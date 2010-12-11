@@ -25,10 +25,6 @@ function HydraSpike:OnCreate()
     
 end
 
-function HydraSpike:GetTechId()
-    return kTechId.HydraSpike
-end
-
 function HydraSpike:GetDeathIconIndex()
     return kDeathMessageIcon.HydraSpike
 end
@@ -42,7 +38,7 @@ if (Server) then
 
             if targetHit ~= nil and targetHit:isa("LiveScriptActor") and GetGamerules():CanEntityDoDamageTo(self, targetHit) then
 
-                targetHit:TakeDamage(HydraSpike.kDamage, self:GetOwner(), self, self:GetOrigin(), nil)                    
+                targetHit:TakeDamage(HydraSpike.kDamage, self, self, self:GetOrigin(), nil)
 
             end            
 

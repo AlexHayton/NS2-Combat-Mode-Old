@@ -599,6 +599,9 @@ function Player:UpdateCrossHairText()
         
             local techId = trace.entity:GetTechId()
             local statusText = string.format("(%.0f%%)", Clamp(math.ceil(trace.entity:GetHealthScalar() * 100), 0, 100))
+            if entity:isa("Structure") and not entity:GetIsBuilt() then
+                statusText = string.format("(%.0f%%)", Clamp(math.ceil(trace.entity:GetBuiltFraction() * 100), 0, 100))
+            end
 
             local secondaryText = ""
             if entity:isa("Structure") then
@@ -1551,6 +1554,8 @@ function Player:OnUpdate(deltaTime)
             self:UpdatePoseParameters(deltaTime)
             
         end
+        
+        GetEffectManager():TriggerQueuedEffects()
     
         self:UpdateClientEffects(deltaTime, isLocal)
     

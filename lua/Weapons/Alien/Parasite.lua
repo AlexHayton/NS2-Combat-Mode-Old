@@ -33,10 +33,6 @@ function Parasite:GetHUDSlot()
     return 2
 end
 
-function Parasite:GetTechId()
-    return kTechId.Parasite
-end
-
 function Parasite:GetIconOffsetY(secondary)
     return kAbilityOffset.Parasite
 end

@@ -72,10 +72,6 @@ function SwipeBlink:GetDrawAnimationSpeed()
     return 1.6
 end
 
-function SwipeBlink:GetTechId()
-    return kTechId.SwipeBlink
-end
-
 function SwipeBlink:GetDeathIconIndex()
     return kDeathMessageIcon.SwipeBlink
 end

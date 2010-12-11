@@ -10,7 +10,7 @@
 
 function Commander:SetDefaultSelection()
 
-    // Select nearest command structure to new player knows what to do
+    // Select nearest command structure so new player knows what to do.
     self.selectedEntities = {}
 
     // Find nearest hive or command station and select it
@@ -32,8 +32,9 @@ function Commander:SetDefaultSelection()
     end
     
     if(nearestCommandStructure ~= nil) then
-    
+        
         table.insertunique(self.selectedEntities, {nearestCommandStructure:GetId(), Shared.GetTime()} )
+        self:OnSelectionChanged()
         
     end
     
@@ -41,10 +42,11 @@ end
 
 // Set the menu from a list of entities (typically structures). Pass nil if none are selected.
 // If more than one entity is passed in, only show build menu icons that they all share.
-function Commander:OnSelectionChanged()   
+function Commander:OnSelectionChanged()
     if(Client) then
         self.menuTechId = kTechId.RootMenu
         self.createSelectionCircles = true
+        self:UpdateSelectionCircles()
     else
         self:ProcessTechTreeAction(kTechId.RootMenu, nil, nil)
     end

@@ -161,10 +161,6 @@ function Flamethrower:FirePrimary(player, bullets, range, penetration)
     
 end
 
-function Flamethrower:GetTechId()
-    return kTechId.Flamethrower
-end
-
 function Flamethrower:GetDeathIconIndex()
     return kDeathMessageIcon.Flamethrower
 end

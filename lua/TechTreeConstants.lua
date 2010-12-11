@@ -22,7 +22,7 @@ kTechId = enum({
     // Armory menus
     'ArmoryUpgradesMenu', 'ArmoryEquipmentMenu',
     
-    // Robotics factor menus
+    // Robotics factory menus
     'RoboticsFactoryARCUpgradesMenu', 'RoboticsFactoryMACUpgradesMenu',
     
     // Prototype lab menus
@@ -41,7 +41,7 @@ kTechId = enum({
     /////////////
     
     // Marine classes
-    'Marine', 'Heavy',
+    'Marine', 'Heavy', "MarineCommander",
     
     // Marine alerts (specified alert sound and text in techdata if any)
     'MarineAlertAcknowledge', 'MarineAlertNeedMedpack', 'MarineAlertNeedAmmo', 'MarineAlertNeedOrder', 'MarineAlertHostiles',
@@ -96,7 +96,7 @@ kTechId = enum({
     ////////////
 
     // Alien lifeforms 
-    'Skulk', 'Gorge', 'Lerk', 'Fade', 'Onos',
+    'Skulk', 'Gorge', 'Lerk', 'Fade', 'Onos', "AlienCommander",
     
     // Alien abilities (not all are needed, only ones with damage types)
     'Bite', 'Parasite', 'Spit', 'Spray', 'Spikes', 'SpikesAlt', 'Spores', 'HydraSpike', 'SwipeBlink', 'StabBlink', 'Gore',

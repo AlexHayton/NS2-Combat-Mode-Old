@@ -56,10 +56,6 @@ function Spores:GetIconOffsetY(secondary)
     return kAbilityOffset.Spores
 end
 
-function Spores:GetTechId()
-    return kTechId.Spores
-end
-
 function Spores:OnViewModelIdle()
     self:CreateViewModelEffect(Spores.kViewIdleEffect)
 end

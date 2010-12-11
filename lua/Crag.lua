@@ -78,15 +78,11 @@ function Crag:GetSortedTargetList()
     for index, entity in ipairs(ents) do
 
         if (entity:GetHealth() < entity:GetMaxHealth()) or (entity:GetArmor() < entity:GetMaxArmor()) then
-        
-            if (not entity:isa("Structure") or entity:GetIsBuilt()) or (not entity:isa("Embryo")) then
             
-                // Crags don't heal self
-                if entity ~= self then
-        
-                    table.insert(targets, entity)
-                    
-                end
+            // Crags don't heal self
+            if entity ~= self then
+    
+                table.insert(targets, entity)
                 
             end
             
@@ -138,29 +134,25 @@ function Crag:PerformHealing()
     
     for index, entity in ipairs(ents) do
     
-        if entity:isa("Player") or entity:isa("Structure") then
+        if (entity:AddHealth(Crag.kHealAmount) > 0) then
         
-            if (entity:AddHealth(Crag.kHealAmount) > 0) then
+            entity:PlaySound(Crag.kHealSound)
             
-                entity:PlaySound(Crag.kHealSound)
-                
-                if entity:isa("Structure") or entity:isa("Onos") then
-                    Shared.CreateEffect(nil, Crag.kHealBigTargetEffect, entity)
-                else
-                    Shared.CreateEffect(nil, Crag.kHealTargetEffect, entity)
-                end
-                
-                entsHealed = entsHealed + 1
-                
+            if entity:isa("Structure") or entity:isa("Onos") then
+                Shared.CreateEffect(nil, Crag.kHealBigTargetEffect, entity)
+            else
+                Shared.CreateEffect(nil, Crag.kHealTargetEffect, entity)
             end
             
-            // Can only heal a certain number of targets
-            if (entsHealed >= Crag.kMaxTargets) then
+            entsHealed = entsHealed + 1
             
-                break
-                
-            end
+        end
         
+        // Can only heal a certain number of targets
+        if (entsHealed >= Crag.kMaxTargets) then
+        
+            break
+            
         end
     
     end
@@ -309,9 +301,5 @@ Shared.LinkClassToMap("Crag", Crag.kMapName, {})
 class 'MatureCrag' (Crag)
 
 MatureCrag.kMapName = "maturecrag"
-
-function MatureCrag:GetTechId()
-    return kTechId.MatureCrag
-end
 
 Shared.LinkClassToMap("MatureCrag", MatureCrag.kMapName, {})

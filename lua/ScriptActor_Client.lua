@@ -52,7 +52,7 @@ function ScriptActor:DestroyAttachedEffects()
     
         for index, attachedEffect in ipairs(self.attachedEffects) do
         
-            Client.DestroyCinematic(attachedEffect)
+            Client.DestroyCinematic(attachedEffect[1])
             
         end
         
@@ -62,8 +62,39 @@ function ScriptActor:DestroyAttachedEffects()
     
 end
 
+function ScriptActor:RemoveEffect(effectName)
+    
+    for index, attachedEffect in ipairs(self.attachedEffects) do
+    
+        if attachedEffect[2] == effectName then
+        
+            Client.DestroyCinematic(attachedEffect[1])
+            
+            local success = table.removevalue(self.attachedEffects, attachedEffect)
+            
+            return true
+            
+        end
+        
+    end
+    
+    return false
+
+end
+
 // Uses loopmode endless by default
 function ScriptActor:AttachEffect(effectName, coords, loopMode)
+
+    if self.attachedEffects == nil then
+        self.attachedEffects = {}
+    end
+
+    // Don't create it if already created    
+    for index, attachedEffect in ipairs(self.attachedEffects) do
+        if attachedEffect[2] == effectName then
+            return false
+        end
+    end
 
     local cinematic = Client.CreateCinematic(RenderScene.Zone_Default)
     
@@ -76,11 +107,9 @@ function ScriptActor:AttachEffect(effectName, coords, loopMode)
     
     cinematic:SetRepeatStyle(loopMode)
 
-    if self.attachedEffects == nil then
-        self.attachedEffects = {}
-    end
+    table.insert(self.attachedEffects, {cinematic, effectName})
     
-    table.insert(self.attachedEffects, cinematic)
+    return true
     
 end
 

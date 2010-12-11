@@ -12,6 +12,9 @@ class 'AlienCommander' (Commander)
 AlienCommander.kMapName = "alien_commander"
 
 AlienCommander.kOrderClickedEffect = PrecacheAsset("cinematics/alien/order.cinematic")
+AlienCommander.kSpawnSmallEffect = PrecacheAsset("cinematics/alien/structures/spawn_small.cinematic")
+AlienCommander.kSpawnLargeEffect = PrecacheAsset("cinematics/alien/structures/spawn_large.cinematic")
+
 AlienCommander.kSpawnSound = PrecacheAsset("sound/ns2.fev/alien/structures/generic_spawn_large")
 AlienCommander.kSelectSound = PrecacheAsset("sound/ns2.fev/alien/commander/select")
 AlienCommander.kChatSound = PrecacheAsset("sound/ns2.fev/alien/common/chat")
@@ -26,6 +29,10 @@ end
 
 function AlienCommander:GetPlaceBuildingSound()
     return AlienCommander.kSpawnSound
+end
+
+function AlienCommander:GetBuildEffect(techId)
+    return ConditionalValue(GetTechUpgradesFromTech(techId, kTechId.Hive), AlienCommander.kSpawnLargeEffect, AlienCommander.kSpawnSmallEffect)
 end
 
 function AlienCommander:GetPlaceBuildingEffect()

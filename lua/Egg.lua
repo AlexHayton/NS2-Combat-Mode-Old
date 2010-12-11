@@ -19,6 +19,7 @@ Egg.kModelName = PrecacheAsset("models/alien/egg/egg.model")
 Egg.kAnimIdle = "idle"
 
 Egg.kBurstEffect = PrecacheAsset("cinematics/alien/egg/burst.cinematic")
+Egg.kMistEffect = PrecacheAsset("cinematics/alien/egg/mist.cinematic")
 Egg.kSpawnEffect = PrecacheAsset("cinematics/alien/egg/spawn.cinematic")
 Egg.kGlowEffect = PrecacheAsset("cinematics/alien/egg/glow.cinematic")
 
@@ -51,6 +52,8 @@ function Egg:OnInit()
         self:SetNextThink(Egg.kThinkInterval)
     
         self:PlaySound(Egg.kSpawnSoundName)
+        
+        Shared.CreateEffect(nil, Egg.kMistEffect, nil, self:GetCoords())
         
     end
     
@@ -130,6 +133,9 @@ function Egg:OnKill(damage, attacker, doer, point, direction)
     
     // ...and a splash
     Shared.CreateEffect(nil, Egg.kBurstEffect, nil, self:GetCoords())
+    
+    // Kill mist
+    Shared.StopEffect(nil, Egg.kMistEffect, self)
     
     Structure.OnKill(self, damage, attacker, doer, point, direction)
     

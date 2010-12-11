@@ -58,7 +58,7 @@ local networkVars =
     maxArmor                = "float",
     
     // Used for limiting frequency of abilities
-    energy                  = string.format("integer (0 to %s)", LiveScriptActor.kMaxEnergy),
+    energy                  = "float",
     maxEnergy               = string.format("integer (0 to %s)", LiveScriptActor.kMaxEnergy),
 
     // 0 to 1 value indicating how much pain we're in
@@ -184,6 +184,10 @@ function LiveScriptActor:OnInit()
     
     // Ability to turn off pathing for testing
     self.pathingEnabled = true
+    
+    if Server then
+        self:TriggerEffects("spawn")
+    end
     
 end
 
@@ -433,10 +437,6 @@ function LiveScriptActor:OnUpdate(deltaTime)
     
     if self.timeLastUpdate ~= nil then
 
-        if Server then    
-        self:ApplyQueuedFlinchAnimation()
-        end
-        
         // Update flinch intensity
         if self.flinchIntensity == nil then
             Shared.Message("self.flinchIntensity is nil! class name: " .. self:GetClassName())
@@ -489,22 +489,6 @@ end
 
 function LiveScriptActor:GetPointValue()
     return LookupTechData(self:GetTechId(), kTechDataPointValue, LiveScriptActor.kDefaultPointValue)
-end
-
-function LiveScriptActor:GetFlinchAnimation(damage)
-    return LiveScriptActor.kAnimFlinch
-end
-
-function LiveScriptActor:GetFlinchFlamesAnimation(damage)
-    return LiveScriptActor.kAnimFlinchFlames
-end
-
-function LiveScriptActor:GetFlinchSound(damage)
-    return nil
-end
-
-function LiveScriptActor:GetFlinchEffect(damage)
-    return nil
 end
 
 // If the gamerules indicate it's OK an entity to take damage, it calls this. World objects or those without

@@ -64,10 +64,6 @@ function Pistol:GetRange()
     return Pistol.kRange
 end
 
-function Pistol:GetTechId()
-    return kTechId.Pistol
-end
-
 function Pistol:GetDeathIconIndex()
     return kDeathMessageIcon.Pistol
 end

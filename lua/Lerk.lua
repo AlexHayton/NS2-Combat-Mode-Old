@@ -71,10 +71,6 @@ function Lerk:GetStartFov()
     return Lerk.kFov
 end
 
-function Lerk:GetTechId()
-    return kTechId.Lerk
-end
-
 function Lerk:GetViewModelName()
     return Lerk.kViewModelName
 end

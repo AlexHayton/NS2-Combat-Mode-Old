@@ -245,8 +245,4 @@ class 'AdvancedArmory' (Armory)
 
 AdvancedArmory.kMapName = "advancedarmory"
 
-function AdvancedArmory:GetTechId()
-    return kTechId.AdvancedArmory
-end
-
 Shared.LinkClassToMap("AdvancedArmory", AdvancedArmory.kMapName, {})

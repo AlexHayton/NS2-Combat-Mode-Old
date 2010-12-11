@@ -335,19 +335,26 @@ end
 // TODO: Implement optionalXZOnly
 function NS2Gamerules:GetEntities(className, teamNumber, optionalOrigin, optionalRange, optionalXZOnly)
 
+    PROFILE("NS2GameRules:GetEntities")
+
     if not self.scriptActorList then
         self:UpdateScriptActorList()
     end
     
     local entities = {}
+    local optionalRange2
+    
+    if optionalRange then
+        optionalRange2 = optionalRange * optionalRange
+    end
     
     for index, scriptActor in ipairs(self.scriptActorList) do
+        
+        if (teamNumber == -1) or (teamNumber == nil) or (scriptActor:GetTeamNumber() == teamNumber) then
     
-        if scriptActor:isa(className) then
+            if scriptActor:isa(className) then
         
-            if (teamNumber == -1) or (teamNumber == nil) or (scriptActor:GetTeamNumber() == teamNumber) then
-        
-                if not optionalOrigin or ((scriptActor:GetOrigin() - optionalOrigin):GetLength() < optionalRange) then
+                if not optionalOrigin or ((scriptActor:GetOrigin() - optionalOrigin):GetLengthSquared() < optionalRange2) then
                 
                     table.insert(entities, scriptActor)
                     
@@ -622,6 +629,7 @@ function NS2Gamerules:UpdatePlayerList()
 end
 
 function NS2Gamerules:UpdateScriptActorList()
+    PROFILE("NS2Gamerules:UpdateScriptActorList")
     self.scriptActorList = GetEntitiesIsa("ScriptActor", nil, true)
 end
 
@@ -671,6 +679,8 @@ function NS2Gamerules:OnUpdate(timePassed)
         self.team1:Update(timePassed)
         self.team2:Update(timePassed)
         self.spectatorTeam:Update(timePassed)
+        
+        GetEffectManager():TriggerQueuedEffects()
         
         // Send scores every so often
         self:UpdateScores()

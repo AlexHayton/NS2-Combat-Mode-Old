@@ -26,8 +26,6 @@ Skulk.kFootstepSoundLeftMetal = PrecacheAsset("sound/ns2.fev/materials/metal/sku
 Skulk.kFootstepSoundRightMetal = PrecacheAsset("sound/ns2.fev/materials/metal/skulk_step_right")
 Skulk.kMetalLayer = PrecacheAsset("sound/ns2.fev/materials/metal/skulk_layer")
 Skulk.kLandSound = PrecacheAsset("sound/ns2.fev/alien/skulk/land")
-Skulk.kWoundSound = PrecacheAsset("sound/ns2.fev/alien/skulk/wound")
-Skulk.kWoundSeriousSound = PrecacheAsset("sound/ns2.fev/alien/skulk/wound_serious")
 Skulk.kIdleSound = PrecacheAsset("sound/ns2.fev/alien/skulk/idle")
 
 if Server then
@@ -79,6 +77,9 @@ function Skulk:OnInit()
     Shared.PlaySound(self, Skulk.kIdleSound)
     
     self.wallWalking = false
+    self.wallWalkingNormalCurrent = Vector.yAxis
+    self.wallWalkingNormalGoal    = Vector.yAxis
+    
     self.leaping = false
     self.leapingAnimationPlaying = false
 
@@ -98,10 +99,6 @@ function Skulk:GetSpawnSound()
     return Skulk.kSpawnSoundName
 end
 
-function Skulk:GetTechId()
-    return kTechId.Skulk
-end
-
 function Skulk:GetMaxViewOffsetHeight()
     return Skulk.kViewOffsetHeight
 end
@@ -113,10 +110,6 @@ end
 
 function Skulk:GetCrouchShrinkAmount()
     return 0
-end
-
-function Skulk:GetFlinchSound(damage)
-    return ConditionalValue(damage >= 20, Skulk.kWoundSeriousSound, Skulk.kWoundSound)
 end
 
 function Skulk:GetStartFov()
@@ -275,15 +268,17 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
     elseif (not self:GetRecentlyWallJumped() and not self.crouching) then
         
         // Don't check wall walking every frame for performance    
-        if self.timeLastWallWalkCheck == nil or (Shared.GetTime() > (self.timeLastWallWalkCheck + Skulk.kWallWalkCheckInterval)) then
+        if (Shared.GetTime() > (self.timeLastWallWalkCheck + Skulk.kWallWalkCheckInterval)) then
         
-            self.wallWalking = false
             // Most of the time, it returns a fraction of 0, which means
             // trace started outside the world (and no normal is returned)           
-            self.wallWalkingNormalGoal = self:GetAverageWallWalkingNormal()
+            local goal = self:GetAverageWallWalkingNormal()
             
-            if self.wallWalkingNormalGoal ~= nil then
+            if goal ~= nil then
+                self.wallWalkingNormalGoal = goal
                 self.wallWalking = true
+            else
+                self.wallWalking = false
             end
             
             self.timeLastWallWalkCheck = Shared.GetTime()
@@ -297,7 +292,7 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
         self.wallWalkingNormalGoal = Vector.yAxis
     end
     
-    if(self.leaping and (Alien.GetIsOnGround(self) or self.wallWalking) and (self.timeOfLeap == nil or (Shared.GetTime() > self.timeOfLeap + Skulk.kLeapTime))) then
+    if ( self.leaping and (Alien.GetIsOnGround(self) or self.wallWalking) and (Shared.GetTime() > self.timeOfLeap + Skulk.kLeapTime) ) then
         self.leaping = false
     end
 

@@ -148,7 +148,7 @@ kPlayingTeamInitialCarbon = 50
 	
 kPlayerInitialPlasma = 10	
 	
-kResourceTowerResourceInterval = 6	
+kResourceTowerResourceInterval = 12
 	
 	
 	

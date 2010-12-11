@@ -35,7 +35,7 @@ function AlienTechIdToIndex(techId)
         end
     end
     
-    Print("AlienTechIdToIndex(%s) - invalid tech id passed", ToString(techId))
+    ASSERT(false, "AlienTechIdToIndex(" .. ToString(techId) .. ") - invalid tech id passed")
     return 0
     
 end
@@ -283,9 +283,7 @@ function AlienBuy_GetCurrentAlien()
     local techId = player:GetTechId()
     local index = AlienTechIdToIndex(techId)
     
-    if index < 1 or index > table.count(indexToAlienTechIdTable) then
-        Print("AlienBuy_GetCurrentAlien(%s): returning invalid index %s for %s", ToString(techId), ToString(index), SafeClassName(player))
-    end
+    ASSERT(index >= 1 and index <= table.count(indexToAlienTechIdTable), "AlienBuy_GetCurrentAlien(" .. ToString(techId) .. "): returning invalid index " .. ToString(index) .. " for " .. SafeClassName(player))
     
     return index
     

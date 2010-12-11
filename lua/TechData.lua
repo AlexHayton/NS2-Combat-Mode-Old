@@ -102,12 +102,13 @@ function BuildTechData()
         { [kTechDataId] = kTechId.SetRally,              [kTechDataDisplayName] = "Set rally point", [kTechDataHotkey] = Move.L, [kTechDataTooltipInfo] = "New helper units automatically move here"},
         { [kTechDataId] = kTechId.SetTarget,             [kTechDataDisplayName] = "Set target", [kTechDataHotkey] = Move.T, [kTechDataTooltipInfo] = "Set target direction"},
         
-        // Ready room
-        { [kTechDataId] = kTechId.ReadyRoomPlayer,        [kTechDataDisplayName] = "Ready room player", [kTechDataModel] = Marine.kModelName },
+        // Ready room player is the default player, hence the Player.kMapName
+        { [kTechDataId] = kTechId.ReadyRoomPlayer,        [kTechDataDisplayName] = "Ready room player", [kTechDataMapName] = Player.kMapName, [kTechDataModel] = Marine.kModelName },
         
         // Marine classes
         { [kTechDataId] = kTechId.Marine,              [kTechDataDisplayName] = "Marine", [kTechDataMapName] = Marine.kMapName, [kTechDataModel] = Marine.kModelName, [kTechDataMaxHealth] = Marine.kHealth, [kTechDataEngagementDistance] = kPlayerEngagementDistance, [kTechDataPointValue] = kMarinePointValue},
         { [kTechDataId] = kTechId.Heavy,               [kTechDataDisplayName] = "Heavy", [kTechDataMapName] = Heavy.kMapName, [kTechDataModel] = Heavy.kModelName, [kTechDataMaxHealth] = Heavy.kHealth, [kTechDataEngagementDistance] = kHeavyEngagementDistance, [kTechDataPointValue] = kExosuitPointValue},
+        { [kTechDataId] = kTechId.MarineCommander,     [kTechDataDisplayName] = "Marine Commander", [kTechDataMapName] = MarineCommander.kMapName, [kTechDataModel] = ""},
 
         // Squads
         { [kTechDataId] = kTechId.SelectRedSquad,              [kTechDataDisplayName] = "Red squad", [kTechDataOrderSound] = MarineCommander.kMoveToWaypointSoundName},
@@ -252,17 +253,17 @@ function BuildTechData()
         { [kTechDataId] = kTechId.ARCUndeploy,          [kTechDataCostKey] = 0,                                         [kTechDataResearchTimeKey] = kARCUndeployTime,                     [kTechDataMenuPriority] = 2, [kTechDataHotkey] = Move.D, [kTechDataTooltipInfo] = "Put ARC into movement mode"},
 
         // Alien abilities for damage types
-        { [kTechDataId] = kTechId.Bite,                  [kTechDataMapName] = BiteLeap.kMapName,        [kTechDataDamageType] = kBiteDamageType,        [kTechDataModel] = ""},
-        { [kTechDataId] = kTechId.Parasite,              [kTechDataMapName] = Parasite.kMapName,        [kTechDataDamageType] = kParasiteDamageType,    [kTechDataModel] = ""},
-        { [kTechDataId] = kTechId.Spit,                  [kTechDataMapName] = SpitSpray.kMapName,       [kTechDataDamageType] = kSpitDamageType,        [kTechDataModel] = ""},
-        { [kTechDataId] = kTechId.Spray,                 [kTechDataMapName] = SpitSpray.kMapName,       [kTechDataDamageType] = kHealsprayDamageType,   [kTechDataModel] = ""},
-        { [kTechDataId] = kTechId.Spikes,                [kTechDataMapName] = Spikes.kMapName,          [kTechDataDamageType] = kSpikeDamageType,       [kTechDataModel] = ""},
-        { [kTechDataId] = kTechId.SpikesAlt,             [kTechDataMapName] = Spikes.kMapName,          [kTechDataDamageType] = kSpikesAltDamageType,   [kTechDataModel] = ""},
-        { [kTechDataId] = kTechId.Spores,                [kTechDataMapName] = Spores.kMapName,          [kTechDataDamageType] = kSporesDamageType,      [kTechDataModel] = ""},
-        { [kTechDataId] = kTechId.HydraSpike,            [kTechDataMapName] = HydraSpike.kMapName,      [kTechDataDamageType] = kHydraSpikeDamageType,  [kTechDataModel] = ""},
-        { [kTechDataId] = kTechId.SwipeBlink,            [kTechDataMapName] = SwipeBlink.kMapName,      [kTechDataDamageType] = kSwipeDamageType,       [kTechDataModel] = ""},
-        { [kTechDataId] = kTechId.StabBlink,             [kTechDataMapName] = StabBlink.kMapName,       [kTechDataDamageType] = kStabDamageType,        [kTechDataModel] = ""},
-        { [kTechDataId] = kTechId.Gore,                  [kTechDataMapName] = Gore.kMapName,            [kTechDataDamageType] = kGoreDamageType,        [kTechDataModel] = ""},
+        { [kTechDataId] = kTechId.Bite,                  [kTechDataMapName] = BiteLeap.kMapName,        [kTechDataDamageType] = kBiteDamageType,        [kTechDataModel] = "", [kTechDataDisplayName] = "Bite"},
+        { [kTechDataId] = kTechId.Parasite,              [kTechDataMapName] = Parasite.kMapName,        [kTechDataDamageType] = kParasiteDamageType,    [kTechDataModel] = "", [kTechDataDisplayName] = "Parasite"},
+        { [kTechDataId] = kTechId.Spit,                  [kTechDataMapName] = SpitSpray.kMapName,       [kTechDataDamageType] = kSpitDamageType,        [kTechDataModel] = "", [kTechDataDisplayName] = "Spit"},
+        { [kTechDataId] = kTechId.Spray,                 [kTechDataMapName] = SpitSpray.kMapName,       [kTechDataDamageType] = kHealsprayDamageType,   [kTechDataModel] = "", [kTechDataDisplayName] = "Spray"},
+        { [kTechDataId] = kTechId.Spikes,                [kTechDataMapName] = Spikes.kMapName,          [kTechDataDamageType] = kSpikeDamageType,       [kTechDataModel] = "", [kTechDataDisplayName] = "Spikes"},
+        { [kTechDataId] = kTechId.SpikesAlt,             [kTechDataMapName] = Spikes.kMapName,          [kTechDataDamageType] = kSpikesAltDamageType,   [kTechDataModel] = "", [kTechDataDisplayName] = "Spikes Alt"},
+        { [kTechDataId] = kTechId.Spores,                [kTechDataMapName] = Spores.kMapName,          [kTechDataDamageType] = kSporesDamageType,      [kTechDataModel] = "", [kTechDataDisplayName] = "Spores"},
+        { [kTechDataId] = kTechId.HydraSpike,            [kTechDataMapName] = HydraSpike.kMapName,      [kTechDataDamageType] = kHydraSpikeDamageType,  [kTechDataModel] = "", [kTechDataDisplayName] = "Hydra Spike"},
+        { [kTechDataId] = kTechId.SwipeBlink,            [kTechDataMapName] = SwipeBlink.kMapName,      [kTechDataDamageType] = kSwipeDamageType,       [kTechDataModel] = "", [kTechDataDisplayName] = "Swipe Blink"},
+        { [kTechDataId] = kTechId.StabBlink,             [kTechDataMapName] = StabBlink.kMapName,       [kTechDataDamageType] = kStabDamageType,        [kTechDataModel] = "", [kTechDataDisplayName] = "Stab Blink"},
+        { [kTechDataId] = kTechId.Gore,                  [kTechDataMapName] = Gore.kMapName,            [kTechDataDamageType] = kGoreDamageType,        [kTechDataModel] = "", [kTechDataDisplayName] = "Gore"},
         
         // Alien structures (spawn hive at 110 units off ground = 2.794 meters)
         { [kTechDataId] = kTechId.Hive,                [kTechDataMapName] = Hive.kLevel1MapName,                   [kTechDataDisplayName] = "Hive", [kTechDataCostKey] = kHiveCost,                     [kTechDataBuildTime] = kHiveBuildTime, [kTechDataModel] = Hive.kModelName,  [kTechDataHotkey] = Move.V,                [kTechDataMaxHealth] = kHiveHealth,  [kTechDataMaxArmor] = kHiveArmor,              [kStructureAttachClass] = "TechPoint",         [kTechDataSpawnHeightOffset] = 2.494,    [kTechDataInitialEnergy] = kHiveInitialEnergy,      [kTechDataMaxEnergy] = kHiveMaxEnergy, [kTechDataPointValue] = kHivePointValue, [kTechDataTooltipInfo] = "Allows another player to become Commander and grants access to next tier"},
@@ -331,7 +332,8 @@ function BuildTechData()
         { [kTechDataId] = kTechId.Lerk,                  [kTechDataMapName] = Lerk.kMapName, [kTechDataGestateName] = Lerk.kMapName,                       [kTechDataGestateTime] = kLerkGestateTime, [kTechDataDisplayName] = "Lerk",            [kTechDataModel] = Lerk.kModelName,[kTechDataCostKey] = kLerkCost, [kTechDataMaxHealth] = Lerk.kHealth, [kTechDataMaxArmor] = Lerk.kArmor, [kTechDataEngagementDistance] = kPlayerEngagementDistance, [kTechDataMaxExtents] = Vector(Lerk.XZExtents, Lerk.YExtents, Lerk.XZExtents), [kTechDataPointValue] = kLerkPointValue},
         { [kTechDataId] = kTechId.Fade,                  [kTechDataMapName] = Fade.kMapName, [kTechDataGestateName] = Fade.kMapName,                       [kTechDataGestateTime] = kFadeGestateTime, [kTechDataDisplayName] = "Fade",            [kTechDataModel] = Fade.kModelName,[kTechDataCostKey] = kFadeCost, [kTechDataMaxHealth] = Fade.kHealth, [kTechDataEngagementDistance] = kPlayerEngagementDistance, [kTechDataMaxArmor] = Fade.kArmor, [kTechDataMaxExtents] = Vector(Fade.XZExtents, Fade.YExtents, Fade.XZExtents), [kTechDataPointValue] = kFadePointValue},        
         { [kTechDataId] = kTechId.Onos,                  [kTechDataMapName] = Onos.kMapName, [kTechDataGestateName] = Onos.kMapName,                       [kTechDataGestateTime] = kOnosGestateTime, [kTechDataDisplayName] = "Onos", [kTechDataImplemented] = false,            [kTechDataModel] = Onos.kModelName,[kTechDataCostKey] = kOnosCost, [kTechDataMaxHealth] = Onos.kHealth, [kTechDataEngagementDistance] = kOnosEngagementDistance, [kTechDataMaxArmor] = Onos.kArmor, [kTechDataMaxExtents] = Vector(Onos.XExtents, Onos.YExtents, Onos.ZExtents), [kTechDataPointValue] = kOnosPointValue},
-        { [kTechDataId] = kTechId.Embryo,                [kTechDataGestateName] = Embryo.kMapName,                     [kTechDataDisplayName] = "Embryo", [kTechDataModel] = Embryo.kModelName, [kTechDataMaxExtents] = Vector(Embryo.kXExtents, Embryo.kYExtents, Embryo.kZExtents)},
+        { [kTechDataId] = kTechId.Embryo,                [kTechDataMapName] = Embryo.kMapName, [kTechDataGestateName] = Embryo.kMapName,                     [kTechDataDisplayName] = "Embryo", [kTechDataModel] = Embryo.kModelName, [kTechDataMaxExtents] = Vector(Embryo.kXExtents, Embryo.kYExtents, Embryo.kZExtents)},
+        { [kTechDataId] = kTechId.AlienCommander,        [kTechDataMapName] = AlienCommander.kMapName, [kTechDataDisplayName] = "Alien Commander", [kTechDataModel] = ""},
         
         // General alien upgrades
         { [kTechDataId] = kTechId.Melee1Tech,                  [kTechDataDisplayName] = "Melee #1", [kTechDataHotkey] = Move.M },        

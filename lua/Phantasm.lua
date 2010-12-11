@@ -78,10 +78,6 @@ function Phantasm:OnInit()
         
 end
 
-function Phantasm:GetFlinchSound(damage)
-    return ""
-end
-
 function Phantasm:GetKilledSound(doer)
     return ""
 end

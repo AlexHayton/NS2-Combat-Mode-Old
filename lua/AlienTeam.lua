@@ -111,15 +111,15 @@ function AlienTeam:UpdateTeamAutoHeal(timePassed)
     if self.timeOfLastAutoHeal == nil or (time > (self.timeOfLastAutoHeal + AlienTeam.kAutoHealInterval)) then
     
         // Heal all players by this amount
-        local players = self:GetPlayers()
+        local teamEnts = GetGamerules():GetEntities("LiveScriptActor", self:GetTeamNumber())
         
-        for index, player in ipairs(players) do
+        for index, entity in ipairs(teamEnts) do
         
-            if player:GetIsAlive() then
+            if entity:GetIsAlive() and (entity:isa("Alien") or entity:isa("Drifter")) then
             
-                // Players always get at least 1 point back
-                local healthBack = math.max(player:GetMaxHealth() * AlienTeam.kAutoHealPercent, 1)
-                player:AddHealth(healthBack, true)
+                // Entities always get at least 1 point back
+                local healthBack = math.max(entity:GetMaxHealth() * AlienTeam.kAutoHealPercent, 1)
+                entity:AddHealth(healthBack, true)
                 
             end
             

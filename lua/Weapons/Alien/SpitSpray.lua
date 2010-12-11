@@ -15,29 +15,12 @@ class 'SpitSpray' (Ability)
 
 SpitSpray.kMapName = "spitspray"
 
-SpitSpray.kAttackSoundName = PrecacheAsset("sound/ns2.fev/alien/gorge/spit")
-SpitSpray.kAnimSpitAttack = "spit_attack"
-SpitSpray.kAnimSprayAttack = "spray_attack"
 SpitSpray.kSpitDelay = kSpitFireDelay
 SpitSpray.kSpitSpeed = 40
-SpitSpray.kAnimPlayerSpit = "spit"
-SpitSpray.kAnimPlayerSpray = "healthspray"
-
-// Gorge spit
-SpitSpray.kPlayerAnimAttack = "spit"
 
 // Health spray
-SpitSpray.kHealthSpraySound = PrecacheAsset("sound/ns2.fev/alien/gorge/heal_spray")
 SpitSpray.kRegenerationSound = PrecacheAsset("sound/ns2.fev/alien/common/regeneration")
-SpitSpray.kSprayAttachPoint = "Head"
-
-// Effects
-SpitSpray.kSpitEffect = PrecacheAsset("cinematics/alien/gorge/spit.cinematic")
-SpitSpray.kSpitImpactEffect = PrecacheAsset("cinematics/alien/gorge/spit_impact.cinematic")
-SpitSpray.kSpitFireEffect = PrecacheAsset("cinematics/alien/gorge/spit_fire.cinematic")
 SpitSpray.kHealthSprayEffect = PrecacheAsset("cinematics/alien/gorge/healthspray.cinematic")
-SpitSpray.kHealthSprayViewEffect = PrecacheAsset("cinematics/alien/gorge/healthspray_view.cinematic")
-SpitSpray.kHealthSprayViewIdleEffect = PrecacheAsset("cinematics/alien/gorge/healthspray_view_idle.cinematic")
 
 // Gorge health spray
 SpitSpray.kAnimSprayTable = { {.5, "health_spray_attack"} }
@@ -46,7 +29,7 @@ SpitSpray.kAnimIdleTable = { {1, "idle"}, {.3, "idle2"}, {.05, "idle3"} }
 
 SpitSpray.kHealthSprayEnergyCost = kHealsprayEnergyCost
 SpitSpray.kMinHeal = 5
-SpitSpray.kHealRadius = 1.5
+SpitSpray.kHealRadius = 3.5
 SpitSpray.kHealthPercent = 0.05
 SpitSpray.kHealingSprayDamage = kHealsprayDamage
 SpitSpray.kHealthSprayDelay = kHealsprayFireDelay
@@ -73,14 +56,6 @@ end
 
 function SpitSpray:GetHUDSlot()
     return 1
-end
-
-function SpitSpray:GetTechId()
-    if self.spitMode then
-        return kTechId.Spit
-    else
-        return kTechId.Spray
-    end
 end
 
 function SpitSpray:GetDeathIconIndex()
@@ -137,13 +112,9 @@ function SpitSpray:PerformPrimaryAttack(player)
     
     self.spitMode = true
     
-    player:SetViewAnimation(SpitSpray.kAnimSpitAttack, nil, nil, 1/player:AdjustFuryFireDelay(1))
-    
-    player:SetOverlayAnimation(SpitSpray.kAnimPlayerSpit)
+    player:TriggerEffects("spit_fire", {speed = 1/player:AdjustFuryFireDelay(1)})
     
     player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
-
-    Shared.PlaySound(player, SpitSpray.kAttackSoundName)
 
     self:CreateSpitProjectile(player)               
     
@@ -152,19 +123,20 @@ end
 // Find friendly players and structures in front of us, in cone and heal them by a 
 // a percentage of their health
 function SpitSpray:HealEntities(player)
-
+    
     local ents = GetEntitiesIsaInRadius("LiveScriptActor", -1, self:GetHealOrigin(player), SpitSpray.kHealRadius, false, true)
     
     for index, targetEntity in ipairs(ents) do
-    
+
         if( targetEntity ~= player ) then
-        
-            local hurtPlayer = (GetEnemyTeamNumber(player:GetTeamNumber()) == targetEntity:GetTeamNumber())
-            local healPlayer = (player:GetTeamNumber() == targetEntity:GetTeamNumber())
-            if targetEntity:GetHealth() < targetEntity:GetMaxHealth() then
+            
+            local isHurtPlayer = (GetEnemyTeamNumber(player:GetTeamNumber()) == targetEntity:GetTeamNumber())
+            local isHealPlayer = (player:GetTeamNumber() == targetEntity:GetTeamNumber())
+            // GetHealthScalar() factors in health and armor.
+            if targetEntity:GetHealthScalar() < 1 then
                 
                 // TODO: Traceline to target to make sure we don't go through objects (or check line of sight because of area effect?)
-                if healPlayer then
+                if isHealPlayer then
                     
                     local health = math.max(SpitSpray.kMinHeal, targetEntity:GetMaxHealth() * SpitSpray.kHealthPercent)
                     targetEntity:AddHealth( health )
@@ -172,7 +144,7 @@ function SpitSpray:HealEntities(player)
                     // Put out entities on fire 
                     targetEntity:SetGameEffectMask(kGameEffect.OnFire, false)
                     
-                elseif hurtPlayer then
+                elseif isHurtPlayer then
                 
                     targetEntity:AddHealth( -SpitSpray.kHealingSprayDamage )
                     
@@ -197,20 +169,20 @@ function SpitSpray:GetSecondaryEnergyCost()
 end
 
 function SpitSpray:GetHealOrigin(player)
-    return player:GetEyePos() + (player:GetViewAngles():GetCoords().zAxis * SpitSpray.kHealRadius)
+
+    local startPos = player:GetEyePos()
+    local trace = Shared.TraceRay(startPos, startPos + (player:GetViewAngles():GetCoords().zAxis * SpitSpray.kHealRadius), PhysicsMask.Bullets, EntityFilterOne(player))
+    return trace.endPoint
+    
 end
 
 function SpitSpray:PerformSecondaryAttack(player)
 
     self.spitMode = false
     
-    player:SetViewAnimation(SpitSpray.kAnimSprayAttack, nil, nil, 1/player:AdjustFuryFireDelay(1))
-    
-    player:SetOverlayAnimation(SpitSpray.kAnimPlayerSpray)
+    player:TriggerEffects("spray_fire", {speed = 1/player:AdjustFuryFireDelay(1)})
     
     player:SetActivityEnd( player:AdjustFuryFireDelay(self:GetSecondaryAttackDelay() ))
-
-    Shared.PlaySound(player, SpitSpray.kHealthSpraySound)
     
     // Put slightly in front of us
     local coords = Coords(self:GetViewCoords())

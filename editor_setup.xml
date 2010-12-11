@@ -203,6 +203,13 @@
         
     </class>
 
+    <!-- Allow map to specify where eggs can be created -->
+    <class name="egg_start" help="Place in same location as tech point"> <parent>base_start</parent>
+	<model>
+          <file>models/alien/egg/egg.model</file>
+        </model>
+    </class>
+
     <!-- NS2 strategy gameplay rules -->
     <class name="ns2_gamerules" label="Use core NS2 strategy gameplay">
 

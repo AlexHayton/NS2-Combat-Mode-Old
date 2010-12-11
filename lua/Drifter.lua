@@ -17,13 +17,10 @@ Drifter.kMapName = "drifter"
 Drifter.kModelName = PrecacheAsset("models/alien/drifter/drifter.model")
 
 Drifter.kAttackSoundName   = PrecacheAsset("sound/ns2.fev/alien/drifter/attack")
-Drifter.kDieSoundName      = PrecacheAsset("sound/ns2.fev/alien/drifter/death")
 Drifter.kDriftSoundName    = PrecacheAsset("sound/ns2.fev/alien/drifter/drift")
 Drifter.kFlareSoundName    = PrecacheAsset("sound/ns2.fev/alien/drifter/flare")
 Drifter.kOrderedSoundName  = PrecacheAsset("sound/ns2.fev/alien/drifter/ordered")
 Drifter.kOrdered2DSoundName  = PrecacheAsset("sound/ns2.fev/alien/drifter/ordered_2d")
-Drifter.kSpawnSoundName    = PrecacheAsset("sound/ns2.fev/alien/drifter/spawn")
-Drifter.kWoundSoundName    = PrecacheAsset("sound/ns2.fev/alien/drifter/wound")
 
 Drifter.kAnimIdleTable = {{1.0, "idle"}, {.5, "idle2"}, {.05, "idle3"}, {.05, "idle4"}}
 Drifter.kAnimFly = "fly"
@@ -78,8 +75,6 @@ function Drifter:OnInit()
         self.justSpawned = true    
         self:SetNextThink(Drifter.kMoveThinkInterval)
         
-        self:PlaySound(Drifter.kSpawnSoundName)
-        
         self:SetUpdates(true)
         
     end
@@ -96,20 +91,8 @@ function Drifter:GetIsFlying()
     return true
 end
 
-function Drifter:GetFlinchSound(damage)
-    return Drifter.kWoundSoundName
-end
-
-function Drifter:GetKilledSound(doer)
-    return Drifter.kDieSoundName
-end
-
 function Drifter:GetHoverHeight()
     return Drifter.kHoverHeight
-end
-
-function Drifter:GetTechId()
-    return kTechId.Drifter
 end
 
 function Drifter:GetFov()

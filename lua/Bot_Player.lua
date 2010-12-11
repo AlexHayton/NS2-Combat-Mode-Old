@@ -24,12 +24,16 @@ function Player:ChooseOrder()
     local order = self:GetCurrentOrder()
     
     // If we have no order or are attacking, acquire possible new target
-    if order == nil or (order:GetType() == kTechId.Attack) then
+    if GetGamerules():GetGameStarted() then
     
-        // Get nearby visible target
-        self:AttackVisibleTarget()
+        if order == nil or (order:GetType() == kTechId.Attack) then
         
-        order = self:GetCurrentOrder()
+            // Get nearby visible target
+            self:AttackVisibleTarget()
+            
+            order = self:GetCurrentOrder()
+            
+        end
         
     end
 
@@ -361,16 +365,18 @@ function Player:UpdateName()
     
 end
 
-function Player:UpdateTeam()
+function Player:UpdateTeam(joinTeam)
 
     // Join random team (could force join if needed but will enter respawn queue if game already started)
     if self:GetTeamNumber() == 0 and (math.random() < .03) then
     
-        local randomTeamNumber = ConditionalValue(math.random() < .5, 1, 2)
+        if joinTeam == nil then
+            joinTeam = ConditionalValue(math.random() < .5, 1, 2)
+        end
         
-        if GetGamerules():GetCanJoinTeamNumber(randomTeamNumber) then
+        if GetGamerules():GetCanJoinTeamNumber(joinTeam) or Shared.GetCheatsEnabled() then
         
-            GetGamerules():JoinTeam(self, randomTeamNumber)    
+            GetGamerules():JoinTeam(self, joinTeam)
             
         end
         

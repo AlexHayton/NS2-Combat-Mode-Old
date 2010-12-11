@@ -73,6 +73,8 @@ function GetDeathMessageEntityName(isPlayer, clientIndex)
 
     if isPlayer == 1 then
         name = Scoreboard_GetPlayerData(clientIndex, kScoreboardDataIndexName)
+    else
+        name = LookupTechData(clientIndex, kTechDataDisplayName)
     end
     
     if not name then

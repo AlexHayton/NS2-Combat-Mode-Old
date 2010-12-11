@@ -256,9 +256,9 @@ function ReplicateStructure(techId, position, commander)
         if newEnt ~= nil then
         
             // Create replicate effect at source and destination
-            local replicateEffect = CommandStation.kMarineReplicateEffect
+            local replicateEffect = MarineCommander.kBuildEffect
             if GetTechUpgradesFromTech(srcStructure:GetTechId(), kTechId.CommandStation) then
-                replicateEffect = CommandStation.kMarineReplicateBigEffect
+                replicateEffect = MarineCommander.kBuildBigEffect
             end
             
             Shared.CreateEffect(nil, replicateEffect, srcStructure, nil)

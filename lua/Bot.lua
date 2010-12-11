@@ -13,10 +13,11 @@ end
 
 class 'Bot'
 
-function Bot:__init()
+function Bot:__init(forceTeam)
 
     // Create a virtual client for the bot
     self.client = Server.AddVirtualClient()
+    self.forceTeam = forceTeam
     
 end
 
@@ -28,7 +29,7 @@ end
 // Stores all of the bots
 local bots = { }
 
-function OnConsoleAddBots(client, numBotsParam)
+function OnConsoleAddBots(client, numBotsParam, forceTeam)
 
     // Run from dedicated server or with dev or cheats on
     if client == nil or Shared.GetCheatsEnabled() or Shared.GetDevMode() then
@@ -40,7 +41,7 @@ function OnConsoleAddBots(client, numBotsParam)
         
         for index = 1, numBots do
         
-            local bot = Bot()
+            local bot = Bot(tonumber(forceTeam))
             table.insert( bots, bot )
             
         end
@@ -108,10 +109,11 @@ function OnVirtualClientThink(client, deltaTime)
             
                 player:UpdateName()
                 
-                player:UpdateTeam()
+                player:UpdateTeam(bot.forceTeam)
             
                 // Orders update and completed in Player:UpdateOrder()
-                if GetGamerules():GetGameStarted() then
+                // Don't give orders to bots that are waiting to spawn.
+                if not player:isa("Spectator") then
                     player:ChooseOrder()
                 end
                 

@@ -19,7 +19,8 @@ Commander.kSpendCarbonSoundName = PrecacheAsset("sound/ns2.fev/marine/common/com
 Commander.kSpendPlasmaSoundName = PrecacheAsset("sound/ns2.fev/marine/common/player_spend_nanites")
 
 Commander.kSelectionCircleModelName = PrecacheAsset("models/misc/marine-build/marine-build.model")
-Commander.kCircleModelName = PrecacheAsset("models/misc/circle/circle.model")
+Commander.kMarineCircleModelName = PrecacheAsset("models/misc/circle/circle.model")
+Commander.kAlienCircleModelName = PrecacheAsset("models/misc/circle/circle_alien.model")
 
 // Extra hard-coded vertical distance that makes it so we set our scroll position,
 // we are looking at that point, instead of setting our position to that point)
@@ -70,8 +71,6 @@ function Commander:OnInit()
     self:SetIsVisible(false)
     
     self:SetDefaultSelection()
-        
-    self:OnSelectionChanged()
 
     self:LoadHeightmap()
     

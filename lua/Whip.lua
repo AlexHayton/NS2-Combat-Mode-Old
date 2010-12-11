@@ -23,7 +23,7 @@ Whip.kAnimFury = "enervate"
 
 Whip.kFurySound = PrecacheAsset("sound/ns2.fev/alien/structures/whip/fury")
 Whip.kIdleSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/whip/idle")
-Whip.kStrikeSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/hydra/attack")
+Whip.kStrikeSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/whip/attack")
 
 Whip.kBombardFireEffect = PrecacheAsset("cinematics/alien/whip/bombard_fire.cinematic")
 Whip.kBombardEffect = PrecacheAsset("cinematics/alien/whip/bombard.cinematic")
@@ -131,10 +131,6 @@ Shared.LinkClassToMap("Whip", Whip.kMapName, networkVars)
 class 'MatureWhip' (Whip)
 
 MatureWhip.kMapName = "maturewhip"
-
-function MatureWhip:GetTechId()
-    return kTechId.MatureWhip
-end
 
 
 Shared.LinkClassToMap("MatureWhip", MatureWhip.kMapName, networkVars)

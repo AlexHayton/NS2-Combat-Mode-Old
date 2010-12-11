@@ -120,10 +120,6 @@ function Marine:OnCreate()
     
 end
 
-function Marine:GetTechId()
-    return kTechId.Marine
-end
-
 function Marine:OnInit()
     
     Player.OnInit(self)
@@ -416,26 +412,6 @@ function Marine:UpdateSprintingState(input)
     // Update fov as we're sprinting
     //self.fov = self:GetStartFov() + self.sprintingScalar*(Marine.kMaxSprintFov - self:GetStartFov())
     
-end
-
-function Marine:GetFlinchAnimation(damage)
-
-    local activeWeapon = self:GetActiveWeapon()
-    
-    // No flinch_big just flinch (ie, rifle_flinch)
-    if activeWeapon ~= nil then
-        return string.format("%s_%s", activeWeapon:GetMapName(), LiveScriptActor.kAnimFlinch)
-    end
-    
-    return ""
-    
-end
-
-function Marine:GetFlinchEffect(damage)
-    if damage > BiteLeap.kDamage then
-        return Marine.kFlinchBigEffect
-    end
-    return Marine.kFlinchEffect
 end
 
 function Marine:GetCanViewModelIdle()

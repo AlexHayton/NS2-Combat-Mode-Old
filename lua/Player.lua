@@ -311,11 +311,6 @@ function Player:OnCreate()
     
 end
 
-// If not overridden, we're in the ready room
-function Player:GetTechId()
-    return kTechId.ReadyRoomPlayer
-end
-
 function Player:OnInit()
     
     LiveScriptActor.OnInit(self)

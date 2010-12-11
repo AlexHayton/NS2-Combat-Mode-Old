@@ -27,13 +27,26 @@ end
 /**
  * Notify that Entity-type alert was clicked
  */
-function CommanderUI_ClickedEntityAlert(eid)
-    Print("CommanderUI_ClickedEntityAlert(%s)", ToString(eid))	
+function CommanderUI_ClickedEntityAlert(entityId)
+
+    local player = Client.GetLocalPlayer()
+    if player:isa("Commander") then
+        local entity = Shared.GetEntity(entityId)
+        if entity ~= nil then
+            player:SetWorldScrollPosition(entity:GetOrigin().x, entity:GetOrigin().z)
+        end
+    end
+    
 end
 
 /**
  * Notify that Location-type alert was clicked
  */
-function CommanderUI_ClickedLocationAlert(xp, yp)
-    Print("CommanderUI_ClickedLocationAlert(%s, %s)", ToString(xp), ToString(yp))
+function CommanderUI_ClickedLocationAlert(xp, zp)
+
+    local player = Client.GetLocalPlayer()
+    if player:isa("Commander") then
+        player:SetWorldScrollPosition(xp, zp)
+    end
+    
 end

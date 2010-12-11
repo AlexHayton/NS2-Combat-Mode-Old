@@ -90,10 +90,6 @@ function Onos:GetSpawnSound()
     return Onos.kSpawnSoundName
 end
 
-function Onos:GetTechId()
-    return kTechId.Onos
-end
-
 function Onos:GetViewModelName()
     return Onos.kViewModelName
 end

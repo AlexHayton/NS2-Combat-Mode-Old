@@ -13,7 +13,7 @@ HydraAbility.kMapName = "chamber"
 
 HydraAbility.kCreateStartSound = PrecacheAsset("sound/ns2.fev/alien/gorge/create_structure_start")
 
-HydraAbility.kCircleModelName = PrecacheAsset("models/misc/circle/circle.model")
+HydraAbility.kCircleModelName = PrecacheAsset("models/misc/circle/circle_alien.model")
 
 HydraAbility.kCreateEffect = PrecacheAsset("cinematics/alien/gorge/create.cinematic")
 HydraAbility.kCreateViewEffect = PrecacheAsset("cinematics/alien/gorge/create_view.cinematic")

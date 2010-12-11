@@ -100,10 +100,6 @@ function PowerPoint:OnReset()
     
 end
 
-function PowerPoint:GetTechId()
-    return kTechId.PowerPoint
-end
-
 function PowerPoint:GetCanTakeDamage()
     return self.powered
 end

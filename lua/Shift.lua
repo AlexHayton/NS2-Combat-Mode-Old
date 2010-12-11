@@ -145,8 +145,4 @@ class 'MatureShift' (Shift)
 
 MatureShift.kMapName = "matureshift"
 
-function MatureShift:GetTechId()
-    return kTechId.MatureShift
-end
-
 Shared.LinkClassToMap("MatureShift", MatureShift.kMapName, {})

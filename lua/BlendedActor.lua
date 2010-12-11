@@ -28,6 +28,11 @@ local networkVars =
     nextIdleTime                = "float", 
 }
 
+
+// Temporary used in BlendedActor:BlendAnimation to reduce the amount of
+// allocation/garbage created.
+local g_poses = PosesArray()
+
 // Called right after an entity is created on the client or server. This happens through Server.CreateEntity, 
 // or when a server-created object is propagated to client. 
 function BlendedActor:OnCreate()    
@@ -278,9 +283,9 @@ end
 /**
  * Called by the engine to construct the pose of the bones for the actor's model.
  */
-function BlendedActor:BuildPose(poses)
+function BlendedActor:BuildPose(model, poses)
     
-    Actor.BuildPose(self, poses)
+    Actor.BuildPose(self, model, poses)
 
     // If we have a previous animation, blend it in.
     if (self.prevAnimationSequence ~= Model.invalidSequence) then
@@ -296,7 +301,7 @@ function BlendedActor:BuildPose(poses)
                     Print("%s:BuildPose(): fraction: %.2f", self:GetClassName(), fraction)
                 end
                 
-                self:BlendAnimation(poses, self.prevAnimationSequence, self.prevAnimationStart, 1 - fraction)
+                self:BlendAnimation(model, poses, self.prevAnimationSequence, self.prevAnimationStart, 1 - fraction)
             end
             
         end
@@ -305,7 +310,7 @@ function BlendedActor:BuildPose(poses)
 
     // Apply the overlay animation if we have one.
     if (self.overlayAnimationSequence ~= Model.invalidSequence) then
-        self:AccumulateAnimation(poses, self.overlayAnimationSequence, self.overlayAnimationStart)
+        self:AccumulateAnimation(model, poses, self.overlayAnimationSequence, self.overlayAnimationStart)
     end
     
 end
@@ -313,21 +318,14 @@ end
 /**
  * Blends an animation over the existing pose by the indicated fraction (0 to 1).
  */
-function BlendedActor:BlendAnimation(poses, animationIndex, animationStart, fraction)
+function BlendedActor:BlendAnimation(model, poses, animationIndex, animationStart, fraction)
+   
+    local animationTime = (Shared.GetTime() - animationStart) * self.animationSpeed
 
-    local model = Shared.GetModel(self.modelIndex)
+    model:GetReferencePose(g_poses)
+    model:AccumulateSequence(animationIndex, animationTime, self.poseParams, g_poses)
 
-    if (model ~= nil) then
-        
-        local animationTime = (Shared.GetTime() - animationStart) * self.animationSpeed
-
-        local poses2 = PosesArray()
-        model:GetReferencePose(poses2)
-        model:AccumulateSequence(animationIndex, animationTime, self.poseParams, poses2)
-
-        Model.GetBlendedPoses(poses, poses2, fraction)
-
-    end
+    Model.GetBlendedPoses(poses, g_poses, fraction)
     
 end
 

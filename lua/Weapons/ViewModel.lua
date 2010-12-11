@@ -160,7 +160,7 @@ function ViewModel:GetAttachPointCoords(attachPoint)
             local poses = PosesArray()
             local boneCoords = CoordsArray()
             model:GetReferencePose(poses)
-            self:AccumulateAnimation(poses, self.animationSequence, self.animationStart)
+            self:AccumulateAnimation(model, poses, self.animationSequence, self.animationStart)
             model:GetBoneCoords(poses, boneCoords)
         
             local coords = self:GetCoords()
@@ -175,7 +175,7 @@ function ViewModel:GetAttachPointCoords(attachPoint)
 
     end
     
-    Print("%s:GetAttachPointCoords(%s): Returning identity coords.", self:GetClassName(), ToString(attachPoint))
+    Print("%s:GetAttachPointCoords(%s): Returning identity coords for ViewModel.", self:GetClassName(), ToString(attachPoint))
     
     return Coords.GetIdentity()
     

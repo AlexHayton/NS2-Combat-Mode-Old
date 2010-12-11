@@ -42,10 +42,6 @@ function StabBlink:GetHUDSlot()
     return 2
 end
 
-function StabBlink:GetTechId()
-    return kTechId.StabBlink
-end
-
 function StabBlink:GetDeathIconIndex()
     return kDeathMessageIcon.SwipeBlink
 end

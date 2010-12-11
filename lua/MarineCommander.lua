@@ -18,6 +18,9 @@ if(Client) then
     Script.Load("lua/MarineCommander_Client.lua")
 end
 
+MarineCommander.kBuildEffect = PrecacheAsset("cinematics/marine/structures/spawn_building.cinematic")
+MarineCommander.kBuildBigEffect = PrecacheAsset("cinematics/marine/structures/spawn_building_big.cinematic")
+
 MarineCommander.kSentryFiringSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/sentry_firing")
 MarineCommander.kSentryTakingDamageSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/sentry_taking_damage")
 MarineCommander.kSoldierLostSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/soldier_lost")
@@ -83,6 +86,10 @@ function MarineCommander:OnSelectionChanged()
         
     end
 
+end
+
+function MarineCommander:GetBuildEffect(techId)
+    return ConditionalValue(GetTechUpgradesFromTech(techId, kTechId.CommandStation), MarineCommander.kBuildBigEffect, MarineCommander.kBuildEffect)
 end
 
 // Top row always the same. Alien commander can override to replace. 

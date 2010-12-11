@@ -100,10 +100,6 @@ function Gorge:GetStartFov()
     return Gorge.kFov
 end
 
-function Gorge:GetTechId()
-    return kTechId.Gorge
-end
-
 function Gorge:GetViewModelName()
     return Gorge.kViewModelName
 end

@@ -65,10 +65,6 @@ function Minigun:GetBaseIdleAnimation()
     
 end
 
-function Minigun:GetTechId()
-    return kTechId.Minigun
-end
-
 function Minigun:GetPrimaryAttackAnimation()
 
     if(self.clip % 2 == 1) then

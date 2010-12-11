@@ -62,13 +62,9 @@ if (Server) then
 
         // Don't hit owner - shooter
         if targetHit == nil or self:GetOwner() ~= targetHit then
-            // Play sound and particle effect
-            Shared.PlayWorldSound(nil, Spit.kSpitHitSound, nil, self:GetOrigin())
+        
+            self:TriggerEffects("spit_hit")
             
-            if self.physicsBody then
-                Shared.CreateEffect(nil, Spit.kSpitHitEffect, nil, self.physicsBody:GetCoords())
-            end
-
             if targetHit == nil or (targetHit:isa("LiveScriptActor") and GetGamerules():CanEntityDoDamageTo(self, targetHit)) then
 
                 if targetHit ~= nil then

@@ -146,8 +146,4 @@ class 'MatureShade' (Shade)
 
 MatureShade.kMapName = "matureshade"
 
-function MatureShade:GetTechId()
-    return kTechId.MatureShade
-end
-
 Shared.LinkClassToMap("MatureShade", MatureShade.kMapName, {})

@@ -58,10 +58,6 @@ end
 function Axe:OnReload(player)
 end
 
-function Axe:GetTechId()
-    return kTechId.Axe
-end
-
 function Axe:GetDeathIconIndex()
     return kDeathMessageIcon.Axe
 end

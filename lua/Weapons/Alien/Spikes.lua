@@ -98,10 +98,6 @@ function Spikes:GetIdleAnimation()
     return chooseWeightedEntry( Spikes.kAnimIdleTable )
 end
 
-function Spikes:GetTechId()
-    return ConditionalValue(self.zoomedIn, kTechId.SpikesAlt, kTechId.Spikes)
-end
-
 function Spikes:GetDeathIconIndex()
     return ConditionalValue(self.zoomedIn, kDeathMessageIcon.SpikesAlt, kDeathMessageIcon.Spikes)
 end

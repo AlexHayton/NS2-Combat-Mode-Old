@@ -77,10 +77,6 @@ function Shotgun:GetInaccuracyScalar()
     return 1
 end
 
-function Shotgun:GetTechId()
-    return kTechId.Shotgun
-end
-
 function Shotgun:GetDeathIconIndex()
     return kDeathMessageIcon.Shotgun
 end

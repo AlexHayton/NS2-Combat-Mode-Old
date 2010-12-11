@@ -16,18 +16,6 @@ function OnosPhantasm:GetExtents()
     return LookupTechData(kTechId.Onos, kTechDataMaxExtents)
 end
 
-function OnosPhantasm:GetSpawnSoundName()
-    return Onos.kSpawnSoundName
-end
-
-function OnosPhantasm:GetFlinchSound(damage)
-    return Onos.kWoundSound
-end
-
-function OnosPhantasm:GetKilledSound(doer)
-    return Onos.kDieSoundName
-end
-
 function OnosPhantasm:GetOrderedSoundName()
     return Onos.kGoreSound
 end

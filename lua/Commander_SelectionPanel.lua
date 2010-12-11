@@ -105,7 +105,7 @@ function CommanderUI_GetSelectedLocation(entityId)
     end
     
     // Add in energy if any
-    if ent:GetEnergy() ~= 0 and ent:GetMaxEnergy() ~= 0 then
+    if ent and ent:GetEnergy() ~= 0 and ent:GetMaxEnergy() ~= 0 then
     
         if not ent:isa("Structure") or ent:GetIsBuilt() then
             locationText = string.format("%s    %d/%d energy", locationText, math.ceil(ent:GetEnergy()), math.ceil(ent:GetMaxEnergy()))

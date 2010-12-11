@@ -67,10 +67,6 @@ function Embryo:OnDestroyClient()
     
 end
 
-function Embryo:GetTechId()
-    return kTechId.Embryo
-end
-
 function Embryo:GetMaxViewOffsetHeight()
     return .2
 end

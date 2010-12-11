@@ -33,8 +33,6 @@ Alien.kFocusIconsTexture = "ui/alien_focusicons.dds"
 // Small mono-color icons representing 1-4 upgrades that the creature or structure has
 Alien.kUpgradeIconsTexture = "ui/alien_upgradeicons.dds"
 
-Alien.kFlinchEffect = PrecacheAsset("cinematics/alien/hit.cinematic")
-Alien.kFlinchBigEffect = PrecacheAsset("cinematics/alien/hit_big.cinematic")
 Alien.kMetabolizeSmallEffect = PrecacheAsset("cinematics/alien/metabolize_small.cinematic")
 Alien.kMetabolizeLargeEffect = PrecacheAsset("cinematics/alien/metabolize_large.cinematic")
 
@@ -52,7 +50,7 @@ local networkVars =
 {
     // Energy used for all alien weapons and abilities (instead of ammo).
     // Regenerates on its own over time. Not called energy because used in base class.
-    abilityEnergy           = string.format("integer (0 to %d)", Ability.kMaxEnergy),
+    abilityEnergy           = "float", // Range is (0 to Ability.kMaxEnergy)
     
     energizeLevel           = string.format("integer (0 to %d)", kMaxStackLevel),
 
@@ -225,10 +223,6 @@ function Alien:ExecuteSaying(index)
         
     end
     
-end
-
-function Alien:GetFlinchEffect(damage)
-    return Alien.kFlinchEffect
 end
 
 function Alien:GetChatSound()

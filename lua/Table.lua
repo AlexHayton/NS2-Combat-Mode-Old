@@ -417,7 +417,9 @@ function table.tostring(t)
                 
             elseif(type(value) == "userdata") then
             
-                table.insert(buffer, string.format("class \"%s\"", value:GetClassName()))
+                if value.GetClassName then
+                    table.insert(buffer, string.format("class \"%s\"", value:GetClassName()))
+                end
                 
             else
             

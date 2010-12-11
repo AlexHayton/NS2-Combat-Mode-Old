@@ -95,10 +95,6 @@ function Rifle:GetFireSoundName()
     return Rifle.fireLoopSoundTable[self.soundType]
 end
 
-function Rifle:GetTechId()
-    return kTechId.Rifle
-end
-
 function Rifle:GetDeathIconIndex()
     return ConditionalValue(self.lastAttackSecondary, kDeathMessageIcon.RifleButt, kDeathMessageIcon.Rifle)
 end

@@ -24,10 +24,9 @@ MAC.kStartConstruction2DSoundName = PrecacheAsset("sound/ns2.fev/marine/structur
 MAC.kHelpingSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/help_build")
 MAC.kPassbyMACSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/passby_mac")
 MAC.kPassbyDrifterSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/passby_driffter")
-MAC.kDeathSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/death")
 MAC.kHoverSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/hover")
 MAC.kIdleSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/idle")
-MAC.kPainSound = PrecacheAsset("sound/ns2.fev/marine/structures/mac/pain")
+MAC.kPainSound = PrecacheAsset()
 MAC.kThrustersSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/thrusters")
 MAC.kWeldSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/weld")
 MAC.kWeldStartSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/weld_start")
@@ -46,7 +45,6 @@ MAC.kLightEffect = PrecacheAsset("cinematics/marine/mac/light.cinematic")
 
 // Play at origin
 MAC.kSirenEffect = PrecacheAsset("cinematics/marine/mac/siren.cinematic")
-MAC.kDeathEffect = PrecacheAsset("cinematics/marine/mac/death.cinematic")
 
 // Animations
 MAC.kAnimIdle = {{1, "idle"}, {.1, "idle2"}}
@@ -659,10 +657,6 @@ function MAC:FindSomethingToDo()
     
 end
 
-function MAC:GetTechId()
-    return kTechId.MAC
-end
-
 function MAC:GetDeathIconIndex()
     return kDeathMessageIcon.MAC
 end
@@ -702,18 +696,6 @@ function MAC:GetTechButtons(techId)
     
 end
 
-function MAC:GetFlinchSound(damage)
-    return MAC.kPainSound
-end
-
-function MAC:GetKilledSound(doer)
-    return MAC.kDeathSoundName
-end
-
-function MAC:GetDeathEffect()
-    return MAC.kDeathEffect
-end
-
 function MAC:GetWaypointGroupName()
     return kAirWaypointsGroup
 end
@@ -722,9 +704,6 @@ function MAC:OnKill(damage, attacker, doer, point, direction)
 
     LiveScriptActor.OnKill(self, damage, attacker, doer, point, direction)
 
-    // Create puff of smoke and sparks
-    Shared.CreateEffect(nil, self:GetDeathEffect(), nil, self:GetCoords())
-    
     self:StopSound(MAC.kHoverSoundName)
     self:StopSound(MAC.kThrustersSoundName)
     Shared.StopEffect(nil, MAC.kSirenEffect, self)

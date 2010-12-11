@@ -27,6 +27,8 @@ Hive.kExitSound = PrecacheAsset("sound/ns2.fev/alien/structures/hive_exit")
 Hive.kHiveSpawnTechEffect = PrecacheAsset("cinematics/alien/hive/hive_spawn.cinematic")
 Hive.kDeployTechEffect = PrecacheAsset("cinematics/alien/hive/deploy_tech.cinematic")
 Hive.kIdleMistEffect = PrecacheAsset("cinematics/alien/hive/idle_mist.cinematic")
+Hive.kL2IdleMistEffect = PrecacheAsset("cinematics/alien/hive/idle_mist_lev2.cinematic")
+Hive.kL3IdleMistEffect = PrecacheAsset("cinematics/alien/hive/idle_mist_lev3.cinematic")
 Hive.kGlowEffect = PrecacheAsset("cinematics/alien/hive/glow.cinematic")
 Hive.kSpecksEffect = PrecacheAsset("cinematics/alien/hive/specks.cinematic")
 Hive.kDeathEffect = PrecacheAsset("cinematics/alien/hive/death.cinematic")
@@ -57,38 +59,23 @@ Hive.kAnimFlinchInactiveBig = "flinch_inactive_big"
 Hive.kAnimFlinchActiveSmall = "flinch_active"
 Hive.kAnimFlinchActiveBig = "flinch_active_big"
 
-// Flame animations
-Hive.kAnimFlinchFlames = "flinch_active_flames"
-
 Hive.kAnimIdleActiveTable = {{.4, "idle_active"}, {.7, "idle_active2"}, {.7, "idle_active3"}}
 Hive.kAnimIdleInactiveTable = {{1.4, "idle_inactive"}, {.3, "idle_inactive2"}, {.3, "idle_inactive3"}}
 
 // A little bigger than we might expect because the hive origin isn't on the ground
 Hive.kEggMinSpawnRadius = 3
 Hive.kEggMaxSpawnRadius = 10
-Hive.kBaseNumEggs = 5
+Hive.kHiveNumEggs = 3
+Hive.kMassNumEggs = 5
+Hive.kColonyNumEggs = 7
 Hive.kBaseEggSpawnTime = 6
 Hive.kMaxEggDropDistance = 15
 
 
 if Server then
     Script.Load("lua/Hive_Server.lua")
-end
-
-function Hive:OnInit()
-
-    CommandStructure.OnInit(self)
-    
-    if Client then
-    
-        // Create glowy "plankton" swimming around hive, along with mist and glow
-        local coords = self:GetCoords()
-        self:AttachEffect(Hive.kSpecksEffect, coords)
-        self:AttachEffect(Hive.kIdleMistEffect, coords)
-        self:AttachEffect(Hive.kGlowEffect, coords, Cinematic.Repeat_Loop)
-        
-    end
-    
+else
+    Script.Load("lua/Hive_Client.lua")
 end
 
 function Hive:GetPlaceBuildingEffect()
@@ -205,30 +192,20 @@ function Hive:PerformActivation(techId, position, commander)
     
 end
 
-
 function Hive:GetOnFireSound()
     return LiveScriptActor.kOnFireLargeSound
 end
 
-Shared.LinkClassToMap("Hive",    Hive.kMapName, {})
 Shared.LinkClassToMap("Hive",    Hive.kLevel1MapName, {})
 
 // Create new classes here so L2 and L3 hives can be created for test cases without
 // create a basic hive and then upgrading it
 class 'HiveL2' (Hive)
 
-function HiveL2:GetTechId()
-    return kTechId.HiveMass
-end
-
 HiveL2.kMapName = "hivel2"
 Shared.LinkClassToMap("HiveL2",    HiveL2.kMapName, {})
 
 class 'HiveL3' (HiveL2)
-
-function HiveL3:GetTechId()
-    return kTechId.HiveColony
-end
 
 HiveL3.kMapName = "hivel3"
 Shared.LinkClassToMap("HiveL3",    HiveL3.kMapName, {})

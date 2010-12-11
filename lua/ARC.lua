@@ -191,10 +191,6 @@ function ARC:OnThink()
 end
 end
 
-function ARC:GetTechId()
-    return kTechId.ARC
-end
-
 function ARC:GetDeathIconIndex()
     return kDeathMessageIcon.ARC
 end

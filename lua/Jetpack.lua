@@ -24,10 +24,6 @@ function Jetpack:OnInit()
     
 end
 
-function Jetpack:GetTechId()
-    return kTechId.Jetpack
-end
-
 function Jetpack:OnTouch(player)
 
     if( player:GetTeamNumber() == self:GetTeamNumber() ) then

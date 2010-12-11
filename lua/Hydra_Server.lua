@@ -19,6 +19,8 @@ end
 
 function Hydra:GetSortedTargetList()
 
+    PROFILE("Hydra:GetSortedTargetList")
+
     local hydraAttackOrigin = self:GetModelOrigin()
     local targets = GetGamerules():GetEntities("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), hydraAttackOrigin, Hydra.kRange)
 
@@ -35,8 +37,8 @@ function Hydra:GetSortedTargetList()
         end
 
         // Shoot closer targets
-        local dist1 = (hydraAttackOrigin - ent1:GetEngagementPoint()):GetLength()
-        local dist2 = (hydraAttackOrigin - ent2:GetEngagementPoint()):GetLength()        
+        local dist1 = (hydraAttackOrigin - ent1:GetEngagementPoint()):GetLengthSquared()
+        local dist2 = (hydraAttackOrigin - ent2:GetEngagementPoint()):GetLengthSquared()        
         if dist1 ~= dist2 then
             return dist1 < dist2
         end

@@ -46,10 +46,6 @@ function SetEntityRecentlyHurt(entityId)
     
 end
 
-function SporeCloud:GetTechId()
-    return kTechId.Spores
-end
-
 function SporeCloud:GetDeathIconIndex()
     return kDeathMessageIcon.SporeCloud
 end

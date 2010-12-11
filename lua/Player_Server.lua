@@ -122,7 +122,7 @@ function Player:OnTeamChange(newTeamNumber)
     if(newTeamNumber ~= self:GetTeamNumber()) then
 
         // Remove from the old team, if non-nil
-        if(self:GetTeamNumber() ~= nil) then
+        if(self:GetTeamNumber() ~= -1) then
             
             self:RemoveChildren()
         
@@ -176,12 +176,6 @@ function Player:OnTakeDamage(damage, doer, point)
 
     LiveScriptActor.OnTakeDamage(self, damage, doer, point)
     
-    // Play hurt sound
-    local flinchSound = self:GetFlinchSound(damage)
-    if(flinchSound ~= nil) then
-        self:PlaySound(flinchSound)
-    end
-    
     // Play damage indicator for player
     if point ~= nil then
         Server.SendNetworkMessage(self, "DamageIndicator", BuildDamageIndicatorMessage(point, damage), true)
@@ -207,11 +201,16 @@ function Player:OnKill(damage, killer, doer, point, direction)
 
     local killerName = nil
     
-    if(killer and killer:isa("Player") and killer ~= self and killer:GetTeamNumber() == GetEnemyTeamNumber(self:GetTeamNumber())) then
+    local pointOwner = killer
+    // If the pointOwner is not a player, award it's points to it's owner.
+    if pointOwner ~= nil and not pointOwner:isa("Player") then
+        pointOwner = pointOwner:GetOwner()
+    end
+    if(pointOwner and pointOwner:isa("Player") and pointOwner ~= self and pointOwner:GetTeamNumber() == GetEnemyTeamNumber(self:GetTeamNumber())) then
    
-        killerName = killer:GetName()
-        killer:AddKill()        
-        killer:AddScore(self:GetPointValue())
+        killerName = pointOwner:GetName()
+        pointOwner:AddKill()        
+        pointOwner:AddScore(self:GetPointValue())
         
     end        
 
@@ -449,7 +448,8 @@ function Player:Replace(mapName, newTeamNumber, preserveChildren)
     local owner  = Server.GetOwner(self)
     
     // Add new player to new team if specified
-    if(newTeamNumber ~= nil) then
+    // Both nil and -1 are possible invalid team numbers.
+    if(newTeamNumber ~= nil and newTeamNumber ~= -1) then
         teamNumber = newTeamNumber
     end
 

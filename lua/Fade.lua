@@ -59,10 +59,6 @@ function Fade:GetTauntSound()
     return Fade.kTauntSound
 end
 
-function Fade:GetTechId()
-    return kTechId.Fade
-end
-
 function Fade:OnInit()
     
     Alien.OnInit(self)

@@ -53,10 +53,6 @@ function Target:OnLoad()
         
 end
 
-function Target:GetTechId()
-    return kTechId.Target
-end
-
 function Target:GetCanIdle()
     return false
 end

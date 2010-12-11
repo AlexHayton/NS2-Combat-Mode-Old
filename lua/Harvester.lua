@@ -16,7 +16,6 @@ Harvester.kActiveSound = PrecacheAsset("sound/ns2.fev/alien/structures/harvester
 Harvester.kHarvestedSound = PrecacheAsset("sound/ns2.fev/alien/structures/harvester_harvested")
 Harvester.kDeploySound = PrecacheAsset("sound/ns2.fev/alien/structures/deploy_small")
 Harvester.kKilledSound = PrecacheAsset("sound/ns2.fev/alien/structures/harvester_death")
-Harvester.kWoundSound = PrecacheAsset("sound/ns2.fev/alien/structures/harvester_wound")
 Harvester.kUnderAttackSound = PrecacheAsset("sound/ns2.fev/alien/voiceovers/harvester_under_attack")
 
 Harvester.kGlowEffect = PrecacheAsset("cinematics/alien/harvester/glow.cinematic")
@@ -35,10 +34,6 @@ end
 
 function Harvester:GetDeploySound()
     return Harvester.kDeploySound
-end
-
-function Harvester:GetFlinchSound(damage)
-    return Harvester.kWoundSound
 end
 
 function Harvester:GetTechButtons(techId)

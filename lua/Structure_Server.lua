@@ -386,7 +386,12 @@ end
 
 function Structure:OnReset()
 
+    // OnCreate will reset the team number, so preseve it here
+    local teamNumber = self.teamNumber
+
     Structure.OnCreate(self)
+    
+    self.teamNumber = teamNumber
     
     self:ClearAttached()
     

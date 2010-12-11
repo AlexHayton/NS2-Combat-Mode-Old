@@ -705,4 +705,40 @@
   <file>
     <filename>ARC.lua</filename>
   </file>
+  <file>
+    <filename>GUIBulletDisplay.lua</filename>
+  </file>
+  <file>
+    <filename>EffectManager.lua</filename>
+  </file>
+  <file>
+    <filename>Effects.lua</filename>
+  </file>
+  <file>
+    <filename>GeneralEffects.lua</filename>
+  </file>
+  <file>
+    <filename>GUIHealthCircle.lua</filename>
+  </file>
+  <file>
+    <filename>GUICommanderManager.lua</filename>
+  </file>
+  <file>
+    <filename>AlienWeaponEffects.lua</filename>
+  </file>
+  <file>
+    <filename>AlienStructureEffects.lua</filename>
+  </file>
+  <file>
+    <filename>CommonEffects.lua</filename>
+  </file>
+  <file>
+    <filename>MarineStructureEffects.lua</filename>
+  </file>
+  <file>
+    <filename>MarineWeaponEffects.lua</filename>
+  </file>
+  <file>
+    <filename>PlayerEffects.lua</filename>
+  </file>
 </project>

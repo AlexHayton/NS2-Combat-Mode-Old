@@ -453,8 +453,10 @@ function ToString(t)
             return t:tostring()
         elseif t:isa("Trace") then
             return string.format("trace fraction: %.2f entity: %s", t.fraction, SafeClassName(t.entity))
-        else
+        elseif t.GetClassName then
             return t:GetClassName()
+        else
+            return "userdata"
         end
     elseif type(t) == "boolean" then
         return tostring(t)
@@ -1096,6 +1098,17 @@ function GetAndCheckBoolean(valueString, valueName, defaultValue)
     
 end
 
+function StringStartsWith(inString, startString)
+
+    if(type(inString) ~= "string" or type(startString) ~= "string") then
+        Print("StringStartsWith(%s, %s) not called with strings.", tostring(inString), tostring(startString))
+        return false
+    end
+    
+    return string.lower(string.sub(inString, 1, string.len(startString))) == string.lower(startString)
+
+end
+
 function StringEndsWith(inString, endString)
 
     if(type(inString) ~= "string" or type(endString) ~= "string") then
@@ -1171,7 +1184,7 @@ function InitEntity(entity, className, origin, teamNumber)
 
     if(entity:isa("ScriptActor")) then
 
-        if(Server and teamNumber ~= nil) then
+        if(Server and teamNumber ~= -1) then
             entity:SetTeamNumber(teamNumber)
         end
             
@@ -1187,6 +1200,10 @@ if(Server) then
 // teamNumber optional. Make sure to pass the mapName, not className.
 function CreateEntity(mapName, origin, teamNumber)
 
+    if (teamNumber == nil) then
+        teamNumber = -1
+    end
+    
     local entity = nil
     
     if(origin == nil) then

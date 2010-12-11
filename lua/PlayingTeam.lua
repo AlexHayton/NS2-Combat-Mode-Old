@@ -185,6 +185,11 @@ end
 // Returns true if the alert was played.
 function PlayingTeam:TriggerAlert(techId, entity)
 
+    ASSERT(entity ~= nil)
+    ASSERT(entity:GetTechId() ~= kTechId.ReadyRoomPlayer, "Ready room entity TechId detected!")
+    ASSERT(entity:GetTechId() ~= kTechId.None, "None entity TechId detected! Classname: " .. entity:GetClassName())
+    ASSERT(techId ~= kTechId.None, "None TechId detected!")
+    
     local triggeredAlert = false
 
     // Queue alert so commander can jump to it
@@ -250,17 +255,12 @@ end
 // Send alert to all team commanders so it pings minimap
 function PlayingTeam:SendMinimapAlert(techId, entity)
 
-    // Don't send the same player the same alert every time
-    
-    // Build command    
-    local alertType = LookupTechData(techId, kTechDataAlertType, kAlertType.Info)
-    local minimapAlertCommand = string.format("minimapalert %d %.2f %.2f", alertType, location.x, location.z)
-    
     for i, playerIndex in ipairs(self.playerIds) do
 
         local player = Shared.GetEntity(playerIndex)
         if(player ~= nil and player:isa("Commander")) then
         
+            player:SendAlert(techId, entity)
             Server.SendCommand(player, minimapAlertCommand) 
             
         end
@@ -713,7 +713,7 @@ end
 // deathmsg killingPlayerIndex killerTeamNumber doerIconIndex targetPlayerIndex targetTeamNumber
 //
 // Note: Client indices are used here as entity Ids aren't always valid on the client
-// due to relevance.
+// due to relevance. If the killer or target is not a player, the entity techId is used.
 function PlayingTeam:GetDeathMessage(killer, doerIconIndex, targetEntity)
 
     local killerIsPlayer = 0    
@@ -727,6 +727,8 @@ function PlayingTeam:GetDeathMessage(killer, doerIconIndex, targetEntity)
             if killer:GetOwner() and killer:GetOwner():isa("Player") then
                 killerIsPlayer = 1
                 killerIndex = killer:GetOwner():GetClientIndex()
+            else
+                killerIndex = killer:GetTechId()
             end
         end
     end
@@ -735,6 +737,8 @@ function PlayingTeam:GetDeathMessage(killer, doerIconIndex, targetEntity)
     local targetIndex = -1
     if targetIsPlayer == 1 then
         targetIndex = targetEntity:GetClientIndex()
+    else
+        targetIndex = targetEntity:GetTechId()
     end
     
     local targetTeamNumber = targetEntity:GetTeamNumber()

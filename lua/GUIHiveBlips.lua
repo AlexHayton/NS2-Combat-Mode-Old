@@ -82,11 +82,8 @@ function GUIHiveBlips:UpdateAnimations(deltaTime)
         local size = math.min(blip.Radius * 2 * GUIHiveBlips.kDefaultBlipSize, GUIHiveBlips.kMaxBlipSize)
         blip.GraphicsItem:SetSize(Vector(size, size, 0))
         
-        // The coordinates are in real screen space so convert the virtual screen space.
-        local fixedX = (blip.ScreenX / Client.GetScreenWidth()) * blip.GraphicsItem:GetVirtualScreenWidth()
-        local fixedY = (blip.ScreenY / Client.GetScreenHeight()) * blip.GraphicsItem:GetVirtualScreenHeight()
         // Offset by size / 2 so the blip is centered.
-        local newPosition = Vector(fixedX - size / 2, fixedY - size / 2, 0)
+        local newPosition = Vector(blip.ScreenX - size / 2, blip.ScreenY - size / 2, 0)
         blip.GraphicsItem:SetPosition(newPosition)
         
         local blipCurrentFrame = self.currentFrame % GUIHiveBlips.kNumberFramesForBlipType[blip.Type]

@@ -9,6 +9,8 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+Script.Load("lua/GUIScript.lua")
+
 class 'GUIDial' (GUIScript)
 
 // Extra height buffer just to make sure everything is covered.

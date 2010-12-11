@@ -54,10 +54,6 @@ function BiteLeap:GetIconOffsetY(secondary)
     return kAbilityOffset.Bite
 end
 
-function BiteLeap:GetTechId()
-    return kTechId.Bite
-end
-
 function BiteLeap:GetRange()
     return BiteLeap.kRange
 end

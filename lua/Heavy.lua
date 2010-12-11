@@ -39,10 +39,6 @@ function Heavy:OnInit()
                       
 end
 
-function Heavy:GetTechId()
-    return kTechId.Heavy
-end
-
 function Heavy:InitWeapons()
 end
 

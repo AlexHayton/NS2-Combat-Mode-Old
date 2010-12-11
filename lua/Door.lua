@@ -96,10 +96,6 @@ function Door:OnInit()
 
 end
 
-function Door:GetTechId()
-    return kTechId.Door
-end
-
 // Only hackable by marine commander
 function Door:PerformActivation(techId, position, commander)
 

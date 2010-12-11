@@ -67,10 +67,10 @@ function OnCommandHotgroup(number, hotgroupString)
         
 end
 
-function OnCommandMinimapAlert(techId, worldX, worldZ, entityId)
+function OnCommandMinimapAlert(techId, worldX, worldZ, entityId, entityTechId)
     local player = Client.GetLocalPlayer()
     if player:isa("Commander") then
-        player:AddAlert(tonumber(techId), tonumber(worldX), tonumber(worldZ), tonumber(entityId))
+        player:AddAlert(tonumber(techId), tonumber(worldX), tonumber(worldZ), tonumber(entityId), tonumber(entityTechId))
     end
 end
 

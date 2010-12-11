@@ -8,13 +8,14 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+local kMaxRenderBlobSquads = 3
+local kBallRadius = 0.03
+local kMinThreshold = 0.47
+local kMaxThreshold = 0.50
+    
 function MarineCommander:InitSquadSelectionScreenEffects()
 
     self.metaballScreenEffect = Client.CreateScreenEffect("shaders/Metaballs.screenfx")
-    self.maxRenderBlobSquads = 3
-    self.ballRadius = 0.05
-    self.minThreshold = 0.45
-    self.maxThreshold = 0.50
 
 end
 
@@ -35,25 +36,25 @@ end
 
 function MarineCommander:GetMaxRenderBlobSquads()
 
-    return self.maxRenderBlobSquads
+    return kMaxRenderBlobSquads
 
 end
 
 function MarineCommander:GetSquadBallRadius()
 
-    return self.ballRadius
+    return kBallRadius
 
 end
 
 function MarineCommander:GetSquadBallMinThreshold()
 
-    return self.minThreshold
+    return kMinThreshold
 
 end
 
 function MarineCommander:GetSquadBallMaxThreshold()
 
-    return self.maxThreshold
+    return kMaxThreshold
 
 end
 
@@ -141,14 +142,17 @@ function MarineCommander:UpdateSquadScreenEffects(highlightSquad, selectedSquad)
     
         local setColor = Color(ball[2])
         if(selectedSquad == ball[4]) then
+            setColor.r = setColor.r * 6
+            setColor.g = setColor.g * 6
+            setColor.b = setColor.b * 6
+        elseif(highlightSquad == ball[4]) then
             setColor.r = setColor.r * 4
             setColor.g = setColor.g * 4
             setColor.b = setColor.b * 4
-        elseif(highlightSquad == ball[4]) then
-            setColor.r = setColor.r * 2
-            setColor.g = setColor.g * 2
-            setColor.b = setColor.b * 2
         end
+        setColor.r = setColor.r * 0.2
+        setColor.g = setColor.g * 0.2
+        setColor.b = setColor.b * 0.2
         self.metaballScreenEffect:SetParameter("metaBallColor", setColor, ball[1], string.format("p%d", ball[5]))
         
         self.metaballScreenEffect:SetParameter("metaBallPos", ball[3], ball[1], string.format("p%d", ball[5]))

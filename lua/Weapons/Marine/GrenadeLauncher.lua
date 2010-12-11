@@ -65,10 +65,6 @@ function GrenadeLauncher:GetDrawAnimation(previousWeaponMapName)
     
 end
 
-function GrenadeLauncher:GetTechId()
-    return kTechId.GrenadeLauncher
-end
-
 function GrenadeLauncher:GetNeedsAmmo()
     return Rifle.GetNeedsAmmo(self) or self.auxClip < GrenadeLauncher.kAuxClipSize or self.auxAmmo < GrenadeLauncher.kLauncherStartingAmmo
 end

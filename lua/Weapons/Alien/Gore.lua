@@ -60,10 +60,6 @@ function Gore:GetIdleAnimation()
     return chooseWeightedEntry( Gore.kAnimIdleTable )
 end
 
-function Gore:GetTechId()
-    return kTechId.Gore
-end
-
 function Gore:GetHUDSlot()
     return 1
 end

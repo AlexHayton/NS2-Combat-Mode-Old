@@ -54,6 +54,28 @@ function CommanderUI_MenuImage()
     
 end
 
+function CommanderUI_MenuImageSize()
+
+    local player = Client.GetLocalPlayer()
+    if(player and player:isa("AlienCommander")) then
+        return 640, 1024
+    end
+    
+    return 960, 960
+    
+end
+
+function CommanderUI_IsAlienCommander()
+
+    local player = Client.GetLocalPlayer()
+    if(player and player:isa("AlienCommander")) then
+        return true
+    end
+    
+    return false
+    
+end
+
 function CommanderUI_MapImage()
     return "map"
 end
@@ -158,14 +180,14 @@ function CommanderUI_MapClicked(x, y, button, index)
     
 end
 
-function CommanderUI_OnMousePress(mouseButton, x, y)
+function CommanderUI_OnMousePressGOBRIAN(mouseButton, x, y)
 
     local player = Client.GetLocalPlayer()
     player:ClientOnMousePress(mouseButton, x, y)
     
 end
 
-function CommanderUI_OnMouseRelease(mouseButton, x, y)
+function CommanderUI_OnMouseReleaseGOBRIAN(mouseButton, x, y)
 
     local player = Client.GetLocalPlayer()
     
@@ -236,6 +258,9 @@ function Commander:OnDestroy()
     
         RemoveFlashPlayer(kClassFlashIndex)
         
+        GetGUIManager():DestroyGUIScriptSingle("GUICommanderAlerts")
+        GetGUIManager():DestroyGUIScriptSingle("GUICommanderManager")
+        
         self:DestroyGhostStructure()
         self:DestroySelectionCircles()
         self:DestroyGhostGuides()
@@ -247,7 +272,7 @@ function Commander:OnDestroy()
 end
 
 function Commander:DestroySelectionCircles()
-
+    
     // Delete old circles, if any
     if self.selectionCircles ~= nil then
     
@@ -297,7 +322,8 @@ function Commander:AddGhostGuide(origin, radius)
 
     // Insert point, circle
     local guide = Client.CreateRenderModel(RenderScene.Zone_Default)
-    guide:SetModel(Commander.kCircleModelName)
+    local modelName = ConditionalValue(self:GetTeamType() == kAlienTeamType, Commander.kAlienCircleModelName, Commander.kMarineCircleModelName)
+    guide:SetModel(modelName)
     guide:SetCoords(BuildCoords(Vector(0, 1, 0), Vector(1, 0, 0), origin + Vector(0, kZFightingConstant, 0), radius * 2))
     guide:SetIsVisible(true)
     
@@ -454,7 +480,7 @@ end
  * Called when the user drags out a selection box. The coordinates are in
  * pixel space.
  */
-function CommanderUI_SelectMarquee(selectStartX, selectStartY, selectEndX, selectEndY)
+function CommanderUI_SelectMarqueeGOBRIAN(selectStartX, selectStartY, selectEndX, selectEndY)
    
     local player = Client.GetLocalPlayer()        
     player:SelectMarquee(selectStartX, selectStartY, selectEndX, selectEndY)
@@ -464,7 +490,7 @@ end
 /**
  * Called by Flash when the mouse is at the edge of the screen.
  */
-function CommanderUI_ScrollView(deltaX, deltaY) 
+function CommanderUI_ScrollViewGOBRIAN(deltaX, deltaY) 
    
     local player = Client.GetLocalPlayer()        
     player.scrollX = deltaX
@@ -635,11 +661,12 @@ function CommanderUI_GetDynamicMapBlips()
 
 end
 
-function Commander:AddAlert(techId, worldX, worldZ, entityId)
-
+function Commander:AddAlert(techId, worldX, worldZ, entityId, entityTechId)
+    
     // Create alert blip
     local alertType = LookupTechData(techId, kTechDataAlertType, kAlertType.Info)
     local success, mapX, mapY = self:GetMapXY(worldX, worldZ)
+    local xOffset, yOffset = self:GetMaterialXYOffset(entityTechId, self:isa("MarineCommander"))
     if success then
     
         table.insert(self.alertBlips, mapX)
@@ -649,10 +676,11 @@ function Commander:AddAlert(techId, worldX, worldZ, entityId)
         // Create alert message => {text, icon x offset, icon y offset, -1, entity id}
         local alertText = LookupTechData(techId, kTechDataAlertText, "")
         table.insert(self.alertMessages, alertText)
-        table.insert(self.alertMessages, 0)
-        table.insert(self.alertMessages, 0)
-        table.insert(self.alertMessages, -1)
+        table.insert(self.alertMessages, xOffset)
+        table.insert(self.alertMessages, yOffset)
         table.insert(self.alertMessages, entityId)
+        table.insert(self.alertMessages, worldX)
+        table.insert(self.alertMessages, worldZ)
         
     end
     
@@ -900,10 +928,14 @@ function Commander:SetupHud()
     
     // Create circle for display under cursor
     self.unitUnderCursorRenderModel = Client.CreateRenderModel(RenderScene.Zone_Default)
-    self.unitUnderCursorRenderModel:SetModel(Commander.kCircleModelName)
+    local modelName = ConditionalValue(self:GetTeamType() == kAlienTeamType, Commander.kAlienCircleModelName, Commander.kMarineCircleModelName)
+    self.unitUnderCursorRenderModel:SetModel(modelName)
     self.unitUnderCursorRenderModel:SetIsVisible(false)
     
     self.entityIdUnderCursor = Entity.invalidId
+    
+    GetGUIManager():CreateGUIScriptSingle("GUICommanderAlerts")
+    GetGUIManager():CreateGUIScriptSingle("GUICommanderManager")
     
 end
 
@@ -1079,36 +1111,37 @@ end
 
 function Commander:GetCircleSizeForEntity(entity)
 
-    local size = ConditionalValue(entity:isa("Player"), 1.5, 2)
-    size = ConditionalValue(entity:isa("Drifter"), 2, size)
-    size = ConditionalValue(entity:isa("Hive"), 6.0, size)
-    size = ConditionalValue(entity:isa("MAC"), 1.45, size)
-    size = ConditionalValue(entity:isa("Door"), 3.5, size)
-    size = ConditionalValue(entity:isa("InfantryPortal"), 3.0, size)
-    size = ConditionalValue(entity:isa("Extractor"), 2.5, size)
-    size = ConditionalValue(entity:isa("CommandStation"), 5.0, size)
-    size = ConditionalValue(entity:isa("Egg"), 2.0, size)
-    size = ConditionalValue(entity:isa("Cocoon"), 2.5, size)
-    size = ConditionalValue(entity:isa("Armory"), 3.5, size)
-    size = ConditionalValue(entity:isa("Harvester"), 3.2, size)
-    size = ConditionalValue(entity:isa("RoboticsFactory"), 3.8, size)
-    size = ConditionalValue(entity:isa("ARC"), 3, size)
+    local size = ConditionalValue(entity:isa("Player"),2.0, 2)
+    size = ConditionalValue(entity:isa("Drifter"), 2.5, size)
+    size = ConditionalValue(entity:isa("Hive"), 6.5, size)
+    size = ConditionalValue(entity:isa("MAC"), 2.0, size)
+    size = ConditionalValue(entity:isa("Door"), 4.0, size)
+    size = ConditionalValue(entity:isa("InfantryPortal"), 3.5, size)
+    size = ConditionalValue(entity:isa("Extractor"), 3.0, size)
+    size = ConditionalValue(entity:isa("CommandStation"), 5.5, size)
+    size = ConditionalValue(entity:isa("Egg"), 2.5, size)
+    size = ConditionalValue(entity:isa("Cocoon"), 3.0, size)
+    size = ConditionalValue(entity:isa("Armory"), 4.0, size)
+    size = ConditionalValue(entity:isa("Harvester"), 3.7, size)
+    size = ConditionalValue(entity:isa("RoboticsFactory"), 4.3, size)
+    size = ConditionalValue(entity:isa("ARC"), 3.5, size)
     return size
     
 end
 
 function Commander:UpdateSelectionCircles()
 
-    if not Client.GetIsRunningPrediction() then
-    
+    // Check self.selectionCircles because this function may be called before it is valid.
+    if not Client.GetIsRunningPrediction() and self.selectionCircles ~= nil then
+        
         // Selection changed, so deleted old circles and create new ones
         if self.createSelectionCircles then
-        
+            
             self:DestroySelectionCircles()
         
             // Create new ones
-            for index, entityEntry in pairs(self.selectedEntities) do    
-            
+            for index, entityEntry in pairs(self.selectedEntities) do
+                
                 local renderModelCircle = Client.CreateRenderModel(RenderScene.Zone_Default)
                 renderModelCircle:SetModel(Commander.kSelectionCircleModelName)
                 
@@ -1136,7 +1169,12 @@ function Commander:UpdateSelectionCircles()
                 
                 // Set position, orientation, scale (add in a littler vertical to avoid z-fighting)
                 renderModelCircle:SetCoords(BuildCoords(Vector(0, 1, 0), Vector(1, 0, 0), Vector(entity:GetOrigin() + Vector(0, kZFightingConstant, 0)), scale))
-                renderModelCircle:SetMaterialParameter("healthPercentage", entity:GetHealthScalar()*100)
+                renderModelCircle:SetMaterialParameter("healthPercentage", entity:GetHealthScalar() * 100)
+                local buildPercentage = 1
+                if entity:isa("Structure") then
+                    buildPercentage = entity:GetBuiltFraction()
+                end
+                renderModelCircle:SetMaterialParameter("buildPercentage", buildPercentage * 100)
                 
             end
             
@@ -1194,12 +1232,8 @@ function Commander:UpdateCursor()
     end
     
     local entityUnderCursor = nil
-    
-    if(highlightSquad >= 0) then
 
-        baseCursor = "FriendlyAction"
-        
-    elseif(self.entityIdUnderCursor ~= Entity.invalidId) then
+    if(self.entityIdUnderCursor ~= Entity.invalidId) then
     
         entityUnderCursor = Shared.GetEntity(self.entityIdUnderCursor)
         
@@ -1216,6 +1250,10 @@ function Commander:UpdateCursor()
             baseCursor = "NeutralAction"
             
         end
+        
+    elseif(highlightSquad >= 0) then
+
+        baseCursor = "FriendlyAction"
 
     end
     
@@ -1260,7 +1298,22 @@ function Commander:UpdateCursor()
 end
 
 function Commander:ClientOnMousePress(mouseButton, x, y)
+
     self.mouseButtonDown[mouseButton + 1] = true
+    
+    if(mouseButton == 0) then
+
+        // Only allowed when there is not a ghost structure or the structure is valid.
+        if self.ghostStructure == nil or self.ghostStructureValid == true then
+            local techNode = GetTechNode(self.targetedModeTechId)
+            if((self.targetedModeTechId == nil) or (techNode == nil) or not techNode:GetRequiresTarget()) then
+                // Select things near click.
+                self:ClickSelect(x, y)
+            end
+        end
+        
+    end
+    
 end
 
 function Commander:ClientOnMouseRelease(mouseButton, x, y)
@@ -1315,11 +1368,6 @@ function Commander:ClientOnMouseRelease(mouseButton, x, y)
                 
                 // Clear mode after executed
                 self.targetedModeTechId = kTechId.None
-                
-            else
-
-                // Select things near click
-                self:ClickSelect(x, y)
                 
             end
             

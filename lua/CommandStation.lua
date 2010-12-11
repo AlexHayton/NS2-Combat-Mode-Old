@@ -22,8 +22,6 @@ CommandStation.kReplicateSound = PrecacheAsset("sound/ns2.fev/alien/common/join_
 
 CommandStation.kCommandScreenEffect = PrecacheAsset("cinematics/marine/commandstation/command_screen.cinematic")
 CommandStation.kDeathEffect = PrecacheAsset("cinematics/marine/commandstation/death.cinematic")
-CommandStation.kMarineReplicateEffect = PrecacheAsset("cinematics/marine/clone_structure.cinematic")
-CommandStation.kMarineReplicateBigEffect = PrecacheAsset("cinematics/marine/clone_structure_big.cinematic")
 
 CommandStation.kLoginAttachPoint = "login"
 
@@ -115,25 +113,16 @@ function CommandStation:GetDeathAnimation()
     return ConditionalValue(self.occupied, "death_closed", "death_opened")
 end
 
-Shared.LinkClassToMap("CommandStation",    CommandStation.kMapName, networkVars)
 Shared.LinkClassToMap("CommandStation",    CommandStation.kLevel1MapName, networkVars)
 
 // Create new classes here so L2 and L3 command stations can be created for test cases without
 // create a basic hive and then upgrading it
 class 'CommandStationL2' (CommandStation)
 
-function CommandStationL2:GetTechId()
-    return kTechId.CommandFacility
-end
-
 CommandStationL2.kMapName       = "commandstationl2"
 Shared.LinkClassToMap("CommandStationL2", CommandStationL2.kMapName, {})
 
 class 'CommandStationL3' (CommandStationL2)
-
-function CommandStationL3:GetTechId()
-    return kTechId.CommandCenter
-end
 
 CommandStationL3.kMapName       = "commandstationl3"
 Shared.LinkClassToMap("CommandStationL3", CommandStationL3.kMapName, {})

@@ -76,7 +76,15 @@ function Hive:GetNumEggs()
 end
 
 function Hive:GetNumDesiredEggs()
-    return Hive.kBaseNumEggs
+    if self:GetTechId() == kTechId.Hive then
+        return Hive.kHiveNumEggs
+    elseif self:GetTechId() == kTechId.HiveMass then
+        return Hive.kMassNumEggs
+    elseif self:GetTechId() == kTechId.HiveColony then
+        return Hive.kColonyNumEggs
+    end
+    ASSERT(false, string.format("Hive tech id invalid: %s", EnumToString(kTechId, self:GetTechId())))
+    return Hive.kHiveNumEggs 
 end
 
 // Make sure there's enough room here for an egg
@@ -228,32 +236,6 @@ function Hive:GetFlinchAnimation(damage)
     
     return "flinch" 
 
-end
-
-function Hive:GetFlinchFlamesAnimation(damage)
-
-    if not self:GetIsOccupied() then
-        return Hive.kAnimFlinchFlames
-    end        
-
-    return ""
-    
-end
-
-function Hive:GetFlinchOverlay(animName)
-
-    // All flinch anims are overlay except the inactive ones
-    local overlay = true
-    
-    /*for index, pair in ipairs(Hive.kAnimIdleInactiveTable) do
-        if pair[2] == animName then
-            overlay = false
-            break
-        end
-    end*/
-    
-    return overlay
-    
 end
 
 function Hive:OnTakeDamage(damage, doer, point)

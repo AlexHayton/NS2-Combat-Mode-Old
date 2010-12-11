@@ -138,8 +138,10 @@ function Commander:AttemptToBuild(techId, origin, pickVec, buildTech, builderEnt
             // Play private version for commander too 
             Shared.PlayPrivateSound(self, self:GetPlaceBuildingSound(), nil, 1.0, self:GetOrigin())
             
-            local replicateEffect = ConditionalValue(GetTechUpgradesFromTech(techId, kTechId.CommandStation), CommandStation.kMarineReplicateBigEffect, CommandStation.kMarineReplicateEffect)
-            Shared.CreateEffect(nil, replicateEffect, newEnt, nil)
+            local replicateEffect = self:GetBuildEffect(techId)
+            if replicateEffect then
+                Shared.CreateEffect(nil, replicateEffect, newEnt, nil)
+            end
             
             if newEnt.GetPlaceBuildingEffect then
                 Shared.CreateEffect(nil, newEnt:GetPlaceBuildingEffect(), newEnt)
@@ -160,7 +162,8 @@ function Commander:TriggerNotEnoughResourcesAlert()
 
     local team = self:GetTeam()
     local alertType = ConditionalValue(team:GetTeamType() == kMarineTeamType, kTechId.MarineAlertNotEnoughResources, kTechId.AlienAlertNotEnoughResources)
-    team:TriggerAlert(alertType, self)
+    local commandStructure = Shared.GetEntity(self.commandStationId)
+    team:TriggerAlert(alertType, commandStructure)
 
 end
 
@@ -542,6 +545,8 @@ end
 // Send alert to player unless we recently sent the exact same alert. Returns true if it was sent.
 function Commander:SendAlert(techId, entity)
 
+    ASSERT(entity ~= nil)
+    
     local entityId = entity:GetId()
     local time = Shared.GetTime()
     
@@ -556,7 +561,7 @@ function Commander:SendAlert(techId, entity)
     end
     
     local location = Vector(entity:GetOrigin())
-    Server.SendCommand(self, string.format("minimapalert %d %.2f %.2f %d", techId, location.x, location.z, entity:GetId())) 
+    Server.SendCommand(self, string.format("minimapalert %d %.2f %.2f %d %d", techId, location.x, location.z, entity:GetId(), entity:GetTechId())) 
 
     // Insert new triple: techid/entityid/timesent
     table.insert(self.sentAlerts, {techId, entityId, time})
