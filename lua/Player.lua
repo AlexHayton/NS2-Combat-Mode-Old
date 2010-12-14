@@ -203,7 +203,6 @@ local networkVars =
     
     // Experience system
     experience              = "float",
-    rank                    = "integer (0 to 20)",
     
     // The next point in the world to go to in order to reach an order target location
     nextOrderWaypoint       = "vector",
