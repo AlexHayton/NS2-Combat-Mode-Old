@@ -5,6 +5,8 @@
 //    Created by:   Charlie Cleveland (charlie@unknownworlds.com) and
 //                  Max McGuire (max@unknownworlds.com)
 //
+//    Modded by: Alex Hayton (alex.hayton@gmail.com)
+//
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
 Script.Load("lua/HudTooltips.lua")
@@ -476,6 +478,22 @@ function PlayerUI_GetPlayerHealth()
     local player = Client.GetLocalPlayer()
     if player then
         return Client.GetLocalPlayer():GetHealth()
+    end
+    return 0
+end
+
+function PlayerUI_GetPlayerExperience()
+    local player = Client.GetLocalPlayer()
+    if player then
+        return Client.GetLocalPlayer():GetPlayerExperience()
+    end
+    return 0
+end
+
+function PlayerUI_GetPlayerRank()
+    local player = Client.GetLocalPlayer()
+    if player then
+        return Client.GetLocalPlayer():GetRank()
     end
     return 0
 end

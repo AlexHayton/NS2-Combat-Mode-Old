@@ -4,6 +4,8 @@
 //
 //    Created by:   Charlie Cleveland (charlie@unknownworlds.com)
 //
+//    Modded by: Alex Hayton (alex.hayton@gmail.com)
+//
 // Player coordinates - z is forward, x is to the left, y is up.
 // The origin of the player is at their feet.
 //
@@ -198,6 +200,9 @@ local networkVars =
     baseYaw                 = "float",
     basePitch               = "float",
     baseRoll                = "float",
+    
+    // Experience system
+    experience              = "float",
     
     // The next point in the world to go to in order to reach an order target location
     nextOrderWaypoint       = "vector",
