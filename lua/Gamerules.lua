@@ -77,6 +77,9 @@ end
 function Gamerules:OnKill(damage, attacker, doer, point, direction)   
 end
  
+function Gamerules:OnEntityChange(oldId, newId)
+end
+
 /**
  * Starts a new game by resetting the map and all of the players. Keep everyone on current teams (readyroom, playing teams, etc.) but 
  * respawn playing players.

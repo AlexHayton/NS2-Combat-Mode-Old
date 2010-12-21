@@ -97,14 +97,14 @@ function CommandStation:GetTechButtons(techId)
         elseif(self:GetTechId() == kTechId.CommandFacility) then
             techButtons[kMarineUpgradeButtonIndex] = self:GetLevelTechId(3)
         end
+
+        // Don't allow recycling of structure when occupied!
+        if not self:GetIsOccupied() then
+            techButtons[kRecycleButtonIndex] = kTechId.Recycle
+        end
         
     end
     
-    // Don't allow recycling of structure when occupied!
-    if not self:GetIsOccupied() then
-        techButtons[kRecycleButtonIndex] = kTechId.Recycle
-    end
-
     return techButtons
  
 end

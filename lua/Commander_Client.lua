@@ -76,6 +76,13 @@ function CommanderUI_IsAlienCommander()
     
 end
 
+function CommanderUI_GetTeamColor()
+
+    local player = Client.GetLocalPlayer()
+    return ColorIntToColor(GetColorForPlayer(player))
+    
+end
+
 function CommanderUI_MapImage()
     return "map"
 end
@@ -98,7 +105,7 @@ end
  * Return x center of view in geometry coordinate space.
  */
 function CommanderUI_MapViewCenterX()
-    local player = Client.GetLocalPlayer()        
+    local player = Client.GetLocalPlayer()
     return player:GetScrollPositionX()
 end
 
@@ -106,8 +113,59 @@ end
  * Return y center of view in geometry coordinate space
  */
 function CommanderUI_MapViewCenterY()
-    local player = Client.GetLocalPlayer()        
+    local player = Client.GetLocalPlayer()
     return player:GetScrollPositionY()
+end
+
+/**
+ * Returns the commander view far frustum plane points in world space.
+ */
+function CommanderUI_ViewFarPlanePoints()
+
+    local player = Client.GetLocalPlayer()
+    
+    local camera = Camera()
+    camera:SetType(Camera.Perspective)
+    local cameraCoords = player:GetCameraViewCoords()
+    camera:SetCoords(cameraCoords)
+    camera:SetFov(player:GetRenderFov())
+    
+    local elevation = player.heightmap:GetElevation(cameraCoords.origin.x, cameraCoords.origin.z)
+    local planePoint = Vector(cameraCoords.origin.x, elevation, cameraCoords.origin.z)
+    local planeNormal = GetNormalizedVector(cameraCoords.origin - planePoint)
+    
+    local frustum = camera:GetFrustum()
+    
+    local topLeftLine = frustum:GetPoint(4) - frustum:GetPoint(0)
+    local topLeftPoint = GetLinePlaneIntersection(planePoint, planeNormal, frustum:GetPoint(0), GetNormalizedVector(topLeftLine))
+    
+    local topRightLine = frustum:GetPoint(7) - frustum:GetPoint(3)
+    local topRightPoint = GetLinePlaneIntersection(planePoint, planeNormal, frustum:GetPoint(3), GetNormalizedVector(topRightLine))
+    
+    local bottomLeftLine = frustum:GetPoint(5) - frustum:GetPoint(1)
+    local bottomLeftPoint = GetLinePlaneIntersection(planePoint, planeNormal, frustum:GetPoint(1), GetNormalizedVector(bottomLeftLine))
+    
+    local bottomRightLine = frustum:GetPoint(6) - frustum:GetPoint(2)
+    local bottomRightPoint = GetLinePlaneIntersection(planePoint, planeNormal, frustum:GetPoint(2), GetNormalizedVector(bottomRightLine))
+    
+    ASSERT(topLeftPoint.z < topRightPoint.z)
+    ASSERT(bottomLeftPoint.z < bottomRightPoint.z)
+    ASSERT(topLeftPoint.x > bottomLeftPoint.x)
+    ASSERT(topRightPoint.x > bottomRightPoint.x)
+    
+    return topLeftPoint, topRightPoint, bottomLeftPoint, bottomRightPoint
+    
+end
+
+/**
+ * Converts world coordinates into normalized map coordinates.
+ */
+function CommanderUI_GetMapXY(worldX, worldZ)
+
+    local player = Client.GetLocalPlayer()
+    local success, mapX, mapY = player:GetMapXY(worldX, worldZ)
+    return mapX, mapY
+
 end
 
 /**
@@ -254,11 +312,12 @@ function Commander:OnDestroy()
 
     local player = Client.GetLocalPlayer()
     
-    if self == player or player == nil then
+    if self.hudSetup == true then
     
         RemoveFlashPlayer(kClassFlashIndex)
         
         GetGUIManager():DestroyGUIScriptSingle("GUICommanderAlerts")
+        GetGUIManager():DestroyGUIScriptSingle("GUIMinimap")
         GetGUIManager():DestroyGUIScriptSingle("GUICommanderManager")
         
         self:DestroyGhostStructure()
@@ -266,6 +325,8 @@ function Commander:OnDestroy()
         self:DestroyGhostGuides()
         
         Client.DestroyRenderModel(self.unitUnderCursorRenderModel)
+        
+        self.hudSetup = false
         
     end
     
@@ -935,7 +996,10 @@ function Commander:SetupHud()
     self.entityIdUnderCursor = Entity.invalidId
     
     GetGUIManager():CreateGUIScriptSingle("GUICommanderAlerts")
+    GetGUIManager():CreateGUIScriptSingle("GUIMinimap")
     GetGUIManager():CreateGUIScriptSingle("GUICommanderManager")
+    
+    self.hudSetup = true
     
 end
 

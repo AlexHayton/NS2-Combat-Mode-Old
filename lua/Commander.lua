@@ -25,6 +25,8 @@ Commander.kAlienCircleModelName = PrecacheAsset("models/misc/circle/circle_alien
 // Extra hard-coded vertical distance that makes it so we set our scroll position,
 // we are looking at that point, instead of setting our position to that point)
 Commander.kViewOffsetXHeight = 5
+// Default height above the ground when there's no height map
+Commander.kDefaultCommanderHeight = 11
 Commander.kFov = 90
 Commander.kScoreBoardDisplayDelay = .12
 
@@ -246,9 +248,6 @@ end
 function Commander:UpdateMovePhysics(input)
 
     PROFILE("Commander:UpdateMovePhysics")
-
-    // Default height above the ground when there's no height map
-    local defaultCommanderHeight = 11
     
     local finalPos = Vector()
     
@@ -287,7 +286,7 @@ function Commander:UpdateMovePhysics(input)
     
         finalPos.x = self.heightmap:ClampXToMapBounds(finalPos.x)
         finalPos.z = self.heightmap:ClampZToMapBounds(finalPos.z)
-        finalPos.y = self.heightmap:GetElevation(finalPos.x, finalPos.z) + defaultCommanderHeight
+        finalPos.y = self.heightmap:GetElevation(finalPos.x, finalPos.z) + Commander.kDefaultCommanderHeight
 
     else
     
@@ -299,7 +298,7 @@ function Commander:UpdateMovePhysics(input)
         local trace = Shared.TraceRay(self:GetOrigin(), belowComm, PhysicsMask.CommanderSelect, EntityFilterOne(self))
         
         if trace.fraction < 1 then
-            finalPos.y = trace.endPoint.y + defaultCommanderHeight
+            finalPos.y = trace.endPoint.y + Commander.kDefaultCommanderHeight
         end
         
     end

@@ -32,7 +32,7 @@ function GetEffectManager()
 end
 
 function EffectManager:GetEffectDebug()
-    return Shared.GetDevMode()
+    return false
 end
 
 function EffectManager:AddEffectData(identifier, data)
@@ -354,12 +354,12 @@ function EffectManager:InternalTriggerSound(effectTable, triggeringParams, trigg
     end
     
     // Play world sound
-    if effectTable[kSoundType] == true then
+    if effectTable[kSoundType] then
         
-        if not triggeringEntity or triggeringEntity:isa("Player") then
-            Shared.PlaySound(nil, assetName, nil, coords.origin)
+        if triggeringEntity and triggeringEntity:isa("Player") then
+            Shared.PlaySound(triggeringEntity, assetName)
         else
-            Shared.PlaySound(triggeringEntity, assetName, nil, coords.origin)
+            Shared.PlayWorldSound(nil, assetName, nil, coords.origin)
         end
         
     // Play parented sound

@@ -37,15 +37,6 @@ function GUIDamageIndicators:Uninitialize()
 end
 
 function GUIDamageIndicators:Update(deltaTime)
-
-    --[[
-    if gTempCurrRot == nil then
-        gTempCurrRot = 0
-    else
-        gTempCurrRot = gTempCurrRot + (deltaTime * (math.pi / 8))
-    end
-    local damageIndicators = { 0.5, gTempCurrRot }
-    --]]
     
     local damageIndicators = PlayerUI_GetDamageIndicators()
     

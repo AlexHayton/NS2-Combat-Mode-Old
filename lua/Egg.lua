@@ -39,9 +39,15 @@ function Egg:GetIdleAnimation()
     return Egg.kAnimIdle
 end
 
-function Egg:OnInit()
+function Egg:OnCreate()
 
+    Structure.OnCreate(self)
+    
     self:SetModel(Egg.kModelName)
+    
+end
+
+function Egg:OnInit()
     
     Structure.OnInit(self)
     

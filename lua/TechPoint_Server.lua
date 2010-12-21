@@ -30,6 +30,16 @@ function TechPoint:SpawnCommandStructure(teamNumber)
     
 end
 
+function TechPoint:OnMapPostLoad()
+
+    local locationName = GetLocationForPoint(self:GetOrigin())
+    local success, spawn = GetRandomFreeEggSpawn(locationName)
+    if not success then
+        Print("TechPoint:OnMapPostLoad(): Couldn't find any egg spawn entities near \"%s\" tech point, hives built here won't create eggs.", locationName)
+    end
+    
+end
+
 function TechPoint:SetTechLevel(techLevel)
     self.techLevel = techLevel
 end

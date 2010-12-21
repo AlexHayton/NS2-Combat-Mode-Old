@@ -38,12 +38,12 @@ function GUICommanderAlerts:Uninitialize()
     for i, message in ipairs(self.messages) do
         GUI.DestroyItem(message["Background"])
     end
-    self.messages = nil
+    self.messages = { }
     
     for i, message in ipairs(self.reuseMessages) do
         GUI.DestroyItem(message["Background"])
     end
-    self.reuseMessages = nil
+    self.reuseMessages = { }
     
 end
 

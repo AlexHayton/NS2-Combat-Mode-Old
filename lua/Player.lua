@@ -57,7 +57,7 @@ Player.kUseHolsterTime = .3
     
 Player.kGravity = -24
 Player.kMass = 90.7 // ~200 pounds (incl. armor, weapons)
-Player.kWalkBackwardSpeedScalar = 0.6
+Player.kWalkBackwardSpeedScalar = 0.4
 Player.kJumpHeight =  1   
 
 // The physics shapes used for player collision have a "skin" that makes them appear to float, this makes the shape
@@ -444,6 +444,14 @@ function Player:OverrideInput(input)
         input.pitch = -input.pitch
     end
     
+    if self.timeClosedMenu and (Shared.GetTime() < self.timeClosedMenu + .25) then
+    
+        // Don't allow weapon firing
+        local removePrimaryAttackMask = bit.bxor(0xFFFFFFFF, Move.PrimaryAttack)
+        input.commands = bit.band(input.commands, removePrimaryAttackMask)
+        
+    end
+    
 end
 
 // Returns current FOV
@@ -767,7 +775,7 @@ function Player:Use()
     end
     
     // Get entities in radius
-    local ents = GetEntitiesIsaInRadius("LiveScriptActor", -1, self:GetOrigin(), Player.kUseRange)
+    local ents = GetEntitiesIsaInRadius("LiveScriptActor", self:GetTeamNumber(), self:GetOrigin(), Player.kUseRange)
     for index, entity in ipairs(ents) do
     
         // Look for attach point
@@ -1044,11 +1052,19 @@ end
 
 // Make sure we can't move faster than our max speed (esp. when holding
 // down multiple keys, going down ramps, etc.)
-function Player:ClampSpeed(velocity)
+function Player:ClampSpeed(input, velocity)
 
     // Only clamp XZ speed so it feels better
     local moveSpeedXZ = velocity:GetLengthXZ()        
     local maxSpeed = self:GetMaxSpeed()
+    
+    // Players moving backwards can't go full speed    
+    if input.move.z < 0 then
+    
+        local backwardScalar = input.move:DotProduct(GetNormalizedVector(velocity))
+        maxSpeed = maxSpeed * self:GetMaxBackwardSpeedScalar()
+        
+    end
     
     if (moveSpeedXZ > maxSpeed) then
     
@@ -1080,9 +1096,6 @@ function Player:UpdateMove(input)
             
         end
         
-        // Players moving backwards can't go full speed
-        input.move.z = math.max(input.move.z, -self:GetMaxBackwardSpeedScalar())
-
     end
     
 end
@@ -1184,7 +1197,7 @@ function Player:UpdateMovePhysics(input)
     self:ModifyVelocity(input, velocity)
     
     // Clamp speed to max speed
-    self:ClampSpeed(velocity)
+    self:ClampSpeed(input, velocity)
     
     self:UpdatePosition(velocity, input.time)
     
@@ -2182,8 +2195,8 @@ function Player:HandleButtons(input)
         self:Reload()
     end
 
-    // Temporarily removed weapon dropping until it can be fixed properly
-    //if ( bit.band(input.commands, Move.Drop) ~= 0 and self:isa("Marine") ) then
+    // Temporarily disabled
+    //if ( bit.band(input.commands, Move.Drop) ~= 0 and self.Drop ) then
     //    self:Drop()
     //end
     
@@ -2358,6 +2371,9 @@ function Player:SetActiveWeapon(weaponMapName)
                 
                 newWeapon:SetIsVisible(true)
                 
+                // Always allow player to draw weapon
+                self:ClearActivity()
+                
                 newWeapon:OnDraw(self, previousWeaponName)
 
                 return true
@@ -2385,7 +2401,7 @@ end
 
 // SwitchWeapon or choose option from sayings menu if open
 // weaponindex starts at 1
-function Player:SwitchWeapon(weaponIndex, force)
+function Player:SwitchWeapon(weaponIndex)
 
     local success = false
     
@@ -2396,7 +2412,7 @@ function Player:SwitchWeapon(weaponIndex, force)
             // Choose saying
             self:ExecuteSaying(weaponIndex)
             
-        elseif self:GetCanNewActivityStart() or force then
+        else
         
             local weaponList = self:GetHUDOrderedWeaponList()
             

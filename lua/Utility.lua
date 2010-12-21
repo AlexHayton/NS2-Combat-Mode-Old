@@ -854,9 +854,9 @@ end
 function GetColorForPlayer(player)
 
     if(player ~= nil) then
-        if(player:isa("Marine")) then
+        if(player:isa("Marine") or player:isa("MarineCommander")) then
             return kMarineTeamColor
-        elseif(player:isa("Alien")) then
+        elseif(player:isa("Alien") or player:isa("AlienCommander")) then
             return kAlienTeamColor
         end
     end
@@ -1234,7 +1234,7 @@ end
 
 end
 
-function LoadEntityFromValues(entity, values)
+function LoadEntityFromValues(entity, values, initOnly)
 
     entity:SetOrigin( values.origin )
     entity:SetAngles( values.angles )
@@ -1248,8 +1248,12 @@ function LoadEntityFromValues(entity, values)
         
     end
     
-    if entity.OnLoad then
-        entity:OnLoad()
+    if not initOnly then
+    
+        if entity.OnLoad then
+            entity:OnLoad()
+        end
+        
     end
     
     if entity.OnInit then

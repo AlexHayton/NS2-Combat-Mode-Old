@@ -63,7 +63,7 @@ Structure.kAlienHurtSevereEffect = PrecacheAsset("cinematics/alien/structures/hu
 Structure.kBuildSoundInterval = .5
 
 // Start with this percentage of health when spawned
-Structure.kStartHealthScalar = .3
+Structure.kStartHealthScalar = kStartHealthScalar
 
 Structure.kDefaultBuildTime = 8.00
 

@@ -40,19 +40,19 @@ ClipWeapon.kRicochetEffect = "cinematics/materials/%s/ricochet.cinematic"
 ClipWeapon.kRicochetMaterialSound = "sound/ns2.fev/materials/%s/ricochet"
 
 // Weapon spread - from NS1/Half-life
-ClipWeapon.kCone0Degrees  = Vector( 0.0, 0.0, 0.0)
-ClipWeapon.kCone1Degrees  = Vector( 0.00873, 0.00873, 0.00873 )
-ClipWeapon.kCone2Degrees  = Vector( 0.01745, 0.01745, 0.01745 )
-ClipWeapon.kCone3Degrees  = Vector( 0.02618, 0.02618, 0.02618 )
-ClipWeapon.kCone4Degrees  = Vector( 0.03490, 0.03490, 0.03490 )
-ClipWeapon.kCone5Degrees  = Vector( 0.04362, 0.04362, 0.04362 )
-ClipWeapon.kCone6Degrees  = Vector( 0.05234, 0.05234, 0.05234 )
-ClipWeapon.kCone7Degrees  = Vector( 0.06105, 0.06105, 0.06105 )
-ClipWeapon.kCone8Degrees  = Vector( 0.06976, 0.06976, 0.06976 )
-ClipWeapon.kCone9Degrees  = Vector( 0.07846, 0.07846, 0.07846 )
-ClipWeapon.kCone10Degrees = Vector( 0.08716, 0.08716, 0.08716 )
-ClipWeapon.kCone15Degrees = Vector( 0.13053, 0.13053, 0.13053 )
-ClipWeapon.kCone20Degrees =Vector( 0.17365, 0.17365, 0.17365 )
+ClipWeapon.kCone0Degrees  = Math.Radians(0)
+ClipWeapon.kCone1Degrees  = Math.Radians(1)
+ClipWeapon.kCone2Degrees  = Math.Radians(2)
+ClipWeapon.kCone3Degrees  = Math.Radians(3)
+ClipWeapon.kCone4Degrees  = Math.Radians(4)
+ClipWeapon.kCone5Degrees  = Math.Radians(5)
+ClipWeapon.kCone6Degrees  = Math.Radians(6)
+ClipWeapon.kCone7Degrees  = Math.Radians(7)
+ClipWeapon.kCone8Degrees  = Math.Radians(8)
+ClipWeapon.kCone9Degrees  = Math.Radians(9)
+ClipWeapon.kCone10Degrees = Math.Radians(10)
+ClipWeapon.kCone15Degrees = Math.Radians(15)
+ClipWeapon.kCone20Degrees = Math.Radians(20)
                         
 PrecacheMultipleAssets(ClipWeapon.kRicochetEffect, kSurfaceList)
 PrecacheMultipleAssets(ClipWeapon.kRicochetMaterialSound, kSurfaceList)
@@ -97,7 +97,7 @@ end
 
 // Used to affect spread and change the crosshair
 function ClipWeapon:GetInaccuracyScalar()
-    return 1 + (1 - self.accuracy)*1
+    return 1
 end
 
 function ClipWeapon:UpdateAccuracy(player, input)
@@ -427,15 +427,15 @@ function ClipWeapon:FireBullets(player, bulletsToShoot, range, penetration)
     for bullet = 1, bulletsToShoot do
     
         // Calculate spread for each shot, in case they differ
-        local spread = self:GetSpread() * self:GetInaccuracyScalar()
-
-        // Gaussian distribution        
-        local x = (NetworkRandom(string.format("%s:FireBullet %d, %d", self:GetClassName(), bullet, 1)) - .5) + (NetworkRandom(string.format("%s:FireBullet %d, %d", self:GetClassName(), bullet, 2)) - .5)
-        local y = (NetworkRandom(string.format("%s:FireBullet %d, %d", self:GetClassName(), bullet, 3)) - .5) + (NetworkRandom(string.format("%s:FireBullet %d, %d", self:GetClassName(), bullet, 4)) - .5)
+        local spreadAngle = self:GetSpread() * self:GetInaccuracyScalar() / 2
         
-        local spreadDirection = viewCoords.zAxis + x * spread.x * viewCoords.xAxis + y * spread.y * viewCoords.yAxis
-    
-        local endPoint = startPoint + spreadDirection * range
+        local randomAngle  = NetworkRandom() * math.pi * 2
+        local randomRadius = NetworkRandom() * math.tan(spreadAngle)
+        
+        local fireDirection = viewCoords.zAxis + (viewCoords.xAxis * math.cos(randomAngle) + viewCoords.yAxis * math.sin(randomAngle)) * randomRadius
+        fireDirection:Normalize()
+       
+        local endPoint = startPoint + fireDirection * range
         
         local trace = Shared.TraceRay(startPoint, endPoint, PhysicsMask.Bullets, filter)
         

@@ -90,8 +90,7 @@ end
 
 // When in alt-fire mode, keep very accurate
 function Pistol:GetInaccuracyScalar()
-    local scalar = ConditionalValue(self.altMode, .5, 1)
-    return 1 + (1 - self.accuracy)*scalar
+    return ConditionalValue(self.altMode, .5, 1)
 end
 
 function Pistol:GetHUDSlot()

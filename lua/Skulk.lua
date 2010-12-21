@@ -542,7 +542,7 @@ function Skulk:GetMaxBackwardSpeedScalar()
     return ConditionalValue(self:GetIsWallWalking(), 1, Alien.GetMaxBackwardSpeedScalar(self))
 end
 
-function Skulk:ClampSpeed(velocity)
+function Skulk:ClampSpeed(input, velocity)
 
     if self:GetIsWallWalking() then
     
@@ -559,7 +559,7 @@ function Skulk:ClampSpeed(velocity)
     else
     
         // Otherwise clamp XZ
-        Alien.ClampSpeed(self, velocity)
+        Alien.ClampSpeed(self, input, velocity)
         
     end    
     

@@ -40,6 +40,7 @@ Alien.kAnimOverlayAttack = "attack"
 
 // DI regen think time
 Alien.kRegenThinkInterval = 1.0
+Alien.kWalkBackwardSpeedScalar = 0.75
 
 // Percentage per DI regen
 Alien.kInnateRegenerationPercentage = 0.02
@@ -91,6 +92,10 @@ function Alien:UpdateAbilityEnergy(input)
     // Add energy back over time, called from Player:OnProcessMove
     self.abilityEnergy = Clamp(self.abilityEnergy + energyRate * input.time, 0, Ability.kMaxEnergy)
 
+end
+
+function Alien:GetMaxBackwardSpeedScalar()
+    return Alien.kWalkBackwardSpeedScalar
 end
 
 function Alien:UpdateSharedMisc(input)

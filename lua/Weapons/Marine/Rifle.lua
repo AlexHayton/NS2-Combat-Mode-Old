@@ -107,6 +107,10 @@ function Rifle:GetReloadSound()
     return Rifle.reloadSoundName
 end
 
+function Rifle:GetIsDroppable()
+    return true
+end
+
 function Rifle:GetBaseIdleAnimation()
     return chooseWeightedEntry( Rifle.kAnimIdleTable )
 end
@@ -144,11 +148,6 @@ end
 function Rifle:GetAccuracyRecoveryRate(player)
     local velocityScalar = player:GetVelocity():GetLength()/player:GetMaxSpeed()
     return 1.4 - .3*velocityScalar
-end
-
-// Used to affect spread and change the crosshair
-function Rifle:GetInaccuracyScalar()
-    return 1 + (1 - self.accuracy)*1.4
 end
 
 function Rifle:GetPrimaryAttackAnimation()

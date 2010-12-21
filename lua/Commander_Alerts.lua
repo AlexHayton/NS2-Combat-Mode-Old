@@ -15,13 +15,11 @@
  *  Entity -> text, icon x offset, icon y offset, -1, entity id
  */
 function CommanderUI_GetAlertMessages()
-    local messages = Client.GetLocalPlayer():GetAndClearAlertMessages()
-    /*
-    if table.count(messages) > 0 then
-        Print("CommanderUI_GetAlertMessages() returning %s", table.tostring(messages))
+    local player = Client.GetLocalPlayer()
+    if player:isa("Commander") then
+        return player:GetAndClearAlertMessages()
     end
-    */
-    return messages
+    return { }
 end
 
 /**

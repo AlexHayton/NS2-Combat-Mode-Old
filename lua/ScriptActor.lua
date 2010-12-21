@@ -204,6 +204,10 @@ function ScriptActor:GetTechId()
     return self.techId
 end
 
+function ScriptActor:GetCost()
+    return LookupTechData(self:GetTechId(), kTechDataCostKey, 0)
+end
+
 function ScriptActor:SetTechId(techId)
     self.techId = techId
     return true

@@ -52,9 +52,6 @@ function Marine:OnDestroyClient()
 
 end
 
-function Marine:Drop()
-end
-
 function Marine:UpdateClientEffects(deltaTime, isLocal)
     
     Player.UpdateClientEffects(self, deltaTime, isLocal)
@@ -93,6 +90,9 @@ function Marine:CloseMenu(flashIndex)
         Client.SetMouseVisible(false)
         Client.SetMouseClipped(false)
         Client.SetMouseCaptured(true)
+        
+        // Quick work-around to not fire weapon when closing menu
+        self.timeClosedMenu = Shared.GetTime()
         
         return true
             

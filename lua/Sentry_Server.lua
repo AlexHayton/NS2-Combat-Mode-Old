@@ -120,8 +120,11 @@ function Sentry:SetMode(mode)
         elseif mode == Sentry.kMode.SpinningUp then
         
             local anim = Sentry.kAttackStartAnim
-            self:SetAnimation(anim)
+            
+            // Spin up faster!
+            self:SetAnimation(anim, true, 3)
             modeTime = self:GetAnimationLength(anim)
+            
             self:PlaySound(Sentry.kSpinUpSoundName)
         
         elseif mode == Sentry.kMode.Attacking then

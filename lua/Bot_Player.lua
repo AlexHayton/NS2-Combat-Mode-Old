@@ -16,7 +16,7 @@
 local kBotNames = {
     "Flayra (bot)", "max0r (bot)", "Ooghi (bot)", "Breadman (bot)", "Squeal Like a Pig (bot)", "Chops (bot)", "Numerik (bot)",
     "Comprox (bot)", "MonsieurEvil (bot)", "Joev (bot)", "puzl (bot)", "Crispix (bot)", "Kouji_San (bot)", "TychoCelchuuu (bot)",
-    "Insane (bot)", "CoolCookieCooks (bot)", "devildog (bot)", "tommyd (bot)", "Relic25 (bot)"
+    "Insane (bot)", "CoolCookieCooks (bot)", "devildog (bot)", "tommyd (bot)", "Relic25 (bot)", "Hamza @ Dtoid (bot)"
 }
 
 function Player:ChooseOrder()

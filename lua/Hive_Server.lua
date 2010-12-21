@@ -71,8 +71,16 @@ function Hive:OnThink()
 end
 
 function Hive:GetNumEggs()
-    local eggs = GetGamerules():GetEntities("Egg", self:GetTeamNumber(), self:GetOrigin(), Hive.kEggMaxSpawnRadius)
-    return table.count( eggs )
+
+    local numEggs = 0
+    local eggs = GetGamerules():GetEntities("Egg", self:GetTeamNumber())    
+    for index, egg in ipairs(eggs) do
+        if egg:GetLocationName() == self:GetLocationName() then
+            numEggs = numEggs + 1
+        end
+    end
+    
+    return numEggs
 end
 
 function Hive:GetNumDesiredEggs()
@@ -90,30 +98,28 @@ end
 // Make sure there's enough room here for an egg
 function Hive:SpawnEgg()
 
-    local egg = nil
-    
-    local extents = LookupTechData(kTechId.Egg, kTechDataMaxExtents)
-    local maxExtentsDimension = math.max(extents.x, extents.y)
-    local spawnHeight = LookupTechData(self:GetTechId(), kTechDataSpawnHeightOffset) - .2
-    local spawnOrigin = self:GetOrigin() - Vector(0, spawnHeight, 0)
-    local minEntityDistance = 3
-    local success, position = GetRandomSpaceForEntity(spawnOrigin, Hive.kEggMinSpawnRadius, Hive.kEggMaxSpawnRadius, maxExtentsDimension, minEntityDistance)
+    local success, spawn = GetRandomFreeEggSpawn(self:GetLocationName())
 
     if success then
     
-        egg = CreateEntity(Egg.kMapName, position, self:GetTeamNumber())
+        local egg = CreateEntity(Egg.kMapName, spawn:GetOrigin(), self:GetTeamNumber())
         
         if egg ~= nil then 
             
-            SetRandomOrientation(egg)
+            egg:SetAngles(spawn:GetAngles())
+            
+            // To make sure physics model is updated without waiting a tick
+            egg:UpdatePhysicsModel()
         
             self.timeOfLastEgg = Shared.GetTime()
+            
+            return egg
             
         end
         
     end
     
-    return egg
+    return nil
     
 end
 
@@ -142,14 +148,14 @@ end
 function Hive:SpawnEggs()
 
     local numEggsSpawned = 0
-    local numTries = 0
     
-    while ((self:GetNumEggs() < self:GetNumDesiredEggs()) and numTries < 20) do
+    while ((self:GetNumEggs() < self:GetNumDesiredEggs())) do
     
         if self:SpawnEgg() ~= nil then
             numEggsSpawned = numEggsSpawned + 1
+        else
+            break
         end
-        numTries = numTries + 1
         
     end
     

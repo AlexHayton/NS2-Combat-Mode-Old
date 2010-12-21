@@ -90,6 +90,15 @@ function OnCommandPlasma(client)
     
 end
 
+function OnCommandAutobuild(client)
+
+    if Shared.GetCheatsEnabled() then
+        GetGamerules():SetAutobuild(not GetGamerules():GetAutobuild())
+        Print("Autobuild now %s", ToString(GetGamerules():GetAutobuild()))
+    end
+    
+end
+
 function OnCommandEnergy(client)
 
     local player = client:GetControllingPlayer()
@@ -668,6 +677,7 @@ Event.Hook("Console_gotoidleworker",        OnCommandGotoIdleWorker)
 // Cheats
 Event.Hook("Console_carbon",                OnCommandCarbon)
 Event.Hook("Console_plasma",                OnCommandPlasma)
+Event.Hook("Console_autobuild",             OnCommandAutobuild)
 Event.Hook("Console_energy",                OnCommandEnergy)
 Event.Hook("Console_takedamage",            OnCommandTakeDamage)
 Event.Hook("Console_giveammo",              OnCommandGiveAmmo)

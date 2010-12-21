@@ -178,7 +178,12 @@ function Player:OnTakeDamage(damage, doer, point)
     
     // Play damage indicator for player
     if point ~= nil then
-        Server.SendNetworkMessage(self, "DamageIndicator", BuildDamageIndicatorMessage(point, damage), true)
+        local damageOrigin = doer:GetOrigin()
+        local doerParent = doer:GetParent()
+        if doerParent then
+            damageOrigin = doerParent:GetOrigin()
+        end
+        Server.SendNetworkMessage(self, "DamageIndicator", BuildDamageIndicatorMessage(damageOrigin, damage), true)
     end
     
 end
@@ -535,26 +540,22 @@ function Player:ProcessBuyAction(techId)
     
 end
 
-/* Spawns an item based on the entity (map) name and adds it to the player's inventory. */
-/* Make it the active weapon. */
+// Creates an item by mapname and spawns it at our feet.
 function Player:GiveItem(itemMapName)
 
     local newItem = nil
 
-    // Don't give it to the player if they already have it
-    if (itemMapName ~= nil and (self:GetItem(itemMapName) == nil)) then
+    if itemMapName then
     
-        // Calls OnSpawn    
-        newItem = CreateEntity(itemMapName, self:GetOrigin(), self:GetTeamNumber())
-        if(newItem ~= nil) then
-    
-            // Call OnTouch manually because collision not in yet
-            newItem:OnTouch(self)
+        newItem = CreateEntity(itemMapName, self:GetEyePos(), self:GetTeamNumber())
+        if newItem and newItem.OnCollision then
+        
+            self:ClearActivity()
+            
+            newItem:OnCollision(self)
             
         else
-        
-            Shared.Message("Couldn't create entity named " .. itemMapName .. ".")
-            
+            Print("Couldn't create entity named %s.", itemMapName)            
         end
         
     end
@@ -573,6 +574,8 @@ function Player:AddWeapon(weapon, setActive)
         self:SetActiveWeapon(weapon:GetMapName())
     end
     
+    return true
+    
 end
 
 function Player:RemoveWeapon(weapon)
@@ -585,7 +588,6 @@ function Player:RemoveWeapon(weapon)
     
     // Delete weapon 
     weapon:SetParent(nil)
-    DestroyEntity(weapon)
     
 end
 

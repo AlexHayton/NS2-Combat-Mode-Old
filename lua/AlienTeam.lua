@@ -222,6 +222,8 @@ end
 
 function AlienTeam:DeleteOldBlips(time)
 
+    PROFILE("AlienTeam:DeleteOldBlips")
+
     for index, blip in ipairs( GetEntitiesIsa("Blip", -1) ) do
     
         if blip.timeOfUpdate < time then

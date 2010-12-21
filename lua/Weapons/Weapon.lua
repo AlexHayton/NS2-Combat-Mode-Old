@@ -11,6 +11,8 @@ class 'Weapon' (ScriptActor)
 
 Weapon.kMapName = "weapon"
 
+Weapon.kDropSound = PrecacheAsset("sound/ns2.fev/marine/common/drop_weapon")
+
 // Attach point for marine weapons
 Weapon.kHumanAttachPoint = "RHand_Weapon"
 
@@ -77,8 +79,8 @@ function Weapon:SetCameraShake(amount, speed, time)
     end
 end
 
-function Weapon:Dropped()
-    self.dropTime = Shared.GetTime()
+function Weapon:GetIsDroppable()
+    return false
 end
 
 function Weapon:GetPrimaryAttackAnimation()

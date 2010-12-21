@@ -26,7 +26,6 @@ MAC.kPassbyMACSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/pas
 MAC.kPassbyDrifterSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/passby_driffter")
 MAC.kHoverSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/hover")
 MAC.kIdleSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/idle")
-MAC.kPainSound = PrecacheAsset()
 MAC.kThrustersSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/thrusters")
 MAC.kWeldSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/weld")
 MAC.kWeldStartSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/weld_start")

@@ -583,21 +583,6 @@ function Marine:ConstrainMoveVelocity(moveVelocity)
     
 end
 
-function Marine:OnKill(damage, attacker, doer, point, direction)
-    
-    Player.OnKill(self, damage, attacker, doer, point, direction)
-    self:PlaySound(Marine.kDieSoundName)
-    
-    // Don't play alert if we suicide
-    if player ~= self then
-        self:GetTeam():TriggerAlert(kTechId.MarineAlertSoldierLost, self)
-    end
-    
-    // Remember squad we were in on death so we can beam back to them
-    self.lastSquad = self:GetSquad()
-    
-end
-
 // Set to true or false every frame
 function Marine:SetWeaponLift(weaponLift)
 

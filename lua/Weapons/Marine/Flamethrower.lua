@@ -83,6 +83,10 @@ function Flamethrower:GetClipSize()
     return kFlamethrowerClipSize
 end
 
+function Flamethrower:GetIsDroppable()
+    return true
+end
+
 function Flamethrower:CreatePrimaryAttackEffect(player)
 
     // Create 1st person or world flame effect
@@ -146,8 +150,10 @@ function Flamethrower:FirePrimary(player, bullets, range, penetration)
                 
                     ent:SetOnFire(player, self)
                     
+                    // Impact should not be played for the player that is on fire (if it is a player).
+                    local entIsPlayer = ConditionalValue(ent:isa("Player"), ent, nil)
                     // Play on fire cinematic
-                    Shared.CreateEffect(nil, Flamethrower.kImpactCinematic, ent, Coords.GetIdentity())
+                    Shared.CreateEffect(entIsPlayer, Flamethrower.kImpactCinematic, ent, Coords.GetIdentity())
                     
                 end
                 

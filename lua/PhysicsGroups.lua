@@ -30,7 +30,7 @@ PhysicsGroup = enum
         'RagdollGroup',             // Ragdolls are in this group
         'PlayerControllersGroup',   // Bullets will not collide with this group.
         'PlayerGroup',              // Ignored for movement
-        'ProjectileGroup',
+        'ProjectileGroup',          // Includes dropped weapons
         'CommanderPropsGroup',
         'CommanderUnitGroup',       // Macs, Drifters, doors, etc.
         'AttachClassGroup',         // Nozzles, tech points, etc.

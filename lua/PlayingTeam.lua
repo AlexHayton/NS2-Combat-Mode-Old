@@ -645,6 +645,8 @@ end
 
 function PlayingTeam:Update(timePassed)
 
+    PROFILE("PlayingTeam:Update")
+
     // Update structure research and energy
     for index, structure in ipairs(self.structures) do
     
@@ -696,16 +698,6 @@ end
 
 function PlayingTeam:GetTechTree()
     return self.techTree
-end
-
-function PlayingTeam:AddTooltip(tooltipText)
-
-    function t(player)
-        player:AddTooltip(tooltipText)
-    end
-    
-    self:ForEachPlayer(t)
-    
 end
 
 // Create death message string with following format:
@@ -772,7 +764,7 @@ end
 
 function PlayingTeam:ProcessGeneralHelp(player)
 
-    if(not GetGamerules():GetGameStarted() and player:AddTooltipOnce("The game won't begin until both sides have players.")) then
+    if((GetGamerules():GetGameState() == kGameState.NotStarted) and player:AddTooltipOnce("The game won't begin until both sides have players.")) then
         return true
     elseif(GetGamerules():GetGameStarted() and player:AddTooltipOnce("The game has begun!")) then
         return true
@@ -876,16 +868,30 @@ function PlayingTeam:UpdateHelp()
     
         function ProcessPlayerHelp(player)
         
-            if(not self:ProcessGeneralHelp(player)) then
+            // Only do this before the game has started
+            if((GetGamerules():GetGameState() == kGameState.NotStarted) and player:AddTooltipOnce("The game won't begin until both sides have players.")) then
+                return true
+            // Only process other help after game has started
+            elseif(GetGamerules():GetGameStarted()) then
             
-                if not self:ProcessEntityHelp(player) then
-                
-                    player:UpdateHelp()
+                if player:AddTooltipOnce("The game has begun!") then
+                    return true
+                else
+        
+                    if(not self:ProcessGeneralHelp(player)) then
+                    
+                        if not self:ProcessEntityHelp(player) then
+                        
+                            player:UpdateHelp()
+                            
+                        end
+                        
+                    end
                     
                 end
                 
             end
-
+            
         end
 
         self:ForEachPlayer(ProcessPlayerHelp)
@@ -902,15 +908,35 @@ function PlayingTeam:GetMinimapBlipTypeAndTeam(entity)
     local blipType = 0
     local blipTeam = 0
     
+    // Don't display blips for ResourceTowers or CommandStructures as
+    // they will have a blip under them for the Resource/Tech Point already or
+    // they are not important enough to display.
+    if entity:isa("CommandStructure") or entity:isa("ResourceTower") or
+       entity:isa("Egg") then
+        return success, blipType, blipTeam
+    end
+    
     // World entities
     if entity:isa("Door") then
     
         blipType = kMinimapBlipType.Door
         
-    elseif entity:isa("ResourcePoint") or entity:isa("TechPoint") then
+    elseif entity:isa("ResourcePoint") then
+
+        blipType = kMinimapBlipType.ResourcePoint
     
-        blipType = kMinimapBlipType.AttachPoint
+    elseif entity:isa("TechPoint") then
+    
+        blipType = kMinimapBlipType.TechPoint
         
+    // Don't display PowerPoints unless they are in an unpowered state.
+    elseif entity:isa("PowerPoint") then
+    
+        // Important to have this statement inside the isa("PowerPoint") statement.
+        if entity:GetLightMode() == kLightMode.NoPower then
+            blipType = kMinimapBlipType.PowerPoint
+        end
+    
     // Friendly players and structures
     elseif entity:GetIsVisible() then
     
@@ -943,11 +969,19 @@ function PlayingTeam:GetMinimapBlipTypeAndTeam(entity)
     
         if blipTeam == 0 then
         
-            if entity:GetTeamNumber() == kTeamReadyRoom then
+            local teamEntity = entity
+            // If the entity isn't on a team but has an attached entity, use
+            // the attached entity instead. This makes finding the team for a
+            // ResourcePoint easier.
+            if entity:GetTeamNumber() == kTeamReadyRoom and entity:GetAttached() then
+                teamEntity = entity:GetAttached()
+            end
+            
+            if teamEntity:GetTeamNumber() == kTeamReadyRoom then
                 blipTeam = kMinimapBlipTeam.Neutral
-            elseif entity:GetTeamNumber() == self:GetTeamNumber() then
+            elseif teamEntity:GetTeamNumber() == self:GetTeamNumber() then
                 blipTeam = kMinimapBlipTeam.Friendly
-            elseif entity:GetTeamNumber() == GetEnemyTeamNumber(self:GetTeamNumber()) then
+            elseif teamEntity:GetTeamNumber() == GetEnemyTeamNumber(self:GetTeamNumber()) then
                 blipTeam = kMinimapBlipTeam.Enemy
             end
             

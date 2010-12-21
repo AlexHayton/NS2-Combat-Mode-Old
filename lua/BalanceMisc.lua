@@ -25,6 +25,7 @@ kInfantryPortalRecycleScalar = .8
 kInfantryPortalBuildDistance = 8
 // Minimum distance that initial IP spawns away from team location
 kInfantryPortalMinSpawnDistance = 4
+kWeaponStayTime = 30    // NS1
 kInfestCost = 10
 kRifleCost = 0
 kPistolCost = 0

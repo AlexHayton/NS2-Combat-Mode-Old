@@ -124,6 +124,16 @@ function Team:GetPlayers()
     
 end
 
+function Team:AddTooltip(tooltipText)
+
+    function t(player)
+        player:AddTooltip(tooltipText)
+    end
+    
+    self:ForEachPlayer(t)
+    
+end
+
 function Team:tostring()
 
     local numPlayers = self:GetNumPlayers()
@@ -203,6 +213,16 @@ function Team:PlayPrivateTeamSound(soundName, origin, commandersOnly)
     end
     
     self:ForEachPlayer(PlayPrivateSound)
+    
+end
+
+function Team:SetFrozenState(state)
+
+    local function SetFrozen(player)
+        player.frozen = state
+    end
+    
+    self:ForEachPlayer(SetFrozen)
     
 end
 

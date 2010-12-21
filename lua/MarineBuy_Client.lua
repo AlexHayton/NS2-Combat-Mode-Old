@@ -8,7 +8,8 @@
 //=============================================================================
 
 // Specifies which and order of weapons to buy
-local kWeaponIdList = {kTechId.Axe, kTechId.Pistol, kTechId.Rifle, kTechId.GrenadeLauncher, kTechId.Shotgun, kTechId.Flamethrower, kTechId.Jetpack}
+// Jetpack removed until it is implemented.
+local kWeaponIdList = {kTechId.Axe, kTechId.Pistol, kTechId.Rifle, kTechId.GrenadeLauncher, kTechId.Shotgun, kTechId.Flamethrower}//, kTechId.Jetpack}
 
 local kBigIconIndices = {{0, 0}, {0, 1},{0, 2},{0, 3},{1, 0},{1, 1},{1, 2} }
     
@@ -195,9 +196,8 @@ function GetWeaponArray(techIdArray)
         local researched = false
         local techNode = GetTechTree():GetTechNode(id)
         
-        if techNode == nil then
-            Print("GetWeaponArray(%d): Couldn't find techNode", id)
-        else
+        ASSERT(techNode ~= nil, "GetWeaponArray(" .. id .. "): Couldn't find techNode for " .. LookupTechData(id, kTechDataDisplayName))
+        if techNode ~= nil then
             researched = techNode:GetAvailable()
         end
 

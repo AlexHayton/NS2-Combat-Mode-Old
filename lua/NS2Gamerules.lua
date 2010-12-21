@@ -14,6 +14,9 @@ NS2Gamerules.kMapName = "ns2_gamerules"
 
 NS2Gamerules.kGamerulesThinkInterval = .5
 NS2Gamerules.kGameEndCheckInterval = .75
+NS2Gamerules.kPregameLength = 8
+NS2Gamerules.kCountDownLength = 6
+NS2Gamerules.kTimeToReadyRoom = 8
 
 ////////////
 // Server //
@@ -40,6 +43,26 @@ function NS2Gamerules:BuildTeam(teamType)
     
 end
 
+function NS2Gamerules:SetGameState(state)
+
+    if state ~= self.gameState then
+    
+        self.gameState = state
+        self.timeGameStateChanged = Shared.GetTime()
+        self.timeSinceGameStateChanged = 0
+        
+        local frozenState = (state == kGameState.Countdown) and (not Shared.GetDevMode())
+        self.team1:SetFrozenState(frozenState)
+        self.team2:SetFrozenState(frozenState)
+
+    end
+    
+end
+
+function NS2Gamerules:GetGameState()
+    return self.gameState
+end
+
 function NS2Gamerules:OnCreate()
 
     // Calls SetGamerules()
@@ -57,14 +80,12 @@ function NS2Gamerules:OnCreate()
 
     self.spectatorTeam = SpectatingTeam()
     self.spectatorTeam:Initialize("Spectator", kSpectatorIndex)
+
+    self:SetGameState(kGameState.NotStarted)
     
-    self.gameStarted = false
-    self.timeGameStarted = nil
-    self.countingDown = false
-    self.countdownTime = 0
-    self.timeGameEnded = nil
     self.allTech = false
     self.orderSelf = false
+    self.autobuild = false
   
     self:SetIsVisible(false)
     self:SetPropagate(Entity.Propagate_Always)
@@ -210,6 +231,19 @@ function NS2Gamerules:OnEntityChange(oldId, newId)
     self.team1:OnEntityChange(oldId, newId)
     self.team2:OnEntityChange(oldId, newId)
     self.spectatorTeam:OnEntityChange(oldId, newId)
+
+    // Keep server map entities up to date    
+    local index = table.find(Server.mapLoadLiveEntityValues, oldId)
+    if index then
+    
+        table.removevalue(Server.mapLoadLiveEntityValues, oldId)
+        if newId then
+        
+            table.insert(Server.mapLoadLiveEntityValues, newId)
+            
+        end
+        
+    end
     
 end
 
@@ -398,9 +432,11 @@ end
  */
 function NS2Gamerules:ResetGame()
 
-    // Reset all players and entities, delete other entities that were created during 
+    // Destroy any map entities that are still around
+    DestroyLiveMapEntities()    
+    
+    // Reset all players, delete other not map entities that were created during 
     // the game (hives, command structures, initial resource towers, etc)
-
     local entityList = GetEntitiesIsa("Entity", -1)
     for index, entity in pairs(entityList) do
 
@@ -420,6 +456,8 @@ function NS2Gamerules:ResetGame()
  
     end
     
+    // Create living map entities fresh
+    CreateLiveMapEntities()
     
     // Build list of team locations
     local teamLocations = GetEntitiesIsa("TeamLocation", -1)
@@ -444,13 +482,8 @@ function NS2Gamerules:ResetGame()
     self.team1:ReplaceRespawnAllPlayers()
     self.team2:ReplaceRespawnAllPlayers()
     
-    self.gameStarted = false
-    self.countingDown = false
-    self.countdownTime = 0
-    self.timeGameEnded = nil
     self.forceGameStart = false
     self.losingTeam = nil
-    self.timeToReadyRoom = nil
     self.preventGameEnd = nil
     
     // Send scoreboard update, ignoring other scoreboard updates (clearscores resets everything)
@@ -459,6 +492,8 @@ function NS2Gamerules:ResetGame()
         Server.SendCommand(player, "onresetgame")
         //player:SetScoreboardChanged(false)
     end
+    
+    self:SetGameState(kGameState.NotStarted)
     
 end
 
@@ -476,43 +511,6 @@ end
 
 function NS2Gamerules:GetSpectatorTeam()
     return self.spectatorTeam
-end
-
-function NS2Gamerules:UpdateCountdown(timePassed)
-
-    if(self.countingDown) then
-    
-        self.countdownTime = self.countdownTime - timePassed
-
-        local countDownSeconds = math.ceil(self.countdownTime)
-        if(self.lastCountdownPlayed ~= countDownSeconds) then        
-        
-            self.team1:PlayPrivateTeamSound(NS2Gamerules.kCountdownSound)
-            self.team2:PlayPrivateTeamSound(NS2Gamerules.kCountdownSound)
-            
-            self.lastCountdownPlayed = countDownSeconds
-            
-        end
-        
-        if(self.countdownTime <= 0) then
-        
-            self.countingDown = false    
-            self.countdownTime = 0
-        
-            if(not Shared.GetDevMode()) then
-           
-                self.team1:PlayPrivateTeamSound(ConditionalValue(self.team1:GetTeamType() == kAlienTeamType, NS2Gamerules.kAlienStartSound, NS2Gamerules.kMarineStartSound))
-                self.team2:PlayPrivateTeamSound(ConditionalValue(self.team2:GetTeamType() == kAlienTeamType, NS2Gamerules.kAlienStartSound, NS2Gamerules.kMarineStartSound))
-                
-            end
-            
-            self.gameStarted = true   
-            self.timeGameStarted = Shared.GetTime() 
-            
-        end
-        
-    end
-    
 end
 
 function NS2Gamerules:UpdateScores()
@@ -629,16 +627,15 @@ function NS2Gamerules:UpdatePlayerList()
 end
 
 function NS2Gamerules:UpdateScriptActorList()
-    PROFILE("NS2Gamerules:UpdateScriptActorList")
     self.scriptActorList = GetEntitiesIsa("ScriptActor", nil, true)
 end
 
-function NS2Gamerules:UpdateToReadyRoom(timePassed)
+function NS2Gamerules:UpdateToReadyRoom()
 
-    if(self.timeToReadyRoom ~= nil and self.timeToReadyRoom > 0) then
+    local state = self:GetGameState()
+    if(state == kGameState.Team1Won or state == kGameState.Team2Won or state == kGameState.Draw) then
     
-        self.timeToReadyRoom = self.timeToReadyRoom - timePassed
-        if(self.timeToReadyRoom <= 0) then
+        if self.timeSinceGameStateChanged >= NS2Gamerules.kTimeToReadyRoom then
         
             // Set all players to ready room team
             local function SetReadyRoomTeam(player)
@@ -672,8 +669,10 @@ function NS2Gamerules:OnUpdate(timePassed)
         self:CheckGameStart()
         self:CheckGameEnd()
 
-        self:UpdateCountdown(timePassed)
-        self:UpdateToReadyRoom(timePassed)
+        self:UpdatePregame(timePassed)
+        self:UpdateToReadyRoom()
+        
+        self.timeSinceGameStateChanged = self.timeSinceGameStateChanged + timePassed
         
         self.worldTeam:Update(timePassed)
         self.team1:Update(timePassed)
@@ -693,25 +692,21 @@ function NS2Gamerules:OnUpdate(timePassed)
     
 end
 
-function NS2Gamerules:GetGameEnded()
-    return self.timeGameEnded ~= nil
-end
-
 /**
  * Ends the current game
  */
 function NS2Gamerules:EndGame(winningTeam)
 
-    if(self.timeGameEnded == nil) then
-    
-        self.timeGameEnded = Shared.GetTime()
+    if self:GetGameState() == kGameState.Started then
 
         // Set losing team        
         local losingTeam = nil
         if(winningTeam == self.team1) then
-            losingTeam = self.team2
+            self:SetGameState(kGameState.Team2Won)
+            losingTeam = self.team2            
         else
-            losingTeam = self.team1
+            self:SetGameState(kGameState.Team1Won)
+            losingTeam = self.team1            
         end
         
         self.losingTeam = losingTeam
@@ -730,19 +725,16 @@ function NS2Gamerules:EndGame(winningTeam)
         self.team1:ClearRespawnQueue()
         self.team2:ClearRespawnQueue()  
         
-        // Set timer to put everyone back in ready room after music plays
-        self.timeToReadyRoom = 8
-
     end
 
 end
 
 function NS2Gamerules:DrawGame()
 
-    if(self.timeGameEnded == nil) then
+    if self:GetGameState() == kGameState.Started then
     
-        self.timeGameEnded = Shared.GetTime()
-
+        self:SetGameState(kGameState.Draw)
+        
         // Play loss sounds for both teams
         self.team1:PlayPrivateTeamSound(NS2Gamerules.kDefeatSound)
         self.team2:PlayPrivateTeamSound(NS2Gamerules.kDefeatSound)
@@ -757,9 +749,6 @@ function NS2Gamerules:DrawGame()
 
         self.team1:ClearRespawnQueue()
         self.team2:ClearRespawnQueue()  
-
-        // Set timer to put everyone back in ready room after music plays
-        self.timeToReadyRoom = 8
 
     end
 
@@ -856,12 +845,12 @@ function NS2Gamerules:JoinTeam(player, newTeamNumber, force)
 end
 
 function NS2Gamerules:GetGameStarted()
-    return self.gameStarted
+    return (self.gameState == kGameState.Started)
 end
 
 /* For test framework only. Prevents game from ending on its own also. */
 function NS2Gamerules:SetGameStarted()
-    self.gameStarted = true
+    self:SetGameState(kGameState.Started)
     self.preventGameEnd = true
 end
 
@@ -869,41 +858,50 @@ function NS2Gamerules:SetPreventGameEnd(state)
     self.preventGameEnd = state
 end
 
-function NS2Gamerules:GetCountingDown()
-    return self.countingDown
+function NS2Gamerules:AddGlobalTooltip(tooltipMsg)
+    self.worldTeam:AddTooltip(tooltipMsg)
+    self.team1:AddTooltip(tooltipMsg)
+    self.team2:AddTooltip(tooltipMsg)
+    self.spectatorTeam:AddTooltip(tooltipMsg)
 end
 
-function NS2Gamerules:StartGameCountdown()
+function NS2Gamerules:StartCountdown()
 
-    if(not Shared.GetDevMode()) then
-        self:ResetGame()
-    else
-        // TODO: Remove this once Decoda performance is higher for deleting entities while debugging
-        Print("NS2Gamerules:StartGameCountdown(): Skipping game reset in dev mode.")
-    end
+    self:ResetGame()
     
-    self.countingDown = true
-    self.countdownTime = 4
-    self.lastCountdownPlayed = nil
+    self:SetGameState(kGameState.Countdown)
+
+    local countdownTime = NS2Gamerules.kCountDownLength
+    //if(Shared.GetDevMode() or Shared.GetCheatsEnabled()) then
+    //    self.countdownTime = 0
+    //end    
+    self.countdownTime = countdownTime
     
-    if(Shared.GetDevMode() or Shared.GetCheatsEnabled()) then
-        self.countdownTime = 0
-    end    
+    self.lastCountdownPlayed = nil    
    
 end
 
 function NS2Gamerules:CheckGameStart()
 
-    if(not self.gameStarted and not self.countingDown) then
+    if(self:GetGameState() == kGameState.NotStarted or self:GetGameState() == kGameState.PreGame) then
     
-        // Start when both teams have players or when once side does if cheats are enabled
+        // Start pre-game when both teams have players or when once side does if cheats are enabled
         local team1Players = self.team1:GetNumPlayers()
         local team2Players = self.team2:GetNumPlayers()
         
         if  (team1Players > 0 and team2Players > 0) or (Shared.GetCheatsEnabled() and (team1Players > 0 or team2Players > 0)) then
+        
+            if self:GetGameState() == kGameState.NotStarted then
             
-            self:StartGameCountdown()
+                // Tell everyone the game will be starting shortly
+                self:AddGlobalTooltip("The game will be starting shortly...")
+                self:SetGameState(kGameState.PreGame)
+
+            end
             
+        elseif self:GetGameState() == kGameState.PreGame then
+            self:AddGlobalTooltip("Game start cancelled")
+            self:SetGameState(kGameState.NotStarted)
         end
         
     end
@@ -912,7 +910,7 @@ end
 
 function NS2Gamerules:CheckGameEnd()
     
-    if(self.gameStarted and self.timeGameEnded == nil and not Shared.GetCheatsEnabled() and not self.preventGameEnd) then
+    if(self:GetGameStarted() and self.timeGameEnded == nil and not Shared.GetCheatsEnabled() and not self.preventGameEnd) then
     
         if self.timeLastGameEndCheck == nil or (Shared.GetTime() > self.timeLastGameEndCheck + NS2Gamerules.kGameEndCheckInterval) then
         
@@ -935,6 +933,51 @@ function NS2Gamerules:CheckGameEnd()
                 
     end
     
+end
+
+function NS2Gamerules:UpdatePregame(timePassed)
+
+    if self:GetGameState() == kGameState.PreGame then
+    
+        local preGameTime = NS2Gamerules.kPregameLength
+        if(Shared.GetDevMode() or Shared.GetCheatsEnabled()) then
+            preGameTime = 0
+        end    
+
+        if Shared.GetTime() > (self.timeSinceGameStateChanged + preGameTime) then
+            self:StartCountdown()
+        end
+        
+    elseif self:GetGameState() == kGameState.Countdown then
+    
+        self.countdownTime = self.countdownTime - timePassed
+
+        // Play count down sounds for last few seconds of count-down
+        local countDownSeconds = math.ceil(self.countdownTime)
+        if(self.lastCountdownPlayed ~= countDownSeconds and (countDownSeconds < 4)) then        
+
+            self.team1:PlayPrivateTeamSound(NS2Gamerules.kCountdownSound)
+            self.team2:PlayPrivateTeamSound(NS2Gamerules.kCountdownSound)
+            
+            self.lastCountdownPlayed = countDownSeconds
+            
+        end
+        
+        if(self.countdownTime <= 0) then
+        
+            if(not Shared.GetDevMode()) then
+           
+                self.team1:PlayPrivateTeamSound(ConditionalValue(self.team1:GetTeamType() == kAlienTeamType, NS2Gamerules.kAlienStartSound, NS2Gamerules.kMarineStartSound))
+                self.team2:PlayPrivateTeamSound(ConditionalValue(self.team2:GetTeamType() == kAlienTeamType, NS2Gamerules.kAlienStartSound, NS2Gamerules.kMarineStartSound))
+                
+            end
+
+            self:SetGameState(kGameState.Started)
+            
+        end
+        
+    end
+            
 end
 
 // Returns true if entity should be propagated to player
@@ -996,13 +1039,13 @@ function NS2Gamerules:GetIsRelevant(player, entity, noRecurse)
             if entity:isa("Weapon") then
             
                 local parent = entity:GetParent()
-                if parent:GetActiveWeapon() == entity then
+                if parent ~= nil and parent:GetActiveWeapon() == entity then
                 
                     relevant = self:GetIsRelevant(player, parent, true)
                     
                 end
 
-            elseif entity:isa("Player") then
+            else
             
                 local children = GetChildEntities(entity, "ScriptActor")
                 for index, child in ipairs(children) do
@@ -1045,6 +1088,14 @@ function NS2Gamerules:SetAllTech(state)
         
     end
     
+end
+
+function NS2Gamerules:GetAutobuild()
+    return self.autobuild
+end
+
+function NS2Gamerules:SetAutobuild(state)
+    self.autobuild = state
 end
 
 function NS2Gamerules:SetOrderSelf(state)

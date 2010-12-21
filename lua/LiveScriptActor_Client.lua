@@ -54,10 +54,10 @@ function LiveScriptActor:UpdateEffects()
             local firstPerson = (Client.GetLocalPlayer() == self)
             local cinematicName = GetOnFireCinematic(self, firstPerson)
             
-            if firstPerson then            
+            if firstPerson then
                 local viewModel = self:GetViewModelEntity()
                 if viewModel then
-                    Shared.CreateEffect(self, cinematicName, viewModel, Coords.GetTranslation(Vector(0, 0, 0)))
+                    Shared.CreateAttachedEffect(self, cinematicName, viewModel, Coords.GetTranslation(Vector(0, 0, 0)), "", true)
                 end
             else
                 Shared.CreateEffect(self, cinematicName, self, self:GetAngles():GetCoords())

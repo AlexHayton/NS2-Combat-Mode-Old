@@ -73,10 +73,6 @@ function Shotgun:GetViewModelName()
     return Shotgun.kViewModelName
 end
 
-function Shotgun:GetInaccuracyScalar()
-    return 1
-end
-
 function Shotgun:GetDeathIconIndex()
     return kDeathMessageIcon.Shotgun
 end
@@ -86,6 +82,10 @@ function Shotgun:GetFireSoundName()
         return Shotgun.kFireLastSoundName
     end
     return Shotgun.kFireSoundName
+end
+
+function Shotgun:GetIsDroppable()
+    return true
 end
 
 function Shotgun:GetDrawSound()

@@ -13,6 +13,7 @@ Script.Load("lua/Shared.lua")
 Script.Load("lua/Button.lua")
 Script.Load("lua/TechData.lua")
 
+Script.Load("lua/EggSpawn.lua")
 Script.Load("lua/MarineTeam.lua")
 Script.Load("lua/AlienTeam.lua")
 Script.Load("lua/TeamJoin.lua")
@@ -23,7 +24,16 @@ Script.Load("lua/NetworkMessages_Server.lua")
 
 Server.readyRoomSpawnList = {}
 Server.playerSpawnList = {}
+Server.eggSpawnList = {}
 Server.locationList = {}
+
+// map name, group name and values keys for all map entities loaded to 
+// be created on game reset
+Server.mapLoadLiveEntityValues = {}
+
+// Game entity indices created from mapLoadLiveEntityValues. They are all deleted
+// on and rebuilt on map reset.
+Server.mapLiveEntities = {}
 
 /**
  * Called as the map is being loaded to create the entities.
@@ -47,12 +57,22 @@ function OnMapLoadEntity(mapName, groupName, values)
         and mapName ~= Reverb.kMapName
         and mapName ~= Particles.kMapName) then
         
-        local entity = Server.CreateEntity(mapName)
+        local entity = Server.CreateEntity(mapName)      
+        if entity then      
         
-        if (entity ~= nil) then
-               
             entity:SetMapEntity()
             LoadEntityFromValues(entity, values)
+
+            // LiveScriptActors can be destroyed during the game so         
+            if entity:isa("LiveScriptActor") then
+            
+                // Insert into table so we can re-create them all on map post load (and game reset)
+                table.insert(Server.mapLoadLiveEntityValues, {mapName, groupName, values})
+                
+                // Delete it because we're going to recreate it on map reset
+                table.insert(Server.mapLiveEntities, entity:GetId())
+
+            end
             
         end
         
@@ -98,7 +118,14 @@ function OnMapLoadEntity(mapName, groupName, values)
         entity:OnCreate()
         LoadEntityFromValues(entity, values)
         table.insert(Server.playerSpawnList, entity)
-        
+
+    elseif (mapName == EggSpawn.kMapName) then
+
+        local entity = EggSpawn()
+        entity:OnCreate()
+        LoadEntityFromValues(entity, values)
+        table.insert(Server.eggSpawnList, entity)
+    
     elseif (mapName == AmbientSound.kMapName) then
     
         // Make sure sound index is precached but only create ambient sound object on client
@@ -126,8 +153,42 @@ function OnMapPreLoad()
     // Clear spawn points
     Server.readyRoomSpawnList = {}
     Server.playerSpawnList = {}
+    Server.eggSpawnList = {}
     
     Server.locationList = {}
+    
+    Server.mapLoadLiveEntityValues = {}
+    Server.mapLiveEntities = {}
+    
+end
+
+function DestroyLiveMapEntities()
+
+    // Delete any map entities that have been created
+    for index, mapEntId in ipairs(Server.mapLiveEntities) do
+    
+        local ent = Shared.GetEntity(mapEntId)
+        if ent then
+            DestroyEntity(ent)
+        end
+        
+    end
+
+end
+
+function CreateLiveMapEntities()
+
+    // Create new LiveScriptActor map entities 
+    for index, triple in ipairs(Server.mapLoadLiveEntityValues) do
+    
+        // {mapName, groupName, keyvalues}
+        local entity = Server.CreateEntity(triple[1])            
+        LoadEntityFromValues(entity, triple[3], true)
+
+        // Store so we can track it during the game and delete it on game reset if not dead yet   
+        table.insert(Server.mapLiveEntities, entity:GetId())
+        
+    end
     
 end
 

@@ -41,11 +41,18 @@ function Structure:OnUse(player, elapsedTime, useAttachPoint)
         if (player:isa("Marine") or player:isa("Gorge")) and player:GetCanNewActivityStart() then
         
             // Calling code will put weapon away we return true
-            self:Construct(Structure.kBuildInterval)
+            if self:Construct(Structure.kBuildInterval) then
             
-            player:SetActivityEnd(Structure.kBuildInterval)
+                // Give points for building structures
+                if self:GetIsBuilt() and not self:isa("Hydra") then                
+                    player:AddScore(kBuildPointValue)
+                end
+                
+                player:SetActivityEnd(Structure.kBuildInterval)
 
-            used = true
+                used = true
+                
+            end
                 
         end
         
@@ -257,6 +264,14 @@ function Structure:OnInit()
     
     self:PlaySound(self:GetSpawnSound())
     
+    if GetGamerules():GetAutobuild() then
+        self:SetConstructionComplete()
+    end
+    
+    if self.startsBuilt and not self:GetIsBuilt() then
+        self:SetConstructionComplete()
+    end
+    
 end
 
 function Structure:OnLoad()
@@ -264,10 +279,6 @@ function Structure:OnLoad()
     LiveScriptActor.OnLoad(self)
     
     self.startsBuilt = GetAndCheckBoolean(self.startsBuilt, "startsBuilt", false)
-    
-    if self.startsBuilt then
-        self:SetConstructionComplete()
-    end
     
 end
 

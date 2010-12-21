@@ -25,17 +25,28 @@ end
 
 function Marine:AddWeapon(weapon)
 
-    // If incoming weapon uses occupied weapon slot, drop current weapon before adding new one
-    local newSlot = weapon:GetHUDSlot()
-    local weaponInSlot = self:GetWeaponInHUDSlot(newSlot)
+    local success = false
     
-    if(weaponInSlot ~= nil) then
+    if self:GetCanNewActivityStart() then
     
-        self:Drop(weaponInSlot)
-    
+        // If incoming weapon uses occupied weapon slot, only pick it up if it costs more than our current weapon (ie, it's better)
+        // In that case, drop current weapon before adding new one
+        local newSlot = weapon:GetHUDSlot()
+        local weaponInSlot = self:GetWeaponInHUDSlot(newSlot)
+        
+        if not weaponInSlot or (weapon:GetCost() > weaponInSlot:GetCost()) then
+        
+            if weaponInSlot then
+                self:Drop(weaponInSlot)
+            end
+            
+            success = Player.AddWeapon(self, weapon)
+            
+        end
+        
     end
     
-    Player.AddWeapon(self, weapon)
+    return success
     
 end
 
@@ -109,14 +120,48 @@ function Marine:AttemptToBuy(techId)
     
 end
 
-// Drop current weapon
+function Marine:OnKill(damage, attacker, doer, point, direction)
+
+    // Will become "drop" soon
+    self:KillWeapons()
+    
+    Player.OnKill(self, damage, attacker, doer, point, direction)
+    self:PlaySound(Marine.kDieSoundName)
+    
+    // Don't play alert if we suicide
+    if player ~= self then
+        self:GetTeam():TriggerAlert(kTechId.MarineAlertSoldierLost, self)
+    end
+    
+    // Remember squad we were in on death so we can beam back to them
+    self.lastSquad = self:GetSquad()
+    
+end
+
+// Will become DropWeapons soon
+function Marine:KillWeapons()
+
+    local weapons = self:GetHUDOrderedWeaponList()
+    
+    for index = 1, table.count(weapons) do
+    
+        local weapon = weapons[index]
+        if weapon then
+            //self:Drop(weapon)
+            DestroyEntity(weapon)
+        end
+        
+    end
+    
+end
+
 function Marine:Drop(weapon)
 
-    if(weapon == nil) then
+    if not weapon then
         weapon = self:GetActiveWeapon()
     end
     
-    if( weapon ~= nil and weapon:isa("ClipWeapon") ) then
+    if( weapon ~= nil and weapon.GetIsDroppable and weapon:GetIsDroppable() ) then
     
         // Remove from player's inventory
         self:RemoveWeapon(weapon)
@@ -124,13 +169,11 @@ function Marine:Drop(weapon)
         // Make sure we're ready to deploy new weapon so we switch to it properly
         self:ClearActivity()
         
-        // Tell weapon not to be picked up again for a bit
-        weapon:Dropped()
+        local weaponSpawnPoint = self:GetAttachPointOrigin(Weapon.kHumanAttachPoint)
+        weapon:SetOrigin(weaponSpawnPoint)
         
-        // TODO: Include this after we get physics working again
-        // Give forward velocity so we can see the result
-        //local dropDirection = self:GetViewAngles():GetCoords().zAxis
-        //weapon:SetImpulse(Vector(0, 0, 0), dropDirection*3)
+        // Tell weapon not to be picked up again for a bit
+        weapon:Dropped(self)
         
     end
     
@@ -206,3 +249,4 @@ function Marine:ApplyCatPack()
     self.timeOfLastCatPack = Shared.GetTime()
     
 end
+

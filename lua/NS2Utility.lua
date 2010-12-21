@@ -639,6 +639,58 @@ function GetRandomSpaceForEntity(basePoint, minRadius, maxRadius, boxExtents, mi
     return false, nil
     
 end
+
+// Assumes position is at the bottom center of the egg
+function GetCanEggFit(position)
+
+    local extents = LookupTechData(kTechId.Egg, kTechDataMaxExtents)
+    local maxExtentsDimension = math.max(extents.x, extents.y)
+    ASSERT(maxExtentsDimension > 0, "invalid x extents for")
+
+    local eggCenter = position + Vector(0, extents.y + .05, 0)
+
+    if not Shared.CollideBox(extents, eggCenter) then
+            
+        return true
+                    
+    end
+    
+    return false
+    
+end
+
+function GetRandomFreeEggSpawn(locationName)
+
+    // Look for free egg_spawns in this location
+    local numEggSpawns = table.count(Server.eggSpawnList)
+    if numEggSpawns > 0 then
+        
+        // Start at a random base offset
+        local randomBaseOffset = math.floor(math.random() * numEggSpawns)
+        
+        for index = 1, numEggSpawns do
+        
+            local offset = ((randomBaseOffset + index) % numEggSpawns) + 1
+            local spawn = Server.eggSpawnList[offset]
+            
+            if GetLocationForPoint(spawn:GetOrigin()) == locationName then
+            
+                if GetCanEggFit(spawn:GetOrigin()) then
+            
+                    return true, spawn
+                    
+                end
+            
+            end
+            
+        end
+        
+    end
+    
+    return false, nil
+    
+end
+
 end
 
 function SpawnPlayerAtPoint(player, origin, angles)
@@ -917,10 +969,13 @@ function GetHasRoomForCapsule(extents, position, physicsMask, ignoreEntity)
     if extents ~= nil then
     
         local capsuleHeight, capsuleRadius = GetTraceCapsuleFromExtents(extents)
-        local startPoint = Vector(position.x, position.y + capsuleHeight/2 + capsuleRadius, position.z)
+        local startPoint = Vector(position.x, position.y + capsuleHeight/2 + .01 + capsuleRadius, position.z)
         local endPoint = Vector(startPoint.x, startPoint.y + .1, startPoint.z)
+        local filter = ConditionalValue(ignoreEntity, EntityFilterOne(ignoreEntity), nil)
         
-        local trace = Shared.TraceCapsule(startPoint, endPoint, capsuleRadius, capsuleHeight, physicsMask, EntityFilterOne(ignoreEntity))
+        // Very important - TraceCapsule will succeed even if intersecting if the trace appears to be making the 
+        // two "unstuck". This is so interpenetrating players can move away from each other.
+        local trace = Shared.TraceCapsule(startPoint, endPoint, capsuleRadius, capsuleHeight, physicsMask, filter)
         
         return (trace.fraction == 1)        
         

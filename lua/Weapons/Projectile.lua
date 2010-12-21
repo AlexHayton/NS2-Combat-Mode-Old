@@ -75,4 +75,5 @@ function Projectile:GetPhysicsModelAllowed()
     
 end
 
+// Dropped weapons depend on this also
 Shared.LinkClassToMap("Projectile", Projectile.kMapName, Projectile.networkVars)

@@ -741,4 +741,13 @@
   <file>
     <filename>PlayerEffects.lua</filename>
   </file>
+  <file>
+    <filename>GUICommanderAlerts.lua</filename>
+  </file>
+  <file>
+    <filename>GUIMinimap.lua</filename>
+  </file>
+  <file>
+    <filename>GUIUtility.lua</filename>
+  </file>
 </project>

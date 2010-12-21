@@ -58,7 +58,8 @@ kGeneralEffectData =
             {sound = "sound/ns2.fev/alien/skulk/wound_serious", classname = "Skulk", flinch_severe = true, stop = true},           
             {sound = "sound/ns2.fev/alien/skulk/wound", classname = "Skulk", stop = true},           
             {sound = "sound/ns2.fev/alien/gorge/wound", classname = "Gorge", stop = true},           
-            {sound = "sound/ns2.fev/alien/lerk/wound", classname = "Lerk", stop = true},           
+            // The lerk wound sound is causing static and then FMOD to stop working completely
+            //{sound = "sound/ns2.fev/alien/lerk/wound", classname = "Lerk", stop = true},           
             {sound = "sound/ns2.fev/alien/fade/wound", classname = "Fade", stop = true},           
             {sound = "sound/ns2.fev/alien/onos/wound", classname = "Onos", stop = true},           
             {sound = "sound/ns2.fev/alien/structures/harvester_wound", classname = "Harvester", stop = true},                       

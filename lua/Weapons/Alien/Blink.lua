@@ -268,7 +268,7 @@ function Blink:PerformBlink(player)
             
         // Play view model blink effect
         if Client then
-            Shared.CreateEffect(player, Blink.kBlinkViewEffect, player:GetViewModelEntity(), nil)
+            Shared.CreateAttachedEffect(player, Blink.kBlinkViewEffect, player:GetViewModelEntity(), Coords.GetTranslation(Vector(0, 0, 0)), "", true)
         end
 
         // Play sound with randomized positional offset (in sound) at place we're leaving

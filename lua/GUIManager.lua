@@ -9,6 +9,7 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
 Script.Load("lua/GUIScript.lua")
+Script.Load("lua/GUIUtility.lua")
 
 class 'GUIManager'
 

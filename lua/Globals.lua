@@ -116,11 +116,7 @@ kDamageTypeDesc = {
 // Death message indices 
 kDeathMessageIcon = enum( {'None', 'Rifle', 'RifleButt', 'Pistol', 'Axe', 'Shotgun', 'Flamethrower', 'ARC', 'Grenade', 'Sentry', 'MAC', 'Bite', 'HydraSpike', 'Spit', 'Spikes', 'SpikesAlt', 'SporeCloud', 'SwipeBlink', 'Drifter', 'Whip'} )
 
-// 0 = tech/resource point (empty white square)
-// 1 = structure (filled in square, smaller than tech point)
-// 2 = player (filled in circle, little smaller than structure)
-// 3 = door (small filled in white square)
-kMinimapBlipType = enum( {'AttachPoint', 'Structure', 'Player', 'Door'} )
+kMinimapBlipType = enum( { 'TechPoint', 'ResourcePoint', 'Structure', 'Player', 'Door', 'PowerPoint'} )
 
 // Friendly IDs
 // 0 = friendly
@@ -156,6 +152,9 @@ kDSPType = enum( {'NearDeath', 'ShadeDisorientFlange', 'ShadeDisorientLoPass'} )
 
 // Dynamic light modes for power grid
 kLightMode = enum( {'Normal', 'NoPower', 'LowPower', 'Damaged'} )
+
+// Game state
+kGameState = enum( {'NotStarted', 'PreGame', 'Countdown', 'Started', 'Team1Won', 'Team2Won', 'Draw'} )
 
 // Don't allow commander to build structures this close to attach points or other structures
 kBlockAttachStructuresRadius = 3

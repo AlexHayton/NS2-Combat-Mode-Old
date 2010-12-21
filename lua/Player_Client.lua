@@ -563,7 +563,7 @@ function Player:UpdateCrossHairText()
         
         if self.traceReticle then
             
-            self.crossHairText = string.format("%s (id: %d) origin: %s", SafeClassName(trace.entity), trace.entity:GetId(), trace.entity:GetOrigin():tostring())
+            self.crossHairText = string.format("%s (id: %d) origin: %s, %.2f dist", SafeClassName(trace.entity), trace.entity:GetId(), trace.entity:GetOrigin():tostring(), (trace.endPoint - startPoint):GetLength())
 
             if trace.entity.GetExtents then
                 self.crossHairText = string.format("%s extents: %s", self.crossHairText, trace.entity:GetExtents():tostring())
@@ -1136,6 +1136,9 @@ function Player:CloseMenu(flashIndex)
         Client.SetMouseCaptured(true)
         Client.SetMouseClipped(false)
         
+        // Quick work-around to not fire weapon when closing menu
+        self.timeClosedMenu = Shared.GetTime()
+        
         success = true
 
     end
@@ -1418,12 +1421,12 @@ function PlayerUI_GetDamageIndicators()
             local worldX = indicatorTriple[1]
             local worldZ = indicatorTriple[2]
             
-            // Dot our view direction with direction to damage       
-            local normViewDir = GetNormalizedVectorXZ(player:GetViewAngles():GetCoords().zAxis)
-            local normDirToDamage = GetNormalizedVector(Vector(worldX, 0, worldZ) - Vector(player:GetOrigin().x, 0, player:GetOrigin().z))
-            local dotProduct = normViewDir:DotProduct(normDirToDamage)
+            local normDirToDamage = GetNormalizedVector(Vector(player:GetOrigin().x, 0, player:GetOrigin().z) - Vector(worldX, 0, worldZ))
+            local worldToView = player:GetViewAngles():GetCoords():GetInverse()
             
-            local directionRadians = math.acos(dotProduct)
+            local damageDirInView = worldToView:TransformVector(normDirToDamage)
+            
+            local directionRadians = math.atan2(damageDirInView.x, damageDirInView.z)
             if directionRadians < 0 then
                 directionRadians = directionRadians + 2 * math.pi
             end
