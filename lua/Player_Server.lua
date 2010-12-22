@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+a// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Player_Server.lua
 //
@@ -657,7 +657,7 @@ function Player:AddExperience(points)
     // Tell client to display cool effect
     if(points ~= nil and points ~= 0) then
         Server.SendCommand(self, "points " .. tostring(points))
-        self.score = Clamp(self.experience + points, 0, kMaxScore)
+        self.experience = Clamp(self.experience + points, 0, kMaxExperience)
         self:SetScoreboardChanged(true)        
     end
 

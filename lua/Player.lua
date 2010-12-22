@@ -15,6 +15,7 @@ Script.Load("lua/TechData.lua")
 Script.Load("lua/Utility.lua")
 Script.Load("lua/LiveScriptActor.lua")
 Script.Load("lua/PhysicsGroups.lua")
+Script.Load("lua/Experience.lua")
 
 class 'Player' (LiveScriptActor)
 
@@ -2537,6 +2538,14 @@ end
 
 function Player:GetScore()
     return self.score
+end
+
+function Player:GetExperience()
+    return self.experience
+end
+
+function Player:GetRank()
+    return Experience_GetRank(self.experience)
 end
 
 function Player:GetScoreboardChanged()
