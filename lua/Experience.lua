@@ -4,6 +4,7 @@
 // Created by: Alex Hayton (alex.hayton@gmail.com)
 //
 // Manages the experience ranks and generic functions
+// Manages the experience ranks and generic functions for dealing with experience.
 //
 
 kMaxExperience = 2000

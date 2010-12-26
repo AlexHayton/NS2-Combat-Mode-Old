@@ -2549,6 +2549,10 @@ function Player:GetExperience()
     return self.experience
 end
 
+function Player:GetRank()
+    return Experience_GetRank(self.experience)
+end
+
 function Player:GetScoreboardChanged()
     return self.scoreboardChanged
 end
