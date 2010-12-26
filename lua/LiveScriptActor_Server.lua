@@ -85,6 +85,21 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
         if damage > 0 then
         
             self:OnTakeDamage(damage, doer, point)
+            
+            local pointOwner = attacker
+            // If the pointOwner is not a player, award it's points to it's owner.
+            if pointOwner ~= nil and not pointOwner:isa("Player") then
+                pointOwner = pointOwner:GetOwner()
+            end
+            
+            // Award Experience
+            if(pointOwner ~= nil and pointOwner:isa("Player") and pointOwner:GetTeamNumber() ~= self:GetTeamNumber()) then
+                local damagetaken = armorUsed + healthUsed
+                local experience = Experience_ComputeExperience(self, damagetaken)
+                
+                pointOwner:AddExperience(experience)
+                Experience_GrantNearbyExperience(pointOwner, experience)
+            end
                 
             if (self.health == 0) then
                 

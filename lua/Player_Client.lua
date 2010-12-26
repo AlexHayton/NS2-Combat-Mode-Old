@@ -490,6 +490,14 @@ function PlayerUI_GetPlayerExperience()
     return 0
 end
 
+function PlayerUI_GetPlayerNextRank()
+    local player = Client.GetLocalPlayer()
+    if player then
+        return Experience_GetNextRank(Client.GetLocalPlayer():GetPlayerRank())
+    end
+    return 0
+end
+
 function PlayerUI_GetPlayerRank()
     local player = Client.GetLocalPlayer()
     if player then

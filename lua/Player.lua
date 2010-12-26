@@ -15,6 +15,7 @@ Script.Load("lua/TechData.lua")
 Script.Load("lua/Utility.lua")
 Script.Load("lua/LiveScriptActor.lua")
 Script.Load("lua/PhysicsGroups.lua")
+Script.Load("lua/Experience.lua")
 
 class 'Player' (LiveScriptActor)
 
@@ -202,7 +203,8 @@ local networkVars =
     baseRoll                = "float",
     
     // Experience system
-    experience              = "float",
+    experience              = string.format("integer (0 to %d)", kMaxExperience),
+    rank                    = string.format("integer (0 to %d)", kMaxRank),
     
     // The next point in the world to go to in order to reach an order target location
     nextOrderWaypoint       = "vector",
@@ -304,6 +306,10 @@ function Player:OnCreate()
     self.flareStopTime = 0
     self.flareScalar = 1
     self.plasma = 0
+    
+    // Experience
+    self.experience = 0
+    self.rank = 0
         
     // Make the player kinematic so that bullets and other things collide with it.
     self:SetPhysicsType(Actor.PhysicsType.Kinematic)
@@ -2537,6 +2543,10 @@ end
 
 function Player:GetScore()
     return self.score
+end
+
+function Player:GetExperience()
+    return self.experience
 end
 
 function Player:GetScoreboardChanged()

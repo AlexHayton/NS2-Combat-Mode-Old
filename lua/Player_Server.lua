@@ -653,13 +653,16 @@ function Player:AddScore(points)
     
 end
 
+function Player:GetExperience()
+    return self.experience
+end
+
 function Player:AddExperience(points)
-    // Tell client to display cool effect
     if(points ~= nil and points ~= 0) then
-        Server.SendCommand(self, "points " .. tostring(points))
-        self.score = Clamp(self.experience + points, 0, kMaxScore)
+        self.experience = Clamp(self.experience + points, 0, kMaxExperience)
         self:SetScoreboardChanged(true)        
     end
+end
 
 function Player:GetKills()
     return self.kills

@@ -24,7 +24,7 @@ GUIScoreboard.kInsanePingColor = Color(1, 0, 0, 1)
 // Team constants.
 GUIScoreboard.kTeamNameFontSize = 26
 GUIScoreboard.kTeamInfoFontSize = 16
-GUIScoreboard.kTeamItemWidth = 500
+GUIScoreboard.kTeamItemWidth = 550
 GUIScoreboard.kTeamItemHeight = GUIScoreboard.kTeamNameFontSize + GUIScoreboard.kTeamInfoFontSize + 8
 GUIScoreboard.kTeamSpacing = 32
 GUIScoreboard.kTeamScoreColumnStartX = 250
@@ -133,6 +133,20 @@ function GUIScoreboard:CreateTeamBackground(color)
     scoreItem:SetColor(color)
     scoreItem:SetText("Score")
     teamItem:AddChild(scoreItem)
+    
+    currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
+    
+    // Exp  text item.
+    local expItem = GUI.CreateTextItem()
+    expItem:SetFontName(GUIScoreboard.kFontName)
+    expItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
+    expItem:SetAnchor(GUIItem.Left, GUIItem.Top)
+    expItem:SetTextAlignmentX(GUITextItem.Align_Min)
+    expItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    expItem:SetPosition(Vector(currentColumnX, 5, 0))
+    expItem:SetColor(color)
+    expItem:SetText("Exp")
+    teamItem:AddChild(expItem)
     
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
@@ -256,7 +270,7 @@ function GUIScoreboard:UpdateTeam(updateTeam)
     end
 
     // How many items per player.
-    local numElementsPerPlayerRecord = 7
+    local numElementsPerPlayerRecord = 8
     local numPlayers = table.count(teamScores) / numElementsPerPlayerRecord
     
     // Update the team name text.
@@ -283,6 +297,7 @@ function GUIScoreboard:UpdateTeam(updateTeam)
         local kills = tostring(teamScores[currentPlayerIndex + 2])
         local deaths = tostring(teamScores[currentPlayerIndex + 3])
         local isCommander = teamScores[currentPlayerIndex + 4]
+        local expStr= tostring(teamScores[currentPlayerIndex + 7])
         local plasmaStr = ConditionalValue(isLocalTeam, tostring(teamScores[currentPlayerIndex + 5]), "-")
         local ping = teamScores[currentPlayerIndex + 6]
         local pingStr = tostring(ping)
@@ -313,6 +328,7 @@ function GUIScoreboard:UpdateTeam(updateTeam)
         player["Deaths"]:SetText(deaths)
         player["Plasma"]:SetText(plasmaStr)
         player["Ping"]:SetText(pingStr)
+        player["Exp"]:SetText(expStr)
         if ping < GUIScoreboard.kLowPingThreshold then
             player["Ping"]:SetColor(GUIScoreboard.kLowPingColor)
         elseif ping < GUIScoreboard.kMedPingThreshold then
@@ -390,6 +406,19 @@ function GUIScoreboard:CreatePlayerItem()
     
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
+    // Exp text item.
+    local expItem = GUI.CreateTextItem()
+    expItem:SetFontName(GUIScoreboard.kFontName)
+    expItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
+    expItem:SetAnchor(GUIItem.Left, GUIItem.Top)
+    expItem:SetTextAlignmentX(GUITextItem.Align_Min)
+    expItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    expItem:SetPosition(Vector(currentColumnX, 5, 0))
+    expItem:SetColor(Color(1, 1, 1, 1))
+    playerItem:AddChild(expItem)
+    
+    currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX    
+    
     // Kill text item.
     local killsItem = GUI.CreateTextItem()
     killsItem:SetFontName(GUIScoreboard.kFontName)
@@ -440,6 +469,6 @@ function GUIScoreboard:CreatePlayerItem()
     pingItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(pingItem)
     
-    return { Background = playerItem, Name = playerNameItem, Score = scoreItem, Kills = killsItem, Deaths = deathsItem, Plasma = resItem, Ping = pingItem }
+    return { Background = playerItem, Name = playerNameItem, Score = scoreItem, Kills = killsItem, Deaths = deathsItem, Plasma = resItem, Ping = pingItem, Exp = expItem }
     
 end

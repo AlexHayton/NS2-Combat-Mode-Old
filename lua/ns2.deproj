@@ -750,4 +750,10 @@
   <file>
     <filename>GUIUtility.lua</filename>
   </file>
+  <file>
+    <filename>Experience.lua</filename>
+  </file>
+  <file>
+    <filename>GUIExperience.lua</filename>
+  </file>
 </project>

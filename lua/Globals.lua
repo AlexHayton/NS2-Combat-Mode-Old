@@ -6,6 +6,7 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Utility.lua")
+Script.Load("lua/Experience.lua")
 
 // Team types - corresponds with teamNumber in editor_setup.xml
 kNeutralTeamType = 0

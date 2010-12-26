@@ -35,6 +35,14 @@ GUIAlienHUD.kArmorTextureY1 = 0
 GUIAlienHUD.kArmorTextureX2 = 256
 GUIAlienHUD.kArmorTextureY2 = 128
 
+GUIAlienHUD.kExperienceBackgroundWidth = 500
+GUIAlienHUD.kExperienceBackgroundHeight = 128
+GUIAlienHUD.kExperienceBarOffset = Vector(30, -30, 0)
+GUIAlienHUD.kExperienceBackgroundTextureX1 = 0
+GUIAlienHUD.kExperienceBackgroundTextureY1 = 0
+GUIAlienHUD.kExperienceBackgroundTextureX2 = 128
+GUIAlienHUD.kExperienceBackgroundTextureY2 = 128
+
 GUIAlienHUD.kBarMoveRate = 0.5
 
 GUIAlienHUD.kFontColor = Color(0.8, 0.4, 0.4, 1)
@@ -44,6 +52,9 @@ GUIAlienHUD.kHealthTextYOffset = -20
 
 GUIAlienHUD.kArmorTextFontSize = 25
 GUIAlienHUD.kArmorTextYOffset = 20
+
+GUIAlienHUD.kExperienceTextFontSize = 25
+GUIAlienHUD.kExperienceTextOffset = Vector(52, 40, 0)
 
 // This is how long a ball remains visible after it changes.
 GUIAlienHUD.kBallFillVisibleTimer = 5
@@ -84,6 +95,7 @@ function GUIAlienHUD:Initialize()
     
     self:CreateHealthBall()
     self:CreateEnergyBall()
+    self:CreateExperienceBar()
 
 end
 
@@ -274,6 +286,38 @@ function GUIAlienHUD:CreateInactiveAbilityIcons(numberOfIcons)
 
 end
 
+function GUIAlienHUD:CreateExperienceBar()
+    self.experienceBarBackground = GUI.CreateGraphicsItem()
+    self.experienceBarBackground:SetSize(Vector(GUIAlienHUD.kExperienceBackgroundWidth, GUIAlienHUD.kExperienceBackgroundHeight, 0))
+    self.experienceBarBackground:SetAnchor(GUIItem.Right, GUIItem.Top)
+    self.experienceBarBackground:SetPosition(Vector(-GUIAlienHUD.kExperienceBackgroundWidth, 0, 0) + GUIAlienHUD.kExperienceBarOffset)
+    self.experienceBarBackground:SetColor(Color(GUIAlienHUD.kFontColor))
+    self.experienceBarBackground:SetTexture(GUIAlienHUD.kTextureName)
+    self.experienceBarBackground:SetTexturePixelCoordinates(GUIAlienHUD.kExperienceBackgroundTextureX1, GUIAlienHUD.kExperienceBackgroundTextureY1, GUIAlienHUD.kExperienceBackgroundTextureY1, GUIAlienHUD.kExperienceBackgroundTextureY2)
+    self.experienceBarBackgroundXCoord = GUIAlienHUD.kExperienceBackgroundTextureX2
+    
+    self.experienceBar = GUI.CreateGraphicsItem()
+    self.experienceBar:SetSize(Vector(GUIAlienHUD.kExperienceBackgroundWidth, GUIAlienHUD.kExperienceBackgroundHeight, 0))
+    self.experienceBar:SetAnchor(GUIItem.Right, GUIItem.Top)
+    self.experienceBar:SetPosition(Vector(-GUIAlienHUD.kExperienceBackgroundWidth, 0, 0) + GUIAlienHUD.kExperienceBarOffset)
+    self.experienceBar:SetColor(Color(GUIAlienHUD.kFontColor))
+    self.experienceBar:SetTexture(GUIAlienHUD.kTextureName)
+    self.experienceBar:SetTexturePixelCoordinates(GUIAlienHUD.kExperienceBackgroundTextureX1, GUIAlienHUD.kExperienceBackgroundTextureY1, GUIAlienHUD.kExperienceBackgroundTextureY1, GUIAlienHUD.kExperienceBackgroundTextureY2)
+    
+    self.experienceText = GUI.CreateTextItem()
+    self.experienceText:SetFontSize(GUIAlienHUD.kExperienceTextFontSize)
+    self.experienceText:SetFontName(GUIAlienHUD.kTextFontName)
+    self.experienceText:SetFontIsBold(false)
+    self.experienceText:SetAnchor(GUIItem.Left, GUIItem.Top)
+    self.experienceText:SetTextAlignmentX(GUITextItem.Align_Center)
+    self.experienceText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.experienceText:SetPosition(GUIAlienHUD.kExperienceTextOffset)
+    self.experienceText:SetColor(GUIAlienHUD.kFontColor)
+
+    self.experienceBarBackground:AddChild(self.experienceBar)
+    self.experienceBarBackground:AddChild(self.experienceText)
+end
+
 function GUIAlienHUD:Uninitialize()
 
     if self.healthBall then
@@ -303,6 +347,7 @@ function GUIAlienHUD:Update(deltaTime)
     
     self:UpdateHealthBall(deltaTime)
     self:UpdateEnergyBall(deltaTime)
+    self:UpdateExperienceBar(deltaTime)
     
 end
 
@@ -342,6 +387,9 @@ function GUIAlienHUD:UpdateEnergyBall(deltaTime)
     
     self:UpdateAbilities(deltaTime)
     
+end
+
+function GUIAlienHUD:UpdateExperienceBar(deltaTime)
 end
 
 function GUIAlienHUD:UpdateAbilities(deltaTime)

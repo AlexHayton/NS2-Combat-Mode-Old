@@ -144,6 +144,9 @@ function GUIMarineHUD:CreateArmorBar()
 
 end
 
+function GUIMarineHUD:CreateExperienceBar()
+end
+
 function GUIMarineHUD:Uninitialize()
 
     // Destroying the background will destroy all it's children too.
@@ -212,4 +215,7 @@ function GUIMarineHUD:UpdateArmorBar(deltaTime)
         self.armorText:SetText(tostring(math.ceil(PlayerUI_GetPlayerArmor())))
     end
     
+end
+
+function GUIMarineHUD:UpdateExperienceBar(deltaTime)
 end
