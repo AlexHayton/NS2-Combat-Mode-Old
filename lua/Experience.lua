@@ -7,7 +7,6 @@
 // Manages the experience ranks and generic functions for dealing with experience.
 //
 
-kMaxExperience = 2000
 kRankExp = { 0, 10, 20, 40, 80, 150, 300, kMaxExperience }
 kMarineRanks = { "Private", "Private First Class", "Sergeant", "Lieutenant", "Commander", "General", "Master General" }
 kAlienRanks = { "Worm", "Slug", "Parasite", "Crawler", "Hunter", "Beast", "Overlord" }
@@ -62,7 +61,7 @@ function Experience_GrantNearbyExperience(pointOwner, points)
     
     for index, entity in ipairs(friendlies) do
     
-        if (entity:GetOrigin() - pointOwner:GetOrigin()):GetLength() < kExperienceRadius then
+        //if (entity:GetOrigin() - pointOwner:GetOrigin()):GetLength() < kExperienceRadius then
 
             if not entity:isa("Commander") and not entity == pointOwner then
 
@@ -77,7 +76,7 @@ function Experience_GrantNearbyExperience(pointOwner, points)
                 
             end
             
-        end
+        //end
         
     end
 end
