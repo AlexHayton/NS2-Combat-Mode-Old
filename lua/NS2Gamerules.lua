@@ -104,6 +104,10 @@ function NS2Gamerules:CanEntityDoDamageTo(attacker, target)
     if not target:isa("LiveScriptActor") then
         return false
     end
+
+    if (not target:GetCanTakeDamage()) then
+        return false
+    end
    
     if (target == nil or target == {} or self:GetDarwinMode()) then
         return false
@@ -138,7 +142,7 @@ function NS2Gamerules:CanEntityDoDamageTo(attacker, target)
     end
     
     // Allow damage of own stuff when testing
-    return target:GetCanTakeDamage() and teamsOK
+    return teamsOK
 
 end
 
@@ -654,40 +658,44 @@ end
 
 function NS2Gamerules:OnUpdate(timePassed)
 
-    if self.justCreated then
-    
-        if not self.gameStarted then
-            self:ResetGame()
+    GetEffectManager():TriggerQueuedEffects()
+
+    if Server then
+
+        if self.justCreated then
+        
+            if not self.gameStarted then
+                self:ResetGame()
+            end
+            
+            self.justCreated = false
+
         end
         
-        self.justCreated = false
+        if self:GetMapLoaded() then
+        
+            self:CheckGameStart()
+            self:CheckGameEnd()
 
-    end
+            self:UpdatePregame(timePassed)
+            self:UpdateToReadyRoom()
+            
+            self.timeSinceGameStateChanged = self.timeSinceGameStateChanged + timePassed
+            
+            self.worldTeam:Update(timePassed)
+            self.team1:Update(timePassed)
+            self.team2:Update(timePassed)
+            self.spectatorTeam:Update(timePassed)
+            
+            // Send scores every so often
+            self:UpdateScores()
+            self:UpdatePings()
+            self:UpdateMinimapBlips()
+            self:UpdatePlayerList()
+            self:UpdateScriptActorList()
+            
+        end
     
-    if self:GetMapLoaded() then
-    
-        self:CheckGameStart()
-        self:CheckGameEnd()
-
-        self:UpdatePregame(timePassed)
-        self:UpdateToReadyRoom()
-        
-        self.timeSinceGameStateChanged = self.timeSinceGameStateChanged + timePassed
-        
-        self.worldTeam:Update(timePassed)
-        self.team1:Update(timePassed)
-        self.team2:Update(timePassed)
-        self.spectatorTeam:Update(timePassed)
-        
-        GetEffectManager():TriggerQueuedEffects()
-        
-        // Send scores every so often
-        self:UpdateScores()
-        self:UpdatePings()
-        self:UpdateMinimapBlips()
-        self:UpdatePlayerList()
-        self:UpdateScriptActorList()
-        
     end
     
 end

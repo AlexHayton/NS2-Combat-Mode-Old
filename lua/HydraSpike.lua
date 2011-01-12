@@ -12,8 +12,6 @@ class 'HydraSpike' (Projectile)
 
 HydraSpike.kMapName            = "hydraspike"
 HydraSpike.kModelName          = PrecacheAsset("models/alien/lerk/lerk_view_spike.model")
-HydraSpike.kHitSound           = PrecacheAsset("sound/ns2.fev/alien/common/spikes_ricochet")
-HydraSpike.kImpactEffect       = PrecacheAsset("cinematics/alien/lerk/spike_impact.cinematic")
 
 HydraSpike.kDamage             = kHydraSpikeDamage
 
@@ -42,11 +40,8 @@ if (Server) then
 
             end            
 
-            // Play sound and particle effect
-            Shared.PlayWorldSound(nil, HydraSpike.kHitSound, nil, self:GetOrigin())
-            
-            Shared.CreateEffect(nil, HydraSpike.kImpactEffect, nil, self:GetCoords())
-            
+            self:TriggerEffects("hydra_spike_hit")
+
             DestroyEntity(self)
                 
         end    

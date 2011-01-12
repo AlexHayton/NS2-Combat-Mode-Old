@@ -13,7 +13,7 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
 
     local killed = false
     
-    if (self:GetIsAlive()) then
+    if (self:GetIsAlive() and self:GetCanTakeDamage()) then
     
         self:OnTakeDamage(damage, doer, point)
         

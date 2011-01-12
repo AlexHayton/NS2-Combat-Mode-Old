@@ -12,10 +12,6 @@ class 'Grenade' (Projectile)
 
 Grenade.kMapName            = "grenade"
 Grenade.kModelName          = PrecacheAsset("models/marine/rifle/rifle_grenade.model")
-Grenade.kExplosionSound     = PrecacheAsset("sound/ns2.fev/marine/common/explode")
-Grenade.kGrenadeBounceSound = PrecacheAsset("sound/ns2.fev/marine/rifle/grenade_bounce")
-Grenade.kExplosionEffect    = "cinematics/materials/%s/grenade_explosion.cinematic"
-PrecacheMultipleAssets(Grenade.kExplosionEffect, kSurfaceList)
 
 Grenade.kDamageRadius       = kGrenadeLauncherDamageRadius
 Grenade.kMaxDamage          = kGrenadeLauncherDamage
@@ -47,7 +43,7 @@ if (Server) then
             self:Detonate(targetHit)            
         else
             if self:GetVelocity():GetLength() > 2 then
-                self:PlaySound(Grenade.kGrenadeBounceSound)
+                self:TriggerEffects("grenade_bounce")
             end
         end
         
@@ -60,9 +56,6 @@ if (Server) then
     
     function Grenade:Detonate(targetHit)
     
-        // Play sound and particle effect
-        Shared.PlayWorldSound(nil, Grenade.kExplosionSound, nil, self:GetOrigin())
-        
         // Do damage to targets
         local hitEntities = GetGamerules():GetEntities("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), Grenade.kDamageRadius)
         
@@ -72,15 +65,8 @@ if (Server) then
         
         RadiusDamage(hitEntities, self:GetOrigin(), Grenade.kDamageRadius, Grenade.kMaxDamage, self)
 
-        if self.physicsBody then
-
-            local surface = GetSurfaceFromEntity(targetHit)
-            
-            if(surface ~= "" and surface ~= nil and surface ~= "unknown") then
-                Shared.CreateEffect(nil, string.format(Grenade.kExplosionEffect, surface), nil, BuildCoords(Vector(0, 1, 0), Vector(0, 0, 1), self.physicsBody:GetCoords().origin, 1))    
-            end
-            
-        end
+        local surface = GetSurfaceFromEntity(targetHit)        
+        self:TriggerEffects("grenade_explode", {surface = surface})
 
         // Destroy first, just in case there are script errors below somehow
         DestroyEntity(self)

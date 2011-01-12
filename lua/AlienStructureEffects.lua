@@ -7,22 +7,253 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 kAlienStructureEffects = 
 {
-    //////////////////////
-    // Particle effects //
-    //////////////////////
+    construct =
+    {
+        alienConstruct =
+        {
+            {sound = "sound/ns2.fev/alien/structures/generic_build", isalien = true, done = true},
+        },
+    },
+
+    construction_complete = 
+    {
+        alienStructureComplete =
+        {
+            //"cinematics/alien/harvester/glow.cinematic"?
+            {sound = "sound/ns2.fev/alien/structures/harvester_active", classname = "Harvester"},
+            {animation = "active", classname = "Harvester", done = true},
+            {sound = "sound/ns2.fev/alien/structures/hive_idle", classname = "Hive"},
+        },
+    },
+    
+    animation_complete =
+    {
+        animCompleteEffects =
+        {
+            {animation = {{.4, "active1"}/*, {.7, "active2"}*/}, classname = "Harvester", from_animation = "deploy", blend_time = .3, force = true},            
+            {stop_sound = "sound/ns2.fev/alien/structures/harvester_active", classname = "Harvester", from_animation = "deploy"},
+            {sound = "sound/ns2.fev/alien/structures/harvester_active", classname = "Harvester", from_animation = "deploy"},
+        },
+    },
+    
     death =
     {
         alienStructureDeathParticleEffect =
         {        
             // Plays the first effect that evalutes to true
-            {cinematic = "cinematics/alien/structures/death_large.cinematic", classname = "Hive", isalien = true, stop = true},
-            {cinematic = "cinematics/alien/egg/burst.cinematic", classname = "Egg", stop = true},
-            {cinematic = "cinematics/alien/structures/death_small.cinematic", isalien = true, stop = true},
-            {cinematic = "cinematics/marine/structures/generic_death.cinematic", isalien = false, stop = true}
-            
+            {cinematic = "cinematics/alien/structures/death_large.cinematic", classname = "Hive", done = true},
+            {cinematic = "cinematics/alien/structures/death_small.cinematic", isalien = true, classname = "Structure", done = true},
+        },
+        
+        alienStructureDeathSounds =
+        {
+            {sound = "sound/alien/structures/hive_death", classname = "Hive", done = true},
+            {sound = "sound/alien/structures/harvester_death", classname = "Harvester", done = true},
+        },
+        
+        alienStructureDeathStopSounds =
+        {
+            {stop_sound = "sound/ns2.fev/alien/structures/harvester_active", classname = "Harvester", done = true},
+            {stop_sound = "sound/ns2.fev/alien/structures/hive_idle", classname = "Hive", done = true},
+        },        
+    },
+    
+    drifter_melee_attack =
+    {
+        drifterMeleeAttackEffects =
+        {
+            {animation = "attack", blend_time = .2},
+            {sound = "sound/ns2.fev/alien/drifter/attack"},
         },
     },
+    
+    drifter_flare =
+    {
+        drifterFlareEffects = 
+        {
+        },
+    },    
+    
+    // "sound/ns2.fev/alien/drifter/drift"
+    // "sound/ns2.fev/alien/drifter/ordered"
+    harvester_collect =
+    {
+        harvesterCollectEffect =
+        {
+            {sound = "sound/ns2.fev/alien/structures/harvester_harvested"},
+            //{cinematic = "cinematics/alien/harvester/resource_collect.cinematic"},
+            {animation = {{.4, "active1"}, {.7, "active2"}}, force = false},
+        },
+    },
+    
+    egg_death =
+    {
+        eggSpawnPlayerEffects =
+        {
+            // Kill egg with a sound
+            {sound = "sound/ns2.fev/alien/structures/egg/death"},
+            
+            // ...and a splash
+            {cinematic = "cinematics/alien/egg/burst.cinematic"},            
+
+            {stop_cinematic = "cinematics/alien/egg/mist.cinematic"},
+            
+            {animation = ""},
+
+        },
+    },
+
+    hydra_attack =
+    {
+        hydraAttackEffects =
+        {
+            {sound = "sound/ns2.fev/alien/structures/hydra/attack"},
+            //{cinematic = "cinematics/alien/hydra/spike_fire.cinematic"},
+            {animation = "attack", blend_time = .2},
+        },
+    },
+    
+    hydra_alert =
+    {
+        hydraAlertEffects =
+        {
+            {animation = "alert", blend_time = .2},
+        },
+    },
+    
+    hydra_spike_hit =
+    {
+        hydraSpikeHitEffects = 
+        {
+            {sound = "sound/ns2.fev/alien/common/spikes_ricochet"},
+            // or "cinematics/alien/lerk/spike_impact.cinematic"?
+            {cinematic = "cinematics/alien/hydra/spike_impact.cinematic"},
+        },
+    },
+    
+    player_start_gestate =
+    {
+        playerStartGestateEffects = 
+        {
+            {sound = "sound/ns2.fev/alien/common/gestate"},
+        },
+    },
+
+    player_end_gestate =
+    {
+        playerStartGestateEffects = 
+        {
+            {sound = "sound/ns2.fev/alien/common/hatch"},
+            {stop_sound = "sound/ns2.fev/alien/common/gestate"},
+        },
+    },
+    
+    hive_login =
+    {
+        hiveLoginEffects =
+        {
+            {sound = "sound/ns2.fev/alien/structures/hive_load"},            
+            {animation = "load"},
+        },
+    },
+
+    hive_logout =
+    {
+        hiveLogoutEffects =
+        {
+            {sound = "sound/ns2.fev/alien/structures/hive_exit"},
+            {animation = "deploy"},            
+        },
+    },
+    
+    hive_metabolize =
+    {
+        hiveMetabolizeEffects =
+        {
+            {sound = "sound/ns2.fev/alien/metabolize"},
+            
+            {cinematic = "cinematics/alien/metabolize_large.cinematic", classname = "Hive", done = true},
+            {cinematic = "cinematics/alien/metabolize_large.cinematic", classname = "Onos", done = true},
+            {cinematic = "cinematics/alien/metabolize_small.cinematic"},
+        },
+    },
+    
+    // Hive touched by enemy player
+    hive_recoil =
+    {
+        hiveRecoilEffects =
+        {
+            {animation = "scared_active", occupied = true, blend_time = .3},
+            {animation = "scared_inactive", occupied = false, blend_time = .3},
+        },
+    },
+    
+    // Triggers when crag tries to heal entities
+    crag_heal =
+    {        
+        cragTriggerHealEffects = 
+        {
+            {cinematic = "cinematics/alien/crag/heal.cinematic"},
+            {animation = "heal"},
+        },
+    },
+    
+    // Triggered for each entity healed by crag
+    crag_target_healed =
+    {        
+        cragTargetHealedEffects =
+        {
+            {sound = "sound/ns2.fev/alien/common/regeneration"},
+            
+            {cinematic = "cinematics/alien/heal_big.cinematic", classname = "Onos", done = true},
+            {cinematic = "cinematics/alien/heal_big.cinematic", classname = "Structure", done = true},
+            {cinematic = "cinematics/alien/heal.cinematic", done = true},
+        },
+    },
+    
+    // Triggered by commander
+    crag_trigger_umbra =
+    {
+        cragUmbraEffects =
+        {
+            // TODO: Play as private commander sound if played
+            {sound = "sound/ns2.fev/alien/structures/crag/umbra"},
+            {animation = "umbra"},
+            {cinematic = "cinematics/alien/crag/umbra.cinematic"},
+            // TODO: Add private commander sound
+        },
+    },    
+
+    // Triggered by commander
+    crag_trigger_babblers =
+    {
+        cragBabblerEffects =
+        {
+        },
+    },    
+    
+    whip_attack =
+    {
+        whipAttackEffects =
+        {
+            {sound = "sound/ns2.fev/alien/structures/whip/attack"},
+            {animation = "attack"},
+        },
+    },
+    
+    whip_trigger_fury =
+    {
+        whipTriggerFuryEffects = 
+        {
+            {sound = "sound/ns2.fev/alien/structures/whip/fury"},
+            {cinematic = "cinematics/alien/whip/fury.cinematic"},
+            {animation = "enervate", speed = 1},
+        },
+    },   
+
 }
+
+GetEffectManager():AddEffectData("AlienStructureEffects", kAlienStructureEffects)
 
 /*
 Hive.lua:27: Hive.kHiveSpawnTechEffect = PrecacheAsset("cinematics/alien/hive/hive_spawn.cinematic")
@@ -88,7 +319,6 @@ Whip.lua:26: Whip.kStrikeSoundEffect = PrecacheAsset("sound/ns2.fev/alien/struct
 
 Harvester.lua:22: Harvester.kGlowEffect = PrecacheAsset("cinematics/alien/harvester/glow.cinematic")
 Harvester.lua:23: Harvester.kIdleEffect = PrecacheAsset("cinematics/alien/harvester/resource_idle.cinematic")
-Harvester.lua:24: Harvester.kCollectEffect = PrecacheAsset("cinematics/alien/harvester/resource_collect.cinematic")
 Harvester.lua:15: Harvester.kActiveSound = PrecacheAsset("sound/ns2.fev/alien/structures/harvester_active")
 Harvester.lua:16: Harvester.kHarvestedSound = PrecacheAsset("sound/ns2.fev/alien/structures/harvester_harvested")
 Harvester.lua:17: Harvester.kDeploySound = PrecacheAsset("sound/ns2.fev/alien/structures/deploy_small")
@@ -101,7 +331,6 @@ Egg.lua:21: Egg.kBurstEffect = PrecacheAsset("cinematics/alien/egg/burst.cinemat
 Egg.lua:22: Egg.kMistEffect = PrecacheAsset("cinematics/alien/egg/mist.cinematic")
 Egg.lua:23: Egg.kSpawnEffect = PrecacheAsset("cinematics/alien/egg/spawn.cinematic")
 Egg.lua:24: Egg.kGlowEffect = PrecacheAsset("cinematics/alien/egg/glow.cinematic")
-Egg.lua:26: Egg.kDeathSoundName = PrecacheAsset("sound/ns2.fev/alien/structures/egg/death")
 Egg.lua:27: Egg.kSpawnSoundName = PrecacheAsset("sound/ns2.fev/alien/structures/egg/spawn")
 
 */

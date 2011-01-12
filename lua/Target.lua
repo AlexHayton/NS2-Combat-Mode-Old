@@ -85,10 +85,6 @@ if (Server) then
         
     end
     
-    function Target:GetKilledSound(doer)
-        return self.deathSoundName
-    end
-    
     function Target:OnKill(damage, attacker, doer, point, direction)
     
         // Create a rag doll.

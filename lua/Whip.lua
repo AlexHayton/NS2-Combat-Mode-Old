@@ -17,22 +17,6 @@ Whip.kMapName = "whip"
 
 Whip.kModelName = PrecacheAsset("models/alien/whip/whip.model")
 
-Whip.kAnimAttack = "attack"
-Whip.kAnimIdleTable = {{1, "idle"}, {.4, "idle2"}, {.3, "idle3"}, {.2, "idle4"}}
-Whip.kAnimFury = "enervate"
-
-Whip.kFurySound = PrecacheAsset("sound/ns2.fev/alien/structures/whip/fury")
-Whip.kIdleSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/whip/idle")
-Whip.kStrikeSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/whip/attack")
-
-Whip.kBombardFireEffect = PrecacheAsset("cinematics/alien/whip/bombard_fire.cinematic")
-Whip.kBombardEffect = PrecacheAsset("cinematics/alien/whip/bombard.cinematic")
-Whip.kBombardImpactEffect = PrecacheAsset("cinematics/alien/whip/bombard_impact.cinematic")
-Whip.kAcidStrikeFireEffect = PrecacheAsset("cinematics/alien/whip/acidstrike_fire.cinematic")
-Whip.kAcidStrikeEffect = PrecacheAsset("cinematics/alien/whip/acidstrike.cinematic")
-Whip.kAcidStrikeImpactEffect = PrecacheAsset("cinematics/alien/whip/acidstrike_impact.cinematic")
-Whip.kFuryEffect = PrecacheAsset("cinematics/alien/whip/fury.cinematic")
-
 Whip.kScanThinkInterval = .3
 Whip.kROF = 2.0
 Whip.kFov = 360
@@ -66,22 +50,6 @@ end
 
 function Whip:GetIsAlienStructure()
     return true
-end
-
-function Whip:GetIdleSound()
-    return Whip.kIdleSoundEffect
-end
-
-function Whip:GetIdleAnimation()
-    return chooseWeightedEntry(Whip.kAnimIdleTable)
-end
-
-function Whip:GetDeathEffect()
-    return Structure.kAlienDeathLargeEffect
-end
-
-function Whip:GetDamageEffectOffset()
-    return Vector(0, 9, 10)
 end
 
 function Whip:GetTechButtons(techId)

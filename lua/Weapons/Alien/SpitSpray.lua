@@ -18,15 +18,6 @@ SpitSpray.kMapName = "spitspray"
 SpitSpray.kSpitDelay = kSpitFireDelay
 SpitSpray.kSpitSpeed = 40
 
-// Health spray
-SpitSpray.kRegenerationSound = PrecacheAsset("sound/ns2.fev/alien/common/regeneration")
-SpitSpray.kHealthSprayEffect = PrecacheAsset("cinematics/alien/gorge/healthspray.cinematic")
-
-// Gorge health spray
-SpitSpray.kAnimSprayTable = { {.5, "health_spray_attack"} }
-
-SpitSpray.kAnimIdleTable = { {1, "idle"}, {.3, "idle2"}, {.05, "idle3"} }
-
 SpitSpray.kHealthSprayEnergyCost = kHealsprayEnergyCost
 SpitSpray.kMinHeal = 5
 SpitSpray.kHealRadius = 3.5
@@ -70,10 +61,6 @@ function SpitSpray:GetIconOffsetY(secondary)
     return kAbilityOffset.Spit
 end
 
-function SpitSpray:GetIdleAnimation()
-    return chooseWeightedEntry(SpitSpray.kAnimIdleTable)
-end
-
 function SpitSpray:CreateSpitProjectile(player)   
 
     if Server then
@@ -112,8 +99,6 @@ function SpitSpray:PerformPrimaryAttack(player)
     
     self.spitMode = true
     
-    player:TriggerEffects("spit_fire", {speed = 1/player:AdjustFuryFireDelay(1)})
-    
     player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
 
     self:CreateSpitProjectile(player)               
@@ -150,7 +135,7 @@ function SpitSpray:HealEntities(player)
                     
                 end 
                
-                Shared.PlayWorldSound(nil, SpitSpray.kRegenerationSound, nil, targetEntity:GetOrigin())
+                targetEntity:TriggerEffects("sprayed")
             
             end
        
@@ -180,15 +165,8 @@ function SpitSpray:PerformSecondaryAttack(player)
 
     self.spitMode = false
     
-    player:TriggerEffects("spray_fire", {speed = 1/player:AdjustFuryFireDelay(1)})
-    
     player:SetActivityEnd( player:AdjustFuryFireDelay(self:GetSecondaryAttackDelay() ))
     
-    // Put slightly in front of us
-    local coords = Coords(self:GetViewCoords())
-    coords.origin = self:GetHealOrigin(player)
-    Shared.CreateEffect(player, SpitSpray.kHealthSprayEffect, nil, coords)
-
     if Server then           
         self:HealEntities( player )
     end        
@@ -204,6 +182,18 @@ function SpitSpray:UpdateViewModelPoseParameters(viewModel, input)
     // Move away from chamber 
     self.chamberPoseParam = Clamp(Slerp(self.chamberPoseParam, 0, input.time), 0, 1)
     viewModel:SetPoseParam("chamber", self.chamberPoseParam)
+    
+end
+
+function SpitSpray:GetEffectParams(tableParams)
+
+    Ability.GetEffectParams(self, tableParams)
+    
+    // Override host coords for spray to be where heal origin is
+    local player = self:GetParent()
+    if player then
+        tableParams[kEffectHostCoords] = BuildCoordsFromDirection(player:GetViewCoords().zAxis, self:GetHealOrigin(player))
+    end
     
 end
 

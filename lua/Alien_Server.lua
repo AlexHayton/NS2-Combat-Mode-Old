@@ -24,7 +24,12 @@ function Alien:Evolve(techId)
         local physicsMask = PhysicsMask.AllButPCsAndRagdolls
         local position = self:GetOrigin()
         
-        if GetHasRoomForCapsule(eggExtents, position, physicsMask, self) and GetHasRoomForCapsule(newAlienExtents, position, physicsMask, self) then
+        if not self:GetIsOnGround() then
+        
+            // Pop up tooltip
+            self:AddTooltipOncePer("You must be on the ground to evolve.", 3)
+            
+        elseif GetHasRoomForCapsule(eggExtents, position, physicsMask, self) and GetHasRoomForCapsule(newAlienExtents, position, physicsMask, self) then
         
             self:RemoveChildren()
             
@@ -39,6 +44,11 @@ function Alien:Evolve(techId)
             angles.pitch = 0.0
             newPlayer:SetAngles(angles)
             
+            // Eliminate velocity so that we don't slide or jump as an egg
+            newPlayer.velocity.x = 0
+            newPlayer.velocity.y = 0
+            newPlayer.velocity.z = 0
+                    
             // We lose our purchased upgrades when we morph into something else
             newPlayer.upgrade1 = kTechId.None
             newPlayer.upgrade2 = kTechId.None
@@ -93,6 +103,8 @@ function Alien:OnInit()
     
     self.abilityEnergy = Ability.kMaxEnergy
 
-    Shared.PlaySound(self, self:GetSpawnSound())
-    
+end
+
+function Alien:MakeSpecialEdition()
+    // Currently there's no alient special edition visual difference
 end

@@ -148,7 +148,7 @@ kPlayingTeamInitialCarbon = 50
 	
 kPlayerInitialPlasma = 10	
 	
-kResourceTowerResourceInterval = 12
+kResourceTowerResourceInterval = 12	
 	
 	
 	
@@ -195,12 +195,12 @@ kShotgunMinDamageRange = 20
 kShotgunMaxDamageRange = 2	
 kShotgunSpreadDegrees = 20	
 	
-kFlamethrowerDamage = 35	
-kFlamethrowerDamageType = kDamageType.Flame	
-kFlamethrowerFireDelay = 0.5	
-kFlamethrowerClipSize = 20	
-	
-kBurnDamagePerSecond = 10	
+kFlamethrowerDamage = 25
+kFlamethrowerDamageType = kDamageType.Flame
+kFlamethrowerFireDelay = 0.5
+kFlamethrowerClipSize = 20
+
+kBurnDamagePerSecond = 10    
 	
 kMinigunDamage = 25	
 kMinigunDamageType = kDamageType.Normal	
@@ -275,6 +275,7 @@ kStabDamage = 160
 kStabDamageType = kDamageType.Puncture	
 kStabFireDelay = 1.5	
 kStabEnergyCost = 20	
+kBlinkEnergyCost = 25	
 	
 kGoreDamage = 90	
 kGoreDamageType = kDamageType.Normal	
@@ -300,6 +301,9 @@ kMelee1DamageScalar = 1.1
 kMelee2DamageScalar = 1.2	
 kMelee3DamageScalar = 1.3	
 	
+// SPAWN TIMES	
+kMarineRespawnTime = 10	
+kAlienRespawnTime = 9	
 	
 // BUILD/RESEARCH TIMES	
 kArmoryBuildTime = 15	
@@ -418,6 +422,7 @@ kSapResearchTime = 15
 	
 kBoneShieldResearchTime = 20	
 kStompResearchTime = 20	
+	
 	
 	
 	

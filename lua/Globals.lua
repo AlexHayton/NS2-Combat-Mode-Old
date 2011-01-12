@@ -22,6 +22,7 @@ kChatTextColor = 0xDDDDDD
 kChatTypeTextColor = 0xDD4444
 kFriendlyNeutralColor = 0xFFFFFF
 kEnemyColor = 0xFF0000
+kParasitedTextColor = 0xFFEB7F
 
 // Team numbers and indices
 kTeamInvalid = -1

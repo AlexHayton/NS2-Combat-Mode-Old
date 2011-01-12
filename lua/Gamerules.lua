@@ -26,11 +26,11 @@ Gamerules.kMapName = "gamerules"
 
 function Gamerules:OnCreate()
 
+    self:SetUpdates(true)
+
     if(Server) then
     
         self:SetIsVisible(false)
-        
-        self:SetUpdates(true)
         
         self:SetPropagate(Entity.Propagate_Always)
         
@@ -186,6 +186,11 @@ function Gamerules:OnClientConnect(client)
     
     if(player ~= nil) then
     
+        // Set up special armor marines if player owns special edition 
+        if Server.GetIsDlcAuthorized(client, kSpecialEditionProductId) then
+            player:MakeSpecialEdition()
+        end    
+        
         // Tell engine that player is controlling this entity
         client:SetControllingPlayer(player)
         

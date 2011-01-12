@@ -11,25 +11,9 @@ function Hive:GetTeamType()
     return kAlienTeamType
 end
 
-function Hive:GetKilledSound(doer)
-    return Hive.kKilledSound
-end
-
-function Hive:GetLoginSound()
-    return Hive.kLoadSound
-end
-
 // Aliens log in to hive instantly
 function Hive:GetLoginTime()
     return 0
-end
-
-function Hive:GetDeploySound()
-    return Hive.kDeploySound
-end
-
-function Hive:GetLogoutSound()
-    return Hive.kExitSound
 end
 
 function Hive:OnCreate()
@@ -52,7 +36,6 @@ end
 function Hive:OnKill(damage, attacker, doer, point, direction)
 
     CommandStructure.OnKill(self, damage, attacker, doer, point, direction)
-    self:StopSound(Hive.kActiveSound)
     
     if self:GetAttached() then
         self:GetAttached():SetTechLevel(1)
@@ -124,7 +107,7 @@ function Hive:SpawnEgg()
 end
 
 function Hive:GetEggSpawnTime()
-    return Hive.kBaseEggSpawnTime
+    return kAlienRespawnTime
 end
 
 function Hive:GetCanSpawnEgg()
@@ -160,19 +143,6 @@ function Hive:SpawnEggs()
     end
     
     return numEggsSpawned
-    
-end
-
-function Hive:KillEggs()
-
-    local eggs = GetGamerules():GetEntities("Egg", self:GetTeamNumber(), self:GetOrigin(), Hive.kEggMaxSpawnRadius)
-    local eggsKilled = table.count(eggs)
-    
-    for index, egg in ipairs(eggs) do
-        DestroyEntity(egg)
-    end
-    
-    return eggsKilled
     
 end
 
@@ -228,20 +198,6 @@ function Hive:GetDamagedAlertId()
         return kTechId.AlienAlertHiveUnderAttack
     end
     
-end
-
-function Hive:GetFlinchAnimation(damage)
-
-    /*if(not self:GetIsBuilt()) then        
-        return ConditionalValue(damage < 25, Hive.kAnimFlinchSpawnSmall, Hive.kAnimFlinchSpawnBig)
-    elseif(not self:GetIsOccupied()) then
-        return ConditionalValue(damage < 25, Hive.kAnimFlinchInactiveSmall, Hive.kAnimFlinchInactiveBig)
-    else
-        return ConditionalValue(damage < 25, Hive.kAnimFlinchActiveSmall, Hive.kAnimFlinchActiveBig)
-    end */
-    
-    return "flinch" 
-
 end
 
 function Hive:OnTakeDamage(damage, doer, point)

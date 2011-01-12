@@ -18,7 +18,6 @@ Stomp.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/onos/stomp")
 
 // View model animations
 Stomp.kAnimAttackTable = {{1, "attack"}/*, {1, "attack2"}, {1, "attack3"}, {1, "attack4"}*/}
-Stomp.kAnimIdleTable = {{1, "idle"}/*, {.1, "idle2"}, {.5, "idle3"}, {.4, "idle4"}*/}
 
 // Player animations
 Stomp.kAnimPlayerAttack = "stomp"
@@ -51,10 +50,6 @@ end
 
 function Stomp:GetHUDSlot()
     return 3
-end
-
-function Stomp:GetIdleAnimation()
-    return chooseWeightedEntry( Stomp.kAnimIdleTable )
 end
 
 function Stomp:GetIconOffsetY(secondary)

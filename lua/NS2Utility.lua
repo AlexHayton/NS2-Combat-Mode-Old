@@ -52,7 +52,7 @@ function GetIsBuildLegal(techId, position, snapRadius, player, silent)
             end
             
         end
-        
+    
     end
 
     if legalBuild and player then
@@ -65,8 +65,18 @@ function GetIsBuildLegal(techId, position, snapRadius, player, silent)
         end
     
         local techNode = techTree:GetTechNode(techId)
-       
-        if techNode and (techNode:GetIsBuild() or techNode:GetIsBuy()) then
+        
+        // Build tech can't be built on top of LiveScriptActors
+        if techNode and techNode:GetIsBuild() then
+        
+            local trace = Shared.TraceRay(position, position - Vector(0, 2, 0), PhysicsMask.AllButPCs)
+            if trace.entity and trace.entity:isa("LiveScriptActor") then
+                legalBuild = false
+            end
+            
+        end
+
+        if techNode and (techNode:GetIsBuild() or techNode:GetIsBuy()) and legalBuild then        
         
             local numFriendlyEntitiesInRadius = 0
             local entities = GetEntitiesIsaInRadius("ScriptActor", player:GetTeamNumber(), legalPosition, kMaxEntityRadius, true)
@@ -268,7 +278,7 @@ function ReplicateStructure(techId, position, commander)
             newEnt:SetConstructionComplete()
             
             // Deploy it and set next think time to that duration
-            local animLength = newEnt:GetAnimationLength(newEnt:GetDeployAnimation())
+            local animLength = newEnt:GetAnimationLength()
             newEnt:SetNextThink(animLength)
             
             // Play replicate sound at target
@@ -649,7 +659,10 @@ function GetCanEggFit(position)
 
     local eggCenter = position + Vector(0, extents.y + .05, 0)
 
-    if not Shared.CollideBox(extents, eggCenter) then
+    local filter = nil
+    local physicsMask = PhysicsMask.AllButPCs
+    
+    if not Shared.CollideBox(extents, eggCenter, physicsMask, filter) then
             
         return true
                     
@@ -968,16 +981,8 @@ function GetHasRoomForCapsule(extents, position, physicsMask, ignoreEntity)
 
     if extents ~= nil then
     
-        local capsuleHeight, capsuleRadius = GetTraceCapsuleFromExtents(extents)
-        local startPoint = Vector(position.x, position.y + capsuleHeight/2 + .01 + capsuleRadius, position.z)
-        local endPoint = Vector(startPoint.x, startPoint.y + .1, startPoint.z)
         local filter = ConditionalValue(ignoreEntity, EntityFilterOne(ignoreEntity), nil)
-        
-        // Very important - TraceCapsule will succeed even if intersecting if the trace appears to be making the 
-        // two "unstuck". This is so interpenetrating players can move away from each other.
-        local trace = Shared.TraceCapsule(startPoint, endPoint, capsuleRadius, capsuleHeight, physicsMask, filter)
-        
-        return (trace.fraction == 1)        
+        return Shared.CollideBox(extents, position, physicsMask, filter)
         
     else
         Print("GetHasRoomForCapsule(): Extents not valid.")
@@ -1087,3 +1092,29 @@ function GetMinimapNormCoordsFromPlayable(map, playableX, playableY)
     return playableX * (1 / playableWidth), playableY * (1 / playableHeight)
     
 end
+
+// If we hit something, create an effect (sparks, blood, etc.).        
+function TriggerHitEffects(doer, target, origin, surface)
+
+    local tableParams = {}
+
+    if doer and doer.GetClassName then
+        tableParams[kEffectFilterDoerName] = doer:GetClassName()
+    end
+
+    if target and target.GetClassName then
+        tableParams[kEffectFilterClassName] = target:GetClassName()
+    end        
+    
+    tableParams[kEffectSurface] = ConditionalValue(type(surface) == "string" and surface ~= "", surface, "metal")
+    
+    if origin then    
+        tableParams[kEffectHostCoords] = Coords.GetTranslation(origin)
+    else
+        tableParams[kEffectHostCoords] = Coords.GetIdentity()
+    end
+    
+    GetEffectManager():TriggerEffects("hit_effect", tableParams, doer)
+    
+end
+

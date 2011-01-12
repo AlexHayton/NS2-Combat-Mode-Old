@@ -100,6 +100,7 @@ end
 
 // Changes the visual appearance of the player to the special edition version.
 function Player:MakeSpecialEdition()
+    self:SetModel(Player.kSpecialModelName)
 end
 
 // Not authoritative, only visual and information. Carbon is stored in the team.
@@ -144,6 +145,10 @@ function Player:OnTeamChange(newTeamNumber)
 
         // Send scoreboard changes to everyone    
         self:SetScoreboardChanged(true)
+        
+        // Clear all hotkey groups on team change since old
+        // hotkey groups will be invalid.
+        self:InitializeHotkeyGroups()
         
         // Tell team to send entire tech tree
         self.sendTechTreeBase = true
@@ -195,14 +200,6 @@ end
  * may be nil if the damage wasn't directional.
  */
 function Player:OnKill(damage, killer, doer, point, direction)
-
-    local killedSound = self:GetKilledSound(doer)
-    if killedSound ~= nil then
-    
-        // Play world sound instead of parented sound as entity is going away
-        Shared.PlayWorldSound(nil, killedSound, nil, self:GetOrigin())
-        
-    end
 
     local killerName = nil
     
@@ -303,8 +300,6 @@ function Player:OnUpdate(deltaTime)
             
         end
 
-    else
-        self:UpdateUse(deltaTime)
     end 
 
     /*local viewModel = self:GetViewModelEntity()
@@ -548,11 +543,25 @@ function Player:GiveItem(itemMapName)
     if itemMapName then
     
         newItem = CreateEntity(itemMapName, self:GetEyePos(), self:GetTeamNumber())
-        if newItem and newItem.OnCollision then
-        
-            self:ClearActivity()
-            
-            newItem:OnCollision(self)
+        if newItem then
+
+            // If we already have an item which would occupy the same HUD slot, drop it
+
+            if (self.Drop and self.GetWeaponInHUDSlot) then
+
+                local hudSlot = newItem:GetHUDSlot()
+                local weapon  = self:GetWeaponInHUDSlot(hudSlot)
+
+                if (weapon ~= nil) then
+                    self:Drop( weapon )
+                end
+                
+            end
+
+            if newItem.OnCollision then
+                self:ClearActivity()
+                newItem:OnCollision(self)
+            end
             
         else
             Print("Couldn't create entity named %s.", itemMapName)            
@@ -566,10 +575,27 @@ end
 
 function Player:AddWeapon(weapon, setActive)
     
-    weapon:SetParent(self)
+    local activeWeapon = self:GetActiveWeapon()
     
+    weapon:SetParent(self)
     self:ComputeHUDOrderedWeaponList()
     
+    // The active weapon could have been reindexed, so make sure
+    // we're storing the correct index
+    
+    if self.activeWeaponIndex ~= 0 then
+        
+        local weaponList = self:GetHUDOrderedWeaponList()
+    
+        for index, weapon in ipairs(weaponList) do
+            if (weapon == activeWeapon) then
+                self.activeWeaponIndex = index
+                break
+            end
+        end
+    
+    end   
+ 
     if setActive then
         self:SetActiveWeapon(weapon:GetMapName())
     end
@@ -582,12 +608,34 @@ function Player:RemoveWeapon(weapon)
 
     // Switch weapons if we're dropping our current weapon
     local activeWeapon = self:GetActiveWeapon()    
-    if activeWeapon ~= nil and weapon:GetId() == activeWeapon:GetId() then
-        self:SelectNextWeapon()        
+    
+    if activeWeapon ~= nil and weapon == activeWeapon then
+        self.activeWeaponIndex = 0
+        self:SetViewModel(nil, nil)
     end
     
     // Delete weapon 
     weapon:SetParent(nil)
+    
+    // We need to recompute out cached list since we've removed
+    // something from it.
+    self:ComputeHUDOrderedWeaponList()
+    
+    // The active weapon could have been reindexed, so make sure
+    // we're storing the correct index
+    
+    if self.activeWeaponIndex ~= 0 then
+        
+        local weaponList = self:GetHUDOrderedWeaponList()
+    
+        for index, weapon in ipairs(weaponList) do
+            if (weapon == activeWeapon) then
+                self.activeWeaponIndex = index
+                break
+            end
+        end
+    
+    end
     
 end
 
@@ -600,6 +648,10 @@ function Player:RemoveWeapons()
     for index, entity in ipairs(childEntities) do
         DestroyEntity(entity)
     end    
+
+    // We need to recompute out cached list since we've removed
+    // everything from it.
+    self:ComputeHUDOrderedWeaponList()
 
 end
 

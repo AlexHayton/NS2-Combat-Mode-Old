@@ -40,6 +40,7 @@ function Flamethrower:SetPilotLightState(state)
     
 end
 
+/*
 function Flamethrower:OnUpdate(deltaTime)
 
     ClipWeapon.OnUpdate(self, deltaTime)
@@ -66,5 +67,6 @@ function Flamethrower:OnUpdate(deltaTime)
             
     end 
    
-end    
+end
+*/
 

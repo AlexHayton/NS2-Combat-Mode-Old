@@ -24,9 +24,6 @@ Lerk.kModelName = PrecacheAsset("models/alien/lerk/lerk.model")
 Lerk.kViewModelName = PrecacheAsset("models/alien/lerk/lerk_view.model")
 
 Lerk.kSpawnSoundName = PrecacheAsset("sound/ns2.fev/alien/lerk/spawn")
-Lerk.kDieSoundName = PrecacheAsset("sound/ns2.fev/alien/lerk/death")
-Lerk.kLeftFootstepSound = PrecacheAsset("sound/ns2.fev/alien/lerk/footstep_left")
-Lerk.kRightFootstepSound = PrecacheAsset("sound/ns2.fev/alien/lerk/footstep_right")
 Lerk.kFlapSound = PrecacheAsset("sound/ns2.fev/alien/lerk/flap")
 
 local networkVars = {
@@ -54,7 +51,6 @@ Lerk.kAcceleration = 115
 Lerk.kAirAcceleration = 4
 Lerk.kHealth = kLerkHealth
 Lerk.kArmor = kLerkArmor
-Lerk.kAnimIdle = {{1, "idle"}}
 Lerk.kAnimRun = "run"
 Lerk.kAnimFly = "fly"
 Lerk.kAnimLand = "land"
@@ -73,10 +69,6 @@ end
 
 function Lerk:GetViewModelName()
     return Lerk.kViewModelName
-end
-
-function Lerk:GetSpawnSound()
-    return Lerk.kSpawnSoundName
 end
 
 // Gain speed gradually the longer we stay in the air
@@ -127,8 +119,6 @@ function Lerk:HandleJump(input, velocity)
 
         velocity.y = velocity.y + Lerk.kJumpImpulse
     
-        self:PlayFootstepSound(true)
-        
         self.timeOfLastJump = Shared.GetTime()
         
     else
@@ -307,22 +297,6 @@ function Lerk:Flap(input, velocity)
     
     self.flappedSinceLeftGround = true
 
-end
-
-function Lerk:PlayFootstepSound()
-
-    if(self.leftFoot) then
-        Shared.PlaySound(self, Lerk.kLeftFootstepSound)
-    else
-        Shared.PlaySound(self, Lerk.kRightFootstepSound)
-    end
-    
-    self.leftFoot = not self.leftFoot
-    
-end
-
-function Lerk:GetIdleAnimation()
-    return chooseWeightedEntry(Lerk.kAnimIdle)
 end
 
 function Lerk:GetCustomAnimationName(animName)

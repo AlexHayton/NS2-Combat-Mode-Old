@@ -23,6 +23,10 @@ GUICommanderAlerts.kBadgeWidthBuffer = 5
 
 GUICommanderAlerts.kMessageFontSize = 18
 
+// This is how high up the screen the messages should be offset from.
+// This avoids them clipping over the tooltips.
+GUICommanderAlerts.kMessageScreenYOffset = 200
+
 GUICommanderAlerts.kTimeStartFade = 4
 GUICommanderAlerts.kTimeEndFade = 6
 
@@ -91,7 +95,7 @@ function GUICommanderAlerts:Update(deltaTime)
     local numberMessages = table.count(self.messages)
     for i, message in ipairs(self.messages) do
         local currentPosition = Vector(message["Background"]:GetPosition())
-        currentPosition.y = GUICommanderAlerts.kBadgeHeight * (numberMessages - i)
+        currentPosition.y = GUICommanderAlerts.kBadgeHeight * (numberMessages - i) - GUICommanderAlerts.kMessageScreenYOffset
         message["Background"]:SetPosition(currentPosition)
         message["Time"] = message["Time"] + deltaTime
         if message["Time"] >= GUICommanderAlerts.kTimeStartFade then

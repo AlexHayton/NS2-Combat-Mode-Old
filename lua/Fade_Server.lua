@@ -18,10 +18,6 @@ function Fade:InitWeapons()
     
 end
 
-function Fade:GetKilledSound(doer)
-    return Fade.kDieSoundName
-end
-
 function Fade:GetCanTakeDamage()
     return Alien.GetCanTakeDamage(self) and not self:GetIsBlinking()
 end

@@ -15,61 +15,15 @@ Rifle.kMapName = "rifle"
 Rifle.kModelName = PrecacheAsset("models/marine/rifle/rifle.model")
 Rifle.kViewModelName = PrecacheAsset("models/marine/rifle/rifle_view.model")
 
-Rifle.drawSoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/draw")
-Rifle.reloadSoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/reload")
-
-// Three different variations of the rifle to make firefights sound a bit more diverse
-Rifle.fireSingleSoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/fire_single")
-Rifle.fireSingle2SoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/fire_single_2")
-Rifle.fireSingle3SoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/fire_single_3")
-
-Rifle.fireSoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/fire_14_sec_loop")
-Rifle.fire2SoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/fire_loop_2")
-Rifle.fire3SoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/fire_loop_3")
-
-Rifle.fireEndSoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/fire_14_sec_end")
-
-Rifle.meleeSwingSoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/alt_swing")
-Rifle.meleeHitHardSoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/alt_hit_hard")
-Rifle.meleeHitLivingSoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/alt_hit_living")
-
-Rifle.kMuzzleFlashEffect = PrecacheAsset("cinematics/marine/rifle/muzzle_flash.cinematic")
-Rifle.kBarrelSmokeEffect = PrecacheAsset("cinematics/marine/rifle/barrel_smoke.cinematic")
-
-Rifle.kShellEffect = PrecacheAsset("cinematics/marine/rifle/shell.cinematic")
-Rifle.kShell2Effect = PrecacheAsset("cinematics/marine/rifle/shell2.cinematic")
-Rifle.kShell3Effect = PrecacheAsset("cinematics/marine/rifle/shell3.cinematic")
-Rifle.kShell4Effect = PrecacheAsset("cinematics/marine/rifle/shell4.cinematic")
-Rifle.kShell5Effect = PrecacheAsset("cinematics/marine/rifle/shell5.cinematic")
-Rifle.kShellEffectTable = { {1, Rifle.kShellEffect}, {1, Rifle.kShell2Effect}, {1, Rifle.kShell3Effect}, {1, Rifle.kShell4Effect}, {1, Rifle.kShell5Effect}}
-
-Rifle.kBashEffect = "cinematics/materials/%s/bash.cinematic"
-PrecacheMultipleAssets(Rifle.kBashEffect, kSurfaceList)
-
-Rifle.kMuzzleNode = "fxnode_riflemuzzle"
-Rifle.kCasingNode = "fxnode_riflecasing"
-Rifle.kShellNode = "fxnode_rifleshell"
-
 Rifle.kClipSize = kRifleClipSize
 Rifle.kRange = 250
 Rifle.kFireDelay = kRifleFireDelay
-Rifle.kSpread = ClipWeapon.kCone4Degrees    // From NS1
+Rifle.kSpread = ClipWeapon.kCone3Degrees    // 4 degrees in NS1
 Rifle.kDamage = kRifleDamage
 
 Rifle.kButtDelay = kRifleMeleeFireDelay
 Rifle.kButtDamage = kRifleMeleeDamage
 Rifle.kButtRange = 1.5
-Rifle.kMeleeAnims = { {.2, "attack_secondary", Rifle.meleeSwingSoundName}, {.2, "attack_secondary2", Rifle.meleeSwingSoundName}, {.2, "attack_secondary3", Rifle.meleeSwingSoundName}}
-
-// Overlay on player
-Rifle.kPlayerAnimSecondaryAttack = "alt"
-
-// Rifle idle table. The animations here are listed with their relatively probabily of being played. 
-Rifle.kAnimIdleTable = {{1.0, "idle"}, {.5, "idle3"}, {.05, "idle4"}, {.05, "idle5"}}
-Rifle.kAnimPrimaryAttackTable = {{.5, "attack"}}
-
-Rifle.fireSingleSoundTable = {Rifle.fireSingleSoundName, Rifle.fireSingle2SoundName, Rifle.fireSingle3SoundName}
-Rifle.fireLoopSoundTable = {Rifle.fireSoundName, Rifle.fire2SoundName, Rifle.fire3SoundName}
 
 local networkVars =
 {
@@ -90,29 +44,8 @@ function Rifle:GetViewModelName()
     return Rifle.kViewModelName
 end
 
-function Rifle:GetFireSoundName()
-    // Play sound effect for hitting
-    return Rifle.fireLoopSoundTable[self.soundType]
-end
-
 function Rifle:GetDeathIconIndex()
     return ConditionalValue(self.lastAttackSecondary, kDeathMessageIcon.RifleButt, kDeathMessageIcon.Rifle)
-end
-
-function Rifle:GetDrawSound()
-    return Rifle.drawSoundName
-end
-
-function Rifle:GetReloadSound()
-    return Rifle.reloadSoundName
-end
-
-function Rifle:GetIsDroppable()
-    return true
-end
-
-function Rifle:GetBaseIdleAnimation()
-    return chooseWeightedEntry( Rifle.kAnimIdleTable )
 end
 
 function Rifle:GetRunIdleAnimation()
@@ -126,6 +59,10 @@ end
 
 function Rifle:GetClipSize()
     return Rifle.kClipSize
+end
+
+function Rifle:GetReloadTime()
+    return kRifleReloadTime
 end
 
 function Rifle:GetSpread()
@@ -150,25 +87,8 @@ function Rifle:GetAccuracyRecoveryRate(player)
     return 1.4 - .3*velocityScalar
 end
 
-function Rifle:GetPrimaryAttackAnimation()
-    return chooseWeightedEntry( Rifle.kAnimPrimaryAttackTable )
-end
-
-function Rifle:GetForcePrimaryAttackAnimation()
-    // This is a looping attack animation, don't keep restarting it
-    return false
-end
-
 function Rifle:GetSecondaryAttackDelay()
     return Rifle.kButtDelay
-end
-
-function Rifle:GetIsPrimaryAttackLooping()
-    return true
-end
-
-function Rifle:GetMuzzleFlashEffect()
-    return Rifle.kMuzzleFlashEffect
 end
 
 function Rifle:GetBarrelSmokeEffect()
@@ -192,12 +112,6 @@ function Rifle:CreatePrimaryAttackEffect(player)
     
     self:SetCameraShake(.003 + NetworkRandom(string.format("%s:CreatePrimaryAttackEffect():SetCameraShake", self:GetClassName()))*shakeAmount, 1/self:GetPrimaryAttackDelay(), Rifle.kFireDelay)
 
-    // Create the muzzle flash effect.
-    self:CreateWeaponEffect(player, Weapon.kHumanAttachPoint, Rifle.kMuzzleNode, self:GetMuzzleFlashEffect())
-    
-    // Create the shell casing ejecting effect.
-    self:CreateWeaponEffect(player, Weapon.kHumanAttachPoint, Rifle.kCasingNode, self:GetShellEffect())
-    
     // Remember this so we can update gun_loop pose param
     self.timeOfLastPrimaryAttack = Shared.GetTime()
     
@@ -209,17 +123,9 @@ function Rifle:GetReloadCancellable()
     return true
 end
 
-function Rifle:OnDestroy()
-
-    self:StopPrimaryAttackSound()
-    
-    ClipWeapon.OnDestroy(self)
-    
-end
-
 function Rifle:OnHolster(player)
 
-    self:StopPrimaryAttackSound()
+    //self:StopPrimaryAttackSound()
     
     ClipWeapon.OnHolster(self, player)
     
@@ -227,7 +133,7 @@ end
 
 function Rifle:OnPrimaryAttack(player)
 
-    if not self.primaryAttackLastFrame then
+    if not player:GetPrimaryAttackLastFrame() then
         self.timeStartedAttack = Shared.GetTime()
     end
     
@@ -241,18 +147,12 @@ function Rifle:OnPrimaryAttackEnd(player)
 
     self:SetOverlayAnimation( nil )
     
-    self:StopPrimaryAttackSound()
-    
-    self:CreateWeaponEffect(player, Weapon.kHumanAttachPoint, Rifle.kMuzzleNode, self:GetBarrelSmokeEffect())
-    
     self.timeStartedAttack = nil
     
 end
 
 function Rifle:DoMelee(player)
 
-    self:StopPrimaryAttackSound()
-    
     self.lastAttackSecondary = true
     
     self:PerformMeleeAttack(player)
@@ -267,39 +167,32 @@ function Rifle:PerformMeleeAttack(player)
     // Perform melee attack
     local didHit, trace = self:AttackMeleeCapsule(player, Rifle.kButtDamage, Rifle.kButtRange)
     
-    if ( didHit ) then
-
-        // Hit the level
-        local hitObject = trace.entity
-        if(hitObject == nil) then        
+    if didHit then
+    
+        local hitClassname = nil
+        local isAlien = false
         
-            Shared.PlaySound(player, Rifle.meleeHitHardSoundName)
+        if trace.entity then
             
-        elseif(hitObject:isa("Player") or (hitObject:GetTeamType() == kAlienTeamType)) then
+            local hitObject = trace.entity
         
-            Shared.PlaySound(player, Rifle.meleeHitLivingSoundName)
-            
-            // Take player mass into account 
-            local direction = player:GetOrigin() - hitObject:GetOrigin()
-            direction:Normalize()
+            hitClassname = hitObject:GetClassName()
+            isAlien = (hitObject:GetTeamType() == kAlienTeamType)
             
             if hitObject:isa("Player") then
             
+                // Take player mass into account 
+                local direction = player:GetOrigin() - hitObject:GetOrigin()
+                direction:Normalize()
+                
                 local targetVelocity = hitObject:GetVelocity() + direction * (300 / hitObject:GetMass())
                 hitObject:SetVelocity(targetVelocity)
-                
+                    
             end
             
-        else
-        
-            Shared.PlaySound(player, Rifle.meleeHitHardSoundName)
-            
         end
         
-        local surface = GetSurfaceFromTrace(trace)
-        if(surface ~= "" and surface ~= nil and surface ~= "unknown") then
-            Shared.CreateEffect(nil, string.format(Rifle.kBashEffect, surface), nil, Coords.GetTranslation(trace.endPoint))
-        end
+        self:TriggerEffects("rifle_alt_attack_hit", {classname = hitClassname, isalien = isAlien, surface = GetSurfaceFromTrace(trace)})
         
     end
     
@@ -311,19 +204,14 @@ function Rifle:OnSecondaryAttack(player)
     if ( player:GetCanNewActivityStart() ) then
     
         // Play view model effect
-        local index = table.chooseWeightedIndex(Rifle.kMeleeAnims)
-        local animName = Rifle.kMeleeAnims[index][2]
-        
-        player:SetViewAnimation(animName)
         player:SetActivityEnd(self:GetSecondaryAttackDelay() * player:GetCatalystFireModifier())
 
-        player:SetOverlayAnimation(Rifle.kPlayerAnimSecondaryAttack)
         player:DeactivateWeaponLift()
         
         self:DoMelee(player)
         
-        Shared.PlaySound(player, Rifle.kMeleeAnims[index][3])
-
+        ClipWeapon.OnSecondaryAttack(self, player)
+        
     end
 
 end
@@ -345,50 +233,6 @@ function Rifle:ApplyMeleeHitEffects(player, damage, target, endPoint, direction)
         //local targetVelocity = target:GetVelocity() + direction * (300 / target:GetMass())
         //target:SetVelocity(targetVelocity)
 
-    end
-    
-end
-
-function Rifle:PlayPrimaryAttackSound(player)
-
-    // Don't play sounds if we have the silencer upgrade
-    if(not GetTechSupported(player, kTechId.RifleUpgradeTech)) then
-    
-        // Play single shot (concurrently with loop) the first time we fire
-        if self.loopingWeaponSoundPlaying == 0 then
-        
-            Shared.PlaySound(player, Rifle.fireSingleSoundTable[self.soundType])
-            
-        end
-        
-        ClipWeapon.PlayPrimaryAttackSound(self, player)    
-        
-    end
-    
-end
-
-function Rifle:StopPrimaryAttackSound()
-
-    local player = self:GetParent()    
-    Shared.StopSound(player, self:GetFireSoundName())
-    
-    if self.loopingWeaponSoundPlaying == 1 then
-    
-        self.loopingWeaponSoundPlaying = 0     
-        Shared.PlaySound(player, Rifle.fireEndSoundName)
-        
-    end
-    
-end
-
-function Rifle:OnReload(player)
-
-    if ( self:CanReload() ) then
-    
-        self:StopPrimaryAttackSound()
-        
-        ClipWeapon.OnReload(self, player)
-        
     end
     
 end
@@ -430,6 +274,14 @@ function Rifle:UpdateViewModelPoseParameters(viewModel, input)
 
     self:SetGunLoopParam(viewModel, "gun_loop", sign*input.time*3)
     self:SetGunLoopParam(viewModel, "arm_loop", sign*input.time)
+    
+end
+
+function Rifle:GetEffectParams(tableParams)
+
+    ClipWeapon.GetEffectParams(self, tableParams)
+    
+    tableParams[kEffectFilterVariant] = self.soundType
     
 end
 

@@ -20,14 +20,6 @@ local indexToUseOrigin = {
     Vector(-Armory.kResupplyUseRange, 0, 0)
 }
 
-function Armory:OnConstructionComplete()
-
-    Structure.OnConstructionComplete(self)
-    
-    self:PlaySound(Armory.kIdleSound)
-
-end
-
 function Armory:GetShouldResupplyPlayer(player)
 
     local inNeed = false
@@ -96,7 +88,7 @@ function Armory:ResupplyPlayer(player)
 
         player:AddHealth(Armory.kHealAmount)
 
-        player:PlaySound(Armory.kHealthSound)
+        player:TriggerEffects("armory_health")
         
         resuppliedPlayer = true
         
@@ -113,9 +105,7 @@ function Armory:ResupplyPlayer(player)
             
                 if weapon:GiveAmmo(1) then
                 
-                    player:PlaySound(Armory.kAmmoSound)
-                
-                    Shared.CreateEffect(nil, Armory.kResupplyEffect, player)
+                    player:TriggerEffects("armory_ammo")
                     
                     resuppliedPlayer = true
                     
@@ -253,7 +243,12 @@ function Armory:UpdateLoggedIn()
         
         if newState ~= self.loggedInArray[i] then
         
-            self:PlaySound(ConditionalValue(newState, Armory.kOpenSound, Armory.kCloseSound))
+            if newState then
+                self:TriggerEffects("armory_open")
+            else
+                self:TriggerEffects("armory_close")
+            end
+            
             self.loggedInArray[i] = newState
             
         end

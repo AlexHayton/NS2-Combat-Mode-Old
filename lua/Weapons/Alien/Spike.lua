@@ -12,7 +12,6 @@ class 'Spike' (Projectile)
 
 Spike.kMapName            = "spike"
 Spike.kModelName          = PrecacheAsset("models/alien/lerk/lerk_view_spike.model")
-Spike.kHitSound           = PrecacheAsset("sound/ns2.fev/alien/common/spikes_ricochet")
 
 // Does full damage up close then falls off over time 
 Spike.kMaxDamage             = kSpikeMaxDamage
@@ -46,8 +45,7 @@ if (Server) then
         // Don't hit owner - shooter
         if targetHit == nil or self:GetOwner() ~= targetHit then
         
-            // Play sound and particle effect
-            Shared.PlayWorldSound(nil, Spike.kHitSound, nil, self:GetOrigin())
+            local didDamage = false
             
             if targetHit == nil or (targetHit:isa("LiveScriptActor") and GetGamerules():CanEntityDoDamageTo(self, targetHit)) then
 
@@ -55,13 +53,21 @@ if (Server) then
                 
                     // Do max damage for short time and then fall off over time to encourage close quarters combat instead of 
                     // hanging back and sniping
-                    local damageScalar = ConditionalValue(self:GetOwner():GetHasUpgrade(kTechId.Piercing), kPiercingDamageScalar, 1)
-                    local damage = Spike.kMaxDamage - Clamp( (Shared.GetTime() - self.createTime) / Spike.kDamageFalloffInterval, 0, 1) * (Spike.kMaxDamage - Spike.kMinDamage)
-                    targetHit:TakeDamage(damage * damageScalar, self:GetOwner(), self, self:GetOrigin(), nil)
-                    
+                    if self:GetOwner() then
+                        local damageScalar = ConditionalValue(self:GetOwner():GetHasUpgrade(kTechId.Piercing), kPiercingDamageScalar, 1)
+                        local damage = Spike.kMaxDamage - Clamp( (Shared.GetTime() - self.createTime) / Spike.kDamageFalloffInterval, 0, 1) * (Spike.kMaxDamage - Spike.kMinDamage)
+                        targetHit:TakeDamage(damage * damageScalar, self:GetOwner(), self, self:GetOrigin(), nil)
+                        didDamage = true
+                    end
+        
                 end
 
             end            
+
+            // Play sound and particle effect            
+            if not didDamage then
+                TriggerHitEffects(self, targetHit, self:GetOrigin())
+            end
             
             // Destroy first, just in case there are script errors below
             DestroyEntity(self)

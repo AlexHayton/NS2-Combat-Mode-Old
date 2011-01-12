@@ -276,8 +276,11 @@ function ChooseRandomSpawn(center, player)
     local testOrigin = center + Vector( (NetworkRandom() - .5) * 6, NetworkRandom() * 1.5, (NetworkRandom() - .5) * 6)
     DropToFloor(testOrigin)
 
+    local filter = ConditionalValue(player, EntityFilterOne(player), nil)
+    local physicsMask = PhysicsMask.AllButPCs
+    
     // (TODO: re-enable this test when function works) If player has room to spawn here, stop looking
-    if not Shared.CollideBox(player:GetExtents(), testOrigin) then
+    if not Shared.CollideBox(player:GetExtents(), testOrigin, physicsMask, filter) then
 
         return testOrigin
         

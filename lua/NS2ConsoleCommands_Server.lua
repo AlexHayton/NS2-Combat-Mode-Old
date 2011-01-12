@@ -446,7 +446,7 @@ function OnCommandCommand(client)
         local ents = GetEntitiesIsa("CommandStructure", player:GetTeamNumber())
         if(table.maxn(ents) > 0) then
             player:SetOrigin(ents[1]:GetOrigin() + Vector(0, 1, 0))
-            ents[1]:OnUse(player, .1, true)
+            ents[1]:OnUse(player, .1, true, ents[1]:GetModelOrigin())
             ents[1]:UpdateCommanderLogin(true)
         end
         
@@ -554,7 +554,7 @@ function OnCommandCreate(client, techIdString, number)
         
         if techId ~= nil then
 
-            for i = 0, number do
+            for i = 1, number do
 
                 local player = client:GetControllingPlayer()        
                 local success, position = GetRandomSpaceForEntity(player:GetOrigin(), 2, 10, 2, 2)

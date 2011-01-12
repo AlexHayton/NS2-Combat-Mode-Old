@@ -56,11 +56,36 @@ function LiveScriptActor:Upgrade(newTechId)
     
 end
 
+function LiveScriptActor:UpdateJustKilled()
+
+    if self.justKilled then
+    
+        // Clear current animation so we know if it was set in TriggerEffects
+        self:SetAnimation("", true)
+        
+        self:TriggerEffects("death")
+        
+        // Destroy immediately if death animation or ragdoll wasn't triggered (used queued because we're in OnProcessMove)
+        local anim = self:GetAnimation()
+        if (self:GetPhysicsGroup() == PhysicsGroup.RagdollGroup) or (anim ~= nil and anim ~= "") then
+        
+            // Set default time to destroy so it's impossible to have things lying around 
+            self.timeToDestroy = Shared.GetTime() + 4
+            self:SetNextThink(.1)
+            
+        else
+            self:SafeDestroy()                    
+        end
+        
+        self.justKilled = nil
+
+    end
+    
+end
+
 // Server version of TakeDamage()
 function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
 
-    local killed = false
-    
     if (self:GetIsAlive() and GetGamerules():CanEntityDoDamageTo(attacker, self)) then
 
         // Get damage type from source    
@@ -79,6 +104,8 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
         local armorUsed, healthUsed
         damage, armorUsed, healthUsed = self:ComputeDamage(damage, damageType)
         
+        local oldHealth = self.health
+        
         self.armor = self.armor - armorUsed
         self.health = math.max(self.health - healthUsed, 0)
         
@@ -86,23 +113,22 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
         
             self:OnTakeDamage(damage, doer, point)
                 
-            if (self.health == 0) then
-                
+            if (oldHealth > 0 and self.health == 0) then
+            
+                // Do this first to make sure death message is sent
                 GetGamerules():OnKill(self, damage, attacker, doer, point, direction)
-                
+        
                 self:OnKill(damage, attacker, doer, point, direction)
-                
-                self:TriggerEffects("death")
-                
-                killed = true
-                
+
+                self.justKilled = true
+                               
             end
             
         end
         
     end
     
-    return killed
+    return (self.justKilled == true)
     
 end
 
@@ -125,17 +151,13 @@ function LiveScriptActor:AddHealth(health, playSound)
         total = healthAdded + healthToAddToArmor
         
         if total > 0 and playSound and (self:GetTeamType() == kAlienTeamType) then
-            self:PlaySound(LiveScriptActor.kAlienRegenerationSound)
+            self:TriggerEffects("regenerate")
         end
         
     end
     
     return total    
     
-end
-
-function LiveScriptActor:GetFlinchOverlay(animName)
-    return true
 end
 
 function LiveScriptActor:GetDamageImpulse(damage, doer, point)
@@ -147,12 +169,18 @@ end
 
 function LiveScriptActor:OnTakeDamage(damage, doer, point)
 
-    // Play audio/visual effects when taking damage   
-    local damageType = nil
+    // Play audio/visual effects when taking damage    
+    local damageType = kDamageType.Normal
     if doer then
         damageType = doer:GetDamageType()
     end
-    self:TriggerEffects("flinch", {damagetype = damageType, flinch_severe = ConditionalValue(damage > 20, true, false)})
+    
+    local flinchParams = {damagetype = damageType, flinch_severe = ConditionalValue(damage > 20, true, false)}
+    if point then
+        flinchParams[kEffectHostCoords] = Coords.GetTranslation(point)
+    end
+    
+    self:TriggerEffects("flinch", flinchParams)
     
     // Apply directed impulse to physically simulated objects, according to amount of damage
     if (self.physicsModel ~= nil and self.physicsType == Actor.PhysicsType.Dynamic) then    
@@ -187,14 +215,11 @@ function LiveScriptActor:SetFuryLevel(level)
     self.furyLevel = level
 end
 
-function LiveScriptActor:GetKilledSound(doer)
-    return nil
-end
-
 function LiveScriptActor:OnKill(damage, attacker, doer, point, direction)
 
     // Give points to killer
     local pointOwner = attacker
+    
     // If the pointOwner is not a player, award it's points to it's owner.
     if pointOwner ~= nil and not pointOwner:isa("Player") then
         pointOwner = pointOwner:GetOwner()
@@ -203,93 +228,63 @@ function LiveScriptActor:OnKill(damage, attacker, doer, point, direction)
         pointOwner:AddScore(self:GetPointValue())
     end
 
-    local killedSound = self:GetKilledSound(doer)
-    if killedSound ~= nil then
-    
-        // Play world sound instead of parented sound as entity is going away
-        Shared.PlayWorldSound(nil, killedSound, nil, self:GetOrigin())
-        
-    end
-    
     self.alive = false
-    self.timeToRagdoll = Shared.GetTime()
-            
-    local deathAnim = self:GetDeathAnimation()
-    if deathAnim ~= nil then
     
-        self:SetAnimationWithBlending(deathAnim, self:GetBlendTime(), true)
-        
-        local ragdollDelay = self:GetAnimationLength(deathAnim)
-        if ragdollDelay > 0 then
-            self.timeToRagdoll = self.timeToRagdoll + ragdollDelay
-        end
-
-    else
+    if point then
         self.deathImpulse = self:GetDamageImpulse(damage, doer, point)
         self.deathPoint = Vector(point)
     end
-
+    
     ScriptActor.OnKill(self, damage, attacker, doer, point, direction)
-    
-    self:SetNextThink(.01)
-    
+
 end
 
-function LiveScriptActor:GetShouldRagdoll()
-    return true
+function LiveScriptActor:SetRagdoll(deathTime)
+
+    if self:GetPhysicsGroup() ~= PhysicsGroup.RagdollGroup then
+
+        self:SetPhysicsType(Actor.PhysicsType.Dynamic)
+        
+        self:SetPhysicsGroup(PhysicsGroup.RagdollGroup)
+        
+        // Apply landing blow death impulse to ragdoll (but only if we didn't play death animation)
+        if self.deathImpulse and self.deathPoint and self.physicsModel and self.physicsType == Actor.PhysicsType.Dynamic then
+        
+            self.physicsModel:AddImpulse(self.deathPoint, self.deathImpulse)
+            self.deathImpulse = nil
+            
+        end
+        
+        if deathTime then
+
+            self.timeToDestroy = Shared.GetTime() + deathTime
+            
+            self:SetNextThink(.1)    
+            
+        end
+        
+    end
+    
 end
 
 function LiveScriptActor:OnThink()
 
     ScriptActor.OnThink(self)
     
-    if self.timeToRagdoll ~= nil and (Shared.GetTime() > self.timeToRagdoll) and not self.alive and (self.timeToDestroy == nil) then
+    if self.timeToDestroy and (Shared.GetTime() > self.timeToDestroy) then
     
-        if self:GetShouldRagdoll() then
-        
-            self:SetPhysicsType(Actor.PhysicsType.Dynamic)
-            
-            self:SetPhysicsGroup(PhysicsGroup.RagdollGroup)
-            
-            // Apply landing blow death impulse to ragdoll (but only if we didn't play death animation)
-            if self.deathImpulse and self.deathPoint and self.physicsModel and self.physicsType == Actor.PhysicsType.Dynamic then
-            
-                self.physicsModel:AddImpulse(self.deathPoint, self.deathImpulse)
-                self.deathImpulse = nil
-                
-            end
-        
-            self.timeToRagdoll = nil
-            
-            self.timeToDestroy = Shared.GetTime() + LiveScriptActor.kRagdollTime
-            
-            self:SetNextThink(.1)    
-            
-        else
-        
-            self:SafeDestroy()
-            
-        end
-        
-    elseif self.timeToDestroy ~= nil and Shared.GetTime() > self.timeToDestroy and not self:GetPersistentRagdoll() then
-    
-        // Don't destroy pre-placed map entities - we activate them again on round reset
         self:SafeDestroy()
 
     else
-        self:SetNextThink(.2)
+        self:SetNextThink(.1)
     end
     
-end
-
-function LiveScriptActor:GetPersistentRagdoll()
-    return false
 end
 
 function LiveScriptActor:SafeDestroy()
 
     if bit.bor(self.gameEffectsFlags, kGameEffect.OnFire) then
-        self:StopSound(self:GetOnFireSound())
+        self:TriggerEffects("fire_stop")
     end
 
     if(self:GetIsMapEntity()) then
@@ -325,7 +320,8 @@ function LiveScriptActor:ComputeDamage(damage, damageType)
         local absorbPercentage = self:GetArmorAbsorbPercentage(damageType)
         
         // Each point of armor blocks a point of health but is only destroyed at half that rate (like NS1)
-        healthPointsBlocked = math.min(self.armor, absorbPercentage * damage )
+        // Thanks Harimau!
+        healthPointsBlocked = math.min(self:GetHealthPerArmor(damageType) * self.armor, absorbPercentage * damage )
         armorPointsUsed = healthPointsBlocked / self:GetHealthPerArmor(damageType)
         
         // Anything left over comes off of health
@@ -690,15 +686,11 @@ end
 function LiveScriptActor:OnGameEffectMaskChanged(effect, state)
     
     if effect == kGameEffect.OnFire and state then
-        self:PlaySound(self:GetOnFireSound())
+        self:TriggerEffects("fire_start")
     elseif effect == kGameEffect.OnFire and not state then
-        self:StopSound(self:GetOnFireSound())
+        self:TriggerEffects("fire_stop")
     end
     
-end
-
-function LiveScriptActor:GetOnFireSound()
-    return LiveScriptActor.kOnFireSmallSound
 end
 
 // Adds a stackable game effect (up to kMaxStackLevel max). Don't add one if we already have
@@ -796,9 +788,6 @@ function LiveScriptActor:GetMeleeAttackInterval()
     return .6
 end
 
-function LiveScriptActor:PlayMeleeHitEffects(target, point, direction)
-end
-
 function LiveScriptActor:GetMeleeAttackOrigin()
     return self:GetOrigin()
 end
@@ -808,6 +797,8 @@ function LiveScriptActor:MeleeAttack(target, time)
     local meleeAttackInterval = self:AdjustFuryFireDelay(self:GetMeleeAttackInterval())
    
     if(Shared.GetTime() > (self.timeOfLastAttack + meleeAttackInterval)) then
+    
+        self:TriggerEffects(string.format("%s_melee_attack", string.lower(self:GetClassName())))
 
         // Traceline from us to them
         local trace = Shared.TraceRay(self:GetMeleeAttackOrigin(), target:GetOrigin(), PhysicsMask.AllButPCs, EntityFilterTwo(self, target))
@@ -822,9 +813,10 @@ function LiveScriptActor:MeleeAttack(target, time)
         end
         
         target:TakeDamage(self:GetMeleeAttackDamage(), attacker, self, trace.endPoint, direction)
+
+        // Play hit effects
+        TriggerHitEffects(self, target, trace.endPoint, GetSurfaceFromTrace(trace))
             
-        self:PlayMeleeHitEffects(target, trace.endPoint, direction)
-        
         self.timeOfLastAttack = Shared.GetTime()
         
     end

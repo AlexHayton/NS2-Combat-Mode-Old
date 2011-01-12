@@ -46,10 +46,6 @@ function Heavy:GetMaxViewOffsetHeight()
     return Heavy.kViewOffsetHeight
 end
 
-function Heavy:GetIdleAnimation()
-    return ""
-end
-
 function Heavy:GetArmorAmount()
 
     local armorLevels = 0

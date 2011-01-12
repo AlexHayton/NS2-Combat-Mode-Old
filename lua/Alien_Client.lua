@@ -264,8 +264,6 @@ function Alien:OnInitLocalClient()
             self.hiveBlips = GetGUIManager():CreateGUIScriptSingle("GUIHiveBlips")
         end
                
-        Shared.PlaySound(self, self:GetSpawnSound())
-
     end
     
 end

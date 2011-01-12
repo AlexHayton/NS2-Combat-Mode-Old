@@ -17,19 +17,7 @@ class 'Crag' (Structure)
 
 Crag.kMapName = "crag"
 
-Crag.kAnimIdle = "idle"
-
 Crag.kModelName = PrecacheAsset("models/alien/crag/crag.model")
-
-Crag.kHealSound = PrecacheAsset("sound/ns2.fev/alien/common/regeneration")
-Crag.kIdleSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/crag/idle")
-Crag.kUmbraSound = PrecacheAsset("sound/ns2.fev/alien/structures/crag/umbra")
-
-Crag.kHealEffect = PrecacheAsset("cinematics/alien/crag/heal.cinematic")
-Crag.kHealTargetEffect = PrecacheAsset("cinematics/alien/heal.cinematic")
-Crag.kHealBigTargetEffect = PrecacheAsset("cinematics/alien/heal_big.cinematic")
-Crag.kUmbraEffect = PrecacheAsset("cinematics/alien/crag/umbra.cinematic")
-Crag.kBabblerEffect = PrecacheAsset("cinematics/alien/crag/babbler.cinematic")
 
 // Same as NS1
 Crag.kHealRadius = 10
@@ -53,18 +41,6 @@ end
 
 function Crag:GetIsAlienStructure()
     return true
-end
-
-function Crag:GetIdleSound()
-    return Crag.kIdleSoundEffect
-end
-
-function Crag:GetIdleAnimation()
-    return Crag.kAnimIdle
-end
-
-function Crag:GetDeathEffect()
-    return Structure.kAlienDeathLargeEffect
 end
 
 // Sort entities by priority (players before structures, most damaged before least)
@@ -96,12 +72,15 @@ function Crag:GetSortedTargetList()
     // For example, if ent1 < ent2 than later the same ent2 cannot be < ent1.
     function sortCragTargets(ent1, ent2)
     
+        local p1 = ent1:isa("Player")
+        local p2 = ent2:isa("Player")
+    
         // Heal players before structures
-        if ent1:isa("Player") and not ent2:isa("Player") then
+        if p1 and not p2 then
             return true
         end
         
-        if not ent1:isa("Player") and ent2:isa("Player") then
+        if not p1 and p2 then
             return false
         end
 
@@ -136,13 +115,7 @@ function Crag:PerformHealing()
     
         if (entity:AddHealth(Crag.kHealAmount) > 0) then
         
-            entity:PlaySound(Crag.kHealSound)
-            
-            if entity:isa("Structure") or entity:isa("Onos") then
-                Shared.CreateEffect(nil, Crag.kHealBigTargetEffect, entity)
-            else
-                Shared.CreateEffect(nil, Crag.kHealTargetEffect, entity)
-            end
+            entity:TriggerEffects("crag_target_healed")
             
             entsHealed = entsHealed + 1
             
@@ -163,9 +136,7 @@ function Crag:PerformHealing()
     
         self:AddEnergy(-energyCost)
         
-        Shared.CreateEffect(nil, Crag.kHealEffect, self)
-        
-        self:SetAnimation("heal")
+        self:TriggerEffects("crag_heal")
         
     end
     
@@ -245,7 +216,7 @@ function Crag:GetTechButtons(techId)
        
     elseif(techId == kTechId.UpgradesMenu) then 
     
-        techButtons = {kTechId.CarapaceTech, kTechId.BacteriaTech, kTechId.BoneShieldTech, kTechId.Armor1Tech, kTechId.Armor2Tech, kTechId.Armor3Tech}
+        techButtons = {kTechId.CarapaceTech, kTechId.BacteriaTech, kTechId.BoneShieldTech, kTechId.Armor1Tech, kTechId.Armor2Tech, kTechId.Armor3Tech, kTechId.None}
         techButtons[kAlienBackButtonIndex] = kTechId.RootMenu
         
     end
@@ -260,16 +231,7 @@ end
 
 function Crag:TriggerUmbra(commander)
 
-    self:PlaySound(Crag.kUmbraSound)
-    
-    // Commander will be nil when running tests
-    if commander then
-        Server.PlayPrivateSound(commander, Crag.kUmbraSound, nil, 1.0, commander:GetOrigin())
-    end
-    
-    Shared.CreateEffect(nil, Crag.kUmbraEffect, self)
-    
-    self:SetAnimation("umbra")
+    self:TriggerEffects("crag_trigger_umbra")
 
     // Think immediately instead of waiting up to Crag.kThinkInterval
     self.timeOfLastUmbra = Shared.GetTime()
@@ -279,7 +241,10 @@ function Crag:TriggerUmbra(commander)
 end
 
 function Crag:TargetBabblers(position)
+
+    self:TriggerEffects("crag_trigger_babblers")
     return true
+    
 end
 
 function Crag:PerformActivation(techId, position, commander)

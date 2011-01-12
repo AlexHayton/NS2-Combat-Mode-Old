@@ -16,7 +16,6 @@ Absorb.kMapName = "absorb"
 
 // View model animations
 Absorb.kAnimAttackTable = {{1, "attack"}/*, {1, "attack2"}, {1, "attack3"}, {1, "attack4"}*/}
-Absorb.kAnimIdleTable = {{1, "idle"}/*, {.1, "idle2"}, {.5, "idle3"}, {.4, "idle4"}*/}
 
 // Balance
 
@@ -42,10 +41,6 @@ end
 
 function Absorb:GetSecondaryAttackDelay()
     return Absorb.kSecondaryAttackDelay
-end
-
-function Absorb:GetIdleAnimation()
-    return chooseWeightedEntry( Absorb.kAnimIdleTable )
 end
 
 function Absorb:PerformPrimaryAttack(player)

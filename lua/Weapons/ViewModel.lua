@@ -20,11 +20,6 @@ class 'ViewModel' (BlendedActor)
 
 ViewModel.mapName = "view_model"
 
-ViewModel.networkVars =
-    {
-        canIdle                     = "boolean"
-    }
-
 function ViewModel:OnCreate()
 
     BlendedActor.OnCreate(self)
@@ -44,9 +39,7 @@ end
 
 function ViewModel:ResetAnimState()
 
-    BlendedActor.ResetAnimState(self)
-    
-    self.canIdle                    = true
+    BlendedActor.ResetAnimState(self)    
     
     self.weapon                     = nil
 
@@ -75,6 +68,15 @@ function ViewModel:SetModel(modelName, weapon)
     
 end
 
+function ViewModel:GetCanIdle()
+    local parent = self:GetParent()
+    if parent and parent.GetCanViewModelIdle then
+        return parent:GetCanViewModelIdle()
+    else
+        return BlendedActor.GetCanIdle(self)
+    end
+end
+
 function ViewModel:GetOverlayAnimation()
 
     local overlayAnimName = ""
@@ -92,28 +94,6 @@ function ViewModel:OnGetIsRelevant(player)
     // Only propagate the view model if it belongs to the player (since they're
     // the only one that can see it)
     return self:GetParent() == player
-    
-end
-
-function ViewModel:GetCanIdle()
-    return self.canIdle
-end
-
-// Parent player can call this to temporarily disable view model idling
-function ViewModel:SetCanIdle(state)
-    self.canIdle = state
-end
-
-function ViewModel:GetIdleAnimation()
-
-    if self.weapon ~= nil then
-    
-        // Play interruptable idle animation
-        return self.weapon:GetIdleAnimation()
-        
-    end
-
-    return ""
     
 end
 
@@ -272,13 +252,25 @@ if (Client) then
         
 end
 
-function ViewModel:OnIdle()
-    BlendedActor.OnIdle(self)
-    self:OnViewModelIdle()
+function ViewModel:GetEffectParams(tableParams)
+    
+    BlendedActor.GetEffectParams(self, tableParams)
+    
+    tableParams[kEffectFilterClassName] = self:GetClassName()
+    
+    // Override classname with class of weapon we represent
+    if self.weapon ~= nil then
+    
+        tableParams[kEffectFilterClassName] = self.weapon:GetClassName()
+        
+        self.weapon:GetEffectParams(tableParams)
+        
+    end
+    
 end
 
-// For playing particle effects, etc.
-function ViewModel:OnViewModelIdle()
+function ViewModel:GetWeapon()
+    return self.weapon
 end
 
-Shared.LinkClassToMap( "ViewModel", ViewModel.mapName, ViewModel.networkVars )  
+Shared.LinkClassToMap( "ViewModel", ViewModel.mapName, {} )  

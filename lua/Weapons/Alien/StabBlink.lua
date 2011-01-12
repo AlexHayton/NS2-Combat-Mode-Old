@@ -15,16 +15,10 @@ class 'StabBlink' (Blink)
 
 StabBlink.kMapName = "stab"
 
-StabBlink.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/fade/stab")
-StabBlink.kStabSound = PrecacheAsset("sound/ns2.fev/alien/fade/impale")
 StabBlink.kHitMarineSound = PrecacheAsset("sound/ns2.fev/alien/fade/stab_marine")
 StabBlink.kImpaleSound = PrecacheAsset("sound/ns2.fev/alien/fade/impale")
 StabBlink.kScrapeMaterialSound = "sound/ns2.fev/materials/%s/scrape"
 PrecacheMultipleAssets(StabBlink.kScrapeMaterialSound, kSurfaceList)
-
-// View model animations
-StabBlink.kAnimAttackTable = {{1, "attack1"}}
-StabBlink.kAnimIdleTable = {{1, "stab_idle"}, {.1, "stab_idle2"}}
 
 // Balance
 StabBlink.kDamage = kStabDamage
@@ -46,21 +40,6 @@ function StabBlink:GetDeathIconIndex()
     return kDeathMessageIcon.SwipeBlink
 end
 
-function StabBlink:GetIdleAnimation()
-    return chooseWeightedEntry( StabBlink.kAnimIdleTable ) 
-end
-
-function StabBlink:GetDrawAnimation(previousWeaponMapName)
-    if previousWeaponMapName == SwipeBlink.kMapName then
-        return "from_swipe"
-    end
-    return ""
-end
-
-function StabBlink:GetDrawAnimationSpeed()
-    return 1.5
-end
-
 function StabBlink:GetPrimaryAttackDelay()
     return StabBlink.kPrimaryAttackDelay
 end
@@ -70,7 +49,7 @@ function StabBlink:GetIconOffsetY(secondary)
 end
 
 function StabBlink:GetPrimaryAttackRequiresPress()
-    return true
+    return false
 end
 
 function StabBlink:OnThink()
@@ -117,12 +96,9 @@ function StabBlink:PerformPrimaryAttack(player)
     Blink.PerformPrimaryAttack(self, player)
     
     // Play random animation
-    player:SetViewAnimation( StabBlink.kAnimAttackTable )
     player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
 
     player:SetAnimAndMode(chooseWeightedEntry(Fade.kAnimStabTable), kPlayerMode.FadeStab)
-
-    Shared.PlaySound(player, StabBlink.kAttackSound)
 
     // Attack doesn't hit until later    
     self:SetNextThink(.85) 

@@ -65,16 +65,6 @@ function Minigun:GetBaseIdleAnimation()
     
 end
 
-function Minigun:GetPrimaryAttackAnimation()
-
-    if(self.clip % 2 == 1) then
-        return "shoot_top"
-    end
-    
-    return "shoot_bottom"  
-  
-end
-
 function Minigun:GetHUDSlot()
     return kPrimaryWeaponSlot
 end
@@ -101,13 +91,6 @@ end
 
 function Minigun:GetPrimaryAttackDelay()
     return kMinigunFireDelay
-end
-
-/**
- * Returns the name of the reload sequence used for the weapon.
- */
-function Minigun:GetReloadSequence()
-    return "reload"
 end
 
 function Minigun:OnDraw(player, previousWeaponMapName)

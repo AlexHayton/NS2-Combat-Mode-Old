@@ -177,8 +177,6 @@ end
 
 function ArmoryUI_Close()
 
-    Shared.PlaySound(Client.GetLocalPlayer(), armoryCloseSound)
-
     Client.SetMouseVisible(false)
     Client.SetMouseCaptured(true)
     Client.SetMouseClipped(false)
@@ -225,7 +223,7 @@ function Armory_Debug()
     
 end
 
-function Armory:OnUse(player, elapsedTime, useAttachPoint)
+function Armory:OnUse(player, elapsedTime, useAttachPoint, usePoint)
 
     if self:GetIsBuilt() and self:GetIsActive() then
 

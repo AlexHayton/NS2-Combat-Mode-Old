@@ -28,10 +28,6 @@ Shade.kMapName = "shade"
 
 Shade.kModelName = PrecacheAsset("models/alien/shade/shade.model")
 
-Shade.kAnimIdle = "idle"
-
-Shade.kIdleSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/shade/idle")
-
 Shade.kBlindEffect = PrecacheAsset("cinematics/alien/shade/blind.cinematic")
 Shade.kGlowEffect = PrecacheAsset("cinematics/alien/shade/glow.cinematic")
 Shade.kPhantasmEffect = PrecacheAsset("cinematics/alien/shade/phantasm.cinematic")
@@ -41,14 +37,6 @@ Shade.kCloakRadius = 15
  
 function Shade:GetIsAlienStructure()
     return true
-end
-
-function Shade:GetIdleSound()
-    return Shade.kIdleSoundEffect
-end
-
-function Shade:GetIdleAnimation()
-    return Shade.kAnimIdle
 end
 
 function Shade:GetTechButtons(techId)
@@ -80,14 +68,6 @@ function Shade:GetTechButtons(techId)
     
     return techButtons
     
-end
-
-function Shade:GetDeathEffect()
-    return Structure.kAlienDeathLargeEffect
-end
-
-function Shade:GetDamageEffectOffset()
-    return Vector(0, 9, 10)
 end
 
 function Shade:OnResearchComplete(structure, researchId)

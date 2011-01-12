@@ -14,7 +14,6 @@ RoboticsFactory.kMapName = "roboticsfactory"
 RoboticsFactory.kModelName = PrecacheAsset("models/marine/robotics_factory/robotics_factory.model")
 
 RoboticsFactory.kActiveEffect = PrecacheAsset("cinematics/marine/roboticsfactory/active.cinematic")
-RoboticsFactory.kDeathEffect = PrecacheAsset("cinematics/marine/roboticsfactory/death.cinematic")
 
 function RoboticsFactory:OnInit()
 
@@ -47,10 +46,6 @@ function RoboticsFactory:GetTechButtons(techId)
     
     return nil
     
-end
-
-function RoboticsFactory:GetDeathEffect()
-    return RoboticsFactory.kDeathEffect
 end
 
 Shared.LinkClassToMap("RoboticsFactory", RoboticsFactory.kMapName, {})

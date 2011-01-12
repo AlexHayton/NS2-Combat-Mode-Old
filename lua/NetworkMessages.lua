@@ -330,6 +330,27 @@ function ParseTracerMessage(t)
     return t.startPoint, t.endPoint, t.velocity
 end
 
+local kExecuteSayingMessage = 
+{
+    sayingIndex = "integer (1 to 5)",
+    sayingsMenu = "integer (1 to 2)"
+}
+
+function BuildExecuteSayingMessage(sayingIndex, sayingsMenu)
+
+    local t = {}
+    
+    t.sayingIndex = sayingIndex
+    t.sayingsMenu = sayingsMenu
+    
+    return t
+    
+end
+
+function ParseExecuteSayingMessage(t)
+    return t.sayingIndex, t.sayingsMenu
+end
+
 Shared.RegisterNetworkMessage("EntityChanged", kEntityChangedMessage)
 Shared.RegisterNetworkMessage("ResetMouse", {} )
 Shared.RegisterNetworkMessage("MinimapBlipMessage", kBlipMessage)
@@ -346,3 +367,6 @@ Shared.RegisterNetworkMessage("CommTargetedActionWorld", kCommTargetedAction)
 
 // Tracer effect
 Shared.RegisterNetworkMessage("Tracer", kTracerMessage)
+
+// Player actions
+Shared.RegisterNetworkMessage("ExecuteSaying", kExecuteSayingMessage)

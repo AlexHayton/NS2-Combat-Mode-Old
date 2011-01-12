@@ -12,19 +12,6 @@ Script.Load("lua/Weapons/Alien/SporeCloud.lua")
 class 'Spores' (Ability)
 
 Spores.kMapName = "spores"
-
-Spores.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spores_shoot")
-Spores.kHitSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spores_hit")
-
-// Particle effects
-Spores.kEffect = PrecacheAsset("cinematics/alien/lerk/spores.cinematic")
-Spores.kImpactEffect = PrecacheAsset("cinematics/alien/lerk/spore_impact.cinematic")
-Spores.kViewIdleEffect = PrecacheAsset("cinematics/alien/lerk/spore_view_idle.cinematic")
-Spores.kViewFireEffect = PrecacheAsset("cinematics/alien/lerk/spore_view_fire.cinematic")
-
-Spores.kAnimIdleTable = {{1, "idle"}/*, {.1, "idle2"}, {.5, "idle3"}*/ }
-Spores.kAnimAttack = "attack"
-Spores.kPlayerAnimAttack = "spores"
 Spores.kDelay = kSporesFireDelay
 Spores.kSwitchTime = .5
 
@@ -44,10 +31,6 @@ function Spores:GetEnergyCost(player)
     return kSporesEnergyCost
 end
 
-function Spores:GetIdleAnimation()
-    return chooseWeightedEntry( Spores.kAnimIdleTable )
-end
-
 function Spores:GetPrimaryAttackDelay()
     return Spores.kDelay
 end
@@ -56,23 +39,10 @@ function Spores:GetIconOffsetY(secondary)
     return kAbilityOffset.Spores
 end
 
-function Spores:OnViewModelIdle()
-    self:CreateViewModelEffect(Spores.kViewIdleEffect)
-end
-
 function Spores:PerformPrimaryAttack(player)
-    
-    player:SetViewAnimation(Spores.kAnimAttack, nil, nil, 1/player:AdjustFuryFireDelay(1))
     
     player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
 
-    // Play the attack animation on the character.
-    player:SetOverlayAnimation(Spores.kPlayerAnimAttack)      
-
-    Shared.PlaySound(player, Spores.kAttackSound)
-    
-    // TODO: Create projectile and update Spores.kEffect so it follows it to it
-    
     // Trace instant line to where it should hit
     local viewAngles = player:GetViewAngles()
     local viewCoords = viewAngles:GetCoords()    
@@ -81,15 +51,13 @@ function Spores:PerformPrimaryAttack(player)
     local trace = Shared.TraceRay(startPoint, startPoint + viewCoords.zAxis * 1000, PhysicsMask.AllButPCs, EntityFilterOne(self))
     if trace.fraction < 1 then
     
-        Shared.CreateEffect(player, Spores.kImpactEffect, nil, Coords.GetTranslation(trace.endPoint))
-        
         // Create spore cloud that will damage players
         if Server then
        
             local spores = CreateEntity(SporeCloud.kMapName, trace.endPoint, player:GetTeamNumber())
             spores:SetOwner(player)
 
-            Shared.PlayWorldSound(nil, Spores.kHitSound, nil, trace.endPoint)
+            self:TriggerEffects("spores", {effecthostcoords = Coords.GetTranslation(trace.endPoint) })
 
         end
         
@@ -110,6 +78,5 @@ function Spores:UpdateViewModelPoseParameters(viewModel, input)
     viewModel:SetPoseParam("spore", self.sporePoseParam)
     
 end
-
 
 Shared.LinkClassToMap("Spores", Spores.kMapName, networkVars )

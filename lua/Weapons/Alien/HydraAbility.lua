@@ -20,8 +20,6 @@ HydraAbility.kCreateViewEffect = PrecacheAsset("cinematics/alien/gorge/create_vi
 
 // Gorge create hydra
 HydraAbility.kAnimHydraAttack = "chamber_attack"
-HydraAbility.kAnimIdleTable = { {1, "idle"}/*, {.3, "idle2"}, {.05, "idle3"}*/ }
-
 HydraAbility.kPlacementDistance = 1.1
 
 local networkVars = 
@@ -46,10 +44,6 @@ function HydraAbility:OnDraw(player, prevWeapon)
     // Show ghost when switch to this weapon
     self.showGhost = true
     
-end
-
-function HydraAbility:GetIdleAnimation()
-    return chooseWeightedEntry( HydraAbility.kAnimIdleTable )
 end
 
 function HydraAbility:GetEnergyCost(player)
@@ -136,7 +130,7 @@ function HydraAbility:CreateHydra(player)
                 angles:BuildFromCoords(coords)
                 hydra:SetAngles(angles)
                 
-                player:PlaySound(player:GetPlaceBuildingSound())
+                hydra:TriggerEffects("hydra_spawn")
                 
                 player:AddPlasma( -cost )
                 

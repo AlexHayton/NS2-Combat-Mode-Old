@@ -23,8 +23,6 @@ Onos.kMapName = "onos"
 Onos.kModelName = PrecacheAsset("models/alien/onos/onos.model")
 Onos.kViewModelName = PrecacheAsset("models/alien/onos/onos_view.model")
 
-Onos.kSpawnSoundName = PrecacheAsset("sound/ns2.fev/alien/onos/spawn") 
-Onos.kDieSoundName = PrecacheAsset("sound/ns2.fev/alien/onos/death")
 Onos.kFootstepSound = PrecacheAsset("sound/ns2.fev/alien/onos/onos_step")
 Onos.kWoundSound = PrecacheAsset("sound/ns2.fev/alien/onos/wound")
 Onos.kGoreSound = PrecacheAsset("sound/ns2.fev/alien/onos/gore")
@@ -86,10 +84,6 @@ function Onos:OnInit()
     
 end
 
-function Onos:GetSpawnSound()
-    return Onos.kSpawnSoundName
-end
-
 function Onos:GetViewModelName()
     return Onos.kViewModelName
 end
@@ -100,14 +94,6 @@ end
 
 function Onos:GetStartFov()
     return Onos.kFov
-end
-
-function Onos:GetKilledSound(doer)
-    return Onos.kDieSoundName
-end
-
-function Onos:GetOnFireSound()
-    return LiveScriptActor.kOnFireLargeSound
 end
 
 function Onos:GetHasSpecialAbility()

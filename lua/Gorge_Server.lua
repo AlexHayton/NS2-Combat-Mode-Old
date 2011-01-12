@@ -18,10 +18,6 @@ function Gorge:InitWeapons()
     
 end
 
-function Gorge:GetKilledSound(doer)
-    return Gorge.kDieSoundName
-end
-
 // When we're in our Gorge armor shell, damage comes off of energy first
 function Gorge:ComputeDamage(damage, damageType)
 
@@ -61,7 +57,7 @@ function Gorge:AttemptToBuy(techId)
 
             self:AddPlasma(-LookupTechData(techId, kTechDataCostKey))
                     
-            self:PlaySound(self:GetPlaceBuildingSound())
+            self:TriggerEffects("gorge_create")
             
             self:SetActivityEnd(.6)
 

@@ -8,24 +8,6 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-function ResourceTower:OnKill(damage, killer, doer, point, direction)
-
-    Structure.OnKill(self, damage, killer, doer, point, direction)
-    
-    self:StopSound(self:GetActiveSound())
-    
-end
-
-function ResourceTower:OnPoweredChange(newPoweredState)
-
-    Structure.OnPoweredChange(self, newPoweredState)
-    
-    if not self.powered then
-        self:StopSound(self:GetActiveSound())
-    end
-    
-end
-
 function ResourceTower:GetUpdateInterval()
     return kResourceTowerResourceInterval
 end
@@ -42,7 +24,11 @@ function ResourceTower:UpdateOnThink()
         team:AddCarbon(ResourceTower.kCarbonInjection)        
     end
     
-    self:PlaySound(self:GetHarvestedSound())
+    if self:isa("Extractor") then
+       self:TriggerEffects("extractor_collect")
+    else
+        self:TriggerEffects("harvester_collect")
+    end
     
 end
 

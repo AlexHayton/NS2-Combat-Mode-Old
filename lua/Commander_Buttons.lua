@@ -46,12 +46,12 @@ function CommanderUI_MenuButtonTooltip(index)
     local requiresText = nil
     local enablesText = nil
     local tooltipInfo = nil
+    local resourceType = 0
     
     if(index <= table.count(player.menuTechButtons)) then
     
         local techTree = GetTechTree()
         techId = player.menuTechButtons[index]        
-        local techNode = techTree:GetTechNode(techId)
         
         tooltipText = techTree:GetDescriptionText(techId)
         hotkey = LookupTechData(techId, kTechDataHotkey, "")
@@ -61,13 +61,17 @@ function CommanderUI_MenuButtonTooltip(index)
         end
         
         cost = LookupTechData(techId, kTechDataCostKey, 0)
+        local techNode = techTree:GetTechNode(techId)
+        if techNode then
+            resourceType = techNode:GetResourceType()
+        end
         requiresText = techTree:GetRequiresText(techId)
         enablesText = techTree:GetEnablesText(techId)
         tooltipInfo = techTree:GetTooltipInfoText(techId)
         
     end
     
-    return {tooltipText, hotkey, cost, requiresText, enablesText, tooltipInfo, 0}    
+    return {tooltipText, hotkey, cost, requiresText, enablesText, tooltipInfo, resourceType}    
     
 end
 
@@ -81,10 +85,12 @@ end
 function CommanderUI_MenuButtonStatus(index)
 
     local player = Client.GetLocalPlayer()
+    local buttonStatus = 0
+    local techId = 0
     
     if(index <= table.count(player.menuTechButtons)) then
     
-        local techId = player.menuTechButtons[index]
+        techId = player.menuTechButtons[index]
         
         if(techId ~= kTechId.None) then
         
@@ -93,23 +99,29 @@ function CommanderUI_MenuButtonStatus(index)
             if(techNode ~= nil) then
             
                 if techNode:GetResearching() then
-                    return 0
-                elseif not techNode:GetAvailable() or not player.menuTechButtonsAllowed[index] then
-                    return 3
+                    // Don't display
+                    buttonStatus = 0
+                elseif not techNode:GetAvailable() then
+                    // Greyed out
+                    buttonStatus = 3
+                // menuTechButtonsAllowed[] contains results of appropriate carbon, plasma or energy check
+                elseif not player.menuTechButtonsAllowed[index] then
+                    // Red
+                    buttonStatus = 2
                 else
-                    return 1
+                    // Available
+                    buttonStatus = 1
                 end
-                
-                // TODO: Handle energy costs and multiple selection
+
             else
                 Print("CommanderUI_MenuButtonStatus(%s): Tech node for id %s not found (%s)", tostring(index), EnumToString(kTechId, techId), table.tostring(player.menuTechButtons))
             end
             
         end
         
-    end
+    end    
     
-    return 0
+    return buttonStatus
 
 end
 
@@ -297,7 +309,6 @@ function Commander:InitTechTreeMaterialOffsets()
     
     self.kMarineTechIdToMaterialOffset[kTechId.Armory] = 1
     self.kMarineTechIdToMaterialOffset[kTechId.RifleUpgradeTech] = 66
-    self.kMarineTechIdToMaterialOffset[kTechId.ArmoryEquipmentMenu] = 68
     self.kMarineTechIdToMaterialOffset[kTechId.MAC] = 2
     // Change offset in CommanderUI_GetIdleWorkerOffset when changing extractor
     self.kMarineTechIdToMaterialOffset[kTechId.Extractor] = 3
@@ -371,6 +382,7 @@ function Commander:InitTechTreeMaterialOffsets()
     self.kMarineTechIdToMaterialOffset[kTechId.Weapons3] = 57
     self.kMarineTechIdToMaterialOffset[kTechId.CommandStationUpgradesMenu] = 58
     self.kMarineTechIdToMaterialOffset[kTechId.ArmoryEquipmentMenu] = 59
+    self.kMarineTechIdToMaterialOffset[kTechId.ArmoryUpgradesMenu] = 59
     
     self.kMarineTechIdToMaterialOffset[kTechId.Marine] = 60
     self.kMarineTechIdToMaterialOffset[kTechId.Heavy] = 61

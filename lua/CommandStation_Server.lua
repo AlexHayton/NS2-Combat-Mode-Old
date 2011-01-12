@@ -6,8 +6,6 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-CommandStation.kKilledSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/command_station_death")
-
 function CommandStation:OnCreate()
 
     CommandStructure.OnCreate(self)    
@@ -25,8 +23,6 @@ end
 function CommandStation:OnKill(damage, attacker, doer, point, direction)
 
     CommandStructure.OnKill(self, damage, attacker, doer, point, direction)
-    
-    self:PlaySound(CommandStation.kKilledSoundName)    
     
     if self:GetAttached() then
         self:GetAttached():SetTechLevel(1)

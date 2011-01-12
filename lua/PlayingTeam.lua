@@ -494,7 +494,7 @@ function PlayingTeam:RespawnPlayer(player, origin, angles)
         
     end
 
-    player:SetAnimationWithBlending(player:GetIdleAnimation())
+    player:OnIdle()
     
     return success
 
@@ -547,6 +547,8 @@ function PlayingTeam:TechBuilt(structure)
 end
 
 function PlayingTeam:ComputeLOS()
+
+    PROFILE("PlayingTeam:ComputeLOS")
 
     // Get all non-commander players on our team
     local teamBuilderName = ConditionalValue(self:GetIsAlienTeam(), "Drifter", "MAC")
@@ -806,7 +808,7 @@ function PlayingTeam:ProcessEntityHelp(player)
                 return true
             end
             
-        elseif entity:isa("Armory") and entity:GetIsBuilt() and player:AddTooltipOncePer("Press your use key at this Armory to get healed, get ammo or buy new weapons.") then 
+        elseif entity:isa("Armory") and entity:GetIsBuilt() and player:AddTooltipOncePer("Press your use key at this Armory to get healed, get ammo or buy new weapons (e key).") then 
             return true
             
         elseif entity:isa("Hive") then
@@ -1080,21 +1082,6 @@ function PlayingTeam:UpdateTeamSpecificGameEffects(teamEntities, enemyPlayers)
         
             // Do damage over time
             entity:TakeDamage(kBurnDamagePerSecond * PlayingTeam.kUpdateGameEffectsInterval, Shared.GetEntity(entity.fireAttackerId), Shared.GetEntity(entity.fireDoerId))
-            
-            // See if we catch anyone else on fire
-            /*
-            local nearbyEnts = GetEntitiesIsaInRadius("LiveScriptActor", self:GetTeamNumber(), entity:GetOrigin(), kFireCatchDistance)
-            
-            for nearbyIndex, nearbyEntity in ipairs(nearbyEnts) do
-            
-                if nearbyEntity ~= entity then
-                
-                    table.insertunique(catchFireEntities, nearbyEntity)
-                    
-                end
-                
-            end
-            */
             
             // See if we put ourselves out
             local stopFireChance = PlayingTeam.kUpdateGameEffectsInterval * kStopFireProbability

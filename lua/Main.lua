@@ -71,6 +71,11 @@ function OnClientDisconnected(reason)
     GetGUIManager():DestroyGUIScriptSingle("GUIAlienHUD")
     GetGUIManager():DestroyGUIScriptSingle("GUIHiveBlips")
     
+    // Destroy graphical debug text items
+    for index, item in ipairs(gDebugTextList) do
+        GetGUIManager():DestroyGUIScript(item)
+    end
+    
     // Some items and scripts expected at the main menu.
     // Disabled the warnings until the missing GUIItem is accounted for.
     local expectedItems = 2
@@ -93,6 +98,15 @@ function OnClientDisconnected(reason)
     
 end
 
+/**
+ * This is called if the user tries to join a server through the
+ * Steam UI.
+ */
+function OnConnectRequested(address, password)
+    MainMenu_SBJoinServer(address, password)
+end
+
+Event.Hook("ConnectRequested", OnConnectRequested)
 Event.Hook("Console_connect",  OnCommandConnect)
 Event.Hook("Console_map",  OnCommandMap)
 Event.Hook("Console_exit", OnCommandExit)

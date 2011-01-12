@@ -106,8 +106,7 @@ function CommandStructure:UpdateCommanderLogin(force)
             self.timeStartedLogin = nil
             self.commander = nil
                         
-            self:PlaySound(self:GetLogoutSound())
-            self:SetAnimation(self:GetOpenAnimation())
+            self:TriggerLogout()
             
         end
         
@@ -177,13 +176,13 @@ function CommandStructure:GetCloseAnimation()
 end
 
 // Put player into Commander mode
-function CommandStructure:OnUse(player, elapsedTime, useAttachPoint)
+function CommandStructure:OnUse(player, elapsedTime, useAttachPoint, usePoint)
 
     local teamNum = self:GetTeamNumber()
     
     if( (teamNum == 0) or (teamNum == player:GetTeamNumber()) ) then
     
-        if(not Structure.OnUse(self, player, elapsedTime, useAttachPoint)) then
+        if(not Structure.OnUse(self, player, elapsedTime, useAttachPoint, usePoint)) then
         
             // Must use attach point if specified (Command Station)
             if (not self.occupied) and (useAttachPoint or (self:GetUseAttachPoint() == "")) then
@@ -193,15 +192,19 @@ function CommandStructure:OnUse(player, elapsedTime, useAttachPoint)
                 self.playerStartedLogin = player:GetId()
                 
                 self.occupied = true
-                
-                self:PlaySound(self:GetLoginSound())
-                
-                self:SetAnimation(self:GetCloseAnimation())
+           
+                if not self:GetIsAlienStructure() then
+                    self:TriggerEffects("commmand_station_login")
+                else
+                    self:TriggerEffects("hive_login")
+                end
                 
                 return true
                 
             end
             
+        else
+            return true            
         end
 
     end
@@ -210,8 +213,14 @@ function CommandStructure:OnUse(player, elapsedTime, useAttachPoint)
     
 end
 
-function CommandStructure:OnAnimationComplete(animName)
-    self:GetCloseAnimation()
+function CommandStructure:TriggerLogout()
+
+    if not self:GetIsAlienStructure() then
+        self:TriggerEffects("commmand_station_logout")
+    else
+        self:TriggerEffects("hive_logout")
+    end
+
 end
 
 function CommandStructure:OnEntityChange(oldEntityId, newEntityId)
@@ -224,10 +233,8 @@ function CommandStructure:OnEntityChange(oldEntityId, newEntityId)
         
         self.occupied = false
         
-        self:PlaySound(self:GetLogoutSound())
+        self:TriggerLogout()        
         
-        self:SetAnimation(self:GetOpenAnimation())
-
     end
     
 end
@@ -259,8 +266,7 @@ function CommandStructure:Logout()
         
         self.occupied = false
         
-        self:PlaySound(self:GetLogoutSound())
-        self:SetAnimation(self:GetOpenAnimation())
+        self:TriggerLogout()                
         
         return player
         

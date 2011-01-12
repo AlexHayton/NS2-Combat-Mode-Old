@@ -318,6 +318,11 @@ function Commander:OnDestroy()
         
         GetGUIManager():DestroyGUIScriptSingle("GUICommanderAlerts")
         GetGUIManager():DestroyGUIScriptSingle("GUIMinimap")
+        if self:GetTeamType() == kMarineTeamType then
+            GetGUIManager():DestroyGUIScriptSingle("GUISelectionPanel")
+            GetGUIManager():DestroyGUIScriptSingle("GUICommanderButtons")
+            GetGUIManager():DestroyGUIScriptSingle("GUIHotkeyIcons")
+        end
         GetGUIManager():DestroyGUIScriptSingle("GUICommanderManager")
         
         self:DestroyGhostStructure()
@@ -859,7 +864,7 @@ function Commander:OnInitLocalClient()
     
     self.cursorOverUI = false
     
-    self.hotkeyAllowed = true
+    self.lastHotkeyIndex = nil
 
 end
 
@@ -996,7 +1001,14 @@ function Commander:SetupHud()
     self.entityIdUnderCursor = Entity.invalidId
     
     GetGUIManager():CreateGUIScriptSingle("GUICommanderAlerts")
-    GetGUIManager():CreateGUIScriptSingle("GUIMinimap")
+    local minimapScript = GetGUIManager():CreateGUIScriptSingle("GUIMinimap")
+    // Only the marines have a selection panel right now.
+    if self:GetTeamType() == kMarineTeamType then
+        GetGUIManager():CreateGUIScriptSingle("GUISelectionPanel")
+        GetGUIManager():CreateGUIScriptSingle("GUICommanderButtons")
+        local hotkeyIconScript = GetGUIManager():CreateGUIScriptSingle("GUIHotkeyIcons")
+        minimapScript:GetBackground():AddChild(hotkeyIconScript:GetBackground())
+    end
     GetGUIManager():CreateGUIScriptSingle("GUICommanderManager")
     
     self.hudSetup = true
@@ -1368,7 +1380,7 @@ function Commander:ClientOnMousePress(mouseButton, x, y)
     if(mouseButton == 0) then
 
         // Only allowed when there is not a ghost structure or the structure is valid.
-        if self.ghostStructure == nil or self.ghostStructureValid == true then
+        if self.ghostStructure == nil then
             local techNode = GetTechNode(self.targetedModeTechId)
             if((self.targetedModeTechId == nil) or (techNode == nil) or not techNode:GetRequiresTarget()) then
                 // Select things near click.

@@ -245,29 +245,25 @@ function GetEntitiesIsaInRadius(className, teamNumber, origin, radius, checkXZOn
     local returnEntities = {}
     
     for index, current in ipairs(entities) do
-    
-        if (teamNumber == -1 or (current:isa("ScriptActor") and (current:GetTeamNumber() == teamNumber))) then
         
-            local currentOrigin = current:GetOrigin()
-            local diff = currentOrigin - origin
-            local distance = ConditionalValue(checkXZOnly, diff:GetLengthXZ(), diff:GetLength())
+        local currentOrigin = current:GetOrigin()
+        local diff = currentOrigin - origin
+        local distance = ConditionalValue(checkXZOnly, diff:GetLengthXZ(), diff:GetLength())
+        
+        if(distance <= radius) then
+        
+            if not visibleOnly or current:GetIsVisible() then
             
-            if(distance <= radius) then
-            
-                if not visibleOnly or current:GetIsVisible() then
-                
-                    if log then
-                        Print("GetEntitiesIsaInRadius(%s, %d, %s, %.2f, %s, %s) - Inserting %s (visible: %s)", 
-                            className, teamNumber, origin:tostring(), radius, tostring(checkXZOnly), tostring(visibleOnly), current:GetClassName(), tostring(current:GetIsVisible()) )
-                    end
-                    
-                    table.insert(returnEntities, current)
-                    
+                if log then
+                    Print("GetEntitiesIsaInRadius(%s, %d, %s, %.2f, %s, %s) - Inserting %s (visible: %s)", 
+                        className, teamNumber, origin:tostring(), radius, tostring(checkXZOnly), tostring(visibleOnly), current:GetClassName(), tostring(current:GetIsVisible()) )
                 end
+                
+                table.insert(returnEntities, current)
                 
             end
             
-        end            
+        end
         
     end
     

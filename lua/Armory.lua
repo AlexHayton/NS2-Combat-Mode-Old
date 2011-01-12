@@ -11,18 +11,8 @@ Armory.kMapName = "armory"
 
 Armory.kModelName = PrecacheAsset("models/marine/armory/armory.model")
 
-Armory.kIdleSound = PrecacheAsset("sound/ns2.fev/marine/structures/armory_idle")
-Armory.kOpenSound = PrecacheAsset("sound/ns2.fev/marine/structures/armory_open")
-Armory.kCloseSound = PrecacheAsset("sound/ns2.fev/marine/structures/armory_close")
-
 // Looping sound while using the armory
 Armory.kResupplySound = PrecacheAsset("sound/ns2.fev/marine/structures/armory_resupply")
-Armory.kHealthSound = PrecacheAsset("sound/ns2.fev/marine/common/health")
-Armory.kAmmoSound = PrecacheAsset("sound/ns2.fev/marine/common/pickup_ammo")
-
-Armory.kResupplyEffect = PrecacheAsset("cinematics/marine/spawn_item.cinematic")
-Armory.kDeathEffect = PrecacheAsset("cinematics/marine/armory/death.cinematic")
-Armory.kBuyItemEffect = PrecacheAsset("cinematics/marine/armory/buy_item_effect.cinematic")
 
 Armory.kArmoryBuyMenuUpgradesTexture = "ui/marine_buymenu_upgrades.dds"
 Armory.kAttachPoint = "Root"
@@ -118,16 +108,8 @@ function Armory:OnInit()
     
 end
 
-function Armory:GetIdleAnimation()
-    return "idle"
-end
-
 function Armory:GetRequiresPower()
     return true
-end
-
-function Armory:GetDeathEffect()
-    return Armory.kDeathEffect
 end
 
 function Armory:GetTechButtons(techId)

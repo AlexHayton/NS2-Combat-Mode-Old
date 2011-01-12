@@ -10,9 +10,9 @@
 
 function Commander:HandleCommanderHotkeys(input)
 
-    if Client then
+    if Client and not Client.GetIsRunningPrediction() then
     
-        if input.hotkey ~= 0 and self.hotkeyAllowed then
+        if input.hotkey ~= 0 then
         
             // Translate hotkey into player button
             for index, techId in ipairs(self.menuTechButtons) do
@@ -21,10 +21,21 @@ function Commander:HandleCommanderHotkeys(input)
                 
                     local hotkey = LookupTechData(techId, kTechDataHotkey)
                     
-                    if hotkey ~= nil and input.hotkey == hotkey then
+                    // Check if the last hotkey was released.
+                    if hotkey ~= nil and self.lastHotkeyIndex ~= index then
                     
+                        self.lastHotkeyIndex = nil
+                        
+                    end
+                    
+                    // Check if a new hotkey was pressed. Don't allow the last
+                    // key pressed unless it has been released first.
+                    if hotkey ~= nil and input.hotkey == hotkey and self.lastHotkeyIndex ~= index then
+                        
+                        Shared.Message("doing SetHotkeyHit now")
+                        
                         self:SetHotkeyHit(index)
-                        self.hotkeyAllowed = false
+                        self.lastHotkeyIndex = index
                         
                         break
                         
@@ -33,9 +44,11 @@ function Commander:HandleCommanderHotkeys(input)
                 end
                 
             end
-            
+        
         else
-            self.hotkeyAllowed = true
+        
+            self.lastHotkeyIndex = nil
+            
         end
     
     end

@@ -110,7 +110,7 @@ function Marine:OnCreate()
         self.flashlight:SetColor( Color(.8, .8, 1) )
         self.flashlight:SetInnerCone( math.rad(30) )
         self.flashlight:SetOuterCone( math.rad(35) )
-        self.flashlight:SetIntensity( 2 )
+        self.flashlight:SetIntensity( 5 )
         self.flashlight:SetRadius( 15 ) 
         self.flashlight:SetAtmospheric( true )
         
@@ -319,6 +319,10 @@ function Marine:GetFlashlightOn()
     return self.flashlightOn
 end
 
+function Marine:GetCanIdle()
+    return not self.sprinting
+end
+
 function Marine:UpdateSprintingState(input)
 
     PROFILE("Marine:UpdateSprintingState")
@@ -370,12 +374,6 @@ function Marine:UpdateSprintingState(input)
             
             self.sprinting = self.desiredSprinting
             
-            // Disable weapon idling when sprinting
-            local viewModel = self:GetViewModelEntity()
-            if viewModel then
-                viewModel:SetCanIdle(not self.sprinting)
-            end
-            
         end
     
     else
@@ -415,9 +413,8 @@ function Marine:UpdateSprintingState(input)
 end
 
 function Marine:GetCanViewModelIdle()
-    return self:GetIsAlive() and not self.sprinting
+    return Player.GetCanViewModelIdle(self) and not self.sprinting
 end
-
 
 // Check if friendly or world obstacle is in front of us so we can swing up our weapon for cool factor
 function Marine:UpdateLiftWeapon(input)
@@ -583,6 +580,20 @@ function Marine:ConstrainMoveVelocity(moveVelocity)
     
 end
 
+function Marine:OnKill(damage, attacker, doer, point, direction)
+    
+    Player.OnKill(self, damage, attacker, doer, point, direction)
+    
+    // Don't play alert if we suicide
+    if player ~= self then
+        self:GetTeam():TriggerAlert(kTechId.MarineAlertSoldierLost, self)
+    end
+    
+    // Remember squad we were in on death so we can beam back to them
+    self.lastSquad = self:GetSquad()
+    
+end
+
 // Set to true or false every frame
 function Marine:SetWeaponLift(weaponLift)
 
@@ -599,23 +610,6 @@ function Marine:SetWeaponLift(weaponLift)
         elseif(not weaponLift and (self.weaponLiftTime ~= 0)) then
             self.weaponLiftTime = 0
             self.weaponDropTime = time
-        end
-        
-        if((prevWeaponLift ~= self.weaponLiftTime) or (prevWeaponDrop ~= self.weaponDropTime)) then
-        
-            // Force player and view model anim to play
-            self.nextIdleTime = time
-           
-            local weapon = self:GetActiveWeapon()
-            if(weapon ~= nil) then
-                weapon.nextIdleTime = time
-            end
-            
-            local viewModel = self:GetViewModelEntity()
-            if viewModel ~= nil then
-                viewModel.nextIdleTime = time
-            end
-            
         end
         
     end
@@ -722,18 +716,16 @@ function Marine:GetSayings()
     
 end
 
-function Marine:ExecuteSaying(index)
+function Marine:ExecuteSaying(index, menu)
 
-    self.showSayings = false
-
-    Player.ExecuteSaying(self, index)
+    Player.ExecuteSaying(self, index, menu)
 
     if(Server) then
     
         local sayings = marineRequestSayingsSounds
         local sayingActions = marineRequestActions
         
-        if(self.showSayingsMenu == 2) then
+        if(menu == 2) then
             sayings = marineGroupSayingsSounds
             sayingActions = marineGroupRequestActions
         end

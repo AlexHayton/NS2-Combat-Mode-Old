@@ -15,23 +15,8 @@ Spikes.kMapName = "spikes"
 
 Spikes.kModelName = PrecacheAsset("models/alien/lerk/lerk_view_spike.model")
 
-Spikes.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spikes")
-Spikes.kAttackPierceSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spikes_pierce")
-Spikes.kAttackZoomedSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spikes_zoomed")
-Spikes.kAttackZoomedPierceSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spikes_zoomed_pierce")
-Spikes.kZoomToggleSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spikes_zoom")
-
-Spikes.kFireEffect = PrecacheAsset("cinematics/alien/lerk/spike_fire.cinematic")
-Spikes.kEffect = PrecacheAsset("cinematics/alien/lerk/spike.cinematic")
-Spikes.kImpactEffect = PrecacheAsset("cinematics/alien/lerk/spike_impact.cinematic")
-Spikes.kFireViewEffect = PrecacheAsset("cinematics/alien/lerk/spike_view_fire.cinematic")
-
 // Lerk spikes (view model)
-Spikes.kAnimLeftAttack = "attack_l"
-Spikes.kAnimRightAttack = "attack_r"
 Spikes.kPlayerAnimAttack = "spikes"
-Spikes.kAnimSnipe = "snipe"
-Spikes.kAnimIdleTable = {{1, "idle"}/*, {.1, "idle2"}, {.5, "idle3"}*/ }
 
 Spikes.kDelay = kSpikeFireDelay
 Spikes.kSnipeDelay = kSpikesAltFireDelay
@@ -94,10 +79,6 @@ function Spikes:GetPrimaryAttackDelay()
     return ConditionalValue(self.zoomedIn, Spikes.kSnipeDelay, Spikes.kDelay)
 end
 
-function Spikes:GetIdleAnimation()
-    return chooseWeightedEntry( Spikes.kAnimIdleTable )
-end
-
 function Spikes:GetDeathIconIndex()
     return ConditionalValue(self.zoomedIn, kDeathMessageIcon.SpikesAlt, kDeathMessageIcon.Spikes)
 end
@@ -110,18 +91,12 @@ function Spikes:PerformPrimaryAttack(player)
 
     if not self.zoomedIn then
     
-        player:SetViewAnimation(ConditionalValue(self.fireLeftNext, Spikes.kAnimLeftAttack, Spikes.kAnimRightAttack), nil, nil, 1/player:AdjustFuryFireDelay(1))
-        
         // Alternate view model animation to fire left then right
         self.fireLeftNext = not self.fireLeftNext
     
-        Shared.PlaySound(player, ConditionalValue(player:GetHasUpgrade(kTechId.Piercing), Spikes.kAttackPierceSound, Spikes.kAttackSound))
-        
         self:FireSpikeProjectile(player)        
         
     else
-    
-        player:SetViewAnimation(Spikes.kAnimSnipe, nil, nil, 1/player:AdjustFuryFireDelay(1))
     
         // Snipe them!
         self:PerformZoomedAttack(player)
@@ -130,9 +105,6 @@ function Spikes:PerformPrimaryAttack(player)
 
     player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
 
-    // Play the attack animation on the character.
-    player:SetOverlayAnimation(Spikes.kPlayerAnimAttack)
-    
 end
 
 function Spikes:FireSpikeProjectile(player)
@@ -193,17 +165,17 @@ function Spikes:PerformZoomedAttack(player)
         local damageScalar = ConditionalValue(hasPiercing, kPiercingDamageScalar, 1)
         trace.entity:TakeDamage(Spikes.kSnipeDamage * damageScalar, player, self, endPoint, direction)
         
+        if hasPiercing then
+            trace.entity:TriggerEffects("spikes_snipe_hit")
+        end
+        
+    else
+        self:TriggerEffects("spikes_snipe_miss", {kEffectHostCoords = Coords.GetTranslation(trace.endPoint)})
     end
     
-    local soundName = ConditionalValue(hasPiercing, Spikes.kAttackZoomedPierceSound, Spikes.kAttackZoomedSound)
-    
-    // Play attack sound
-    Shared.PlaySound(player, soundName)
-
-    // Play snipe sound where it hits so players know what's going on
-    Shared.PlayWorldSound(nil, soundName, nil, trace.endPoint)
-    
     player:SetActivityEnd(player:AdjustFuryFireDelay(Spikes.kSnipeDelay))
+    
+    
     
 end
 
@@ -214,8 +186,6 @@ function Spikes:SetZoomState(player, zoomedIn)
         self.zoomedIn = zoomedIn
         self.timeZoomedIn = Shared.GetTime()
             
-        Shared.PlaySound(player, Spikes.kZoomToggleSound)
-        
         if(Client) then
         
             // Lower mouse sensitivity when zoomed in
@@ -281,6 +251,21 @@ end
 
 function Spikes:GetSecondaryEnergyCost(player)
     return 0
+end
+
+function Spikes:GetEffectParams(tableParams)
+
+    Ability.GetEffectParams(self, tableParams)
+    
+    local player = self:GetParent()
+    
+    // Player may be nil when the spikes are first created.
+    if (player ~= nil) then
+        tableParams[kEffectFilterFrom] = player:GetHasUpgrade(kTechId.Piercing)
+    end    
+    
+    tableParams[kEffectFilterLeft] = not self.fireLeftNext
+    
 end
 
 Shared.LinkClassToMap("Spikes", Spikes.kMapName, networkVars )

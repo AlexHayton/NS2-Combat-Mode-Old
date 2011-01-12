@@ -14,9 +14,9 @@
 //  Choose a friendly player in sight, pick a point near them that they can see, move to it, wait a bit, repeat. Attack any enemies. Choose again if certain time has elapsed.
 //  Go to alien hive room and pick off eggs and shoot the hive
 local kBotNames = {
-    "Flayra (bot)", "max0r (bot)", "Ooghi (bot)", "Breadman (bot)", "Squeal Like a Pig (bot)", "Chops (bot)", "Numerik (bot)",
+    "Flayra (bot)", "m4x0r (bot)", "Ooghi (bot)", "Breadman (bot)", "Squeal Like a Pig (bot)", "Chops (bot)", "Numerik (bot)",
     "Comprox (bot)", "MonsieurEvil (bot)", "Joev (bot)", "puzl (bot)", "Crispix (bot)", "Kouji_San (bot)", "TychoCelchuuu (bot)",
-    "Insane (bot)", "CoolCookieCooks (bot)", "devildog (bot)", "tommyd (bot)", "Relic25 (bot)", "Hamza @ Dtoid (bot)"
+    "Insane (bot)", "CoolCookieCooks (bot)", "devildog (bot)", "tommyd (bot)", "Relic25 (bot)"
 }
 
 function Player:ChooseOrder()
@@ -242,7 +242,7 @@ function Player:UpdateWeaponMove(move)
                 end
                 
             end
-            
+        
         end        
         
     end
@@ -252,12 +252,11 @@ end
 function Player:MoveToPoint(toPoint, move)
     
     // Fill in move to get to specified point
-    local diff = (toPoint - self:GetModelOrigin())
+    local diff = (toPoint - self:GetEyePos())
     local direction = GetNormalizedVector(diff)
     
     // Look at target (needed for moving and attacking)
-    move.yaw = GetYawFromVector(direction) - self.baseYaw
-        
+    move.yaw   = GetYawFromVector(direction) - self.baseYaw
     move.pitch = GetPitchFromVector(direction) - self.basePitch
     
     //self:SetViewAngles(Angles())
@@ -277,6 +276,7 @@ function Player:GenerateMove()
     local move = Move()
     
     move:Clear()
+    self.inAttackRange = false
     
     // If we're inside an egg, hatch
     if self:isa("AlienSpectator") then
@@ -284,7 +284,7 @@ function Player:GenerateMove()
     else
     
         local order = self:GetCurrentOrder()
-        
+
         // Look at order and generate move for it
         if order then
         
@@ -292,32 +292,32 @@ function Player:GenerateMove()
         
             local orderLocation = order:GetLocation()
             
-            // When close enough, stop moving so we don't go back and forth constantly
-            if (orderLocation - self:GetOrigin()):GetLength() > 1.2 then
+            // Check for moving targets. This isn't done inside Order:GetLocation
+            // so that human players don't have special information about invisible
+            // targets just because they have an order to them.
+            if (order:GetType() == kTechId.Attack) then
+                local target = Shared.GetEntity(order:GetParam())
+                if (target ~= nil) then
+                    orderLocation = target:GetEngagementPoint()
+                end
+            end
             
-                local moved = false            
+            local moved = false            
+            
+            if self.pathingEnabled then
+            
+                local movement = Server.MoveToTarget(PhysicsMask.AIMovement, self, self:GetWaypointGroupName(), orderLocation, 1.5)
                 
-                if self.pathingEnabled then
-                
-                    local movement = Server.MoveToTarget(PhysicsMask.AIMovement, self, self:GetWaypointGroupName(), orderLocation, 1.5)
-                    
-                    if movement.valid then
-                    
-                        self:MoveToPoint(movement.position, move)
-                        
-                        moved = true
-                        
-                    end
-                    
+                if movement.valid then
+                    self:MoveToPoint(movement.position, move)
+                    moved = true
                 end
                 
-                if not moved then
-                
-                    // Generate naive move towards point
-                    self:MoveToPoint(orderLocation, move)
-                    
-                end
-                
+            end
+            
+            if not moved then
+                // Generate naive move towards point
+                self:MoveToPoint(orderLocation, move)
             end
             
         else

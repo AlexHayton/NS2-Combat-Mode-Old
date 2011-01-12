@@ -20,13 +20,6 @@ else
     Script.Load("lua/ScriptActor_Client.lua")
 end
 
-ScriptActor.kSparksEffect = PrecacheAsset("cinematics/sparks.cinematic")
-
-// Attach point names for effects
-ScriptActor.kHurtNode = "fxnode_hurt"
-ScriptActor.kHurtSevereNode = "fxnode_hurt_severe"
-ScriptActor.kDeathNode = "fxnode_death"
-
 local networkVars = 
 {   
     // Team type (marine, alien, neutral)
@@ -217,6 +210,67 @@ end
 // busy deploying, researching, etc. it can return false. Pass in the player who is would be buying the tech.
 // techNode could be nil for activations that aren't added to tech tree.
 function ScriptActor:GetTechAllowed(techId, techNode, player)
+
+    if(techNode == nil) then
+        return false
+    end
+
+    // Allow upgrades and energy builds when we're not researching/building something else
+    if techNode:GetIsUpgrade() then
+    
+        // Let child override this
+        return self:GetUpgradeTechAllowed(techId) and (techNode:GetCost() <= player:GetTeamCarbon())
+        
+    elseif techNode:GetIsEnergyBuild() then
+        
+        return self:GetUpgradeTechAllowed(techId) and (techNode:GetCost() <= self:GetEnergy())
+    
+    // If tech is research
+    elseif(techNode:GetIsResearch()) then
+    
+        // Return false if we're researching, or if tech is being researched
+        return self:GetResearchTechAllowed(techNode) and (techNode:GetCost() <= player:GetTeamCarbon())
+
+    // If tech is action or buy action
+    elseif(techNode:GetIsAction() or techNode:GetIsBuy()) then
+    
+        // Return false if we don't have enough plasma
+        if(player:GetPlasma() < techNode:GetCost()) then
+            return false
+        end
+        
+    // If tech is activation
+    elseif(techNode:GetIsActivation()) then
+    
+        // Return false if structure doesn't have enough energy
+        if techNode:GetCost() <= self:GetEnergy() then
+            return self:GetActivationTechAllowed(techId)
+        else
+            return false
+        end
+        
+    // If tech is build
+    elseif(techNode:GetIsBuild()) then
+    
+        // return false if we don't have enough carbon
+        return (player:GetTeamCarbon() >= techNode:GetCost())
+        
+    end
+    
+    return true
+    
+end
+
+// Children can decide not to allow certain activations at certain times (energy cost already considered)
+function ScriptActor:GetActivationTechAllowed(techId)
+    return true
+end
+
+function ScriptActor:GetUpgradeTechAllowed(techId)
+    return true
+end
+
+function ScriptActor:GetResearchTechAllowed(techNode)
     return true
 end
 
@@ -273,7 +327,7 @@ function ScriptActor:GetUseAttachPoint()
 end
 
 // Used by player. Returns true if entity was affected by use, false otherwise.
-function ScriptActor:OnUse(player, elapsedTime, useAttachPoint)
+function ScriptActor:OnUse(player, elapsedTime, useAttachPoint, usePoint)
 end
 
 function ScriptActor:OnTouch(player)
@@ -379,24 +433,27 @@ function ScriptActor:GetLocationName()
 end
 
 // Hooks into effect manager
-function ScriptActor:TriggerEffects(effectName, tableParams)
+function ScriptActor:GetEffectParams(tableParams)
 
-    if effectName and effectName ~= "" then
-    
-        if not tableParams then
-            tableParams = {}
-        end
-        
+    BlendedActor.GetEffectParams(self, tableParams)
+
+    // Only override if not specified    
+    if not tableParams[kEffectFilterClassName] and self.GetClassName then
         tableParams[kEffectFilterClassName] = self:GetClassName()
-        tableParams[kEffectHostCoords] = self:GetCoords()
-        tableParams[kEffectFilterIsAlien] = (self.teamType == kAlienTeamType)
-        
-        GetEffectManager():TriggerEffects(effectName, tableParams, self)
-        
-    else
-        Print("%s:TriggerEffects(): Called with invalid effectName)", self:GetClassName(), ToString(effectName))
     end
-        
+    
+    if not tableParams[kEffectHostCoords] and self.GetCoords then
+        tableParams[kEffectHostCoords] = self:GetCoords()
+    end
+    
+    if not tableParams[kEffectFilterIsAlien] then
+        tableParams[kEffectFilterIsAlien] = (self.teamType == kAlienTeamType)
+    end
+    
+    if not tableParams[kEffectFilterFromAnimation] and self.GetAnimation then
+        tableParams[kEffectFilterFromAnimation] = self:GetAnimation()
+    end
+    
 end
 
 Shared.LinkClassToMap("ScriptActor", ScriptActor.kMapName, networkVars )

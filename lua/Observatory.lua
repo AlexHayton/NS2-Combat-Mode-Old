@@ -16,7 +16,6 @@ Observatory.kModelName = PrecacheAsset("models/marine/observatory/observatory.mo
 Observatory.kScanSound = PrecacheAsset("sound/ns2.fev/marine/structures/observatory_scan")
 Observatory.kDistressBeaconSound = PrecacheAsset("sound/ns2.fev/marine/common/distress_beacon")
 
-Observatory.kDeathEffect = PrecacheAsset("cinematics/marine/observatory/death.cinematic")
 Observatory.kGlowingLightEffect = PrecacheAsset("cinematics/marine/observatory/glowing_light_effect.cinematic")
 Observatory.kDistressBeaconTime = kDistressBeaconTime
 Observatory.kDistressBeaconRange = kDistressBeaconRange
@@ -46,10 +45,6 @@ end
 
 function Observatory:GetRequiresPower()
     return true
-end
-
-function Observatory:GetDeathEffect()
-    return Observatory.kDeathEffect
 end
 
 function Observatory:TriggerScan(position)
@@ -110,13 +105,9 @@ function Observatory:RespawnPlayer(player)
     
     if success then
     
-        // Play effect + sound
-        player:PlaySound(InfantryPortal.kSpawnPlayerSound)
-        
         // Reset player state
         player:SetOrigin(spawnPoint)       
-            
-        Shared.CreateEffect(nil, InfantryPortal.kSpawnEffect, player)
+        player:TriggerEffects("distress_beacon")            
         
     else
         Print("Observatory:RespawnPlayer(): Couldn't find space to respawn player.")
@@ -150,7 +141,7 @@ function Observatory:PerformActivation(techId, position, commander)
         self:TriggerScan(position)
         success = true
 
-    elseif techId == kTechId.kDistressBeaconRange then
+    elseif techId == kTechId.DistressBeacon then
     
         success = self:TriggerDistressBeacon()
         

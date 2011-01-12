@@ -68,18 +68,12 @@ function Phantasm:OnInit()
     
         self:SetNextThink(Phantasm.kMoveThinkInterval)
         
-        self:PlaySound(self:GetSpawnSoundName())
-        
         self:SetUpdates(true)
         
     end
     
     self:UpdateControllerFromEntity()
         
-end
-
-function Phantasm:GetKilledSound(doer)
-    return ""
 end
 
 function Phantasm:GetHoverHeight()

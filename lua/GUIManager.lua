@@ -17,6 +17,7 @@ function GUIManager:Initialize()
 
     self.scripts = { }
     self.scriptsSingle = { }
+    self.animations = { }
 
 end
 
@@ -50,6 +51,7 @@ function GUIManager:CreateGUIScript(scriptName)
     if createdScript ~= nil then
         table.insert(self.scripts, createdScript)
     end
+    return createdScript
 
 end
 
@@ -77,9 +79,12 @@ end
 function GUIManager:DestroyGUIScript(scriptInstance)
 
     // Only uninitialize it if the manager has a reference to it.
+    local success = false
     if table.removevalue(self.scripts, scriptInstance) then
         scriptInstance:Uninitialize()
+        success = true
     end
+    return success
 
 end
 
@@ -98,8 +103,39 @@ function GUIManager:DestroyGUIScriptSingle(scriptName)
     
 end
 
+function GUIManager:NotifyGUIItemDestroyed(destroyedItem)
+    
+    // Remove any animations that reference the destroyed item.
+    local removeAnimations = { }
+    for i, animation in ipairs(self.animations) do
+        if animation.Item == destroyedItem then
+            table.insert(removeAnimations, animation)
+        end
+    end
+    
+    for i, removeAnimation in ipairs(removeAnimations) do
+        table.removevalue(self.animations, removeAnimation)
+    end
+
+end
+
+// Operation should be a function that takes a GUIItem and a value to set.
+function GUIManager:StartAnimation(animatingItem, operation, startValue, endValue, animationTime)
+
+    ASSERT(animatingItem ~= nil)
+    ASSERT(operation ~= nil and type(operation) == "function")
+    ASSERT(type(animationTime) == "number" and animationTime >= 0)
+    
+    table.insert(self.animations, { Item = animatingItem, Operation = operation,
+                                    StartValue = startValue, EndValue = endValue,
+                                    AnimationTime = animationTime, Time = 0 })
+
+end
+
 function GUIManager:Update(deltaTime)
 
+    self:UpdateAnimations(deltaTime)
+    
     for index, script in ipairs(self.scripts) do
         script:Update(deltaTime)
     end
@@ -107,6 +143,29 @@ function GUIManager:Update(deltaTime)
         script[1]:Update(deltaTime)
     end
     
+end
+
+function GUIManager:UpdateAnimations(deltaTime)
+
+    local removeAnimations = { }
+    for i, animation in ipairs(self.animations) do
+    
+        // Ensure the time never goes past the final animation time.
+        animation.Time = math.min(animation.Time + deltaTime, animation.AnimationTime)
+        
+        local timePercent = animation.Time / animation.AnimationTime
+        local lerpedValue = animation.StartValue + ((animation.EndValue - animation.StartValue) * timePercent)
+        animation.Operation(animation.Item, lerpedValue)
+        if animation.Time >= animation.AnimationTime then
+            table.insert(removeAnimations, animation)
+        end
+    
+    end
+    
+    for i, removeAnimation in ipairs(removeAnimations) do
+        table.removevalue(self.animations, removeAnimation)
+    end
+
 end
 
 function GUIManager:SendKeyEvent(key, down)

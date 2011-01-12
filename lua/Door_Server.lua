@@ -111,11 +111,6 @@ function Door:OnTakeDamage(damage, doer, point)
     
 end
 
-// Keep broken door around in level until reset
-function Door:GetPersistentRagdoll()
-    return true
-end
-
 function Door:OnThink()
 
     LiveScriptActor.OnThink(self)
@@ -179,5 +174,7 @@ function Door:OnAnimationComplete(animationName)
         self:SetState(Door.kState.Closed) 
         
     end
+    
+    LiveScriptActor.OnAnimationComplete(self, animationName)
     
 end

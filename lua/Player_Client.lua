@@ -504,6 +504,16 @@ function PlayerUI_GetPlayerMaxArmor()
     return 0
 end
 
+function PlayerUI_GetPlayerIsParasited()
+
+    local player = Client.GetLocalPlayer()
+    if player then
+        return player:GetGameEffectMask(kGameEffect.Parasite)
+    end
+    return false
+
+end
+
 // For drawing health circles
 function GameUI_GetHealthStatus(entityId)
 
@@ -636,6 +646,10 @@ function Player:UpdateCrossHairText()
     
                 self.crossHairTextColor = kEnemyColor
                 
+            elseif trace.entity:GetGameEffectMask(kGameEffect.Parasite) then
+            
+                self.crossHairTextColor = kParasitedTextColor
+                
             else
             
                 self.crossHairTextColor = kFriendlyNeutralColor
@@ -663,10 +677,9 @@ function Player:UpdateMisc(input)
 
     PROFILE("Player:UpdateMisc")
 
-    self:UpdateSharedMisc(input)
-
     if not Shared.GetIsRunningPrediction() then
-
+    
+        self:UpdateSharedMisc(input)
         self:UpdateCrossHairText()
         self:UpdateDamageIndicators()
         
@@ -760,13 +773,14 @@ function Player:UpdateClientEffects(deltaTime, isLocal)
     self:SetIsVisible(drawWorld)
     
     local activeWeapon = self:GetActiveWeapon()
-    if (activeWeapon ~= nil) then
+    if activeWeapon then
         activeWeapon:SetIsVisible( drawWorld )
     end
     
+    // Hide view model for other players and when in third person
     local viewModel = self:GetViewModelEntity()    
-    if(viewModel ~= nil) then
-        viewModel:SetIsVisible( not drawWorld )
+    if viewModel and drawWorld then
+        viewModel:SetIsVisible( false )
     end
     
     //self:UpdateCloaking()
@@ -787,6 +801,31 @@ function Player:UpdateClientEffects(deltaTime, isLocal)
         
     end
     
+end
+
+function Player:ExpireDebugText()
+
+    // Expire debug text items after lifetime has elapsed        
+    local numElements = table.maxn(gDebugTextList)
+
+    for i = 1, numElements do
+    
+        local elementPair = gDebugTextList[i]
+        
+        if elementPair and elementPair[1]:GetExpired() then
+        
+            GetGUIManager():DestroyGUIScript(elementPair[1])
+            
+            table.remove(gDebugTextList, i)
+                
+            numElements = numElements - 1
+            
+            i = i - 1
+            
+        end
+        
+    end
+        
 end
 
 function Player:UpdatePowerPointLights()
@@ -1395,6 +1434,17 @@ function PlayerUI_GetLocationName()
     
 end
 
+function PlayerUI_IsACommander()
+
+    local player = Client.GetLocalPlayer()
+    if player ~= nil then
+        return player:isa("Commander")
+    end
+    
+    return false
+
+end
+
 /**
  * Damage indicators. Returns a array of damage indicators which are used to draw red arrows pointing towards
  * recent damage. Each damage indicator pair will consist of an alpha and a direction. The alpha is 0-1 and the
@@ -1546,7 +1596,6 @@ function Player:OnUpdate(deltaTime)
     // Need to update pose parameters every frame to keep them smooth
     LiveScriptActor.OnUpdate(self, deltaTime)
     
-    self:UpdateUse(deltaTime)
     
     if not Client.GetIsRunningPrediction() then
     
@@ -1561,7 +1610,9 @@ function Player:OnUpdate(deltaTime)
         GetEffectManager():TriggerQueuedEffects()
     
         self:UpdateClientEffects(deltaTime, isLocal)
-    
+        
+        self:ExpireDebugText()
+
     end
     
 end

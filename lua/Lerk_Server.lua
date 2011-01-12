@@ -17,9 +17,5 @@ function Lerk:InitWeapons()
     
 end
 
-function Lerk:GetKilledSound(doer)
-    return Lerk.kDieSoundName
-end
-
 
 

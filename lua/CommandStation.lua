@@ -14,14 +14,8 @@ CommandStation.kLevel1MapName         = "commandstationl1"
 
 CommandStation.kModelName = PrecacheAsset("models/marine/command_station/command_station.model")
 
-CommandStation.kLoginSound = PrecacheAsset("sound/ns2.fev/marine/structures/command_station_close")
-CommandStation.kLogoutSound = PrecacheAsset("sound/ns2.fev/marine/structures/command_station_open")
 CommandStation.kActiveSound = PrecacheAsset("sound/ns2.fev/marine/structures/command_station_active")
 CommandStation.kUnderAttackSound = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/command_station_under_attack")
-CommandStation.kReplicateSound = PrecacheAsset("sound/ns2.fev/alien/common/join_team")
-
-CommandStation.kCommandScreenEffect = PrecacheAsset("cinematics/marine/commandstation/command_screen.cinematic")
-CommandStation.kDeathEffect = PrecacheAsset("cinematics/marine/commandstation/death.cinematic")
 
 CommandStation.kLoginAttachPoint = "login"
 
@@ -38,22 +32,6 @@ function CommandStation:GetRequiresPower()
     return false
 end
 
-function CommandStation:GetDeathEffect()
-    return CommandStation.kDeathEffect
-end
-
-function CommandStation:GetLoginSound()
-    return CommandStation.kLoginSound
-end
-
-function CommandStation:GetLogoutSound()
-    return CommandStation.kLogoutSound
-end
-
-function CommandStation:GetDeploySound()
-    return CommandStation.kLogoutSound
-end
-
 function CommandStation:GetUseAttachPoint()
     return CommandStation.kLoginAttachPoint
 end
@@ -68,6 +46,8 @@ end
 
 function CommandStation:OnAnimationComplete(animName)
 
+    CommandStructure.OnAnimationComplete(self, animName)
+    
     if(animName == Structure.kAnimDeploy) then
         self:SetAnimation("open")
     elseif(animName == "close") then
@@ -76,10 +56,6 @@ function CommandStation:OnAnimationComplete(animName)
         self:StopSound(CommandStation.kActiveSound)
     end
 
-end
-
-function CommandStation:GetOnFireSound()
-    return LiveScriptActor.kOnFireLargeSound
 end
 
 function CommandStation:GetTechButtons(techId)
@@ -107,10 +83,6 @@ function CommandStation:GetTechButtons(techId)
     
     return techButtons
  
-end
-
-function CommandStation:GetDeathAnimation()
-    return ConditionalValue(self.occupied, "death_closed", "death_opened")
 end
 
 Shared.LinkClassToMap("CommandStation",    CommandStation.kLevel1MapName, networkVars)

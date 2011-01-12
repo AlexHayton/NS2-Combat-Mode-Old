@@ -33,7 +33,7 @@ Commander.kScoreBoardDisplayDelay = .12
 // Snap structures to attach points within this range
 Commander.kAttachStructuresRadius = 5
 
-Commander.kScrollVelocity = 600
+Commander.kScrollVelocity = 40
 
 // Snap structures within this range to attach points.
 Commander.kStructureSnapRadius = 4
@@ -272,10 +272,9 @@ function Commander:UpdateMovePhysics(input)
     
         local angles = self:GetViewAngles()
         local moveVelocity = angles:GetCoords():TransformVector( input.move ) * Commander.kScrollVelocity
-        local velocity = moveVelocity * input.time
         
         // Set final position (no collision)
-        finalPos = self:GetOrigin() + velocity * input.time
+        finalPos = self:GetOrigin() + moveVelocity * input.time
 
         self:SetSelectMode(Commander.kSelectMode.None)
         
@@ -480,7 +479,7 @@ end
 // that an entity has changed (ie, a player has changed class), or pass nil
 // for newEntityId to indicate an entity has been destroyed.
 function Commander:OnEntityChange(oldEntityId, newEntityId)
-
+    
     // Replace old object with new one if selected
     local newSelection = {}
     table.copy(self.selectedEntities, newSelection)
@@ -506,34 +505,8 @@ function Commander:OnEntityChange(oldEntityId, newEntityId)
         self:InternalSetSelection(newSelection)
     end
     
-    if Server then
-    
-    // Loop through hotgroups and update accordingly
-    for i = 1, Player.kMaxHotkeyGroups do
-    
-        for index, entityId in ipairs(self.hotkeyGroups[i]) do
-        
-            if(entityId == oldEntityId) then
-            
-                if(newEntityId ~= nil) then
-                
-                    self.hotkeyGroups[i][index] = newEntityId
-                    
-                else
-                
-                    table.remove(self.hotkeyGroups[i], index)
-                    
-                end
-                
-                self:SendHotkeyGroup(i)
-                
-            end
-            
-        end
-        
-   end
-   
-   end
+    // Hotkey groups are handled in player.
+    Player.OnEntityChange(self, oldEntityId, newEntityId)
    
 end
 

@@ -15,15 +15,10 @@ class 'Egg' (Structure)
 Egg.kMapName = "egg"
 
 Egg.kModelName = PrecacheAsset("models/alien/egg/egg.model")
-
-Egg.kAnimIdle = "idle"
-
-Egg.kBurstEffect = PrecacheAsset("cinematics/alien/egg/burst.cinematic")
 Egg.kMistEffect = PrecacheAsset("cinematics/alien/egg/mist.cinematic")
 Egg.kSpawnEffect = PrecacheAsset("cinematics/alien/egg/spawn.cinematic")
 Egg.kGlowEffect = PrecacheAsset("cinematics/alien/egg/glow.cinematic")
 
-Egg.kDeathSoundName = PrecacheAsset("sound/ns2.fev/alien/structures/egg/death")
 Egg.kSpawnSoundName = PrecacheAsset("sound/ns2.fev/alien/structures/egg/spawn")
 
 Egg.kXExtents = 1
@@ -34,10 +29,6 @@ Egg.kHealth = kEggHealth
 Egg.kArmor = kEggArmor
 
 Egg.kThinkInterval = .5
-
-function Egg:GetIdleAnimation()
-    return Egg.kAnimIdle
-end
 
 function Egg:OnCreate()
 
@@ -65,29 +56,8 @@ function Egg:OnInit()
     
 end
 
-function Egg:GetKilledSound(doer)
-    if doer ~= nil then
-        local doerClassName = doer:GetClassName()
-        if doerClassName == "Axe" then 
-            return Structure.kAlienKilledByAxeSound
-        elseif doerClassName == "Grenade" then
-            return Structure.kAlienKilledByGrenadeSound
-        end
-    end
-
-    return Egg.kDeathSoundName
-end
-
 function Egg:GetIsAlienStructure()
     return true
-end
-
-function Egg:GetDeathAnimation()
-    return nil
-end
-
-function Egg:GetDamageEffectOffset()
-    return Vector(0, 9, 10)
 end
 
 function Egg:QueueWaitingPlayer()
@@ -136,12 +106,8 @@ function Egg:OnKill(damage, attacker, doer, point, direction)
         self:GetTeam():PutPlayerInRespawnQueue(player, Shared.GetTime())
         
     end
-    
-    // ...and a splash
-    Shared.CreateEffect(nil, Egg.kBurstEffect, nil, self:GetCoords())
-    
-    // Kill mist
-    Shared.StopEffect(nil, Egg.kMistEffect, self)
+
+    self:TriggerEffects("egg_death")        
     
     Structure.OnKill(self, damage, attacker, doer, point, direction)
     
@@ -166,11 +132,7 @@ function Egg:SpawnPlayer(player)
         
             self.queuedPlayerId = nil
             
-            // Kill egg with a sound
-            Shared.PlayWorldSound(nil, Egg.kDeathSoundName, nil, self:GetOrigin())
-            
-            // ...and a splash
-            Shared.CreateEffect(nil, Egg.kBurstEffect, nil, self:GetCoords())
+            self:TriggerEffects("egg_death")
             
             DestroyEntity(self) 
             
@@ -192,35 +154,35 @@ function Egg:GetTimeQueuedPlayer()
     return self.timeQueuedPlayer
 end
 
-function Egg:GetShouldRagdoll()
-    return false
-end
-
 if Server then
 function Egg:OnThink()
 
-    Structure.OnThink(self)
-
-    // If no player in queue
-    if(self.queuedPlayerId == nil) then
-        
-        // Grab available player from team and put in queue
-        self:QueueWaitingPlayer()
-
-    else
+    if self:GetIsAlive() then
     
-        local startTime = self:GetTimeQueuedPlayer()
-        if startTime ~= nil and (Shared.GetTime() > (startTime + kAlienSpawnTime)) then
+        Structure.OnThink(self)
+
+        // If no player in queue
+        if(self.queuedPlayerId == nil) then
+            
+            // Grab available player from team and put in queue
+            self:QueueWaitingPlayer()
+
+        else
         
-            local player = Shared.GetEntity(self.queuedPlayerId)
-            if player ~= nil then
-                player:AddTooltipOncePer(string.format("Press your attack key to hatch!"), 8)   
-            else
-                self.queuedPlayerId = nil
+            local startTime = self:GetTimeQueuedPlayer()
+            if startTime ~= nil and (Shared.GetTime() > (startTime + kAlienSpawnTime)) then
+            
+                local player = Shared.GetEntity(self.queuedPlayerId)
+                if player ~= nil then
+                    player:AddTooltipOncePer(string.format("Press your attack key to hatch!"), 8)   
+                else
+                    self.queuedPlayerId = nil
+                end
             end
         end
+        
     end
-
+    
     self:SetNextThink(Egg.kThinkInterval)
     
 end

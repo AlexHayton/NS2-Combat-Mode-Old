@@ -144,6 +144,10 @@ function PowerPoint:SetLightMode(lightMode)
     
 end
 
+function PowerPoint:GetIsMapEntity()
+    return true
+end
+
 function PowerPoint:GetLightMode()
     return self.lightMode
 end
@@ -174,6 +178,14 @@ function PowerPoint:ProcessEntityHelp(player)
     
     return false
     
+end
+
+/**
+ * Power points never die, which is what allows them to be repaired even
+ * when they have 0 health.
+ */
+function PowerPoint:GetIsAlive()
+    return true
 end
 
 Shared.LinkClassToMap("PowerPoint", PowerPoint.kMapName, networkVars)

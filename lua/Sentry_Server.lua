@@ -104,7 +104,7 @@ function Sentry:SetMode(mode)
             
             self:GetAnimationLength(animName)
             
-            self:PlaySound(Structure.kPowerUpSound)
+            self:TriggerEffects("power_up")
         
         elseif mode == Sentry.kMode.PoweringDown then
         
@@ -113,7 +113,7 @@ function Sentry:SetMode(mode)
             
             modeTime = self:GetAnimationLength(powerDownAnim)
             
-            self:PlaySound(Structure.kPowerDownSound)
+            self:TriggerEffects("power_down")
         
         elseif mode == Sentry.kMode.Scanning then
         
@@ -404,30 +404,19 @@ function Sentry:FireBullets()
         
         if (trace.fraction < 1) then
         
-            //Shared.CreateEffect(nil, Sentry.kTracerEffect, nil, Coords.GetTranslation(trace.endPoint))
-            
             if not GetBlockedByUmbra(trace.entity) then
             
-                Shared.CreateEffect(nil, ScriptActor.kSparksEffect, nil, Coords.GetTranslation(trace.endPoint))
-                
-                // Play ricochet sound 
-                local surface = GetSurfaceFromTrace(trace)
-                
-                if(surface ~= "" and surface ~= nil and surface ~= "unknown") then
-
-                    // Play ricochet sound at world position for everyone else
-                    Shared.PlayWorldSound(nil, string.format(Sentry.kRicochetMaterialSound, surface), nil, trace.endPoint)
-                    
-                end
-                                   
                 if Server then
                 if trace.entity and trace.entity.TakeDamage then
                 
                     local direction = (trace.endPoint - startPoint):GetUnit()
                     
                     trace.entity:TakeDamage(Sentry.kDamagePerBullet, self, self, endPoint, direction)
-                    
+                
+                else
+                    TriggerHitEffects(self, trace.entity, trace.endPoint, GetSurfaceFromTrace(trace))    
                 end
+                
                 end
                 
             end
