@@ -334,6 +334,11 @@ function GUIAlienHUD:Uninitialize()
         self.energyBall:Uninitialize()
         self.energyBall = nil
     end
+	
+	if self.experienceBar then
+        self.experienceBar:Uninitialize()
+        self.experienceBar = nil
+    end
     
     if self.inactiveAbilitiesBar then
         GUI.DestroyItem(self.inactiveAbilitiesBar)
@@ -390,6 +395,11 @@ function GUIAlienHUD:UpdateEnergyBall(deltaTime)
 end
 
 function GUIAlienHUD:UpdateExperienceBar(deltaTime)
+    local healthBarPercentage = PlayerUI_GetPlayerExperience() / Experience_GetMaxExperience()
+    local barSize = Vector(GUIMarineHUD.kHealthBarWidth * healthBarPercentage, GUIMarineHUD.kHealthBarHeight, 0)
+    self.healthBar:SetSize(barSize)
+		
+	self.healthText:SetText(tostring(math.ceil(PlayerUI_GetPlayerHealth())))
 end
 
 function GUIAlienHUD:UpdateAbilities(deltaTime)
