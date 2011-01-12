@@ -485,7 +485,7 @@ end
 function PlayerUI_GetPlayerExperience()
     local player = Client.GetLocalPlayer()
     if player then
-        return Client.GetLocalPlayer():GetPlayerExperience()
+        return Client.GetLocalPlayer():GetExperience()
     end
     return 0
 end
