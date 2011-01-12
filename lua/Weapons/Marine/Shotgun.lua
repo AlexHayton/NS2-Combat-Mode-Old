@@ -25,28 +25,6 @@ local networkVars =
 Shotgun.kModelName = PrecacheAsset("models/marine/shotgun/shotgun.model")
 Shotgun.kViewModelName = PrecacheAsset("models/marine/shotgun/shotgun_view.model")
 
-Shotgun.kMuzzleFlashEffect = PrecacheAsset("cinematics/marine/shotgun/muzzle_flash.cinematic")
-Shotgun.kShellEffect = PrecacheAsset("cinematics/marine/shotgun/shell.cinematic")
-
-Shotgun.kFireSoundName = PrecacheAsset("sound/ns2.fev/marine/shotgun/fire")
-Shotgun.kFireLastSoundName = PrecacheAsset("sound/ns2.fev/marine/shotgun/fire_last")
-Shotgun.kSecondaryFireSoundName = PrecacheAsset("sound/ns2.fev/marine/shotgun/alt-fire")
-Shotgun.kDeploySoundName = PrecacheAsset("sound/ns2.fev/marine/shotgun/deploy")
-Shotgun.kStartReloadSoundName = PrecacheAsset("sound/ns2.fev/marine/shotgun/start_reload")
-Shotgun.kLoadShellSoundName = PrecacheAsset("sound/ns2.fev/marine/shotgun/load_shell")
-Shotgun.kEndReloadSoundName = PrecacheAsset("sound/ns2.fev/marine/shotgun/end_reload")
-
-Shotgun.kAnimPrimaryAttackTable = {{.5, "attack"} }
-Shotgun.kAnimPrimaryAttackLast = "attack_last"
-Shotgun.kAnimIdleTable = {{1.2, "idle"}, {.03, "idle2"}/*, {.05, "idle3"}*/}
-Shotgun.kAnimReloadStart = "reload_start"
-Shotgun.kAnimReloadShell = "reload_insert"
-Shotgun.kAnimReloadEnd = {{1, "reload_end"}, {1, "reload_end2"}}
-Shotgun.kAnimDrawTable = {{1, "draw"}, {1, "draw2"}}
-
-Shotgun.kCasingAttachPoint = "fxnode_shotguncasing"
-Shotgun.kMuzzleAttachPoint = "fxnode_shotgunmuzzle"
-
 Shotgun.kClipSize = kShotgunClipSize
 // Do max damage when within max damage range
 Shotgun.kMaxDamage = kShotgunMaxDamage
@@ -57,18 +35,6 @@ Shotgun.kSecondaryRange = 10
 Shotgun.kFireDelay = kShotgunFireDelay
 Shotgun.kSecondaryFireDelay = 0.5
 
-function Shotgun:CreatePrimaryAttackEffect(player)
-
-    ClipWeapon.CreatePrimaryAttackEffect(self, player)
-    
-    // Create the muzzle flash effect.
-    self:CreateWeaponEffect(player, Weapon.kHumanAttachPoint, Shotgun.kMuzzleAttachPoint, Rifle.kMuzzleFlashEffect)
-    
-    // Create the shell casing ejecting effect.
-    self:CreateWeaponEffect(player, Weapon.kHumanAttachPoint, Shotgun.kCasingAttachPoint, Shotgun.kShellEffect)
-
-end
-
 function Shotgun:GetViewModelName()
     return Shotgun.kViewModelName
 end
@@ -77,46 +43,8 @@ function Shotgun:GetDeathIconIndex()
     return kDeathMessageIcon.Shotgun
 end
 
-function Shotgun:GetFireSoundName()
-    if(self.clip == 0) then
-        return Shotgun.kFireLastSoundName
-    end
-    return Shotgun.kFireSoundName
-end
-
-function Shotgun:GetIsDroppable()
-    return true
-end
-
-function Shotgun:GetDrawSound()
-    return Shotgun.kDeploySoundName
-end
-
-// TODO: Add different sound effect
-function Shotgun:GetSecondaryFireSoundName()
-    return Shotgun.kSecondaryFireSoundName
-end
-
 function Shotgun:GetHUDSlot()
     return kPrimaryWeaponSlot
-end
-
-function Shotgun:GetDrawAnimation(previousWeaponMapName)
-    return Shotgun.kAnimDrawTable    
-end
-
-function Shotgun:GetPrimaryAttackAnimation()
-
-    if(self.clip == 0) then
-        return Shotgun.kAnimPrimaryAttackLast
-    end
-
-    return chooseWeightedEntry( Shotgun.kAnimPrimaryAttackTable )
-    
-end
-
-function Shotgun:GetAttackEmpty()
-    return chooseWeightedEntry( Shotgun.kAnimPrimaryAttackTable )
 end
 
 function Shotgun:GetClipSize()
@@ -185,15 +113,10 @@ function Shotgun:GetSecondaryAttackDelay()
     return Shotgun.kSecondaryFireDelay
 end
 
-function Shotgun:GetBaseIdleAnimation()
-    return chooseWeightedEntry( Shotgun.kAnimIdleTable )
-end
-
 function Shotgun:EnterReloadPhase(player, phase)
 
     local time = 0
     local blockActivity = true
-    local soundName = ""
 
     if(phase == kReloadPhase.None) then
     
@@ -201,38 +124,24 @@ function Shotgun:EnterReloadPhase(player, phase)
         
     elseif(phase == kReloadPhase.Start) then
     
-        time = player:SetViewAnimation(Shotgun.kAnimReloadStart)
-        soundName = Shotgun.kStartReloadSoundName
-        
-        player:SetOverlayAnimation("reload_start")
-        
+        self:TriggerEffects("shotgun_reload_start")      
+                
     elseif(phase == kReloadPhase.LoadShell) then
     
-        time = player:SetViewAnimation(Shotgun.kAnimReloadShell)
-        
-        soundName = Shotgun.kLoadShellSoundName
-        
-        player:SetOverlayAnimation("reload_insert")
-        
+        self:TriggerEffects("shotgun_reload_shell")        
+    
         // We can cancel reloading of every bullet past the first            
         blockActivity = false
         
     elseif(phase == kReloadPhase.End) then
     
-        time = player:SetViewAnimation(Shotgun.kAnimReloadEnd)
-        soundName = Shotgun.kEndReloadSoundName
-        
-        player:SetOverlayAnimation("reload_end")
+        self:TriggerEffects("shotgun_reload_end")        
 
     end
     
     self.reloadPhase = phase
     
-    self.reloadPhaseEnd = Shared.GetTime() + time
-    
-    if soundName ~= "" then
-        Shared.PlaySound(player, soundName)
-    end
+    self.reloadPhaseEnd = Shared.GetTime() + player:GetViewAnimationLength()
     
     if(blockActivity) then
     
@@ -250,145 +159,7 @@ function Shotgun:OnPrimaryAttack(player)
     
 end
 
-function Shotgun:GetSecondaryAttackAnimation()
-    return self:GetPrimaryAttackAnimation()
-end
-
-/*
-function Shotgun:OnSecondaryAttack(player)
-
-    player:DeactivateWeaponLift()
-
-    self:EnterReloadPhase(player, kReloadPhase.None)
-
-    if (self.clip == 0 and self.ammo > 0) then
-
-        // Automatically reload if we're out of ammo
-        player:Reload()
-    
-    else
-    
-        self:FireSecondary(player, self:GetBulletsPerShot(), self:GetSpread(), Shotgun.kSecondaryRange, self:GetPenetration())
-        self.clip = self.clip - 1
-        
-        // Allow the weapon to be fired again before the activity animation ends.
-        // This allows us to have a fast rate of fire and still have nice animation
-        // effects in the case of the final shot
-        player:SetViewAnimation( self:GetSecondaryAttackAnimation() )
-        player:SetActivityEnd( self:GetSecondaryAttackDelay() * player:GetCatalystFireModifier() )
-        
-        // Play the fire animation on the character.
-        player:SetOverlayAnimation(Marine.kAnimOverlayFire)
-
-        Shared.PlaySound(player, self:GetFireSoundName())
-        
-    end
-    
-end
-
-function Shotgun:FireSecondary(player, bullets, spread, range, penetration)
-    self:FireFlechettes(player, bullets, spread, range, penetration)
-end
-*/
-
-/**
- * Fires the specified number of bullets in a cone from the player's current view. These bullets bounce off walls
- * and continue until out of range or they hit a target.
- */
-function Shotgun:FireFlechettes(player, bulletsToShoot, spread, range, penetration)
-
-    local viewAngles = player:GetViewAngles()
-    local viewCoords = viewAngles:GetCoords()
-    
-    // Filter ourself out of the trace so that we don't hit ourselves.
-    local filter = EntityFilterTwo(player, self)
-    
-    for bullet = 1, bulletsToShoot do
-    
-        local startPoint = player:GetViewOffset() + player:GetOrigin()
-        
-        local xSpread = ((NetworkRandom() * 2 * spread) - spread) + ((NetworkRandom() * 2 * spread) - spread)
-        local ySpread = ((NetworkRandom() * 2 * spread) - spread) + ((NetworkRandom() * 2 * spread) - spread) 
-        local spreadDirection = viewCoords.zAxis + viewCoords.xAxis * xSpread + viewCoords.yAxis * ySpread
-        
-        local endPoint = startPoint + spreadDirection * range
-    
-        self:FireFlechetteRound(startPoint, endPoint, range, filter)
-        
-    end
-
-end
-
-// Fire bullet that bounces off walls until it hits a target or exceeds its range
-function Shotgun:FireFlechetteRound(startPoint, endPoint, range, filter)
-
-    local rangeTravelled = 0
-    local trace = Shared.TraceRay(startPoint, endPoint, PhysicsMask.Bullets, filter)
-    
-    while (trace.fraction > 0.01) do
-
-        local canDamageTarget = true
-        
-        self:CreateHitEffect(player, trace.endPoint - GetNormalizedVector(endPoint - startPoint) * Weapon.kHitEffectOffset, GetSurfaceFromTrace(trace))
-        
-        // Create line showing bullet from start to endpoint (TODO: Make networked)
-        if(Client) then
-        
-            // Draw bounce
-            if(trace.fraction == 1) then
-                DebugLine(startPoint, endPoint, 1.5, 1, 1, 1, 1)
-            else
-                DebugLine(startPoint, trace.endPoint, 1.5, 1, 1, 1, 1)
-            end
-            
-        end
-        
-        // Trace amount travelled so we can do less damage
-        local lastTraceRange = trace.fraction * (endPoint - startPoint):GetLength()
-        rangeTravelled = rangeTravelled + lastTraceRange
-        
-        if(trace.entity and canDamageTarget) then
-            
-            local direction = (trace.endPoint - startPoint):GetUnit()
-            self:ApplyFlechetteHitEffects(player, trace.entity, trace.endPoint, direction, rangeTravelled/range)
-            
-            // We hit a target, this bullet is done
-            break
-                
-        else
-        
-            // Subtract out range
-            range = range - lastTraceRange
-
-            // Perform richochet            
-            if(range > 0) then
-
-                // Calculate reflection normal
-                local bulletReflection = ReflectVector(Vector(endPoint - startPoint), trace.normal)
-            
-                // Trace from hit point to remaining range
-                endPoint = trace.endPoint + bulletReflection * range
-                VectorCopy(trace.endPoint, startPoint)
-                
-                trace = Shared.TraceRay(startPoint, endPoint, PhysicsMask.Bullets, filter)
-                
-            else
-            
-                break
-                
-            end 
-           
-        end
-        
-    end
-    
-end
-
 // Takes a fraction of range (0-1, 1 representing max range) that is applied to damage
-function Shotgun:ApplyFlechetteHitEffects(player, target, endPoint, direction, rangeFraction)
-    target:TakeDamage(self:GetBulletDamage(target, endPoint)*rangeFraction, player, self, endPoint, direction)
-end
-
 // Load bullet if we can. Returns true if there are still more to reload.
 function Shotgun:LoadBullet(player)
 
@@ -472,6 +243,5 @@ function Shotgun:UpdateViewModelPoseParameters(viewModel, input)
     self.emptyPoseParam = Clamp(Slerp(self.emptyPoseParam, ConditionalValue(self.clip == 0, 1, 0), 0, 1, input.time*1), 0, 1)
     viewModel:SetPoseParam("empty", self.emptyPoseParam)
 end
-
 
 Shared.LinkClassToMap("Shotgun", Shotgun.kMapName, networkVars )

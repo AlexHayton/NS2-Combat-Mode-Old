@@ -19,10 +19,8 @@ end
 
 Alien.kNotEnoughResourcesSound = PrecacheAsset("sound/ns2.fev/alien/voiceovers/more")
 Alien.kRegenerationSound = PrecacheAsset("sound/ns2.fev/alien/common/regeneration")
-Alien.kHatchSound = PrecacheAsset("sound/ns2.fev/alien/common/hatch")
 Alien.kChatSound = PrecacheAsset("sound/ns2.fev/alien/common/chat")
 Alien.kSpendPlasmaSoundName = PrecacheAsset("sound/ns2.fev/marine/common/player_spend_nanites")
-Alien.kMetabolizeSound = PrecacheAsset("sound/ns2.fev/alien/metabolize")
 
 // Representative portrait of selected units in the middle of the build button cluster
 Alien.kPortraitIconsTexture = "ui/alien_portraiticons.dds"
@@ -32,9 +30,6 @@ Alien.kFocusIconsTexture = "ui/alien_focusicons.dds"
 
 // Small mono-color icons representing 1-4 upgrades that the creature or structure has
 Alien.kUpgradeIconsTexture = "ui/alien_upgradeicons.dds"
-
-Alien.kMetabolizeSmallEffect = PrecacheAsset("cinematics/alien/metabolize_small.cinematic")
-Alien.kMetabolizeLargeEffect = PrecacheAsset("cinematics/alien/metabolize_large.cinematic")
 
 Alien.kAnimOverlayAttack = "attack"
 
@@ -146,10 +141,6 @@ function Alien:GetInactiveVisible()
     return self.timeOfLastWeaponSwitch ~= nil and (Shared.GetTime() < self.timeOfLastWeaponSwitch + kDisplayWeaponTime)
 end
 
-function Alien:PlayFallSound()
-    // Nothing - avoid boot hitting ground sound
-end
-
 function Alien:OnUpdate(deltaTime)
     
     Player.OnUpdate(self, deltaTime)
@@ -178,22 +169,6 @@ function Alien:GetRecuperationRate()
     return Alien.kEnergyRecuperationRate
 end
 
-function Alien:TranslateViewModelAnimation(animSpecifier)
-
-    local weapon = self:GetActiveWeapon()    
-    
-    local animName = Player.TranslateViewModelAnimation(self, animSpecifier)
-    
-    if(animName ~= nil and animName ~= "" and weapon ~= nil) then
-                
-        animName = string.format("%s_%s", weapon:GetMapName(), animName)
-
-    end
-    
-    return animName
-    
-end
-
 function Alien:MovementModifierChanged(newMovementModifierState, input)
 end
 
@@ -211,11 +186,9 @@ function Alien:GetSayings()
     
 end
 
-function Alien:ExecuteSaying(index)
+function Alien:ExecuteSaying(index, menu)
 
-    self.showSayings = false
-
-    Player.ExecuteSaying(self, index)
+    Player.ExecuteSaying(self, index, menu)
 
     if(Server) then
 

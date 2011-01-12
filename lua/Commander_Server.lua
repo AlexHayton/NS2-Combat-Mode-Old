@@ -133,19 +133,14 @@ function Commander:AttemptToBuild(techId, origin, pickVec, buildTech, builderEnt
         
         if newEnt ~= nil then
             
-            newEnt:PlaySound(self:GetPlaceBuildingSound())
-            
-            // Play private version for commander too 
-            Shared.PlayPrivateSound(self, self:GetPlaceBuildingSound(), nil, 1.0, self:GetOrigin())
-            
-            local replicateEffect = self:GetBuildEffect(techId)
-            if replicateEffect then
-                Shared.CreateEffect(nil, replicateEffect, newEnt, nil)
+            local isAlien = false
+            if newEnt.GetIsAlienStructure then
+                isalien = newEnt:GetIsAlienStructure()
             end
             
-            if newEnt.GetPlaceBuildingEffect then
-                Shared.CreateEffect(nil, newEnt:GetPlaceBuildingEffect(), newEnt)
-            end
+            newEnt:TriggerEffects("commander_create", {isalien = isAlien})
+            
+            self:TriggerEffects("commander_create_local")
             
             return true, newEnt:GetId()
                         

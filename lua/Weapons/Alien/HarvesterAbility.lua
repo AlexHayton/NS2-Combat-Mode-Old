@@ -18,7 +18,6 @@ HarvesterAbility.kCreateViewEffect = PrecacheAsset("cinematics/alien/gorge/creat
 
 // Gorge create harvester
 HarvesterAbility.kAnimHarvesterAttack = "chamber_attack"
-HarvesterAbility.kAnimIdleTable = { {1, "idle"}/*, {.3, "idle2"}, {.05, "idle3"}*/ }
 
 HarvesterAbility.kPlacementDistance = 1.5
 
@@ -44,10 +43,6 @@ function HarvesterAbility:OnDraw(player, prevWeapon)
     // Show ghost when switch to this weapon
     self.showGhost = true
     
-end
-
-function HarvesterAbility:GetIdleAnimation()
-    return chooseWeightedEntry( HarvesterAbility.kAnimIdleTable )
 end
 
 function HarvesterAbility:GetEnergyCost(player)
@@ -138,8 +133,6 @@ function HarvesterAbility:CreateHarvester(player)
                     
                     // Attach to resource point
                     harvester:SetAttached(resourcePoint)
-                    
-                    player:PlaySound(player:GetPlaceBuildingSound())
                     
                     team:AddCarbon( -cost )
                     

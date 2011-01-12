@@ -14,9 +14,6 @@ class 'Parasite' (Ability)
 
 Parasite.kMapName = "parasite"
 
-Parasite.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/skulk/parasite")
-Parasite.kAttackHitSound = PrecacheAsset("sound/ns2.fev/alien/skulk/parasite_hit")
-Parasite.kAnimIdleTable = {{1, "bite_idle"}/*, {.1, "bite_idle2"}, {.5, "bite_idle3"}, {.4, "bite_idle4"}*/}
 Parasite.kDelay = kParasiteFireDelay
 Parasite.kDamage = kParasiteDamage
 Parasite.kRange = 1000
@@ -41,16 +38,10 @@ function Parasite:GetPrimaryAttackRequiresPress()
     return true
 end
 
-function Parasite:GetIdleAnimation()
-    return chooseWeightedEntry( Parasite.kAnimIdleTable )
-end
-
 function Parasite:PerformPrimaryAttack(player)
     
     player:SetActivityEnd(player:AdjustFuryFireDelay(Parasite.kDelay))
 
-    Shared.PlaySound(player, Parasite.kAttackSound)
-    
     // Trace ahead to see if hit enemy player or structure
     if Server then
     
@@ -68,7 +59,7 @@ function Parasite:PerformPrimaryAttack(player)
                 local direction = GetNormalizedVector(trace.endPoint - startPoint)
                 hitObject:TakeDamage(Parasite.kDamage, player, self, trace.endPoint, direction)
                 
-                Shared.PlayWorldSound(nil, Parasite.kAttackHitSound, nil, trace.endPoint)
+                hitObject:TriggerEffects("parasite_hit")
                 
                 // Mark player or structure 
                 if not hitObject:GetGameEffectMask(kGameEffect.Parasite) then

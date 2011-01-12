@@ -11,8 +11,6 @@
 class 'Embryo' (Alien)
 
 Embryo.kMapName = "embryo"
-
-Embryo.kGestateSound = PrecacheAsset("sound/ns2.fev/alien/common/gestate")
 Embryo.kModelName = PrecacheAsset("models/alien/egg/egg.model")
 Embryo.kBaseHealth = 50
 Embryo.kThinkTime = .1
@@ -31,7 +29,7 @@ function Embryo:OnInit()
     
     self:SetModel(Embryo.kModelName)
     
-    self:PlaySound(Embryo.kGestateSound)
+    self:TriggerEffects("player_start_gestate")
     
     self.lastThinkTime = Shared.GetTime()
     
@@ -101,6 +99,15 @@ function Embryo:OverrideInput(input)
 
 end
 
+function Embryo:ConstrainMoveVelocity(moveVelocity)
+
+    // Embryos can't move    
+    moveVelocity.x = 0
+    moveVelocity.y = 0
+    moveVelocity.z = 0
+    
+end
+
 function Embryo:PostUpdateMovePhysics(input, runningPrediction)
     self:SetAngles(self.originalAngles)
 end
@@ -122,15 +129,10 @@ if Server then
             // Replace player with new player
             self:Replace(self.gestationClass)
             
-            self:StopSound(Embryo.kGestateSound)
-
-            Shared.PlayWorldSound(nil, Alien.kHatchSound, nil, self:GetOrigin())    
+            self:TriggerEffects("player_end_gestate")
             
-            // Kill egg with a sound
-            Shared.PlayWorldSound(nil, Egg.kDeathSoundName, nil, self:GetOrigin())
-                    
-            // ...and a splash
-            Shared.CreateEffect(nil, Egg.kBurstEffect, nil, self:GetCoords())
+            self:TriggerEffects("egg_death")
+            
 
         end
         

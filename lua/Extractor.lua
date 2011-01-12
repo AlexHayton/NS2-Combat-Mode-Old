@@ -15,44 +15,10 @@ Extractor.kMapName = "extractor"
 
 Extractor.kModelName = PrecacheAsset("models/marine/extractor/extractor.model")
 
-Extractor.kActiveSound = PrecacheAsset("sound/ns2.fev/marine/structures/extractor_active")
-Extractor.kDeploySound = PrecacheAsset("sound/ns2.fev/marine/structures/extractor_deploy")
-Extractor.kKilledSound = PrecacheAsset("sound/ns2.fev/marine/structures/extractor_death")
-Extractor.kHarvestedSound = PrecacheAsset("sound/ns2.fev/marine/structures/extractor_harvested")
-
-Extractor.kCollectionEffect = PrecacheAsset("cinematics/marine/extractor/collection_effect.cinematic")
-Extractor.kDeathEffect = PrecacheAsset("cinematics/marine/extractor/death.cinematic")
-
 Shared.PrecacheModel(Extractor.kModelName)
-
-function Extractor:OnInit()
-
-    ResourceTower.OnInit(self)
-    
-end
 
 function Extractor:GetRequiresPower()
     return true
-end
-
-function Extractor:GetDeathEffect()
-    return Extractor.kDeathEffect
-end
-
-function Extractor:GetActiveSound()
-    return Extractor.kActiveSound
-end
-
-function Extractor:GetDeploySound()
-    return Extractor.kDeploySound
-end
-
-function Extractor:GetKilledSound(doer)
-    return Extractor.kKilledSound
-end
-
-function Extractor:GetHarvestedSound()
-    return Extractor.kHarvestedSound
 end
 
 function Extractor:GetTechButtons(techId)
@@ -74,23 +40,6 @@ function Extractor:GetTechButtons(techId)
     
 end
 
-function Extractor:OnAnimationComplete(anim)
-
-    if anim == Structure.kAnimDeploy or anim == self:GetPowerUpAnimation() then
-    
-        self:SetAnimationWithBlending(Structure.kAnimActive, self:GetBlendTime(), true)
-        
-        // Make sure we only have one copy playing
-        local activeSound = self:GetActiveSound()
-        self:StopSound(activeSound)
-        self:PlaySound(activeSound)
-
-    else
-        ResourceTower.OnAnimationComplete(self, anim)
-    end
-    
-end
-
 function Extractor:OnResearchComplete(structure, researchId)
 
     local success = ResourceTower.OnResearchComplete(self, structure, researchId)
@@ -103,10 +52,6 @@ function Extractor:OnResearchComplete(structure, researchId)
     
     return success   
     
-end
-
-function Extractor:GetDeathAnimation()
-    return ConditionalValue(self:GetIsBuilt(), "death_spawn", "death_deployed")   
 end
 
 function Extractor:GetDamagedAlertId()

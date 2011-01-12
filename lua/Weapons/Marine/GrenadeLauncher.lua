@@ -15,17 +15,6 @@ GrenadeLauncher.kMapName              = "grenadelauncher"
 
 GrenadeLauncher.kModelName = PrecacheAsset("models/marine/rifle/rifle.model")
 
-GrenadeLauncher.kFireSoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/fire_grenade")
-GrenadeLauncher.kReloadSoundName = PrecacheAsset("sound/ns2.fev/marine/rifle/reload_grenade")
-GrenadeLauncher.kMuzzleFlashEffect = PrecacheAsset("cinematics/marine/gl/muzzle_flash.cinematic")
-GrenadeLauncher.kBarrelSmokeEffect = PrecacheAsset("cinematics/marine/gl/barrel_smoke.cinematic")
-GrenadeLauncher.kShellEffect = PrecacheAsset("cinematics/marine/gl/shell.cinematic")
-
-// Grenade launcher attachment
-GrenadeLauncher.kAnimAttack = "attack_grenade"
-GrenadeLauncher.kAnimReloadGrenade = "reload_grenade"
-GrenadeLauncher.kAnimDraw = "draw_grenade"
-
 GrenadeLauncher.kLauncherFireDelay = kGrenadeLauncherFireDelay
 GrenadeLauncher.kAuxClipSize = 1
 GrenadeLauncher.kLauncherStartingAmmo = 2 * kGrenadeLauncherClipSize
@@ -37,32 +26,14 @@ local networkVars =
         auxAmmo = string.format("integer (0 to %d)", GrenadeLauncher.kLauncherStartingAmmo),
         auxClip = string.format("integer (0 to %d)", GrenadeLauncher.kAuxClipSize),
     }
-    
+ 
+// Use rifle attack effect block for primary fire
+function GrenadeLauncher:GetPrimaryAttackPrefix()
+    return "rifle"
+end
+
 function GrenadeLauncher:GetViewModelName()
     return Rifle.kViewModelName
-end
-
-function GrenadeLauncher:GetMuzzleFlashEffect()
-    return GrenadeLauncher.kMuzzleFlashEffect
-end
-
-function GrenadeLauncher:GetBarrelSmokeEffect()
-    return GrenadeLauncher.kBarrelSmokeEffect
-end
-
-function GrenadeLauncher:GetShellEffect()
-    return GrenadeLauncher.kShellEffect
-end
-
-function GrenadeLauncher:GetDrawAnimation(previousWeaponMapName)
-
-    if not self.drawnOnce then
-        self.drawnOnce = true
-        return GrenadeLauncher.kAnimDraw
-    end
-    
-    return Rifle.GetDrawAnimation(self, previousWeaponMapName)
-    
 end
 
 function GrenadeLauncher:GetNeedsAmmo()
@@ -105,16 +76,8 @@ function GrenadeLauncher:OnSecondaryAttack(player)
 
     if (self.auxClip > 0) then
     
-        // Play effects
-        player:SetViewAnimation(GrenadeLauncher.kAnimAttack)
-        
         player:SetActivityEnd(self:GetSecondaryAttackDelay() * player:GetCatalystFireModifier())
 
-        // Play the fire animation on the character.
-        player:SetOverlayAnimation("attack_grenade")
-        
-        Shared.PlaySound(player, GrenadeLauncher.kFireSoundName)
-        
         player:DeactivateWeaponLift()
         
         // Fire grenade projectile
@@ -145,6 +108,8 @@ function GrenadeLauncher:OnSecondaryAttack(player)
             // Set grenade owner to player so we don't collide with ourselves and so we
             // can attribute a kill to us
             grenade:SetOwner(player)
+            
+            ClipWeapon.OnSecondaryAttack(self, player)
             
         end
         
@@ -179,15 +144,11 @@ function GrenadeLauncher:ReloadGrenade(player)
     
     // Automatically reload if we're out of ammo - don't have to hit a key
     if (self.auxClip < GrenadeLauncher.kAuxClipSize) and (self.auxAmmo > 0) and player:GetCanNewActivityStart() then
+
+        self:TriggerEffects("grenadelauncher_reload")
         
         // Play the reload sequence and don't let it be interrupted until it finishes playing.
-        local length = player:SetViewAnimation(GrenadeLauncher.kAnimReloadGrenade, false, true)
-        player:SetActivityEnd(length)
-        
-        Shared.PlaySound(player, GrenadeLauncher.kReloadSoundName)
-        
-        // Play the reload animation on the character.
-        player:SetOverlayAnimation(Player.kAnimReload)
+        player:SetActivityEnd(.7)
         
         self.auxClip = self.auxClip + 1
         

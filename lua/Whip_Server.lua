@@ -9,10 +9,8 @@
 function Whip:OnConstructionComplete()
 
     Structure.OnConstructionComplete(self)
-        
-    // Start scanning for targets once deployed
-    local pause = math.max(self:GetAnimationLength(Structure.kAnimDeploy), 1)
-    self:SetNextThink(pause)
+
+    self:SetNextThink(1.0)
         
 end
 
@@ -91,11 +89,11 @@ function Whip:AttackTarget()
     
     if(target ~= nil) then
     
-        // Play animation, sound and do damage
-        self:PlaySound(Whip.kStrikeSoundEffect)
-        
-        self:SetAnimation(Whip.kAnimAttack, true, 1/self:AdjustFuryFireDelay(1))
-        
+        self:TriggerEffects("whip_attack")
+   
+        // When attack animation finishes, attack again
+        self.attackAnimation = self:GetAnimation()
+    
         self.timeOfLastStrikeStart = Shared.GetTime()
         
         self.timeOfNextStrikeHit = Shared.GetTime() + self:AdjustFuryFireDelay(.5)
@@ -140,7 +138,9 @@ end
 
 function Whip:OnAnimationComplete(animName)
 
-    if animName == Whip.kAnimAttack then
+    Structure.OnAnimationComplete(self, animName)
+    
+    if animName == self.attackAnimation then
     
         local target = self:GetTarget()
         
@@ -148,7 +148,7 @@ function Whip:OnAnimationComplete(animName)
         
             self:CompletedCurrentOrder()
             
-            self:SetAnimation(self:GetIdleAnimation())
+            self:OnIdle()
 
         end
         
@@ -233,12 +233,8 @@ end
 
 function Whip:TriggerFury()
 
-    self:PlaySound(Whip.kFurySound)
+    self:TriggerEffects("whip_trigger_fury")
     
-    Shared.CreateEffect(nil, Whip.kFuryEffect, self)
-    
-    self:SetAnimation(Whip.kAnimFury, nil, nil, 1/self:AdjustFuryFireDelay(1))
-
     // Increase damage for players, whips (including self!), etc. in range
     self.timeOfLastFury = Shared.GetTime()
     

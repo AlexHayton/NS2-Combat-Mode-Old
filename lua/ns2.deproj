@@ -730,9 +730,6 @@
     <filename>AlienStructureEffects.lua</filename>
   </file>
   <file>
-    <filename>CommonEffects.lua</filename>
-  </file>
-  <file>
     <filename>MarineStructureEffects.lua</filename>
   </file>
   <file>
@@ -755,5 +752,35 @@
   </file>
   <file>
     <filename>GUIExperience.lua</filename>
+  </file>
+  <file>
+    <filename>GUISelectionPanel.lua</filename>
+  </file>
+  <file>
+    <filename>GUIIncrementBar.lua</filename>
+  </file>
+  <file>
+    <filename>GUICommanderButtons.lua</filename>
+  </file>
+  <file>
+    <filename>GUIBorderBackground.lua</filename>
+  </file>
+  <file>
+    <filename>ClientEffects.lua</filename>
+  </file>
+  <file>
+    <filename>GUICommanderTooltip.lua</filename>
+  </file>
+  <file>
+    <filename>GUIButton.lua</filename>
+  </file>
+  <file>
+    <filename>GUIResourceDisplay.lua</filename>
+  </file>
+  <file>
+    <filename>GUIDebugText.lua</filename>
+  </file>
+  <file>
+    <filename>Structure_Client.lua</filename>
   </file>
 </project>

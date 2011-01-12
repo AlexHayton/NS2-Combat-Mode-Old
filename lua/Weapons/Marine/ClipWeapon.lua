@@ -23,21 +23,14 @@ local networkVars =
     // Weapon-specific weapon state
     weaponState = "integer (0 to 5)",
     
-    // 0 means not playing a sound, 1 is playing a sound
-    loopingWeaponSoundPlaying = "integer (0 to 1)",
     reloadTime = "float",
     
     // 1 is most accurate, 0 is least accurate
     accuracy = "float"
 }
 
-ClipWeapon.kAnimIdle = "idle"
 ClipWeapon.kAnimSwingUp = "swing_up"
 ClipWeapon.kAnimSwingDown = "swing_down"
-ClipWeapon.kAnimIdleUp = "idle_up"
-ClipWeapon.kAnimReload = "reload"
-ClipWeapon.kRicochetEffect = "cinematics/materials/%s/ricochet.cinematic"
-ClipWeapon.kRicochetMaterialSound = "sound/ns2.fev/materials/%s/ricochet"
 
 // Weapon spread - from NS1/Half-life
 ClipWeapon.kCone0Degrees  = Math.Radians(0)
@@ -54,9 +47,6 @@ ClipWeapon.kCone10Degrees = Math.Radians(10)
 ClipWeapon.kCone15Degrees = Math.Radians(15)
 ClipWeapon.kCone20Degrees = Math.Radians(20)
                         
-PrecacheMultipleAssets(ClipWeapon.kRicochetEffect, kSurfaceList)
-PrecacheMultipleAssets(ClipWeapon.kRicochetMaterialSound, kSurfaceList)
-
 function ClipWeapon:GetBulletsPerShot()
     return 1
 end
@@ -67,22 +57,6 @@ end
 
 function ClipWeapon:GetClipSize()
     return 10
-end
-
-function ClipWeapon:GetDrawSound()
-    return ""
-end
-
-function ClipWeapon:GetDrawAnimationSpeed()
-    return kMarineDrawSpeedScalar
-end
-
-function ClipWeapon:GetReloadSound()
-    return ""
-end
-
-function ClipWeapon:GetFireEmptySound()
-    return ""
 end
 
 function ClipWeapon:GetAccuracyRecoveryRate(player)
@@ -185,7 +159,6 @@ function ClipWeapon:OnInit()
     self.ammo = self:GetNumStartClips() * self:GetClipSize()
     self.clip = 0
     self.weaponState = 0
-    self.loopingWeaponSoundPlaying = 0
     self.reloadTime = 0
     self.accuracy = 1
 
@@ -195,16 +168,8 @@ function ClipWeapon:OnInit()
 
 end
 
-function ClipWeapon:GetBaseIdleAnimation()
-    return ClipWeapon.kAnimIdle
-end
-
 function ClipWeapon:GetSwingUpAnimation()
     return ClipWeapon.kAnimSwingUp
-end
-
-function ClipWeapon:GetIdleUpAnimation()
-    return ClipWeapon.kAnimIdleUp
 end
 
 function ClipWeapon:GetSwingDownAnimation()
@@ -214,51 +179,6 @@ end
 function ClipWeapon:GetBulletDamage(target, endPoint)
     Print("%s:GetBulletDamage() - Need to override GetBulletDamage()", self:GetClassName())
     return 0
-end
-
-function ClipWeapon:GetIdleAnimation()
-
-    local idleAnimation = self:GetBaseIdleAnimation()
-    local parent = self:GetParent()
-    
-    if parent ~= nil then    
-    
-        // If we're moving reasonably quickly, use the run version of the idle
-        //if parent:GetVelocity():GetLengthXZ() > Player.kRunIdleSpeed then
-        //    idleAnimation = self:GetRunIdleAnimation()
-        //else
-    
-            local weaponLiftTime = parent:GetWeaponLiftTime()
-            if(weaponLiftTime > 0) then
-            
-                idleAnimation = self:GetSwingUpAnimation()
-            
-                if(Shared.GetTime() > weaponLiftTime + parent:GetViewAnimationLength(idleAnimation)) then
-                    idleAnimation = self:GetIdleUpAnimation()
-                end
-                
-            else
-            
-                local weaponDropTime = self:GetParent():GetWeaponDropTime()
-                if((weaponDropTime > 0) and (Shared.GetTime() < weaponDropTime + parent:GetViewAnimationLength(self:GetSwingDownAnimation()))) then
-                
-                    idleAnimation = self:GetSwingDownAnimation()
-                    
-                    // Don't allow us to swing up again for a bit to avoid craziness
-                    parent:DeactivateWeaponLift(1)
-                    
-                end
-                
-            end
-            
-        //end
-        
-    else
-        Print("%s:GetIdleAnimation(): parent is nil", self:GetClassName())
-    end    
-    
-    return idleAnimation
-    
 end
 
 function ClipWeapon:OnIdle()
@@ -290,30 +210,8 @@ function ClipWeapon:GetNeedsAmmo()
     return self:GetClip() < self:GetClipSize() or self:GetAmmo() < self:GetMaxAmmo()
 end
 
-function ClipWeapon:GetIsPrimaryAttackLooping()
-    return false
-end
-
 function ClipWeapon:GetWarmupTime()
     return 0
-end
-
-function ClipWeapon:PlayPrimaryAttackSound(player)
-
-    local attackLoops = self:GetIsPrimaryAttackLooping()
-    
-    if not attackLoops or (self.loopingWeaponSoundPlaying == 0) then
-    
-        Shared.PlaySound(player, self:GetFireSoundName())
-    
-        if attackLoops then
-        
-            self.loopingWeaponSoundPlaying = 1 
-            
-        end
-        
-    end
-        
 end
 
 function ClipWeapon:GetPrimaryAttackRequiresPress()
@@ -326,19 +224,19 @@ end
 
 function ClipWeapon:OnPrimaryAttack(player)
    
-    if(not self:GetPrimaryAttackRequiresPress() or not self.primaryAttackLastFrame) then
+    if(not self:GetPrimaryAttackRequiresPress() or not player:GetPrimaryAttackLastFrame()) then
     
         if (self.clip > 0 ) then
         
             // Allow the weapon to be fired again before the activity animation ends.
             // This allows us to have a fast rate of fire and still have nice animation
             // effects in the case of the final shot
-            player:SetViewAnimation( self:GetPrimaryAttackAnimation(), not self:GetForcePrimaryAttackAnimation() )
+            //player:SetViewAnimation( self:GetPrimaryAttackAnimation(), not self:GetForcePrimaryAttackAnimation() )
 
             // Some weapons don't start firing right away
             local warmupTime = self:GetWarmupTime()
             
-            if not self.primaryAttackLastFrame and warmupTime > 0 then
+            if not player:GetPrimaryAttackLastFrame() and warmupTime > 0 then
             
                 player:SetActivityEnd(warmupTime)
                 
@@ -360,9 +258,9 @@ function ClipWeapon:OnPrimaryAttack(player)
             
             player:DeactivateWeaponLift()
 
-            self:PlayPrimaryAttackSound(player)
-            
             self:CreatePrimaryAttackEffect(player)
+            
+            Weapon.OnPrimaryAttack(self, player)
                     
         elseif (self.ammo > 0) then
 
@@ -371,20 +269,12 @@ function ClipWeapon:OnPrimaryAttack(player)
         
         else
         
-            local emptySound = self:GetFireEmptySound()
-            if emptySound ~= "" then
-                Shared.PlaySound(player, emptySound)
-            end
-            
-            // Totally out of ammo, so "dry fire"
-            local time = player:SetViewAnimation( self:GetPrimaryAttackAnimation(), false, self:GetBlendTime(), 1.0)
-            player:SetActivityEnd(time)
+            self:TriggerEffects("clipweapon_empty")
+            player:SetActivityEnd(.5)
             
         end
         
     end
-    
-    Weapon.OnPrimaryAttack(self, player)
     
 end
 
@@ -408,6 +298,10 @@ end
 // Play ricochet sound/effect every %d bullets
 function ClipWeapon:GetRicochetEffectFrequency()
     return 1
+end
+
+function ClipWeapon:GetIsDroppable()
+    return true
 end
 
 /**
@@ -442,8 +336,6 @@ function ClipWeapon:FireBullets(player, bulletsToShoot, range, penetration)
         if (trace.fraction < 1) then
         
             local blockedByUmbra = GetBlockedByUmbra(trace.entity)
-        
-            self:CreateHitEffect(player, trace.endPoint - GetNormalizedVector(endPoint - startPoint) * Weapon.kHitEffectOffset, GetSurfaceFromTrace(trace))
             
             // Create local tracer effect, and send to other players
             if (NetworkRandom(string.format("%s:FireBullet():TracerCheck", self:GetClassName())) < self:GetTracerPercentage()) then
@@ -454,31 +346,31 @@ function ClipWeapon:FireBullets(player, bulletsToShoot, range, penetration)
                 
             end
             
-            if (trace.entity and not blockedByUmbra) then
+            if not blockedByUmbra then
             
-                local direction = (trace.endPoint - startPoint):GetUnit()
-                self:ApplyBulletGameplayEffects(player, trace.entity, trace.endPoint, direction)
-                hitTarget = true
+                if trace.entity then
+                
+                    local direction = (trace.endPoint - startPoint):GetUnit()
+                    self:ApplyBulletGameplayEffects(player, trace.entity, trace.endPoint, direction)
+                    hitTarget = true
+
+                end
                 
             end
                         
+            // TODO: Account for this
             // Play ricochet sound for player locally for feedback, but not necessarily for every bullet
             local effectFrequency = self:GetRicochetEffectFrequency()
             
-            if ((bullet % effectFrequency) == 0) then
+            if not blockedByUmbra and ((bullet % effectFrequency) == 0) then
             
-                local surface = GetSurfaceFromTrace(trace)
-                if(surface ~= "" and surface ~= nil and surface ~= "unknown" and not blockedByUmbra) then
+                local impactPoint = trace.endPoint - GetNormalizedVector(endPoint - startPoint) * Weapon.kHitEffectOffset
+                TriggerHitEffects(self, trace.entity, impactPoint, GetSurfaceFromTrace(trace))                
                 
-                    local worldRicochetSound = string.format(ClipWeapon.kRicochetMaterialSound, surface)
-
-                    // Play ricochet sound at world position for everyone else
-                    Shared.PlayWorldSound(nil, worldRicochetSound, nil, trace.endPoint)
-                        
-                    // If we are far away from our target, trigger a private sound so we can hear we hit something
-                    if (trace.endPoint - player:GetOrigin()):GetLength() > 5 then
-                        Shared.PlayPrivateSound(player, worldRicochetSound, player, .3, Vector(0, 0, 0))
-                    end
+                // If we are far away from our target, trigger a private sound so we can hear we hit something
+                if (trace.endPoint - player:GetOrigin()):GetLength() > 5 then
+                    
+                    player:TriggerEffects("hit_effect_local")
                     
                 end
                 
@@ -493,14 +385,6 @@ function ClipWeapon:FireBullets(player, bulletsToShoot, range, penetration)
     
     return hitTarget
 
-end
-
-// If we hit something, create an effect 
-function ClipWeapon:CreateHitEffect(player, origin, surface)
-    if(surface ~= "" and surface ~= "unknown") then
-        // Create ricochet just a hair closer to us so particles don't get obscured by surface
-        Shared.CreateEffect(player, string.format(ClipWeapon.kRicochetEffect, surface), nil, Coords.GetTranslation(origin))
-    end
 end
 
 function ClipWeapon:ApplyBulletGameplayEffects(player, target, endPoint, direction)
@@ -519,13 +403,6 @@ function ClipWeapon:ApplyBulletGameplayEffects(player, target, endPoint, directi
     
 end
 
-/**
- * Returns the name of the reload sequence used for the weapon.
- */
-function ClipWeapon:GetReloadSequence()
-    return ClipWeapon.kAnimReload
-end
-
 function ClipWeapon:CanReload()
     return ((self.ammo > 0) and (self.clip < self:GetClipSize()) and (self.reloadTime == 0))
 end
@@ -538,24 +415,18 @@ end
 function ClipWeapon:OnReload(player)
 
     if ( self:CanReload() ) then
+    
+        // Assumes view model animation WILL be set or reload time might be the idle or something else
+        self:TriggerEffects("reload")
         
         // Play the reload sequence and optionally let it be interrupted before it finishes
-        local length = player:SetViewAnimation(self:GetReloadSequence())
+        local length = player:GetViewAnimationLength()
         
         if(not self:GetReloadCancellable()) then
             player:SetActivityEnd(length)
         end
         
         self.reloadTime = Shared.GetTime() + length
-        
-        // Play the reload animation on the character.
-        player:SetOverlayAnimation(Player.kAnimReload)
-        
-        // Play reload sound 
-        local reloadSound = self:GetReloadSound()
-        if(reloadSound ~= "") then
-            Shared.PlaySound(player, reloadSound)
-        end
         
     end
     
@@ -570,15 +441,6 @@ function ClipWeapon:OnDraw(player, previousWeaponMapName)
         // Attach weapon to parent's hand
         self:SetAttachPoint(Weapon.kHumanAttachPoint)
     
-        local length = player:SetViewAnimation(self:GetDrawAnimation(previousWeaponMapName), nil, nil, self:GetDrawAnimationSpeed())
-        
-        player:SetActivityEnd(length)
-        
-        local drawSound = self:GetDrawSound()
-        if(drawSound ~= "") then
-            Shared.PlaySound(player, drawSound)
-        end
-        
     end
     
 end
@@ -593,6 +455,14 @@ function ClipWeapon:FillClip()
     self.clip = math.min(self.ammo, self:GetClipSize())
     self.ammo = self.ammo - self.clip
 
+end
+
+function ClipWeapon:GetEffectParams(tableParams)
+
+    Weapon.GetEffectParams(self, tableParams)
+    
+    tableParams[kEffectFilterEmpty] = (self.clip == 0)
+    
 end
 
 Shared.LinkClassToMap("ClipWeapon", ClipWeapon.kMapName, networkVars)

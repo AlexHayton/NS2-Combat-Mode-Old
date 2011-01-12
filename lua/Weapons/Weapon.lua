@@ -20,11 +20,6 @@ Weapon.kSprintStart = "sprint_start"
 Weapon.kAnimSprint = "sprint"
 Weapon.kSprintEnd = "sprint_end"
 
-Weapon.kAnimPrimaryAttack = "shoot"
-Weapon.kAnimSecondaryAttack = "shoot"
-Weapon.kAnimDraw = "draw"
-Weapon.kAnimRunIdle = "run"
-
 Weapon.kSwingYaw = "swing_yaw"
 Weapon.kSwingPitch = "swing_pitch"
 
@@ -39,8 +34,6 @@ end
 
 local networkVars = 
 {
-    primaryAttackLastFrame      = "boolean",
-    secondaryAttackLastFrame    = "boolean",
 }
 
 function Weapon:OnCreate()
@@ -53,10 +46,6 @@ function Weapon:OnCreate()
     self.moveWithView = false
     
     self:SetIsVisible(false)
-    
-    // So we don't attack more than once if GetPrimaryAttackRequiresPress()/GetSecondaryAttackRequiresPress()
-    self.primaryAttackLastFrame = false
-    self.secondaryAttackLastFrame = false
     
 end
 
@@ -83,14 +72,6 @@ function Weapon:GetIsDroppable()
     return false
 end
 
-function Weapon:GetPrimaryAttackAnimation()
-    return Weapon.kAnimPrimaryAttack
-end
-
-function Weapon:GetSecondaryAttackAnimation()
-    return Weapon.kAnimSecondaryAttack
-end
-
 function Weapon:GetRunIdleAnimation()
     return self:GetBaseIdleAnimation()
     //return Weapon.kAnimRunIdle
@@ -112,20 +93,29 @@ function Weapon:GetSecondaryAttackRequiresPress()
     return false
 end
 
+// So child classes can override names of event names that are triggered (for grenade launcher to use rifle effects block)
+function Weapon:GetPrimaryAttackPrefix()
+    return self:GetMapName()
+end
+
+function Weapon:GetSecondaryAttackPrefix()
+    return self:GetMapName()
+end
+
 function Weapon:OnPrimaryAttack(player)
-    self.primaryAttackLastFrame = true
+    self:TriggerEffects(self:GetPrimaryAttackPrefix() .. "_attack")
 end
 
 function Weapon:OnPrimaryAttackEnd(player)
-    self.primaryAttackLastFrame = false
+    self:TriggerEffects(self:GetPrimaryAttackPrefix() .. "_attack_end")
 end
 
 function Weapon:OnSecondaryAttack(player)
-    self.secondaryAttackLastFrame = true   
+    self:TriggerEffects(self:GetSecondaryAttackPrefix() .. "_alt_attack")
 end
 
 function Weapon:OnSecondaryAttackEnd(player)
-    self.secondaryAttackLastFrame = false
+    self:TriggerEffects(self:GetSecondaryAttackPrefix() .. "_alt_attack_end")
 end
 
 function Weapon:OnReload(player)
@@ -140,13 +130,14 @@ function Weapon:OnDraw(player, previousWeaponMapName)
     self:SetIsVisible(true)
     
     player:SetViewModel(self:GetViewModelName(), self)
-    
-end
 
-/**
- * Called when the view animation is finished playing.
- */
-function Weapon:OnAnimationComplete(animName)
+    // Speed parameter stacks for animations (ie, playback speed is one specified below * any speed parameter specified in script)
+    local speedScalar = ConditionalValue(player:isa("Marine"), kMarineDrawSpeedScalar, 1)
+    self:TriggerEffects("draw", {speed = speedScalar})
+    
+    local animLength = player:GetViewAnimationLength()
+    player:SetActivityEnd(animLength)   
+    
 end
 
 function Weapon:AttackMeleeCapsule(player, damage, range)
@@ -170,14 +161,14 @@ function Weapon:AttackMeleeCapsule(player, damage, range)
         
             if(trace.entity ~= player) then
         
-                self:CreateHitEffect(player, trace.endPoint - GetNormalizedVector(endPoint - startPoint) * Weapon.kHitEffectOffset, trace.surface)
-                
                 if Server then
                 
                     local direction = (trace.endPoint - startPoint):GetUnit()
                     self:ApplyMeleeHitEffects(player, damage, trace.entity, trace.endPoint, direction)
                     
                 end
+                
+                TriggerHitEffects(self, trace.entity, trace.endPoint, GetSurfaceFromTrace(trace))
                 
                 return true, trace
                 
@@ -199,11 +190,6 @@ function Weapon:AttackMeleeCapsule(player, damage, range)
 end
 
 function Weapon:ConstrainMoveVelocity(moveVelocity)
-end
-
-// If we hit something, create an effect (in the future will be some sort of sparks or blood or whatever).        
-function Weapon:CreateHitEffect(player, origin, surface)
-    Shared.CreateEffect(player, ScriptActor.kSparksEffect, nil, Coords.GetTranslation(origin))
 end
 
 // Weapons can override
@@ -263,14 +249,6 @@ end
  * Don't play animations on weapons.
  */
 function Weapon:SetAnimation(sequenceName, force)
-end
-
-function Weapon:GetDrawAnimation(previousWeaponMapName)
-    return Weapon.kAnimDraw
-end
-
-function Weapon:GetDrawAnimationSpeed()
-    return 1
 end
 
 function Weapon:GetSprintStartAnimation()

@@ -23,9 +23,6 @@ local networkVars =
     prevAnimationSequence       = "compensated integer (-1 to " .. Actor.maxAnimations .. ")",
     prevAnimationStart          = "compensated float",
     blendTime                   = "compensated float",
-    
-    // Idling
-    nextIdleTime                = "float", 
 }
 
 
@@ -48,8 +45,6 @@ function BlendedActor:OnCreate()
     self.prevAnimationStart         = 0
     self.blendTime                  = 0.0
     
-    self.nextIdleTime               = 0
-    
 end
 
 function BlendedActor:ResetAnimState()
@@ -63,23 +58,12 @@ function BlendedActor:ResetAnimState()
     self.prevAnimationStart         = 0
     self.blendTime                  = 0.0
     
-    self.nextIdleTime               = 0
-
 end
 
 // Allow children to process animation names to translate something like 
 // "idle" to "bite_idle" depending on current state
 function BlendedActor:GetCustomAnimationName(baseAnimationName)
     return baseAnimationName
-end
-
-function BlendedActor:GetCanIdle()
-    return true
-end
-
-// Return empty string for no idling
-function BlendedActor:GetIdleAnimation()
-    return ""
 end
 
 // Default movement blending time
@@ -103,8 +87,6 @@ function BlendedActor:SetAnimation(sequenceName, force, animSpeed)
                 length = length / animSpeed
             end
         
-            self.nextIdleTime = Shared.GetTime() + length
-            
         end
 
         return true
@@ -193,6 +175,10 @@ function BlendedActor:SetOverlayAnimation(animationName, dontForce)
 
     if( animationName == nil or animationName == "") then
     
+        if self.GetClassName and self:GetClassName() == gActorAnimDebugClass then
+            Print("%s:SetOverlayAnimation(%s, %s) - Clearing overlay.", self:GetClassName(), ToString(animationName), ToString(dontForce))
+        end
+
         self.overlayAnimationSequence = Model.invalidSequence
     
     elseif ( animationName ~= nil ) then
@@ -205,14 +191,17 @@ function BlendedActor:SetOverlayAnimation(animationName, dontForce)
             theAnimName = animationName
             index = self:GetAnimationIndex( theAnimName )
         end
-        
+
         // Don't reset it if already playing
         if(index ~= Model.invalidSequence) and ((self.overlayAnimationSequence ~= index) or (not dontForce)) then
+
+            if self.GetClassName and self:GetClassName() == gActorAnimDebugClass then
+                Print("%s:SetOverlayAnimation(%s, %s)", self:GetClassName(), ToString(animationName), ToString(dontForce))
+            end
+        
             self.overlayAnimationSequence = index
             self.overlayAnimationStart    = Shared.GetTime()
             
-            //self.nextIdleTime = Shared.GetTime() + self:GetAnimationLength(animationName)
-            //Print("%s (%d):SetOverlayAnimation(%s) (set next idle to %.2f)", self:GetMapName(), self:GetId(), theAnimName, self.nextIdleTime)
         end
         
     end
@@ -329,30 +318,11 @@ function BlendedActor:BlendAnimation(model, poses, animationIndex, animationStar
     
 end
 
-// Called whenever actor is not doing anything else. Play idle animation, trigger reload, etc.
-// Called when current time passes nextIdleTime. Return time of next idle, or nil to not
-// update next idle time. Enable or disable idling through GetCanIdle().
-function BlendedActor:OnIdle()
-
-    // Play interruptable idle animation
-    local animName = self:GetIdleAnimation()
-    
-    if(animName ~= "" and self:GetAnimationLength(animName) > 0) then
-    
-        self:SetAnimation(animName, true)
-        
-    end
-        
-end
-
 // Called every tick
 function BlendedActor:OnUpdate(deltaTime)
 
     Actor.OnUpdate( self, deltaTime )
-    
-    if not Shared.GetIsRunningPrediction() then
-        self:UpdateAnimation( deltaTime )
-    end        
+    self:UpdateAnimation( deltaTime )
     
 end
 
@@ -360,11 +330,9 @@ function BlendedActor:GetName()
     return self:GetMapName()
 end
 
-function BlendedActor:ForceIdle()
-    self.nextIdleTime = 0
-end
-
 function BlendedActor:UpdateAnimation(timePassed)
+
+    PROFILE("BlendedActor:UpdateAnimation")
 
     // Run idles on the server only until we have shared random numbers
     if self:GetIsVisible() and self.modelIndex ~= 0 then
@@ -376,18 +344,13 @@ function BlendedActor:UpdateAnimation(timePassed)
             
         end
     
-        if(self.nextIdleTime ~= nil and self.nextIdleTime ~= -1 and Shared.GetTime() > self.nextIdleTime and self:GetCanIdle()) then
-        
-           self:OnIdle()
-            
-        end    
-        
     end
     
 end
 
 // Called with name of animation that finished. Called at end of looping animation also.
 function BlendedActor:OnAnimationComplete(animationName)
+    Actor.OnAnimationComplete(self, animationName)
     self.prevAnimationSequence = Model.invalidSequence
 end
 

@@ -16,13 +16,9 @@ Drifter.kMapName = "drifter"
 
 Drifter.kModelName = PrecacheAsset("models/alien/drifter/drifter.model")
 
-Drifter.kAttackSoundName   = PrecacheAsset("sound/ns2.fev/alien/drifter/attack")
-Drifter.kDriftSoundName    = PrecacheAsset("sound/ns2.fev/alien/drifter/drift")
 Drifter.kFlareSoundName    = PrecacheAsset("sound/ns2.fev/alien/drifter/flare")
-Drifter.kOrderedSoundName  = PrecacheAsset("sound/ns2.fev/alien/drifter/ordered")
 Drifter.kOrdered2DSoundName  = PrecacheAsset("sound/ns2.fev/alien/drifter/ordered_2d")
 
-Drifter.kAnimIdleTable = {{1.0, "idle"}, {.5, "idle2"}, {.05, "idle3"}, {.05, "idle4"}}
 Drifter.kAnimFly = "fly"
 Drifter.kAnimLandBuild = "land_build"
 
@@ -109,7 +105,7 @@ function Drifter:SetOrder(order, clearExisting, insertFirst)
     
     self:SetNextThink(Drifter.kMoveThinkInterval)
     
-    self:PlaySound(Drifter.kOrderedSoundName)
+    self:PlaySound(Drifter.kOrdered2DSoundName)
     
     local owner = self:GetOwner()
     if owner then
@@ -169,10 +165,6 @@ function Drifter:OverrideOrder(order)
     
 end
 
-function Drifter:PlayMeleeHitEffects(target, point, direction)
-    Shared.PlayWorldSound(nil, Drifter.kAttackSoundName, nil, point)
-end
-
 function Drifter:ProcessJustSpawned()
 
     self.justSpawned = nil
@@ -196,7 +188,7 @@ function Drifter:ProcessJustSpawned()
         
     end  
     
-    // Move glowy outside of hive so he can be selected    
+    // Move outside of hive so she can be selected    
     local angle = NetworkRandom() * math.pi*2
     local startPoint = self:GetOrigin() + Vector( math.cos(angle)*Drifter.kStartDistance , 0 , math.sin(angle)*Drifter.kStartDistance )
     self:SetOrigin(startPoint)
@@ -213,6 +205,10 @@ function Drifter:OnThink()
         self:ProcessJustSpawned()           
     end        
 
+    if not self:GetIsAlive() then
+        return 
+    end
+    
     // Check to see if it's time to go off. Don't process other orders while getting ready to explode.
     if self.flareExplodeTime then
     
@@ -346,10 +342,6 @@ function Drifter:OnThink()
     
 end
 
-function Drifter:GetIdleAnimation()
-    return chooseWeightedEntry(Drifter.kAnimIdleTable)
-end
-
 function Drifter:OnUpdate(deltaTime)
 
     LiveScriptActor.OnUpdate(self, deltaTime)
@@ -384,6 +376,7 @@ function Drifter:PerformActivation(techId, position, commander)
 
     if(techId == kTechId.DrifterFlare) then
     
+        self:TriggerEffects("drifter_flare")
         self:SetAnimationWithBlending(Drifter.kFlareAnim, nil, true)
         
         self:PlaySound(Drifter.kFlareSoundName)

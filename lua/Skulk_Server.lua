@@ -17,10 +17,6 @@ function Skulk:InitWeapons()
     
 end
 
-function Skulk:GetKilledSound(doer)
-    return Skulk.kDieSoundName
-end
-
 // Handle carapace
 function Skulk:GetHealthPerArmor(damageType)
 

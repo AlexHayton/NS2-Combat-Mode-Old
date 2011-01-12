@@ -116,6 +116,47 @@ function OnCommandAnimDebug(className)
     
 end
 
+function OnCommandEffectDebug(className)
+
+    Print("OnCommandEffectDebug(\"%s\")", ToString(className))
+    if Shared.GetDevMode() then
+    
+        if className and className ~= "" then
+            gEffectDebugClass = className
+        elseif gEffectDebugClass ~= nil then
+            gEffectDebugClass = nil
+        else
+            gEffectDebugClass = ""
+        end
+    end
+    
+end
+
+function OnCommandDebugText(debugText, worldOriginString, entIdString)
+
+    if Shared.GetDevMode() then
+    
+        local success, origin = DecodePointFromString(worldOriginString)
+        if success then
+        
+            local ent = nil
+            if entIdString then
+                local id = tonumber(entIdString)
+                if id and (id >= 0) then
+                    ent = Shared.GetEntity(id)
+                end
+            end
+            
+            GetEffectManager():AddDebugText(debugText, origin, ent)
+            
+        else
+            Print("OnCommandDebugText(%s, %s): Couldn't decode point.", debugText, worldOriginString)
+        end
+        
+    end
+    
+end
+
 Event.Hook("Console_tooltip",                   OnCommandTooltip)
 Event.Hook("Console_reset",                     OnCommandRoundReset)
 Event.Hook("Console_deathmsg",                  OnCommandDeathMsg)
@@ -126,6 +167,8 @@ Event.Hook("Console_harvestercount",            OnCommandTeamHarvesterCount)
 Event.Hook("Console_soundgeometry",             OnCommandSoundGeometry)
 Event.Hook("Console_reloadsoundgeometry",       OnCommandReloadSoundGeometry)
 Event.Hook("Console_onanimdebug",               OnCommandAnimDebug)
+Event.Hook("Console_oneffectdebug",             OnCommandEffectDebug)
+Event.Hook("Console_debugtext",                 OnCommandDebugText)
 
 Client.HookNetworkMessage("Ping",               OnCommandPing)
 Client.HookNetworkMessage("Scores",             OnCommandScores)

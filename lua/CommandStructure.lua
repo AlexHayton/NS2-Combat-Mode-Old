@@ -95,4 +95,12 @@ function CommandStructure:GetLevel()
     
 end
 
+function CommandStructure:GetEffectParams(tableParams)
+
+    Structure.GetEffectParams(self, tableParams)
+    
+    tableParams[kEffectFilterOccupied] = self.occupied
+    
+end
+
 Shared.LinkClassToMap("CommandStructure", CommandStructure.kMapName, networkVars)

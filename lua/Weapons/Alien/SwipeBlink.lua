@@ -17,15 +17,9 @@ SwipeBlink.kMapName = "swipe"
 
 // TODO: Hold shift for "rebound" type ability. Shift while looking at enemy lets you blink above, behind or off of a wall.
 
-SwipeBlink.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/fade/swipe")
 SwipeBlink.kHitMarineSound = PrecacheAsset("sound/ns2.fev/alien/fade/swipe_hit_marine")
 SwipeBlink.kScrapeMaterialSound = "sound/ns2.fev/materials/%s/scrape"
 PrecacheMultipleAssets(SwipeBlink.kScrapeMaterialSound, kSurfaceList)
-
-// View model animations (update Blink.lua as well)
-SwipeBlink.kAnimAttackTable = {{1, "attack"}, {1, "attack2"}, {1, "attack3"}, {1, "attack4"}, {1, "attack5"}, {1, "attack6"}}
-SwipeBlink.kAnimStabTable = {{1, "attack"}, {1, "attack2"}, {1, "attack3"}, {1, "attack4"}}
-SwipeBlink.kAnimIdleTable = {{1, "swipe_idle"}, {.1, "swipe_idle2"}, {.5, "swipe_idle3"}}
 
 // Swipe
 SwipeBlink.kSwipeEnergyCost = kSwipeEnergyCost
@@ -49,27 +43,12 @@ function SwipeBlink:GetHUDSlot()
     return 1
 end
 
-function SwipeBlink:GetIdleAnimation()
-    return chooseWeightedEntry( SwipeBlink.kAnimIdleTable )
-end
-
 function SwipeBlink:GetIconOffsetY(secondary)
     return kAbilityOffset.SwipeBlink
 end
 
 function SwipeBlink:GetPrimaryAttackRequiresPress()
     return false
-end
-
-function SwipeBlink:GetDrawAnimation(previousWeaponMapName)
-    if previousWeaponMapName == StabBlink.kMapName then
-        return "from_stab"
-    end
-    return "draw"
-end
-
-function SwipeBlink:GetDrawAnimationSpeed()
-    return 1.6
 end
 
 function SwipeBlink:GetDeathIconIndex()
@@ -83,14 +62,8 @@ function SwipeBlink:PerformPrimaryAttack(player)
     Blink.PerformPrimaryAttack(self, player)
 
     // Play random animation
-    player:SetViewAnimation( SwipeBlink.kAnimAttackTable, nil, nil, 1/player:AdjustFuryFireDelay(1) )
     player:SetActivityEnd( player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay() ))
 
-    // Play the attack animation on the character.
-    player:SetOverlayAnimation( chooseWeightedEntry(Fade.kAnimSwipeTable) )
-
-    Shared.PlaySound(player, SwipeBlink.kAttackSound)
-    
     // Attack a short time later to match with animation
     self:SetNextThink(.15) 
     

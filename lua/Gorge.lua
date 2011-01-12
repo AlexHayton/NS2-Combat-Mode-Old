@@ -29,11 +29,6 @@ Gorge.kMapName = "gorge"
 
 Gorge.kModelName = PrecacheAsset("models/alien/gorge/gorge.model")
 Gorge.kViewModelName = PrecacheAsset("models/alien/gorge/gorge_view.model")
-Gorge.kSpawnSoundName = PrecacheAsset("sound/ns2.fev/alien/gorge/spawn" )
-Gorge.kDieSoundName = PrecacheAsset("sound/ns2.fev/alien/gorge/death")
-Gorge.kLeftFootstepSound = PrecacheAsset("sound/ns2.fev/alien/gorge/footstep_left")
-Gorge.kRightFootstepSound = PrecacheAsset("sound/ns2.fev/alien/gorge/footstep_right")
-Gorge.kStructureSpawnSound = PrecacheAsset("sound/ns2.fev/alien/structures/spawn_small")
 Gorge.kTauntSound = PrecacheAsset("sound/ns2.fev/alien/gorge/taunt")
 Gorge.kSlideHitSound = PrecacheAsset("sound/ns2.fev/alien/gorge/hit")
 Gorge.kJumpSoundName = PrecacheAsset("sound/ns2.fev/alien/gorge/jump")
@@ -104,24 +99,12 @@ function Gorge:GetViewModelName()
     return Gorge.kViewModelName
 end
 
-function Gorge:GetSpawnSound()
-    return Gorge.kSpawnSoundName
-end
-
-function Gorge:GetPlaceBuildingSound()
-    return Gorge.kStructureSpawnSound
-end
-
 function Gorge:GetJumpHeight()
     return Gorge.kJumpHeight
 end
 
 function Gorge:GetHasSpecialAbility()
     return true
-end
-
-function Gorge:TranslateViewModelAnimation(animSpecifier)
-    return Player.TranslateViewModelAnimation(self, animSpecifier)
 end
 
 // For special ability, return an array of energy (0-1), energy cost (0-1), tex x offset, tex y offset, 
@@ -418,20 +401,6 @@ end
 
 function Gorge:GetMass()
     return Gorge.kMass
-end
-
-function Gorge:PlayFootstepSound(sendMessage)
-
-    if sendMessage or Client then
-        if (self.leftFoot) then
-            Shared.PlaySound(self, Gorge.kLeftFootstepSound)
-        else
-            Shared.PlaySound(self, Gorge.kRightFootstepSound)
-        end
-    end
-    
-    self.leftFoot = not self.leftFoot
-    
 end
 
 function Gorge:GetTauntSound()

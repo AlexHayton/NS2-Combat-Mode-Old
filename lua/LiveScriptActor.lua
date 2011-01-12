@@ -25,11 +25,6 @@ LiveScriptActor.kAnimFlinchFlames = "flinch_flames"
 LiveScriptActor.kAnimFlinchHealth = 50
 LiveScriptActor.kAnimFlinchBig = "flinch_big"
 
-// On fire sounds
-LiveScriptActor.kOnFireSmallSound = PrecacheAsset("sound/ns2.fev/common/fire_small")
-LiveScriptActor.kOnFireLargeSound = PrecacheAsset("sound/ns2.fev/common/fire_large")
-LiveScriptActor.kAlienRegenerationSound = PrecacheAsset("sound/ns2.fev/alien/common/regeneration")
-
 // Takes this much time to reduce flinch completely
 LiveScriptActor.kFlinchIntensityReduceRate = .4
 
@@ -37,8 +32,6 @@ LiveScriptActor.kDefaultPointValue = 10
 LiveScriptActor.kMaxEnergy = 300
 
 LiveScriptActor.kMoveToDistance = 1
-
-LiveScriptActor.kRagdollTime = 3
 
 if (Server) then
     Script.Load("lua/LiveScriptActor_Server.lua")
@@ -184,10 +177,6 @@ function LiveScriptActor:OnInit()
     
     // Ability to turn off pathing for testing
     self.pathingEnabled = true
-    
-    if Server then
-        self:TriggerEffects("spawn")
-    end
     
 end
 
@@ -435,6 +424,11 @@ function LiveScriptActor:OnUpdate(deltaTime)
 
     ScriptActor.OnUpdate(self, deltaTime)
     
+    // Process outside of OnProcessMove() because animations can't be set there
+    if Server then
+        self:UpdateJustKilled()
+    end
+    
     if self.timeLastUpdate ~= nil then
 
         // Update flinch intensity
@@ -495,11 +489,6 @@ end
 // health can return false. 
 function LiveScriptActor:GetCanTakeDamage()
     return true
-end
-
-// Play this animation if non-nil. Turn to ragdoll when animation finishes, or immediately if no anim specified.
-function LiveScriptActor:GetDeathAnimation()
-    return nil
 end
 
 function LiveScriptActor:GetGameEffectMask(effect)

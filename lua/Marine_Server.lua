@@ -157,8 +157,14 @@ end
 
 function Marine:Drop(weapon)
 
+    local activeWeapon = self:GetActiveWeapon()
+    
     if not weapon then
-        weapon = self:GetActiveWeapon()
+        weapon = activeWeapon
+    end
+
+    if weapon == activeWeapon then
+        self:SelectNextWeapon()
     end
     
     if( weapon ~= nil and weapon.GetIsDroppable and weapon:GetIsDroppable() ) then
@@ -176,7 +182,7 @@ function Marine:Drop(weapon)
         weapon:Dropped(self)
         
     end
-    
+
 end
 
 function Marine:OnResearchComplete(structure, researchId)

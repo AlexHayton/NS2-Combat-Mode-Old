@@ -92,7 +92,7 @@ function AlienTeam:UpdateAutoBuild(timePassed)
         
             // Account for metabolize game effects
             local autoBuildTime = GetAlienEvolveResearchTime(timePassed, structure)
-            structure:Construct(autoBuildTime, Structure.kAlienAutoBuildSound)
+            structure:Construct(autoBuildTime)
         
         end
         
@@ -475,7 +475,7 @@ function AlienTeam:InitTechTree()
     self.techTree:AddUpgradeNode(kTechId.LobTech,                kTechId.MatureWhip,          kTechId.TwoHives)
     self.techTree:AddTargetedActivation(kTechId.WhipBombard,                  kTechId.LobTech,             kTechId.MatureWhip)
     
-    self.techTree:AddResearchNode(kTechId.Melee2Tech,             kTechId.Whip,                kTechId.HiveMass)
+    self.techTree:AddResearchNode(kTechId.Melee2Tech,             kTechId.Melee1Tech,                kTechId.HiveMass)
     self.techTree:AddResearchNode(kTechId.Armor2Tech,             kTechId.Armor1Tech,          kTechId.HiveMass)
         
     // Tier 3
@@ -484,7 +484,7 @@ function AlienTeam:InitTechTree()
     self.techTree:AddUpgradeNode(kTechId.HiveColonyUpgrade,      kTechId.ThreeHives,           kTechId.None)
     self.techTree:AddBuyNode(kTechId.Onos,                      kTechId.HiveColony,           kTechId.ThreeHives)
     
-    self.techTree:AddResearchNode(kTechId.Melee3Tech,             kTechId.Whip,                kTechId.HiveColony)
+    self.techTree:AddResearchNode(kTechId.Melee3Tech,             kTechId.Melee2Tech,                kTechId.HiveColony)
     self.techTree:AddResearchNode(kTechId.Armor3Tech,             kTechId.Armor2Tech,          kTechId.HiveColony)
     
     // Shift targeted ability    

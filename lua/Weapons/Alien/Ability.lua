@@ -16,12 +16,6 @@ Ability.kAttackDelay = .5
 Ability.kEnergyCost = 20
 Ability.kMaxEnergy = 100
 
-// Special note on alien view model animations:
-// The current ability is prefixed to the animation played. So
-// "idle" becomes "bite_idle". Missing animations will be displayed
-// in the log.
-Ability.kTransitionAnimPrefix = "draw_from_"
-
 // The order of icons in kHUDAbilitiesTexture, used by GetIconOffsetY.
 // These are just the rows, the colum is determined by primary or secondary
 // The 0th row is the unknown (?) icon
@@ -115,7 +109,7 @@ end
 // Child class can override
 function Ability:OnPrimaryAttack(player)
 
-    if(not self:GetPrimaryAttackRequiresPress() or not self.primaryAttackLastFrame) then
+    if not self:GetPrimaryAttackRequiresPress() or not player:GetPrimaryAttackLastFrame() then
     
         // Check energy cost
         local energyCost = self:GetEnergyCost(player)
@@ -130,18 +124,18 @@ function Ability:OnPrimaryAttack(player)
             player:DeductAbilityEnergy(energyCost)
                 
             self:PerformPrimaryAttack(player)
+            
+            Weapon.OnPrimaryAttack(self, player)
 
         end
         
     end
-
-    Weapon.OnPrimaryAttack(self, player)
     
 end
 
 function Ability:OnSecondaryAttack(player)
 
-    if(not self:GetSecondaryAttackRequiresPress() or not self.secondaryAttackLastFrame) then
+    if(not self:GetSecondaryAttackRequiresPress() or not player:GetSecondaryAttackLastFrame()) then
 
         // Check energy cost
         local energyCost = self:GetSecondaryEnergyCost(player)
@@ -152,13 +146,13 @@ function Ability:OnSecondaryAttack(player)
             
                 player:DeductAbilityEnergy(energyCost)
                 
+                Weapon.OnSecondaryAttack(self, player)
+                
             end
 
         end
 
     end
-    
-    Weapon.OnSecondaryAttack(self, player)
     
 end
 
@@ -168,24 +162,14 @@ end
 function Ability:Reload()
 end
 
-// Aliens have no draw animations any more. Will try to cover this with a "sploosh" from the egg.
-function Ability:GetDrawAnimation(previousWeaponMapName)
-    return ""
-end
+function Ability:GetEffectParams(tableParams)
 
-function Ability:OnDraw(player, previousWeaponMapName)
-
-    if (player:GetCanNewActivityStart() and player:CanDrawWeapon()) then
-
-        Weapon.OnDraw(self, player, previousWeaponMapName)
+    Weapon.GetEffectParams(self, tableParams)
     
-        if(previousWeaponMapName ~= self:GetMapName() and previousWeaponMapName ~= nil and previousWeaponMapName ~= "") then
-        
-            local animName = self:GetDrawAnimation(previousWeaponMapName)
-            local length = player:SetViewAnimation(animName, nil, nil, self:GetDrawAnimationSpeed())
-            player:SetActivityEnd(length)
-            
-        end
+    local player = self:GetParent()
+    if player then
+    
+        tableParams[kEffectParamAnimationSpeed] = 1/player:AdjustFuryFireDelay(1)
         
     end
     

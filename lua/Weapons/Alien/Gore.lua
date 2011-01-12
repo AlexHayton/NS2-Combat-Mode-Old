@@ -21,7 +21,6 @@ Gore.kDoorHitEffect = PrecacheAsset("cinematics/alien/onos/door_hit.cinematic")
 
 // View model animations
 Gore.kAnimAttackTable = {{1, "attack"}/*, {1, "attack2"}, {1, "attack3"}, {1, "attack4"}*/}
-Gore.kAnimIdleTable = {{1, "gore_idle"}/*, {.1, "gore_idle2"}, {.5, "gore_idle3"}*/}
 
 // Player animations
 Gore.kAnimPlayerAttack = "gore"
@@ -54,10 +53,6 @@ end
 
 function Gore:GetSecondaryAttackDelay()
     return Gore.kSecondaryAttackDelay
-end
-
-function Gore:GetIdleAnimation()
-    return chooseWeightedEntry( Gore.kAnimIdleTable )
 end
 
 function Gore:GetHUDSlot()

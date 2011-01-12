@@ -15,8 +15,6 @@ MAC.kMapName = "mac"
 
 MAC.kModelName = PrecacheAsset("models/marine/mac/mac.model")
 
-MAC.kAttackSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/attack")
-MAC.kBuildSound = PrecacheAsset("sound/ns2.fev/marine/structures/mac/build")
 MAC.kConfirmSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/confirm")
 MAC.kConfirm2DSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/confirm_2d")
 MAC.kStartConstructionSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/constructing")
@@ -24,33 +22,10 @@ MAC.kStartConstruction2DSoundName = PrecacheAsset("sound/ns2.fev/marine/structur
 MAC.kHelpingSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/help_build")
 MAC.kPassbyMACSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/passby_mac")
 MAC.kPassbyDrifterSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/passby_driffter")
-MAC.kHoverSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/hover")
 MAC.kIdleSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/idle")
-MAC.kThrustersSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/thrusters")
-MAC.kWeldSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/weld")
-MAC.kWeldStartSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/weld_start")
-MAC.kWeldedSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/welded")
 MAC.kUsedSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/mac/use")
 
-// "fxnode_welder"
-MAC.kBuildEffect = PrecacheAsset("cinematics/marine/mac/build.cinematic")
-MAC.kWelderEffect = PrecacheAsset("cinematics/marine/mac/weld.cinematic")
-
-// "fxnode_jet1" and "fxnode_jet2"
-MAC.kJetEffect = PrecacheAsset("cinematics/marine/mac/jet.cinematic")
-
-// "fxnode_light"
-MAC.kLightEffect = PrecacheAsset("cinematics/marine/mac/light.cinematic")
-
-// Play at origin
-MAC.kSirenEffect = PrecacheAsset("cinematics/marine/mac/siren.cinematic")
-
 // Animations
-MAC.kAnimIdle = {{1, "idle"}, {.1, "idle2"}}
-MAC.kAnimFly = "fly"
-MAC.kAnimFlyStop = "fly_stop"
-MAC.kAnimConstruct = "construct"
-MAC.kAnimWeld = "construct_weld"
 MAC.kAnimAttack = "attack"
 
 MAC.kRightJetNode = "fxnode_jet1"
@@ -106,11 +81,7 @@ function MAC:OnInit()
         self.justSpawned = true    
         self:SetNextThink(MAC.kMoveThinkInterval)
         
-        self:PlaySound(MAC.kHoverSoundName)
-        
     end
-    
-    Shared.CreateAttachedEffect(nil, MAC.kLightEffect, self, Coords.GetTranslation(self:GetOrigin()), "fxnode_light", false)
     
     self:UpdateControllerFromEntity()
     
@@ -136,7 +107,7 @@ function MAC:GetCanBeUsed(player)
     return true
 end
 
-function MAC:OnUse(player, elapsedTime, useAttachPoint)
+function MAC:OnUse(player, elapsedTime, useAttachPoint, usePoint)
 
     // Play flavor sounds when using MAC
     if Server then
@@ -241,18 +212,8 @@ function MAC:SetOrder(order, clearExisting, insertFirst)
         Server.PlayPrivateSound(owner, MAC.kConfirm2DSoundName, owner, 1.0, Vector(0, 0, 0))
     end
     
-    self:PlaySound(MAC.kThrustersSoundName)
-    
-    Shared.CreateEffect(nil, MAC.kSirenEffect, self)
-    
-    Shared.CreateAttachedEffect(nil, MAC.kJetEffect, self, nil, "fxnode_jet1", false)
-    
-    Shared.CreateAttachedEffect(nil, MAC.kJetEffect, self, nil, "fxnode_jet2", false)
-        
-end
-
-function MAC:PlayMeleeHitEffects(target, point, direction)
-    Shared.PlayWorldSound(nil, MAC.kAttackSoundName, nil, point)
+    self:TriggerEffects("mac_set_order")
+            
 end
 
 function MAC:OverrideTechTreeAction(techNode, position, orientation, commander)
@@ -318,9 +279,7 @@ function MAC:ProcessWeldOrder()
             if( (canBeWeldedNow or canBeWeldedFuture) and target:OnWeld(self, MAC.kWeldThinkInterval)) then
     
                 // Play puff of sparks
-                self:CreateAttachedEffect(MAC.kBuildEffect, "fxnode_welder")
-                
-                Shared.PlayWorldSound(nil, MAC.kWeldSoundName, nil, self:GetOrigin())
+                self:TriggerEffects("mac_weld")
                 
                 self:SetNextThink(MAC.kWeldThinkInterval)
                 
@@ -380,7 +339,7 @@ function MAC:ProcessJustSpawned()
     local startPoint = self:GetOrigin() + Vector( math.cos(angle)*MAC.kStartDistance , MAC.kHoverHeight, math.sin(angle)*MAC.kStartDistance )
     self:SetOrigin(startPoint)
     
-    self:SetAnimationWithBlending(chooseWeightedEntry(MAC.kAnimIdle))
+    self:TriggerEffects("idle")
 
 end
 
@@ -390,7 +349,8 @@ function MAC:ProcessMove()
     local distToTarget = self:MoveToTarget(PhysicsMask.AIMovement, currentOrder:GetLocation(), self:GetMoveSpeed(), MAC.kMoveThinkInterval)
     if(distToTarget < kEpsilon) then
     
-        self:SetAnimationWithBlending(MAC.kAnimFlyStop)
+        self:TriggerEffects("mac_move_complete")
+
         self:CompletedCurrentOrder()
         
         // For playing idle after stop animation ends
@@ -398,7 +358,7 @@ function MAC:ProcessMove()
         
     else
     
-        self:SetAnimationWithBlending(MAC.kAnimFly)
+        self:TriggerEffects("mac_move")
         
     end
     
@@ -448,25 +408,10 @@ function MAC:UpdateGreetings()
 
 end
 
-function MAC:OrderChanged()
-
-    LiveScriptActor.OrderChanged(self)
-
-    if not self:GetHasOrder() then
-    
-        self:StopSound(MAC.kThrustersSoundName)
-        Shared.StopEffect(nil, MAC.kSirenEffect, self)
-        
-    end    
-    
-end
-
 function MAC:ProcessBuildConstruct()
 
     local setNextThink = false
     
-    self:SetAnimationWithBlending(MAC.kAnimConstruct)
-
     local currentOrder = self:GetCurrentOrder()
     
     local distToTarget = (currentOrder:GetLocation() - self:GetOrigin()):GetLengthXZ()
@@ -539,11 +484,8 @@ function MAC:ProcessBuildConstruct()
                 // Otherwise, add build time to structure
                 constructTarget:Construct(MAC.kConstructThinkInterval * kMACConstructEfficacy)
                 
-                // Play puff of sparks
-                self:CreateAttachedEffect(MAC.kBuildEffect, "fxnode_welder")
+                self:TriggerEffects("mac_construct")
                 
-                Shared.PlayWorldSound(nil, MAC.kBuildSound, nil, self:GetOrigin())
-                    
             else
             
                 self:CompletedCurrentOrder()
@@ -575,6 +517,10 @@ function MAC:OnThink()
         
     end        
     
+    if not self:GetIsAlive() then
+        return 
+    end
+    
     local setNextThink = false
     local currentOrder = self:GetCurrentOrder()
     
@@ -587,14 +533,10 @@ function MAC:OnThink()
             
         elseif(currentOrder:GetType() == kTechId.Attack) then
         
-            self:SetAnimationWithBlending(MAC.kAnimAttack)
-            
             self:ProcessAttackOrder(1, GetDevScalar(MAC.kMoveSpeed, 8), MAC.kMoveThinkInterval)
             
         elseif(currentOrder:GetType() == kTechId.Weld) then
         
-            self:SetAnimationWithBlending(MAC.kAnimWeld)
-            
             setNextThink = self:ProcessWeldOrder()
                     
         elseif((currentOrder:GetType() == kTechId.Build) or (currentOrder:GetType() == kTechId.Construct)) then 
@@ -697,16 +639,6 @@ end
 
 function MAC:GetWaypointGroupName()
     return kAirWaypointsGroup
-end
-
-function MAC:OnKill(damage, attacker, doer, point, direction)
-
-    LiveScriptActor.OnKill(self, damage, attacker, doer, point, direction)
-
-    self:StopSound(MAC.kHoverSoundName)
-    self:StopSound(MAC.kThrustersSoundName)
-    Shared.StopEffect(nil, MAC.kSirenEffect, self)
-    
 end
 
 Shared.LinkClassToMap("MAC", MAC.kMapName, {})

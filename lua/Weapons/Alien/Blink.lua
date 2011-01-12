@@ -20,7 +20,6 @@ if Client then
     Script.Load("lua/Weapons/Alien/Blink_Client.lua")
 end
 
-Blink.kBlinkGhostSound = PrecacheAsset("sound/ns2.fev/alien/common/select")
 Blink.kBlinkSound = PrecacheAsset("sound/ns2.fev/alien/fade/blink")
 
 Blink.kBlinkInEffect = PrecacheAsset("cinematics/alien/fade/blink_in.cinematic")
@@ -30,7 +29,7 @@ Blink.kBlinkPreviewEffect = PrecacheAsset("cinematics/alien/fade/blink_preview.c
 
 // Blink
 Blink.kSecondaryAttackDelay = 0
-Blink.kBlinkEnergyCost = 25
+Blink.kBlinkEnergyCost = kBlinkEnergyCost
 Blink.kBlinkDistance = 20
 Blink.kOrientationScanRadius = 2.5
 
@@ -265,22 +264,14 @@ function Blink:PerformBlink(player)
 
         // Local/view model effects    
         self.showingGhost = false
-            
-        // Play view model blink effect
-        if Client then
-            Shared.CreateAttachedEffect(player, Blink.kBlinkViewEffect, player:GetViewModelEntity(), Coords.GetTranslation(Vector(0, 0, 0)), "", true)
-        end
 
-        // Play sound with randomized positional offset (in sound) at place we're leaving
-        Shared.PlaySound(player, Blink.kBlinkSound)
-
+        self:TriggerEffects("blink_out", {effecthostcoords = Coords.GetTranslation(player:GetOrigin())})
+        
         // Play world effects. Play particle effect at vanishing position, along with ghostly fade blink-out
         if Client then
             self:CreateBlinkOutEffect(player)
         end
-
-        Shared.CreateEffect(player, Blink.kBlinkOutEffect, nil, Coords.GetTranslation(player:GetOrigin()))
-
+            
         // Animate camera extremely quickly
         local blinkDistance = (coords.origin - self:GetOrigin()):GetLength()
         local blinkTime = math.min(blinkDistance / 120, .06)
@@ -301,8 +292,7 @@ function Blink:PerformBlink(player)
         angles:BuildFromCoords(coords)
         player:SetOffsetAngles(angles)        
         
-        // Play particle effect at destination
-        Shared.CreateEffect(player, Blink.kBlinkInEffect, nil, Coords.GetTranslation(player:GetOrigin()))
+        self:TriggerEffects("blink_in", {effecthostcoords = Coords.GetTranslation(player:GetOrigin())})
         
         player:SetAnimAndMode(Fade.kBlinkInAnim, kPlayerMode.FadeBlinkIn)
         
@@ -332,7 +322,6 @@ function Blink:PerformSecondaryAttack(player)
     if self.showingGhost then
     
         self:PerformBlink(player)    
-        self.primarySecondaryLastFrame = true
         return true
 
     else    
@@ -341,10 +330,12 @@ function Blink:PerformSecondaryAttack(player)
         self.showingGhost = not self.showingGhost
 
         if Client then
-            Shared.PlaySound(player, Blink.kBlinkGhostSound)
+            self:TriggerEffects("blink_ghost")
         end
         
     end
+    
+    Ability.PerformSecondaryAttack(self, player)
     
     return true
     

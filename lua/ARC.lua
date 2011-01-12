@@ -29,7 +29,6 @@ ARC.kFireEffect = PrecacheAsset("cinematics/marine/arc/fire.cinematic")
 ARC.kFireShellEffect = PrecacheAsset("cinematics/marine/arc/fire_shell.cinematic")
 ARC.kExplosionEffect = PrecacheAsset("cinematics/marine/arc/explosion.cinematic")
 ARC.kDamagedEffect = PrecacheAsset("cinematics/marine/arc/damaged.cinematic")
-ARC.kDeathEffect = PrecacheAsset("cinematics/marine/arc/destroyed.cinematic")
 
 // Animations
 ARC.kDeploy = "deploy"
@@ -37,8 +36,6 @@ ARC.kUndeploy = "undeploy"
 ARC.kMove = "move"
 ARC.kIdle = "idle"
 ARC.kMoveParam = "move_speed"
-ARC.kDeployedAnimIdleTable = { {1.5, "idle_deployed"}/*, {.1, "idle_deployed_fidget1"}, {.1, "idle_deployed_fidget2"}, {.1, "idle_deployed_fidget3"}*/ }
-ARC.kUndeployedAnimIdleTable = { {1.5, "idle_undeployed"}/*, {.1, "idle_undeployed_fidget1"}, {.1, "idle_undeployed_fidget2"}, {.1, "idle_undeployed_fidget3"}*/ }
 ARC.kAnimShootTable = { {1.5, "shoot"}/*, {.1, "shoot2"}*/ }
 
 // Balance
@@ -81,10 +78,6 @@ function ARC:OnInit()
     self:SetAnimationWithBlending(Structure.kAnimDeploy)
     self:SetNextThink(ARC.kMoveThinkInterval)
 
-end
-
-function ARC:GetDeathEffect()
-    return ARC.kDeathEffect
 end
 
 function ARC:GetDeathIconIndex()
@@ -178,7 +171,7 @@ function ARC:OnThink()
 
             self:SetPoseParam(ARC.kMoveParam, 0)
 
-            self:SetAnimationWithBlending(self:GetIdleAnimation())
+            self:OnIdle()
 
         end
 
@@ -193,20 +186,6 @@ end
 
 function ARC:GetDeathIconIndex()
     return kDeathMessageIcon.ARC
-end
-
-function ARC:GetIdleAnimation()
-
-    local idleAnimName = ""
-
-    if(self.deployed) then
-        idleAnimName = chooseWeightedEntry( ARC.kDeployedAnimIdleTable )
-    else
-        idleAnimName = chooseWeightedEntry( ARC.kUndeployedAnimIdleTable )
-    end
-
-    return idleAnimName
-
 end
 
 function ARC:GetIsTargetValid(target) 

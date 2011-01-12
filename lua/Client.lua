@@ -20,6 +20,7 @@ Script.Load("lua/AlienBuy_Client.lua")
 Script.Load("lua/MarineBuy_Client.lua")
 Script.Load("lua/Tracer_Client.lua")
 Script.Load("lua/GUIManager.lua")
+Script.Load("lua/GUIDebugText.lua")
 
 Script.Load("lua/ConsoleCommands_Client.lua")
 Script.Load("lua/NetworkMessages_Client.lua")
@@ -378,6 +379,12 @@ function OnSendCharacterEvent(character)
     end
     
     return false
+
+end
+
+function NotifyGUIItemDestroyed(destroyedItem)
+    
+    gGUIManager:NotifyGUIItemDestroyed(destroyedItem)
 
 end
 

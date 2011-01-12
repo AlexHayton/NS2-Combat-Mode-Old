@@ -135,6 +135,24 @@ function TechNode:GetIsUpgrade()
     return self.techType == kTechType.Upgrade
 end
 
+// Returns: 0 = carbon, 1 = plasma, 2 = energy (from CommanderUI_MenuButtonTooltip). Returns nil if none required.
+function TechNode:GetResourceType()
+
+    // Carbon
+    if self.techType == kTechType.Research or self.techType == kTechType.Upgrade or self.techType == kTechType.Build then
+        return 0
+    // Plasma
+    elseif self.techType == kTechType.Buy or self.techType == kTechType.Manufacture then
+        return 1
+    // Energy
+    elseif self.techType == kTechType.Action or self.techType == kTechType.EnergyBuild or self.techType == kTechType.Activation then
+        return 2
+    end
+    
+    return nil
+    
+end
+
 function TechNode:GetIsAction()
     return self.techType == kTechType.Action
 end

@@ -64,15 +64,19 @@ end
 
 function ScriptActor:RemoveEffect(effectName)
     
-    for index, attachedEffect in ipairs(self.attachedEffects) do
+    if self.attachedEffects then
     
-        if attachedEffect[2] == effectName then
+        for index, attachedEffect in ipairs(self.attachedEffects) do
         
-            Client.DestroyCinematic(attachedEffect[1])
+            if attachedEffect[2] == effectName then
             
-            local success = table.removevalue(self.attachedEffects, attachedEffect)
-            
-            return true
+                Client.DestroyCinematic(attachedEffect[1])
+                
+                local success = table.removevalue(self.attachedEffects, attachedEffect)
+                
+                return true
+                
+            end
             
         end
         
@@ -128,4 +132,44 @@ function ScriptActor:GetRenderFov()
     return math.pi/2
 end
 
+function ScriptActor:AddClientEffect(effectName)
+
+    self:SetUpdates(true)
+    
+    if not self.clientEffects then
+        self.clientEffects = {}
+    end
+    
+    // Create trailing spit that is attached to projectile
+    local clientEffect = Client.CreateCinematic(RenderScene.Zone_Default)
+    clientEffect:SetCinematic(effectName)
+    clientEffect:SetRepeatStyle(Cinematic.Repeat_Endless)  
+    
+    table.insert(self.clientEffects, clientEffect)
+    
+end
+
+function ScriptActor:UpdateAttachedEffects()
+
+    if self.attachedEffects then
+
+        for index, effectPair in ipairs(self.attachedEffects) do
+    
+            local coords = Coords.GetIdentity()
+            VectorCopy(self:GetOrigin(), coords.origin)
+            effectPair[1]:SetCoords(coords)
+            
+        end
+        
+    end
+    
+end
+
+function ScriptActor:OnUpdate(deltaTime)
+
+    BlendedActor.OnUpdate(self, deltaTime)
+    
+    self:UpdateAttachedEffects()
+    
+end
 

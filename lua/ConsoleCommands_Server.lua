@@ -184,6 +184,38 @@ function OnCommandAnimDebug(client, className)
     
 end
 
+function OnCommandEffectDebug(client, className)
+
+    if Shared.GetDevMode() then
+    
+        local player = client:GetControllingPlayer()
+        
+        if className and className ~= "" then
+        
+            gEffectDebugClass = className
+            Server.SendCommand(player, string.format("oneffectdebug %s", className))
+            Print("effect_debug enabled for \"%s\" objects.", className)
+            
+        elseif gEffectDebugClass ~= nil then
+        
+            gEffectDebugClass = nil
+            Server.SendCommand(player, "oneffectdebug")
+            Print("effect_debug disabled.")
+                
+        else
+        
+            // Turn on debug of everything
+            gEffectDebugClass = ""
+            Server.SendCommand(player, "oneffectdebug")
+            Print("effect_debug enabled.")
+            
+        end                
+
+    else
+        Print("effect_debug <class name> (dev mode must be enabled)")
+    end
+    
+end
 // Generic console commands
 Event.Hook("Console_name",                  OnCommandSetName)
 Event.Hook("Console_say",                   OnCommandSay)
@@ -194,3 +226,4 @@ Event.Hook("Console_thirdperson",           OnCommandThirdperson)
 Event.Hook("Console_reset",                 OnCommandRoundReset)
 Event.Hook("Console_updateping",            OnCommandUpdatePing)
 Event.Hook("Console_anim_debug",            OnCommandAnimDebug)
+Event.Hook("Console_effect_debug",          OnCommandEffectDebug)

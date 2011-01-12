@@ -14,23 +14,17 @@ InfantryPortal.kMapName = "infantryportal"
 InfantryPortal.kModelName = PrecacheAsset("models/marine/infantry_portal/infantry_portal.model")
 
 InfantryPortal.kAnimSpinStart = "spin_start"
-InfantryPortal.kAnimSpinStop = "spin_stop"
 InfantryPortal.kAnimSpinContinuous = "spin"
 
 InfantryPortal.kLoopSound = PrecacheAsset("sound/ns2.fev/marine/structures/infantry_portal_active")
-InfantryPortal.kSpawnPlayerSound = PrecacheAsset("sound/ns2.fev/marine/structures/infantry_portal_player_spawn")
-InfantryPortal.kStartSpinSound = PrecacheAsset("sound/ns2.fev/marine/structures/infantry_portal_start_spin")
+
 InfantryPortal.kSquadSpawnFailureSound = PrecacheAsset("sound/ns2.fev/marine/common/squad_spawn_fail")
 InfantryPortal.kSquadSpawnSound = PrecacheAsset("sound/ns2.fev/marine/common/squad_spawn")
 
-InfantryPortal.kDeathEffect = PrecacheAsset("cinematics/marine/infantryportal/death.cinematic")
-InfantryPortal.kSpinEffect = PrecacheAsset("cinematics/marine/infantryportal/spin.cinematic")
 InfantryPortal.kIdleLightEffect = PrecacheAsset("cinematics/marine/infantryportal/idle_light.cinematic")
-InfantryPortal.kSpawnEffect = PrecacheAsset("cinematics/marine/infantryportal/player_spawn.cinematic")
 
 InfantryPortal.kTransponderUseTime = .5
 InfantryPortal.kThinkInterval = 0.25
-InfantryPortal.kSpawnTime = 8
 InfantryPortal.kTransponderPointValue = 15
 InfantryPortal.kLoginAttachPoint = "keypad"
 
@@ -55,10 +49,6 @@ function InfantryPortal:GetUseAttachPoint()
     return InfantryPortal.kLoginAttachPoint
 end
 
-function InfantryPortal:GetDeathEffect()
-    return InfantryPortal.kDeathEffect
-end
-
 function InfantryPortal:GetRecycleScalar()
     return kInfantryPortalRecycleScalar
 end
@@ -77,7 +67,9 @@ function InfantryPortal:QueueWaitingPlayer()
             playerToSpawn = team:GetOldestQueuedPlayer()
             
             team:RemovePlayerFromRespawnQueue(playerToSpawn)        
+            
             self.queuedPlayerId = playerToSpawn:GetId()
+            self.queuedPlayerStartTime = Shared.GetTime()
 
             self:StartSpinning()            
             
@@ -106,7 +98,7 @@ function InfantryPortal:OnResearchComplete(structure, researchId)
 end
 
 function InfantryPortal:GetSpawnTime()
-    return InfantryPortal.kSpawnTime
+    return kMarineRespawnTime
 end
 
 function InfantryPortal:GetTechButtons(techId)
@@ -141,11 +133,11 @@ end
 
 if(Server) then
 
-function InfantryPortal:OnUse(player, elapsedTime, useAttachPoint)
-
-    local success = false
+function InfantryPortal:OnUse(player, elapsedTime, useAttachPoint, usePoint)
     
-    if(not Structure.OnUse(self, player, elapsedTime, useAttachPoint)) then
+    if(not Structure.OnUse(self, player, elapsedTime, useAttachPoint, usePoint)) then
+
+        local success = false
     
         if(self:GetIsBuilt() and self:GetTeamNumber() == player:GetTeamNumber()) then
         
@@ -178,9 +170,11 @@ function InfantryPortal:OnUse(player, elapsedTime, useAttachPoint)
         
         end
         
+        return success
+        
+    else
+        return true
     end
-    
-    return success
     
 end
 
@@ -190,20 +184,14 @@ function InfantryPortal:SpawnTimeElapsed()
 
     local elapsed = false
     
-    if(self.queuedPlayerId ~= nil) then
+    if self.queuedPlayerId then
     
         local queuedPlayer = Shared.GetEntity(self.queuedPlayerId)
-        if(queuedPlayer == nil) then
-            self.queuedPlayerId = nil
+        if queuedPlayer then
+            elapsed = (Shared.GetTime() >= (self.queuedPlayerStartTime + self:GetSpawnTime()))
         else
-            local enteredQueueTime = queuedPlayer:GetRespawnQueueEntryTime()
-            local time = Shared.GetTime()
-            
-            if(enteredQueueTime ~= nil and (time - enteredQueueTime) >= self:GetSpawnTime()) then
-            
-                elapsed = true
-                
-            end
+            self.queuedPlayerId = nil
+            self.queuedPlayerStartTime = nil
         end        
     end
     
@@ -240,14 +228,12 @@ function InfantryPortal:SpawnPlayer()
         if(success) then
         
             self.queuedPlayerId = nil
+            self.queuedPlayerStartTime = nil
             
             spawnOrigin.y = spawnOrigin.y + player:GetExtents().y
             player:SetOrigin(spawnOrigin)       
-            
-            // Play sound and remove player from queue
-            self:PlaySound(InfantryPortal.kSpawnPlayerSound)
-            
-            Shared.CreateEffect(nil, InfantryPortal.kSpawnEffect, self)
+
+            self:TriggerEffects("infantry_portal_spawn")            
             
             return true
             
@@ -263,7 +249,7 @@ function InfantryPortal:OnReset()
 
     Structure.OnReset(self)
     
-    Shared.StopEffect(nil, InfantryPortal.kSpawnEffect, self)
+    //Shared.StopEffect(nil, InfantryPortal.kSpawnEffect, self)
 
 end
 
@@ -275,6 +261,7 @@ function InfantryPortal:OnEntityChange(entityId, newEntityId)
         // Player left or was replaced, either way 
         // they're not in the queue anymore
         self.queuedPlayerId = nil
+        self.queuedPlayerStartTime = nil
         
     end
     
@@ -287,6 +274,7 @@ function InfantryPortal:OnKill(damage, attacker, doer, point, direction)
 
     // Don't spawn player
     self.queuedPlayerId = nil
+    self.queuedPlayerStartTime = nil
     
 end
 
@@ -317,7 +305,8 @@ function InfantryPortal:OnThink()
             elseif(self:SpawnTimeElapsed()) then
             
                 self:SpawnPlayer()
-                self:SetAnimation(InfantryPortal.kAnimSpinStop)
+                //self:SetAnimation(InfantryPortal.kAnimSpinStop)
+                self:StopSpinning()
                 self.timeSpinUpStarted = nil
                 
             elseif(self:SpinUpTimeElapsed()) then
@@ -336,26 +325,6 @@ function InfantryPortal:OnThink()
             
         end
         
-    // Start or stop the spinning effect on the client
-    else
-            
-        local anim = self:GetAnimation()
-        local spinning = (anim == InfantryPortal.kAnimSpinContinuous or anim == InfantryPortal.kAnimSpinStart)
-        
-        if spinning and (self.spinEffectInstance == nil) then
-        
-            self.spinEffectInstance = Client.CreateCinematic(RenderScene.Zone_Default)
-            self.spinEffectInstance:SetCinematic(InfantryPortal.kSpinEffect)
-            self.spinEffectInstance:SetRepeatStyle(Cinematic.Repeat_Endless)
-            self.spinEffectInstance:SetCoords(self:GetCoords())
-
-        elseif not spinning and self.spinEffectInstance then
-        
-            Client.DestroyCinematic(self.spinEffectInstance)
-            self.spinEffectInstance = nil
-            
-        end
-        
     end
     
     self:SetNextThink(InfantryPortal.kThinkInterval)
@@ -364,24 +333,30 @@ end
 
 function InfantryPortal:StopSpinning()
 
-    local anim = self:GetAnimation()
+    self:TriggerEffects("infantry_portal_stop_spin")
     
-    if (anim == InfantryPortal.kAnimSpinContinuous or anim == InfantryPortal.kAnimSpinStart) then
+    self:SetEffectsActive(false)
     
-        self:SetAnimation(InfantryPortal.kAnimSpinStop)
-        self.timeSpinUpStarted = nil
+    self.timeSpinUpStarted = nil
         
-    end
-
 end
 
 function InfantryPortal:StartSpinning()
 
-    self:SetAnimation(InfantryPortal.kAnimSpinStart)
-    self:PlaySound(InfantryPortal.kStartSpinSound)
+    if self.timeSpinUpStarted == nil then
     
-    self.timeSpinUpStarted = Shared.GetTime()
+        self:TriggerEffects("infantry_portal_start_spin")
+        
+        self:SetEffectsActive(true)
+        
+        self.timeSpinUpStarted = Shared.GetTime()
+        
+    end
+    
+end
 
+function InfantryPortal:GetCanIdle()
+    return (self.timeSpinUpStarted == nil)
 end
 
 function InfantryPortal:OnPoweredChange(newPoweredState)
@@ -406,21 +381,6 @@ function InfantryPortal:OnPoweredChange(newPoweredState)
         
     end
     
-end
-
-if Client then
-function InfantryPortal:OnDestroy()
-
-    if self.spinEffectInstance then
-        
-        Client.DestroyCinematic(self.spinEffectInstance)
-        self.spinEffectInstance = nil
-        
-    end
-    
-    Structure.OnDestroy(self)
-    
-end
 end
 
 Shared.LinkClassToMap("InfantryPortal", InfantryPortal.kMapName)

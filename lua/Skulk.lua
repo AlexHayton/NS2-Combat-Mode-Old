@@ -17,15 +17,6 @@ Skulk.kMapName = "skulk"
 Skulk.kModelName = PrecacheAsset("models/alien/skulk/skulk.model")
 Skulk.kViewModelName = PrecacheAsset("models/alien/skulk/skulk_view.model")
 
-Skulk.kSpawnSoundName = PrecacheAsset("sound/ns2.fev/alien/skulk/spawn")
-Skulk.kJumpSoundName = PrecacheAsset("sound/ns2.fev/alien/skulk/jump")
-Skulk.kDieSoundName = PrecacheAsset("sound/ns2.fev/alien/skulk/death")
-Skulk.kFootstepSoundLeft = PrecacheAsset("sound/ns2.fev/alien/skulk/footstep_left")
-Skulk.kFootstepSoundRight = PrecacheAsset("sound/ns2.fev/alien/skulk/footstep_right")
-Skulk.kFootstepSoundLeftMetal = PrecacheAsset("sound/ns2.fev/materials/metal/skulk_step_left")
-Skulk.kFootstepSoundRightMetal = PrecacheAsset("sound/ns2.fev/materials/metal/skulk_step_right")
-Skulk.kMetalLayer = PrecacheAsset("sound/ns2.fev/materials/metal/skulk_layer")
-Skulk.kLandSound = PrecacheAsset("sound/ns2.fev/alien/skulk/land")
 Skulk.kIdleSound = PrecacheAsset("sound/ns2.fev/alien/skulk/idle")
 
 if Server then
@@ -62,7 +53,6 @@ Skulk.kWallWalkNormalSmoothRate = 5
 Skulk.kXExtents = .45
 Skulk.kYExtents = .45
 Skulk.kZExtents = .45
-Skulk.kAnimIdleTable = {{1, "idle"}/*, {.1, "idle2"}*/}
 Skulk.kAnimWallRun = "wallrun"
 // Override jump animations with leap (it's a regular jump with different physics)
 Skulk.kAnimStartLeap = "leap_start"
@@ -90,13 +80,7 @@ function Skulk:OnDestroy()
     Alien.OnDestroy(self)
     
     Shared.StopSound(self, Skulk.kIdleSound)
-    // Just assume the metal layer sound is playing
-    Shared.StopSound(self, Skulk.kMetalLayer)
     
-end
-
-function Skulk:GetSpawnSound()
-    return Skulk.kSpawnSoundName
 end
 
 function Skulk:GetMaxViewOffsetHeight()
@@ -124,10 +108,31 @@ end
 
 function Skulk:OnLeap()
 
-    self.justLeaped = true
+    local velocity = self:GetVelocity()
+
+    local forwardVec = self:GetViewAngles():GetCoords().zAxis
+    local newVelocity = velocity + forwardVec * Skulk.kLeapForce
+    
+    if not self:GetHasUpgrade(kTechId.Leap) then
+    
+        // Mini leap not for offense but for navigation - reduce by current speed
+        local currSpeedScalar = Clamp(velocity:GetLength() / self:GetMaxSpeed(), 0, 1)
+        local amount = (1 - currSpeedScalar)            
+        newVelocity = velocity + forwardVec * Skulk.kLeapForce * amount
+        
+    end
+    
+    // Add in vertical component if on the ground
+    if(not self.wallWalking) then
+        newVelocity.y = newVelocity.y + Skulk.kLeapVerticalVelocity
+    end
+    
+    self:SetVelocity(newVelocity)
+    
+    self.leaping = true
+    self.timeOfLeap = Shared.GetTime()
     
     self:SetOverlayAnimation(Skulk.kAnimStartLeap)
-    
     self:SetActivityEnd(Skulk.kLeapTime)
     
 end
@@ -148,47 +153,6 @@ function Skulk:GetIsLeaping()
     return self.leaping
 end
 
-function Skulk:ModifyVelocity(input, velocity)
-
-    Alien.ModifyVelocity(self, input, velocity)
-
-    if(self.justLeaped) then
-    
-        local forwardVec = self:GetViewAngles():GetCoords().zAxis
-        local newVelocity = velocity + forwardVec * Skulk.kLeapForce
-        
-        if not self:GetHasUpgrade(kTechId.Leap) then
-        
-            // Mini leap not for offense but for navigation - reduce by current speed
-            local currSpeedScalar = Clamp(velocity:GetLength() / self:GetMaxSpeed(), 0, 1)
-            local amount = (1 - currSpeedScalar)            
-            newVelocity = velocity + forwardVec * Skulk.kLeapForce * amount
-            
-        end
-        
-        // Add in vertical component if on the ground
-        if(not self.wallWalking) then
-            newVelocity = newVelocity + Vector(0, 1, 0) * Skulk.kLeapVerticalVelocity
-        end
-        
-        VectorCopy(newVelocity, velocity)
-        
-        self.justLeaped = false
-        self.leaping = true
-        self.timeOfLeap = Shared.GetTime()
-        
-    end
-    
-end
-
-function Skulk:PlayFallSound()
-    Shared.PlaySound(self, Skulk.kLandSound)
-end
-
-function Skulk:GetIdleAnimation()
-    return chooseWeightedEntry(Skulk.kAnimIdleTable)
-end
-
 function Skulk:UpdateMoveAnimation()
 
     if( self:GetIsOnGround() ) then
@@ -207,23 +171,10 @@ end
 
 function Skulk:UpdateMoveSounds()
 
-    local currSpeed = self:GetVelocity():GetLength() / self:GetMaxSpeed()
+    // TODO: 
+    //local currSpeed = self:GetVelocity():GetLength() / self:GetMaxSpeed()
+    //self:SetSoundParameter(Skulk.kMetalLayer, "speed", currSpeed, 10)
     
-    // Always update the idle sound speed
-    //self:SetSoundParameter(Skulk.kIdleSound, "speed", currSpeed, 10)
-    
-    // Only play when moving
-    if(self:GetPlayFootsteps() and not self.metalLayerPlaying) then
-        self.metalLayerPlaying = true
-        Shared.PlaySound(self, Skulk.kMetalLayer)
-    elseif(not self:GetPlayFootsteps() and self.metalLayerPlaying) then
-        self.metalLayerPlaying = false
-        Shared.StopSound(self, Skulk.kMetalLayer)
-    end
-    if(self.metalLayerPlaying) then
-        //self:SetSoundParameter(Skulk.kMetalLayer, "speed", currSpeed, 10)
-    end
-
 end
 
 // When leaping, override jump animations
@@ -291,7 +242,8 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
         // When not wall walking, the goal is always directly up (running on ground).
         self.wallWalkingNormalGoal = Vector.yAxis
     end
-    
+
+
     if ( self.leaping and (Alien.GetIsOnGround(self) or self.wallWalking) and (Shared.GetTime() > self.timeOfLeap + Skulk.kLeapTime) ) then
         self.leaping = false
     end
@@ -377,6 +329,7 @@ end
 function Skulk:GetMaxSpeed()
     
     local maxspeed = 0
+
     if self.leaping then
         maxspeed = Skulk.kLeapSpeed
     else
@@ -636,51 +589,13 @@ function Skulk:HandleJump(input, velocity)
 end
 */
 
-function Skulk:PlayFootstepSound(sendMessage)
-
-    // Don't play footsteps when we're walking
-    if(not self.movementModiferState) then
-    
-        if sendMessage or Client then
-        
-            local sndID = self:GetFootstepSoundName(self.leftFoot)
-            Shared.PlaySound(self, sndID)
-            // Only the metal Skulk footsteps have a speed parameter
-            if(self:GetMaterialBelowPlayer() == "metal") then
-                //self:SetSoundParameter(sndID, "speed", self:GetVelocity():GetLength() / self:GetMaxSpeed(), 10)
-            end
-            
-        end
-        
-        self.leftFoot = not self.leftFoot
-        
-    end
-
-end
-
-function Skulk:GetFootstepSoundName(forLeftFoot)
-
-    local surface = self:GetMaterialBelowPlayer()
-    if(surface == "metal") then
-        if(forLeftFoot) then
-            return Skulk.kFootstepSoundLeftMetal
-        end
-        return Skulk.kFootstepSoundRightMetal
-    else
-        if(forLeftFoot) then
-            return Skulk.kFootstepSoundLeft
-        end
-        return Skulk.kFootstepSoundRight
-    end
-
-end
-
-// Play footsteps on ground or on walls
 function Skulk:GetPlayFootsteps()
 
     local velocity = self:GetVelocity()
     local velocityLength = velocity:GetLength() 
-    return (self:GetIsOnGround() or self:GetIsWallWalking()) and velocityLength > .75 and not self.crouching
+    
+    // Don't play footsteps when we're walking
+    return (self:GetIsOnGround() or self:GetIsWallWalking()) and velocityLength > .75 and not self.crouching and not self.movementModiferState
     
 end
 

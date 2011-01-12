@@ -19,11 +19,9 @@ Fade.kModelName = PrecacheAsset("models/alien/fade/fade.model")
 Fade.kViewModelName = PrecacheAsset("models/alien/fade/fade_view.model")
 
 Fade.kSpawnSoundName = PrecacheAsset("sound/ns2.fev/alien/fade/spawn") 
-Fade.kDieSoundName = PrecacheAsset("sound/ns2.fev/alien/fade/death")
 Fade.kTauntSound = PrecacheAsset("sound/ns2.fev/alien/fade/taunt")
 Fade.kJumpSound = PrecacheAsset("sound/ns2.fev/alien/fade/jump")
 
-Fade.kAnimIdleTable = {{.6, "idle2"}, {1, "idle3"}, {1, "idle4"}, {.1, "idle5"}, {.1, "idle6"}}
 Fade.kAnimSwipeTable = { {1, "swipe"}, {1, "swipe2"}, {1, "swipe3"}, {1, "swipe4"}, {1, "swipe5"}, {1, "swipe6"} }
 Fade.kAnimBlinkTable = { {1, "blink"} }
 Fade.kAnimStabTable = { {1, "stab"}, {1, "stab2"} }
@@ -50,10 +48,6 @@ end
 Fade.kBlinkState = enum( {'Normal', 'BlinkOut', 'BlinkIn'} )
 
 local networkVars = {}
-
-function Fade:GetSpawnSound()
-    return Fade.kSpawnSoundName
-end
 
 function Fade:GetTauntSound()
     return Fade.kTauntSound
@@ -115,16 +109,8 @@ function Fade:GetJumpHeight()
     return Fade.kJumpHeight
 end
 
-function Fade:GetIdleAnimation()
-    return chooseWeightedEntry(Fade.kAnimIdleTable)
-end
-
 function Fade:GetHasSpecialAbility()
     return false
-end
-
-function Fade:PlayJumpSound()
-    Shared.PlaySound(self, Fade.kJumpSound)
 end
 
 // For special ability, return an array of energy, energy cost, tex x offset, tex y offset, 

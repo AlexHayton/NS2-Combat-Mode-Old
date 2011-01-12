@@ -77,10 +77,18 @@ function OnCommandCommTargetedActionWorld(client, message)
     
 end
 
+function OnCommandExecuteSaying(client, message)
+
+    local player = client:GetControllingPlayer()
+    local sayingIndex, sayingsMenu = ParseExecuteSayingMessage(message)
+    player:ExecuteSaying(sayingIndex, sayingsMenu)
+
+end
+
 Server.HookNetworkMessage("MarqueeSelect",              OnCommandCommMarqueeSelect)
 Server.HookNetworkMessage("ClickSelect",                OnCommandCommClickSelect)
 Server.HookNetworkMessage("ControlClickSelect",         OnCommandCommControlClickSelect)
 Server.HookNetworkMessage("CommAction",                 OnCommandCommAction)
 Server.HookNetworkMessage("CommTargetedAction",         OnCommandCommTargetedAction)
 Server.HookNetworkMessage("CommTargetedActionWorld",    OnCommandCommTargetedActionWorld)
-
+Server.HookNetworkMessage("ExecuteSaying",              OnCommandExecuteSaying)

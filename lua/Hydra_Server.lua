@@ -9,14 +9,6 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Hydra.kThinkInterval = .5
     
-function Hydra:GetDeploySound()
-    return Hydra.kDeploySound
-end
-
-function Hydra:GetKilledSound(doer)
-    return Hydra.kDeathSound
-end
-
 function Hydra:GetSortedTargetList()
 
     PROFILE("Hydra:GetSortedTargetList")
@@ -105,9 +97,7 @@ function Hydra:AttackTarget()
 
     self:CreateSpikeProjectile()
     
-    Shared.PlayWorldSound(nil, Hydra.kAttackSoundName, nil, self:GetModelOrigin())
-    
-    self:SetAnimationWithBlending(Hydra.kAnimAttack, nil, nil, 1/self:AdjustFuryFireDelay(1))
+    self:TriggerEffects("hydra_attack")
     
     // Random rate of fire to prevent players from popping out of cover and shooting regularly
     self.timeOfNextFire = Shared.GetTime() + self:AdjustFuryFireDelay(.5 + NetworkRandom() * 1)
@@ -163,7 +153,7 @@ function Hydra:OnThink()
 
     Structure.OnThink(self)
     
-    if(self:GetIsBuilt()) then    
+    if self:GetIsBuilt() and self:GetIsAlive() then    
     
         self:AcquireTarget()
     
@@ -182,7 +172,7 @@ function Hydra:OnThink()
             
                 if self:GetIsEnemyNearby() then
                 
-                    self:SetAnimationWithBlending(Hydra.kAnimAlert, nil, nil, 1/self:AdjustFuryFireDelay(1)) 
+                    self:TriggerEffects("hydra_alert")
                     
                     self.timeLastAlertCheck = Shared.GetTime()
                 

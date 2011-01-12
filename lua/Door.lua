@@ -267,7 +267,7 @@ function Door:GetCanBeUsed(player)
     return true
 end
 
-function Door:OnUse(player, elapsedTime, useAttachPoint)
+function Door:OnUse(player, elapsedTime, useAttachPoint, usePoint)
 
     local state = self:GetState()
     if state == Door.kState.Welded or state == Door.kState.Locked then

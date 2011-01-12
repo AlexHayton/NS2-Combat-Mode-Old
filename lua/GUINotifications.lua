@@ -120,7 +120,13 @@ end
 
 function GUINotifications:Update(deltaTime)
 
-    self.locationText:SetText(PlayerUI_GetLocationName())
+    if PlayerUI_IsACommander() then
+        // The commander has their own location text.
+        self.locationText:SetIsVisible(false)
+    else
+        self.locationText:SetIsVisible(true)
+        self.locationText:SetText(PlayerUI_GetLocationName())
+    end
     
     self:UpdateTooltip(deltaTime)
     

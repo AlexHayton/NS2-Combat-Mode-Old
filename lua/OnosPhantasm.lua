@@ -32,10 +32,6 @@ function OnosPhantasm:GetAttackSoundName()
     return Onos.kGoreSound
 end
 
-function OnosPhantasm:GetIdleAnimation()
-    return "idle"
-end
-
 function OnosPhantasm:GetMoveSpeed()
     return GetDevScalar(Onos.kMaxSpeed, 8)
 end

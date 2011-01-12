@@ -16,7 +16,6 @@ BoneShield.kMapName = "boneshield"
 
 // View model animations
 BoneShield.kAnimAttackTable = {{1, "attack"}/*, {1, "attack2"}, {1, "attack3"}, {1, "attack4"}*/}
-BoneShield.kAnimIdleTable = {{1, "idle"}/*, {.1, "idle2"}, {.5, "idle3"}, {.4, "idle4"}*/}
 
 // Player animations
 BoneShield.kAnimPlayerAttack = "shield"
@@ -45,10 +44,6 @@ end
 
 function BoneShield:GetSecondaryAttackDelay()
     return BoneShield.kSecondaryAttackDelay
-end
-
-function BoneShield:GetIdleAnimation()
-    return chooseWeightedEntry( BoneShield.kAnimIdleTable )
 end
 
 function BoneShield:GetIconOffsetY(secondary)

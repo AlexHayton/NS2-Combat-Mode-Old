@@ -31,7 +31,6 @@ Sentry.kFireEffect = PrecacheAsset("cinematics/marine/sentry/fire.cinematic")
 Sentry.kBarrelSmokeEffect = PrecacheAsset("cinematics/marine/sentry/muzzle_smoke.cinematic")
 
 Sentry.kFireShellEffect = PrecacheAsset("cinematics/marine/sentry/fire_shell.cinematic")
-Sentry.kDeathEffect = PrecacheAsset("cinematics/marine/sentry/death.cinematic")
 //Sentry.kTracerEffect = PrecacheAsset("cinematics/marine/tracer.cinematic")
 
 Sentry.kRicochetEffect = "cinematics/materials/%s/ricochet.cinematic"
@@ -57,13 +56,13 @@ Sentry.kReorientSpeed = .05
 Sentry.kDeathAnimTable = {/*{1.0, "death"},*/ {1.0, "death2"}}
 Sentry.kFlinchAnim = "flinch"
 Sentry.kFlinchBigAnim = "flinch_big"
-Sentry.kIdleAnimTable = {{2.0, "idle2"}/*, {.1, "idle3"}*/}
 Sentry.kAttackStartAnim = "attack_start"
 Sentry.kAttackAnim = "attack"
 Sentry.kAttackEndAnim = "attack_end"
 Sentry.kYawPoseParam = "sentry_yaw" // Sentry yaw pose parameter for aiming
 Sentry.kPitchPoseParam = "sentry_pitch"
 Sentry.kMuzzleNode = "fxnode_sentrymuzzle"
+Sentry.kEyeNode = "fxnode_eye"
 
 Sentry.kMode = enum( {'Unbuilt', 'PoweredDown', 'PoweringUp', 'PoweringDown', 'Scanning', 'SpinningUp', 'Attacking', 'SpinningDown', 'SettingTarget'} )
 
@@ -120,11 +119,7 @@ end
 
 // Fire out out muzzle attach point
 function Sentry:GetEyePos()
-    return self:GetAttachPointOrigin(Sentry.kMuzzleNode)
-end
-
-function Sentry:GetDeathEffect()
-    return Sentry.kDeathEffect
+    return self:GetAttachPointOrigin(Sentry.kEyeNode)
 end
 
 function Sentry:GetDeathIconIndex()
@@ -137,10 +132,6 @@ end
 
 function Sentry:GetCanIdle()
     return self:GetSentryMode() == Sentry.kMode.Scanning
-end
-
-function Sentry:GetIdleAnimation()
-    return chooseWeightedEntry(Sentry.kIdleAnimTable)    
 end
 
 function Sentry:GetTechButtons(techId)

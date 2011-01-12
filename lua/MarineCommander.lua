@@ -18,9 +18,6 @@ if(Client) then
     Script.Load("lua/MarineCommander_Client.lua")
 end
 
-MarineCommander.kBuildEffect = PrecacheAsset("cinematics/marine/structures/spawn_building.cinematic")
-MarineCommander.kBuildBigEffect = PrecacheAsset("cinematics/marine/structures/spawn_building_big.cinematic")
-
 MarineCommander.kSentryFiringSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/sentry_firing")
 MarineCommander.kSentryTakingDamageSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/sentry_taking_damage")
 MarineCommander.kSoldierLostSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/soldier_lost")
@@ -37,7 +34,6 @@ MarineCommander.kBuildStructureSound = PrecacheAsset("sound/ns2.fev/marine/voice
 MarineCommander.kDefendTargetSound = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/defend")
 
 MarineCommander.kOrderClickedEffect = PrecacheAsset("cinematics/marine/order.cinematic")
-MarineCommander.kPlaceBuildingSound = PrecacheAsset("sound/ns2.fev/marine/structures/generic_spawn")
 MarineCommander.kSelectSound = PrecacheAsset("sound/ns2.fev/marine/commander/select")
 MarineCommander.kChatSound = PrecacheAsset("sound/ns2.fev/marine/common/chat")
 
@@ -68,10 +64,6 @@ function MarineCommander:GetTeamType()
     return kMarineTeamType
 end
 
-function MarineCommander:GetPlaceBuildingSound()
-    return MarineCommander.kPlaceBuildingSound
-end
-
 function MarineCommander:GetOrderConfirmedEffect()
     return MarineCommander.kOrderClickedEffect
 end
@@ -86,10 +78,6 @@ function MarineCommander:OnSelectionChanged()
         
     end
 
-end
-
-function MarineCommander:GetBuildEffect(techId)
-    return ConditionalValue(GetTechUpgradesFromTech(techId, kTechId.CommandStation), MarineCommander.kBuildBigEffect, MarineCommander.kBuildEffect)
 end
 
 // Top row always the same. Alien commander can override to replace. 

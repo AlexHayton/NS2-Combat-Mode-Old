@@ -14,6 +14,18 @@ class 'GUIMarineHUD' (GUIScript)
 GUIMarineHUD.kTextureName = "ui/marine_health_bg.dds"
 GUIMarineHUD.kTextFontName = "MicrogrammaDBolExt"
 
+GUIMarineHUD.kParasiteTextureName = "ui/parasite_hud.dds"
+GUIMarineHUD.kParasiteTextureWidth = 64
+GUIMarineHUD.kParasiteTextureHeight = 64
+GUIMarineHUD.kParasiteWidth = 32
+GUIMarineHUD.kParasiteHeight = 32
+GUIMarineHUD.kParasiteMaxSize = Vector(GUIMarineHUD.kParasiteWidth, GUIMarineHUD.kParasiteHeight, 0)
+GUIMarineHUD.kParasiteXOffset = 2
+// How long it takes for the parasite icon to scale up upon being parasited.
+GUIMarineHUD.kParasiteAnimateTime = 0.5
+GUIMarineHUD.kParasiteGrowing = 0
+GUIMarineHUD.kParasiteShrinking = 1
+
 GUIMarineHUD.kBackgroundWidth = 232
 GUIMarineHUD.kBackgroundHeight = 50
 GUIMarineHUD.kBackgroundOffset = Vector(30, -30, 0)
@@ -71,6 +83,8 @@ function GUIMarineHUD:Initialize()
     self:CreateHealthBar()
     
     self:CreateArmorBar()
+    
+    self:CreateParasite()
 
 end
 
@@ -144,8 +158,25 @@ function GUIMarineHUD:CreateArmorBar()
 
 end
 
-function GUIMarineHUD:CreateExperienceBar()
+function GUIMarineHUD:CreateParasite()
+
+    self.parasite = GUI.CreateGraphicsItem()
+    self.parasite:SetSize(GUIMarineHUD.kParasiteMaxSize)
+    self.parasite:SetAnchor(GUIItem.Right, GUIItem.Top)
+    self.parasite:SetPosition(Vector(GUIMarineHUD.kParasiteXOffset, 0, 0))
+    self.parasite:SetColor(Color(1, 1, 1, 1))
+    self.parasite:SetBlendTechnique(GUIItem.Add)
+    self.parasite:SetTexture(GUIMarineHUD.kParasiteTextureName)
+    self.parasite:SetTexturePixelCoordinates(0, 0, GUIMarineHUD.kParasiteTextureWidth, GUIMarineHUD.kParasiteTextureHeight)
+    self.parasite:SetIsVisible(false)
+    self.background:AddChild(self.parasite)
+    
+    self.parasiteAnimationState = nil
+
 end
+
+
+
 
 function GUIMarineHUD:Uninitialize()
 
@@ -155,6 +186,7 @@ function GUIMarineHUD:Uninitialize()
     self.healthText = nil
     self.healthBar = nil
     self.healthBarBackground = nil
+    self.parasite = nil
     
 end
 
@@ -162,6 +194,7 @@ function GUIMarineHUD:Update(deltaTime)
     
     self:UpdateHealthBar(deltaTime)
     self:UpdateArmorBar(deltaTime)
+    self:UpdateParasite(deltaTime)
     
 end
 
@@ -191,7 +224,9 @@ function GUIMarineHUD:UpdateHealthBar(deltaTime)
         self.background:SetColor(barColor)
         
         // Update text.
-        self.healthText:SetText(tostring(math.ceil(PlayerUI_GetPlayerHealth())))
+        // It's probably better to do a math.ceil for display health instead of floor, but NS1 did it this way
+        // and I want to make sure the values are exactly the same to avoid confusion right now
+        self.healthText:SetText(tostring(math.floor(PlayerUI_GetPlayerHealth())))
     end
     
 end
@@ -212,10 +247,49 @@ function GUIMarineHUD:UpdateArmorBar(deltaTime)
         self.armorBarBackground:SetTexturePixelCoordinates(GUIMarineHUD.kArmorBarTextureX1, GUIMarineHUD.kArmorBarTextureY1, self.armorBarBackgroundXCoord, GUIMarineHUD.kArmorBarTextureY2)
         
         // Update text.
-        self.armorText:SetText(tostring(math.ceil(PlayerUI_GetPlayerArmor())))
+        self.armorText:SetText(tostring(math.floor(PlayerUI_GetPlayerArmor())))
     end
     
 end
 
-function GUIMarineHUD:UpdateExperienceBar(deltaTime)
+function ScaleParasiteOperator(item, setSize)
+
+    item:SetSize(setSize)
+    local sizeDifferenceX = GUIMarineHUD.kParasiteWidth - setSize.x
+    local sizeDifferenceY = GUIMarineHUD.kParasiteHeight - setSize.y
+    // Make sure it is always centered.
+    item:SetPosition(Vector(GUIMarineHUD.kParasiteXOffset + sizeDifferenceX / 2, sizeDifferenceY / 2, 0))
+    
+end
+
+function GUIMarineHUD:UpdateParasite(deltaTime)
+
+    local isParasited = PlayerUI_GetPlayerIsParasited()
+    local isVisible = self.parasite:GetIsVisible()
+    local currentSize = self.parasite:GetSize()
+    
+    // Check if we should start a parasited animation.
+    if isParasited and (self.parasiteAnimationState ~= GUIMarineHUD.kParasiteGrowing) then
+        // Scale up when parasited.
+        self.parasiteAnimationState = GUIMarineHUD.kParasiteGrowing
+        self.parasite:SetSize(Vector(0, 0, 0))
+        GetGUIManager():StartAnimation(self.parasite, ScaleParasiteOperator, Vector(0, 0, 0), GUIMarineHUD.kParasiteMaxSize, GUIMarineHUD.kParasiteAnimateTime)
+    elseif not isParasited and (self.parasiteAnimationState ~= GUIMarineHUD.kParasiteShrinking) and currentSize == GUIMarineHUD.kParasiteMaxSize then
+        // Shrink down when not parasited anymore.
+        self.parasiteAnimationState = GUIMarineHUD.kParasiteShrinking
+        // Need to scale time so the scale is constant time no matter what size it starts at.
+        local scaleTime = currentSize:GetLengthSquared() / GUIMarineHUD.kParasiteMaxSize:GetLengthSquared()
+        GetGUIManager():StartAnimation(self.parasite, ScaleParasiteOperator, self.parasite:GetSize(), Vector(0, 0, 0), GUIMarineHUD.kParasiteAnimateTime * scaleTime)
+    end
+    
+    if not isParasited and self.parasite:GetIsVisible() then
+        // Only make it invisible if the shrink animation is done. This should eventually be chained to the scale down animation.
+        if self.parasite:GetSize():GetLengthSquared() == 0 then
+            self.parasiteAnimationState = nil
+            self.parasite:SetIsVisible(false)
+        end
+    elseif isParasited then
+        self.parasite:SetIsVisible(true)
+    end
+
 end

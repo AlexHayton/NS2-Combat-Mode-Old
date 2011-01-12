@@ -21,12 +21,9 @@ Shift.kMapName = "shift"
 
 Shift.kModelName = PrecacheAsset("models/alien/shift/shift.model")
 
-Shift.kAnimIdle = "idle"
-
 Shift.kEchoSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/shift/echo")
 Shift.kEnergizeSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/shift/energize")
 Shift.kEnergizeTargetSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/shift/energize_target")
-Shift.kIdleSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/shift/idle")
 //Shift.kRecallSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/shift/recall")
 
 Shift.kEchoEffect = PrecacheAsset("cinematics/alien/shift/echo.cinematic")
@@ -36,22 +33,6 @@ Shift.kEnergizeLargeTargetEffect = PrecacheAsset("cinematics/alien/shift/energiz
 
 function Shift:GetIsAlienStructure()
     return true
-end
-
-function Shift:GetIdleSound()
-    return Shift.kIdleSoundEffect
-end
-
-function Shift:GetIdleAnimation()
-    return Shift.kAnimIdle
-end
-
-function Shift:GetDeathEffect()
-    return Structure.kAlienDeathLargeEffect
-end
-
-function Shift:GetDamageEffectOffset()
-    return Vector(0, 9, 10)
 end
 
 function Shift:GetTechButtons(techId)

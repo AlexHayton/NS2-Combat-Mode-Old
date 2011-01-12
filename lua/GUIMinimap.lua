@@ -8,14 +8,23 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+Script.Load("lua/GUIBorderBackground.lua")
+
 class 'GUIMinimap' (GUIScript)
 
 GUIMinimap.kModeMini = 0
 GUIMinimap.kModeBig = 1
 
-GUIMinimap.kMapBackgroundBorder = "ui/map_background.dds"
+GUIMinimap.kMapBackgroundXOffset = 10
+GUIMinimap.kMapBackgroundYOffset = 10
+
+GUIMinimap.kBackgroundTexture = "ui/marine_commander_background.dds"
+GUIMinimap.kBackgroundTexturePartWidth = 60
+GUIMinimap.kBackgroundTexturePartHeight = 46
 
 GUIMinimap.kMinimapSize = 200
+GUIMinimap.kBackgroundWidth = GUIMinimap.kMinimapSize + 10
+GUIMinimap.kBackgroundHeight = GUIMinimap.kMinimapSize + 10
 GUIMinimap.kBlipSize = 16
 GUIMinimap.kUnpoweredNodeBlipSize = 32
 GUIMinimap.kCameraIconLineSize = 4
@@ -55,14 +64,15 @@ GUIMinimap.kDynamicBlipAttackColor = Color(0.8, 0, 0, 1)
 
 function GUIMinimap:Initialize()
 
-    //self.backgroundBorder = GUI.CreateGraphicsItem()
-    //self.backgroundBorder:SetTexture(GUIMinimap.kMapBackgroundBorder)
-
-    self.background = GUI.CreateGraphicsItem()
+    self:InitializeBackground()
+    
+    self.minimap = GUI.CreateGraphicsItem()
     self.mode = GUIMinimap.kModeMini
     self:SetBackgroundMode(self.mode)
-    self.background:SetTexture("maps/overviews/" .. Shared.GetMapName() .. ".tga")
-    self.background:SetColor(CommanderUI_GetTeamColor())
+    self.minimap:SetTexture("maps/overviews/" .. Shared.GetMapName() .. ".tga")
+    self.minimap:SetColor(CommanderUI_GetTeamColor())
+    
+    self.background:AddChild(self.minimap)
     
     self:InitializeCameraIcon()
     
@@ -73,6 +83,38 @@ function GUIMinimap:Initialize()
     
     self.mousePressed = { LMB = { Down = nil, X = 0, Y = 0 }, RMB = { Down = nil, X = 0, Y = 0 } }
     
+end
+
+function GUIMinimap:InitializeBackground()
+    
+    local settingsTable = { }
+    settingsTable.Width = GUIMinimap.kBackgroundWidth
+    settingsTable.Height = GUIMinimap.kBackgroundHeight
+    settingsTable.X = 0
+    settingsTable.Y = -settingsTable.Height
+    settingsTable.TexturePartWidth = GUIMinimap.kBackgroundTexturePartWidth
+    settingsTable.TexturePartHeight = GUIMinimap.kBackgroundTexturePartHeight
+    if CommanderUI_IsAlienCommander() then
+        // No background art for aliens yet.
+        settingsTable.TextureName = ""
+    else
+        settingsTable.TextureName = GUIMinimap.kBackgroundTexture
+    end
+    settingsTable.TextureCoordinates = { }
+    table.insert(settingsTable.TextureCoordinates, { X1 = 0, Y1 = 0, X2 = 60, Y2 = 46 })
+    table.insert(settingsTable.TextureCoordinates, { X1 = 100, Y1 = 0, X2 = 158, Y2 = 46 })
+    table.insert(settingsTable.TextureCoordinates, { X1 = 196, Y1 = 0, X2 = 255, Y2 = 46 })
+    table.insert(settingsTable.TextureCoordinates, { X1 = 0, Y1 = 106, X2 = 60, Y2 = 148 })
+    table.insert(settingsTable.TextureCoordinates, { X1 = 101, Y1 = 106, X2 = 158, Y2 = 148 })
+    table.insert(settingsTable.TextureCoordinates, { X1 = 196, Y1 = 106, X2 = 255, Y2 = 148 })
+    table.insert(settingsTable.TextureCoordinates, { X1 = 0, Y1 = 210, X2 = 60, Y2 = 255 })
+    table.insert(settingsTable.TextureCoordinates, { X1 = 100, Y1 = 210, X2 = 158, Y2 = 255 })
+    table.insert(settingsTable.TextureCoordinates, { X1 = 196, Y1 = 210, X2 = 255, Y2 = 255 })
+
+    self.background = GUIBorderBackground()
+    self.background:Initialize(settingsTable)
+    self.background:SetAnchor(GUIItem.Left, GUIItem.Top)
+
 end
 
 function GUIMinimap:InitializeCameraIcon()
@@ -86,7 +128,7 @@ function GUIMinimap:InitializeCameraIcon()
     self.cameraIconMask:SetAnchor(GUIItem.Left, GUIItem.Top)
     
     self.cameraIconMask:AddChild(self.cameraIcon)
-    self.background:AddChild(self.cameraIconMask)
+    self.minimap:AddChild(self.cameraIconMask)
     
 end
 
@@ -102,11 +144,12 @@ function GUIMinimap:Uninitialize()
     end
     self.inuseDynamicBlips = { }
     
-    if self.backgroundBorder then
-        GUI.DestroyItem(self.backgroundBorder)
+    if self.background then
+        self.background:Uninitialize()
+        self.background = nil
     end
-    GUI.DestroyItem(self.background)
-    self.background = nil
+    GUI.DestroyItem(self.minimap)
+    self.minimap = nil
     // The staticBlips are children of the background so will be cleaned up with it.
     self.staticBlips = { }
     
@@ -130,16 +173,16 @@ function GUIMinimap:UpdateCameraIcon()
     local topLeftX, topLeftY = CommanderUI_GetMapXY(topLeftPoint.x, topLeftPoint.z)
     local bottomRightX, bottomRightY = CommanderUI_GetMapXY(bottomRightPoint.x, bottomRightPoint.z)
     
-    local iconWidth = (bottomRightX - topLeftX) * self:GetBackgroundSize()
-    local iconHeight = (bottomRightY - topLeftY) * self:GetBackgroundSize()
+    local iconWidth = (bottomRightX - topLeftX) * self:GetMinimapSize()
+    local iconHeight = (bottomRightY - topLeftY) * self:GetMinimapSize()
     self.cameraIconMask:SetSize(Vector(iconWidth, iconHeight, 0))
     // The icon is always slightly bigger than the mask to draw the outline.
     local sizeX = iconWidth + GUIMinimap.kCameraIconLineSize
     local sizeY = iconHeight + GUIMinimap.kCameraIconLineSize
     self.cameraIcon:SetSize(Vector(sizeX, sizeY, 0))
     self.cameraIcon:SetPosition(Vector(-sizeX / 2, -sizeY / 2, 0))
-    local iconX = topLeftX * self:GetBackgroundSize()
-    local iconY = topLeftY * self:GetBackgroundSize()
+    local iconX = topLeftX * self:GetMinimapSize()
+    local iconY = topLeftY * self:GetMinimapSize()
     self.cameraIconMask:SetPosition(Vector(iconX, iconY, 0))
     
 end
@@ -219,7 +262,7 @@ function GUIMinimap:SetStaticBlip(xPos, yPos, xTexture, yTexture, blipType, blip
     
     foundBlip:SetIsVisible(true)
     foundBlip:SetSize(Vector(blipSize, blipSize, 0))
-    foundBlip:SetPosition(Vector(xPos * self:GetBackgroundSize() - blipSize / 2, yPos * self:GetBackgroundSize() - blipSize / 2, 0))
+    foundBlip:SetPosition(Vector(xPos * self:GetMinimapSize() - blipSize / 2, yPos * self:GetMinimapSize() - blipSize / 2, 0))
     foundBlip:SetColor(blipColor)
     foundBlip:SetBlendTechnique(blendTechnique)
     
@@ -229,7 +272,7 @@ function GUIMinimap:AddStaticBlip()
 
     addedBlip = GUI.CreateGraphicsItem()
     addedBlip:SetAnchor(GUIItem.Left, GUIItem.Top)
-    self.background:AddChild(addedBlip)
+    self.minimap:AddChild(addedBlip)
     table.insert(self.staticBlips, addedBlip)
     return addedBlip
 
@@ -401,27 +444,27 @@ function GUIMinimap:UpdateInput()
 
     local mouseX, mouseY = Client.GetCursorPosScreen()
     if self.mousePressed["LMB"]["Down"] then
-        local containsPoint, withinX, withinY = GUIItemContainsPoint(self.background, mouseX, mouseY)
+        local containsPoint, withinX, withinY = GUIItemContainsPoint(self.minimap, mouseX, mouseY)
         if containsPoint then
-            local backgroundSize = self:GetBackgroundSize()
-            local backgroundScreenPosition = self.background:GetScreenPosition(Client.GetScreenWidth(), Client.GetScreenHeight())
+            local minimapSize = self:GetMinimapSize()
+            local backgroundScreenPosition = self.minimap:GetScreenPosition(Client.GetScreenWidth(), Client.GetScreenHeight())
             local cameraIconSize = self.cameraIcon:GetSize()
             
             local cameraPosition = Vector(mouseX, mouseY, 0)
             
-            local playableX = (1 - CommanderUI_MapLayoutPlayableWidth()) / 2 * (backgroundSize - cameraIconSize.x)
-            local playableY = (1 - CommanderUI_MapLayoutPlayableHeight()) / 2 * (backgroundSize - cameraIconSize.y)
+            local playableX = (1 - CommanderUI_MapLayoutPlayableWidth()) / 2 * (minimapSize - cameraIconSize.x)
+            local playableY = (1 - CommanderUI_MapLayoutPlayableHeight()) / 2 * (minimapSize - cameraIconSize.y)
 
             if cameraPosition.x < backgroundScreenPosition.x + playableX then
                 cameraPosition.x = backgroundScreenPosition.x + playableX
-            elseif cameraPosition.x > (backgroundScreenPosition.x + backgroundSize) - playableX then
-                cameraPosition.x = (backgroundScreenPosition.x + backgroundSize) - playableX
+            elseif cameraPosition.x > (backgroundScreenPosition.x + minimapSize) - playableX then
+                cameraPosition.x = (backgroundScreenPosition.x + minimapSize) - playableX
             end
 
             if cameraPosition.y < backgroundScreenPosition.y + playableY then
                 cameraPosition.y = backgroundScreenPosition.y + playableY
-            elseif cameraPosition.y > (backgroundScreenPosition.y + backgroundSize) - playableY then
-                cameraPosition.y = (backgroundScreenPosition.y + backgroundSize) - playableY
+            elseif cameraPosition.y > (backgroundScreenPosition.y + minimapSize) - playableY then
+                cameraPosition.y = (backgroundScreenPosition.y + minimapSize) - playableY
             end
             
             cameraPosition.x = cameraPosition.x - backgroundScreenPosition.x
@@ -430,8 +473,8 @@ function GUIMinimap:UpdateInput()
             local horizontalScale = CommanderUI_MapLayoutHorizontalScale()
             local verticalScale = CommanderUI_MapLayoutVerticalScale()
 
-            local moveX = (cameraPosition.x / backgroundSize) * horizontalScale
-            local moveY = (cameraPosition.y / backgroundSize) * verticalScale
+            local moveX = (cameraPosition.x / minimapSize) * horizontalScale
+            local moveY = (cameraPosition.y / minimapSize) * verticalScale
 
             CommanderUI_MapMoveView(moveX, moveY)
         end
@@ -444,32 +487,28 @@ function GUIMinimap:SetBackgroundMode(setMode)
     self.mode = setMode
     local modeIsMini = self.mode == GUIMinimap.kModeMini
     
-    // Needs to scale for now until the whole Commander UI is complete.
-    local borderWidth = Client.GetScreenWidth() * 0.24
-    local borderHeight = Client.GetScreenHeight() * 0.3
-    if self.backgroundBorder then
+    if self.background then
         if modeIsMini then
-            self.backgroundBorder:SetSize(Vector(borderWidth, borderHeight, 0))
-            self.backgroundBorder:SetAnchor(GUIItem.Left, GUIItem.Bottom)
-            self.backgroundBorder:SetPosition(Vector(0, -borderHeight, 0))
-            self.backgroundBorder:SetIsVisible(true)
+            self.background:SetAnchor(GUIItem.Left, GUIItem.Bottom)
+            self.background:SetPosition(Vector(GUIMinimap.kMapBackgroundXOffset, -GUIMinimap.kBackgroundHeight - GUIMinimap.kMapBackgroundYOffset, 0))
+            self.background:SetIsVisible(true)
         else
-            self.backgroundBorder:SetIsVisible(false)
+            self.background:SetIsVisible(false)
         end
     end
-    local borderExtraSize = ConditionalValue(self.backgroundBorder, borderWidth - self:GetBackgroundSize(), 0)
+    local borderExtraSize = ConditionalValue(self.background, GUIMinimap.kBackgroundWidth - self:GetMinimapSize(), 0)
     
-    local modeSize = self:GetBackgroundSize()
-    self.background:SetSize(Vector(modeSize, modeSize, 0))
-    self.background:SetAnchor(ConditionalValue(modeIsMini, GUIItem.Left, GUIItem.Center), ConditionalValue(modeIsMini, GUIItem.Bottom, GUIItem.Middle))
+    local modeSize = self:GetMinimapSize()
+    self.minimap:SetSize(Vector(modeSize, modeSize, 0))
+    self.minimap:SetAnchor(ConditionalValue(modeIsMini, GUIItem.Left, GUIItem.Center), ConditionalValue(modeIsMini, GUIItem.Bottom, GUIItem.Middle))
     // We want the background to sit "inside" the border so move it up and to the right a bit.
-    local defaultPosition = Vector(borderExtraSize / 2, -self:GetBackgroundSize() - borderExtraSize / 2, 0)
+    local defaultPosition = Vector(borderExtraSize / 2, -borderExtraSize / 2 - self:GetMinimapSize(), 0)
     local modePosition = ConditionalValue(modeIsMini, defaultPosition, Vector(-modeSize / 2, -modeSize / 2, 0))
-    self.background:SetPosition(modePosition)
+    self.minimap:SetPosition(modePosition)
     
 end
 
-function GUIMinimap:GetBackgroundSize()
+function GUIMinimap:GetMinimapSize()
 
     local multiplier = ConditionalValue(self.mode == GUIMinimap.kModeMini, 1, 3)
     return GUIMinimap.kMinimapSize * multiplier
@@ -478,8 +517,8 @@ end
 
 function GUIMinimap:GetPositionOnBackground(xPos, yPos, currentSize)
 
-    local backgroundScreenPosition = self.background:GetScreenPosition(Client.GetScreenWidth(), Client.GetScreenHeight())
-    local inBackgroundPosition = Vector((xPos * self:GetBackgroundSize()) - (currentSize.x / 2), (yPos * self:GetBackgroundSize()) - (currentSize.y / 2), 0)
+    local backgroundScreenPosition = self.minimap:GetScreenPosition(Client.GetScreenWidth(), Client.GetScreenHeight())
+    local inBackgroundPosition = Vector((xPos * self:GetMinimapSize()) - (currentSize.x / 2), (yPos * self:GetMinimapSize()) - (currentSize.y / 2), 0)
     return backgroundScreenPosition + inBackgroundPosition
 
 end
@@ -490,14 +529,14 @@ function GUIMinimap:SendKeyEvent(key, down)
     if key == InputKey.MouseButton0 and self.mousePressed["LMB"]["Down"] ~= down then
         self.mousePressed["LMB"]["Down"] = down
         local mouseX, mouseY = Client.GetCursorPosScreen()
-        /*if down and self.background:ContainsPoint(Vector(mouseX, mouseY, 0)) then
+        /*if down and self.minimap:ContainsPoint(Vector(mouseX, mouseY, 0)) then
             CommanderUI_MapClicked(mouseXNormalized, mouseYNormalized, 0, nil)
             return true
         end*/
     elseif key == InputKey.MouseButton1 and self.mousePressed["RMB"]["Down"]  ~= down then
         self.mousePressed["RMB"]["Down"]  = down
         local mouseX, mouseY = Client.GetCursorPosScreen()
-        /*if down and self.background:ContainsPoint(Vector(mouseX, mouseY, 0)) then
+        /*if down and self.minimap:ContainsPoint(Vector(mouseX, mouseY, 0)) then
             CommanderUI_MapClicked(mouseXNormalized, mouseYNormalized, 1, nil)
             return true
         end*/
@@ -508,5 +547,11 @@ function GUIMinimap:SendKeyEvent(key, down)
     end
     
     return false
+
+end
+
+function GUIMinimap:GetBackground()
+
+    return self.background:GetBackground()
 
 end

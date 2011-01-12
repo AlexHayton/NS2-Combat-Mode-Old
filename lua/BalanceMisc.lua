@@ -11,8 +11,7 @@ kAlienSpawnTime = 2
 kInitialMACs = 0
 // Construct at a slower rate than players
 kMACConstructEfficacy = .3
-kFireCatchDistance = 2
-kStopFireProbability = .15       // 15% chance per second
+kStopFireProbability = .10       // 10% chance per second
 kFlamethrowerAltTechResearchCost = 20
 kDefaultFOV = 90
 kDefaultStructureCost = 10

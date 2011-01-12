@@ -1144,9 +1144,13 @@ end
 
 function PrecacheAsset(effectName)
 
+    if effectName == nil then
+        local a = 0
+    end
+    
     if(type(effectName) ~= "string") then
     
-        Print("PrecacheAsset(%s): effect name isn't a string.", tostring(effectName))
+        Print("PrecacheAsset(%s): effect name isn't a string (%s instead).", tostring(effectName), type(effectName))
         return nil
         
     end
@@ -1260,4 +1264,39 @@ function LoadEntityFromValues(entity, values, initOnly)
         entity:OnInit()
     end
     
+end
+
+/**
+ * This function can be used to verify that a computation is done identically on
+ * the client and server. It should only be used when running a listen server.
+ */
+function CheckPredictionData(key, includeTime, values)
+
+    // Add the time to the key.
+    
+    if (includeTime) then
+        key = key .. string.format(" time=%0.3f", Shared.GetTime())
+    end
+    
+    local data = ""
+    
+    for k,v in pairs(values) do
+        
+        if (type(v) == "number") then
+            // Due to floating point inaccuracy, we only compare up to 3 digits.
+            data = data .. string.format( "%s=%.3f ", k, v ) 
+        else
+            data = data .. string.format( "%s=%s ", k, tostring(v) ) 
+        end
+        
+    end
+    
+    if (Server) then
+        if (not Server.VerifyPredictionData(key, data)) then
+            Shared.Message("Prediction data failed")
+        end
+    else
+        Client.StorePredictionData(key, data)
+    end
+
 end

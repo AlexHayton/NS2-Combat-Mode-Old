@@ -7,7 +7,13 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
 function Weapon:CreateWeaponEffect(player, playerAttachPointName, entityAttachPointName, cinematicName)
-    Shared.CreateAttachedEffect(player, cinematicName, player:GetViewModelEntity(), Coords.GetTranslation(player:GetViewOffset()), entityAttachPointName, true)    
+        
+    if not player:GetIsThirdPerson() then
+        Shared.CreateAttachedEffect(player, cinematicName, player:GetViewModelEntity(), Coords.GetTranslation(player:GetViewOffset()), entityAttachPointName, true)    
+    else        
+        Shared.CreateAttachedEffect(player, cinematicName, self, Coords.GetIdentity(), entityAttachPointName, false)    
+    end
+    
 end
 
 // Return true or false and the camera coords to use for the parent player if weapon chooses

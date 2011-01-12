@@ -10,6 +10,10 @@
 Script.Load("lua/Balance.lua")
 Script.Load("lua/Gamerules_Global.lua")
 
+function Structure:SetEffectsActive(state)
+    self.effectsActive = state
+end
+
 function Structure:GetCanResearch()
 
     return self:GetIsBuilt() and self:GetIsActive() and (self.timeResearchStarted == 0)
@@ -32,30 +36,27 @@ end
 function Structure:OnResearch(techId)
 end
 
-function Structure:OnUse(player, elapsedTime, useAttachPoint)
+function Structure:OnUse(player, elapsedTime, useAttachPoint, usePoint)
 
     local used = false
     
-    if not self:GetIsBuilt() and (player:GetTeamNumber() ~= GetEnemyTeamNumber(self:GetTeamNumber())) then
+    if self:GetCanConstruct(player) then        
     
-        if (player:isa("Marine") or player:isa("Gorge")) and player:GetCanNewActivityStart() then
+        // Always build by set amount of time, for AV reasons
+        // Calling code will put weapon away we return true
+        if self:Construct(Structure.kUseInterval) then
         
-            // Calling code will put weapon away we return true
-            if self:Construct(Structure.kBuildInterval) then
-            
-                // Give points for building structures
-                if self:GetIsBuilt() and not self:isa("Hydra") then                
-                    player:AddScore(kBuildPointValue)
-                end
-                
-                player:SetActivityEnd(Structure.kBuildInterval)
-
-                used = true
-                
+            // Give points for building structures
+            if self:GetIsBuilt() and not self:isa("Hydra") then                
+                player:AddScore(kBuildPointValue)
             end
-                
+            
+            self:TriggerEffects("construct", {effecthostcoords = BuildCoordsFromDirection(player:GetViewCoords().zAxis, usePoint), isalien = self:GetIsAlienStructure()})
+            
+            used = true
+            
         end
-        
+                
     end
     
     return used
@@ -112,23 +113,6 @@ end
 function Structure:OnTakeDamage(damage, doer, point)
 
     LiveScriptActor.OnTakeDamage(self, damage, doer, point)
-    
-    local hurtEffect = nil    
-    
-    if self:GetHealthScalar() < .3 then
-        hurtEffect = self:GetHurtSevereEffect()
-    elseif self:GetHealthScalar() < .7 then
-        hurtEffect = self:GetHurtEffect()
-    end
-    
-    // If we haven't already played this effect, play it
-    if hurtEffect and (hurtEffect ~= self.playingHurtEffect) and point ~= nil then
-
-        Shared.CreateEffect(nil, hurtEffect, nil, Coords.GetTranslation(point))
-
-        self.playingHurtEffect = hurtEffect
-        
-    end
     
     local team = self:GetTeam()
     if team.TriggerAlert then
@@ -247,22 +231,22 @@ function Structure:OnInit()
     if self.startsBuilt then
         self:SetHealth( self:GetMaxHealth() )
     else
-        self:SetHealth( self:GetMaxHealth() * Structure.kStartHealthScalar )
+        self:SetHealth( self:GetMaxHealth() * kStartHealthScalar )
     end
 
     // Server-only data    
     self.timeResearchStarted = 0
-    self.timeOfNextBuildSound = 0
+    self.timeOfNextBuildEffects = 0
     self.deployed = false
     
     self:SetIsVisible(true)
-
+    
     local spawnAnim = self:GetSpawnAnimation()
     if spawnAnim ~= "" then
         self:SetAnimation(spawnAnim)
     end
     
-    self:PlaySound(self:GetSpawnSound())
+    self:TriggerEffects("spawn")
     
     if GetGamerules():GetAutobuild() then
         self:SetConstructionComplete()
@@ -380,13 +364,6 @@ function Structure:OnKill(damage, killer, doer, point, direction)
             team:TechRemoved(self)
         end
         
-        // Create death particle effect
-        if point ~= nil then
-        
-            Shared.CreateEffect(nil, self:GetDeathEffect(), nil, self:GetCoords())
-            
-        end
-        
         self:ClearAttached()
         
         LiveScriptActor.OnKill(self, damage, killer, doer, point, direction)
@@ -431,15 +408,17 @@ function Structure:OnConstructionComplete()
         self:GetTeam():TriggerAlert(kTechId.MarineAlertConstructionComplete, self) 
     end
     
+    self:TriggerEffects("construction_complete")
+    
     if not self:GetRequiresPower() then
     
-        self:PlaySound(self:GetDeploySound())
-
         local deployAnim = self:GetDeployAnimation()
         if deployAnim ~= "" then
             self:SetAnimation(deployAnim)
         end
-
+        
+        self:TriggerEffects("deploy")
+        
     else
         self.powerPoint = self:FindPowerPoint()
     end
@@ -510,9 +489,6 @@ function Structure:OnPoweredChange(newPoweredState)
     
         if not self.deployed then
         
-            // Deploy instead of power up 
-            self:PlaySound(self:GetDeploySound())
-
             local deployAnim = self:GetDeployAnimation()
             if deployAnim ~= "" then
                 self:SetAnimation(deployAnim)
@@ -521,24 +497,23 @@ function Structure:OnPoweredChange(newPoweredState)
         else
         
             // Power up
-            self:PlaySound(Structure.kPowerUpSound)
-            
             local powerUpAnim = self:GetPowerUpAnimation()
             if powerUpAnim ~= "" then
                 self:SetAnimation(powerUpAnim)
             end
             
+            self:TriggerEffects("power_up")
+            
         end
     
     elseif not self.powered then
     
-        // Power down
-        self:PlaySound(Structure.kPowerDownSound)
-        
         local powerDownAnim = self:GetPowerDownAnimation()
         if powerDownAnim ~= "" then
             self:SetAnimation(powerDownAnim)
         end
+        
+        self:TriggerEffects("power_down")
         
     end
         
@@ -561,7 +536,7 @@ end
  * Build structure by elapsedTime amount and play construction sounds. Pass custom construction sound if desired, 
  * otherwise use Gorge build sound or Marine sparking build sounds.
  */
-function Structure:Construct(elapsedTime, buildSound)
+function Structure:Construct(elapsedTime)
 
     if (not self.constructionComplete) then
 
@@ -570,27 +545,20 @@ function Structure:Construct(elapsedTime, buildSound)
         local timeToComplete = LookupTechData(self:GetTechId(), kTechDataBuildTime, Structure.kDefaultBuildTime)
         
         if(Shared.GetDevMode()) then
-            timeToComplete = .5
+            timeToComplete = 1.0
         end
         
-        //if self:GetClassName() == "Harvester" then
-        //    Print("Harvester:Construct(%.2f): %.2f, %.2f, %.2f", elapsedTime, startBuildFraction, newBuildTime, timeToComplete)
-        //end
-
         if (newBuildTime >= timeToComplete) then
         
             self:SetConstructionComplete()
             
         else
         
-            if ( (self.buildTime <= self.timeOfNextBuildSound) and (newBuildTime >= self.timeOfNextBuildSound) ) then
+            if ( (self.buildTime <= self.timeOfNextBuildEffects) and (newBuildTime >= self.timeOfNextBuildEffects) ) then
             
-                if buildSound == nil then
-                    buildSound = self:GetBuildSound()
-                end
+                self:TriggerEffects("construct")
                 
-                self:PlaySound(buildSound)
-                self.timeOfNextBuildSound = newBuildTime + Structure.kBuildSoundInterval
+                self.timeOfNextBuildEffects = newBuildTime + Structure.kBuildEffectsInterval
                 
             end
 
@@ -616,7 +584,7 @@ function Structure:AddBuildHealth(scalar)
     if (scalar > 0) then
     
         local maxHealth = self:GetMaxHealth()        
-        self:AddHealth( scalar * (1 - Structure.kStartHealthScalar) * maxHealth )
+        self:AddHealth( scalar * (1 - kStartHealthScalar) * maxHealth )
     
     end
 
@@ -658,7 +626,7 @@ function Structure:SetConstructionComplete()
     if(team ~= nil) then
         team:TechBuilt(self)
     end
-
+    
 end
 
 // How many resources does it cost?
@@ -684,15 +652,12 @@ function Structure:PerformAction(techNode, position)
         local carbonBack = LookupTechData(self:GetTechId(), kTechDataCostKey) * self:GetHealthScalar() * self:GetRecycleScalar()
         self:GetTeam():AddCarbon(carbonBack)
         
-        Shared.PlayWorldSound(nil, Structure.kMarineRecycleSound, nil, self:GetOrigin())
-        
-        Shared.CreateEffect(nil, Structure.kMarineRecycleEffect, nil, self:GetCoords())
+        self:TriggerEffects("recycle")
         
         local team = self:GetTeam()
         if(team ~= nil) then
             team:TechRemoved(self)
         end
-
         
         self:SafeDestroy()   
         
@@ -707,6 +672,8 @@ function Structure:PerformAction(techNode, position)
 end
 
 function Structure:OnAnimationComplete(animName)
+
+    LiveScriptActor.OnAnimationComplete(self, animName)
 
     if(animName == Structure.kAnimDeploy) then
     

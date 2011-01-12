@@ -8,88 +8,268 @@
 
 kMarineStructureEffects = 
 {
-    //////////////////////
-    // Particle effects //
-    //////////////////////
-    death =
+    // When players or MACs build a structure
+    construct =
     {
-        marineStructureDeathParticleEffect = {
-            {cinematic = "cinematics/marine/structures/generic_death.cinematic", classname="Structure", isalienstructure = false}
+        marineConstruct =
+        {
+            {cinematic = "cinematics/marine/mac/build.cinematic", isalien = false},
+            {sound = "sound/ns2.fev/marine/structures/mac/build", isalien = false, done = true},
         },
     },
+
+    construction_complete = 
+    {
+        marineStructureComplete =
+        {
+            {sound = "sound/ns2.fev/marine/structures/armory_idle", classname = "Armory", done = true},
+            
+            {sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor"},
+            {animation = "active", classname = "Extractor", done = true},
+        },
+    },
+    
+    recycle =
+    {
+        recycleEffects =
+        {
+            {sound = "sound/ns2.fev/marine/structures/recycle"},
+            {cinematic = "cinematics/marine/structures/recycle.cinematic"},
+        },        
+    },
+    
+    animation_complete =
+    {
+        animCompleteEffects =
+        {
+            {animation = "open", classname = "CommandStation", from_animation = "deploy"},            
+            {animation = "active", classname = "Extractor", from_animation = "deploy", blend_time = .3, force = true},            
+            {animation = "active", classname = "Extractor", from_animation = "power_up", blend_time = .3, force = true},            
+            {stop_sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor", from_animation = "deploy"},
+            {stop_sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor", from_animation = "power_up"},
+            {sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor", from_animation = "deploy"},            
+            {sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor", from_animation = "power_up"},     
+            
+            {animation = "spin", classname = "InfantryPortal", from_animation = "spin_start", done = true},
+        },
+    },
+    
+    death =
+    {
+        marineStructureDeathCinematics =
+        {        
+            {cinematic = "cinematics/marine/armory/death.cinematic", classname = "Armory", done = true},
+            {cinematic = "cinematics/marine/infantryportal/death.cinematic", classname = "InfantryPortal", done = true},
+            {cinematic = "cinematics/marine/commandstation/death.cinematic", classname = "CommandStation", done = true},
+            {cinematic = "cinematics/marine/sentry/death.cinematic", classname = "Sentry", done = true},
+            {cinematic = "cinematics/marine/roboticsfactory/death.cinematic", classname = "RoboticsFactory", done = true},
+            {cinematic = "cinematics/marine/extractor/death.cinematic", classname = "Extractor", done = true},
+            {cinematic = "cinematics/marine/observatory/death.cinematic", classname = "Observatory", done = true},
+        },
+        
+        marineStructureDeathSounds =
+        {
+            {sound = "sound/ns2.fev/marine/structures/command_station_death", classname = "CommandStation", done = true},
+            {sound = "sound/ns2.fev/marine/structures/extractor_death", classname = "Extractor", done = true},
+        },
+    },
+    
+    power_down =
+    {
+        powerDownEffects =
+        {
+            {sound = "sound/ns2.fev/marine/structures/power_down"},
+            {stop_sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor"},
+            // Structure power down animations handled in code ("power_down")
+        },
+    },
+
+    power_up =
+    {
+        powerUpEffects =
+        {
+            {sound = "sound/ns2.fev/marine/structures/power_up"},
+            // Structure power down animations handled in code ("power_down")
+        },
+    },    
+    
+    mac_construct =
+    {
+        macConstructEffects =
+        {
+            {animation = "construct", blend_time = .2},
+            {sound = "sound/ns2.fev/marine/structures/mac/weld"},
+            {cinematic = "cinematics/marine/mac/build.cinematic", attach_point = "fxnode_welder"},
+        },
+    },
+    
+    // TODO: "sound/ns2.fev/marine/structures/mac/weld_start" voiceover
+    // TODO: "sound/ns2.fev/marine/structures/mac/welded" voiceover (complete)
+    mac_weld = 
+    {
+        macWeldEffects =
+        {
+            {animation = "construct_weld", blend_time = .2},
+            {sound = "sound/ns2.fev/marine/structures/mac/weld"},
+            {cinematic = "cinematics/marine/mac/weld.cinematic", attach_point = "fxnode_welder"},
+        },
+    },
+    
+    mac_move_complete =
+    {
+        macMoveCompleteEffects = 
+        {
+            {animation = "fly_stop", blend_time = .2},
+            {stop_sound = "sound/ns2.fev/marine/structures/mac/thrusters"},
+        },
+    },
+    
+    mac_move =
+    {
+        macMoveEffects = 
+        {
+            {animation = "fly", blend_time = .2},
+        },
+    },
+    
+    mac_melee_attack =
+    {
+        macMeleeAttackEffects =
+        {
+            {animation = "attack", blend_time = .2},
+            {sound = "sound/ns2.fev/marine/structures/mac/attack"},
+        },
+    },
+    
+    mac_set_order =
+    {
+        macSetOrderEffects =
+        {
+            {stop_sound = "sound/ns2.fev/marine/structures/mac/thrusters"},
+            {parented_sound = "sound/ns2.fev/marine/structures/mac/thrusters"},
+            
+            // Use parented so it follows MAC around
+            {parented_cinematic = "cinematics/marine/mac/jet.cinematic", attach_point = "fxnode_jet1"},
+            {parented_cinematic = "cinematics/marine/mac/jet.cinematic", attach_point = "fxnode_jet2"},
+            
+            // TODO: this should be attached to the siren
+            {parented_cinematic = "cinematics/marine/mac/siren.cinematic", attach_point = "fxnode_light"},
+        },
+    },
+    
+    extractor_collect =
+    {
+        extractorCollectEffect =
+        {
+            {sound = "sound/ns2.fev/marine/structures/extractor_harvested"},
+            //{cinematic = "cinematics/marine/extractor/collection_effect.cinematic"},
+        },
+    },
+    
+    armory_health = 
+    {
+        armoryHealth =
+        {
+            {sound = "sound/ns2.fev/marine/common/health"},
+            {cinematic = "cinematics/marine/spawn_item.cinematic"},
+        },
+    },
+
+    armory_ammo = 
+    {
+        armoryAmmo =
+        {
+            {sound = "sound/ns2.fev/marine/common/pickup_ammo"},
+            {cinematic = "cinematics/marine/spawn_item.cinematic"},
+        },
+    },
+    
+    // Not hooked up
+    armory_buy = 
+    {
+        armoryBuy =
+        {
+            {cinematic = "cinematics/marine/armory/buy_item_effect.cinematic"},
+        },
+    },
+    
+    armory_open = 
+    {
+        armoryOpen =
+        {
+            {sound = "sound/ns2.fev/marine/structures/armory_open"},
+        },
+    },
+    
+    armory_close = 
+    {
+        armoryClose =
+        {
+            {sound = "sound/ns2.fev/marine/structures/armory_close"},
+        },
+    },
+
+    commmand_station_login = 
+    {
+        commandStationLogin =
+        {
+            {sound = "sound/ns2.fev/marine/structures/command_station_close"},
+            {animation = "close"},
+        },
+    },
+
+    commmand_station_logout = 
+    {
+        commandStationLogout =
+        {
+            {sound = "sound/ns2.fev/marine/structures/command_station_open"},
+            {animation = "open"},
+        },
+    },
+    
+    commmand_station_closed = 
+    {
+    },
+    
+    commmand_station_opened = 
+    {
+    },
+    
+    infantry_portal_start_spin = 
+    {
+        ipStartSpinEffect =
+        {
+            {animation = "spin_start"},
+            {sound = "sound/ns2.fev/marine/structures/infantry_portal_start_spin"},
+        },
+    },    
+
+    infantry_portal_stop_spin = 
+    {
+        ipStartSpinEffect =
+        {
+            {animation = "spin_stop", from_animation = "spin", done = true},
+            {animation = "spin_stop", from_animation = "spin_start", done = true},
+        },
+    },    
+    
+    infantry_portal_spawn = 
+    {
+        ipSpawnEffect =
+        {
+            {cinematic = "cinematics/marine/infantryportal/player_spawn.cinematic"},
+            {sound = "sound/ns2.fev/marine/structures/infantry_portal_player_spawn"},
+        },
+    },    
+       
+    distress_beacon = 
+    {
+        playerSpawnEffect =
+        {
+            {cinematic = "cinematics/marine/infantryportal/player_spawn.cinematic"},
+            {sound = "sound/ns2.fev/marine/structures/infantry_portal_player_spawn"},
+        },
+    },    
 }
 
 GetEffectManager():AddEffectData("MarineStructureEffects", kMarineStructureEffects)
-
-/*
-Armory.lua:23: Armory.kResupplyEffect = "cinematics/marine/spawn_item.cinematic")
-Armory.lua:24: Armory.kDeathEffect = PrecacheAsset("cinematics/marine/armory/death.cinematic")
-Armory.lua:25: Armory.kBuyItemEffect = PrecacheAsset("cinematics/marine/armory/buy_item_effect.cinematic")
-Armory.lua:14: Armory.kIdleSound = PrecacheAsset("sound/ns2.fev/marine/structures/armory_idle")
-Armory.lua:15: Armory.kOpenSound = PrecacheAsset("sound/ns2.fev/marine/structures/armory_open")
-Armory.lua:16: Armory.kCloseSound = PrecacheAsset("sound/ns2.fev/marine/structures/armory_close")
-Armory.lua:19: Armory.kResupplySound = PrecacheAsset("sound/ns2.fev/marine/structures/armory_resupply")
-Armory.lua:20: Armory.kHealthSound = PrecacheAsset("sound/ns2.fev/marine/common/health")
-Armory.lua:21: Armory.kAmmoSound = PrecacheAsset("sound/ns2.fev/marine/common/pickup_ammo")
-
-CommandStation.lua:23: CommandStation.kCommandScreenEffect = PrecacheAsset("cinematics/marine/commandstation/command_screen.cinematic")
-CommandStation.lua:24: CommandStation.kDeathEffect = PrecacheAsset("cinematics/marine/commandstation/death.cinematic")
-CommandStation.lua:17: CommandStation.kLoginSound = PrecacheAsset("sound/ns2.fev/marine/structures/command_station_close")
-CommandStation.lua:18: CommandStation.kLogoutSound = PrecacheAsset("sound/ns2.fev/marine/structures/command_station_open")
-CommandStation.lua:19: CommandStation.kActiveSound = PrecacheAsset("sound/ns2.fev/marine/structures/command_station_active")
-CommandStation.lua:20: CommandStation.kUnderAttackSound = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/command_station_under_attack")
-CommandStation.lua:21: CommandStation.kReplicateSound = PrecacheAsset("sound/ns2.fev/alien/common/join_team")
-CommandStation_Server.lua:9: CommandStation.kKilledSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/command_station_death")
-
-InfantryPortal.lua:26: InfantryPortal.kDeathEffect = PrecacheAsset("cinematics/marine/infantryportal/death.cinematic")
-InfantryPortal.lua:27: InfantryPortal.kSpinEffect = PrecacheAsset("cinematics/marine/infantryportal/spin.cinematic")
-InfantryPortal.lua:28: InfantryPortal.kIdleLightEffect = PrecacheAsset("cinematics/marine/infantryportal/idle_light.cinematic")
-InfantryPortal.lua:29: InfantryPortal.kSpawnEffect = PrecacheAsset("cinematics/marine/infantryportal/player_spawn.cinematic")
-InfantryPortal.lua:20: InfantryPortal.kLoopSound = PrecacheAsset("sound/ns2.fev/marine/structures/infantry_portal_active")
-InfantryPortal.lua:21: InfantryPortal.kSpawnPlayerSound = PrecacheAsset("sound/ns2.fev/marine/structures/infantry_portal_player_spawn")
-InfantryPortal.lua:22: InfantryPortal.kStartSpinSound = PrecacheAsset("sound/ns2.fev/marine/structures/infantry_portal_start_spin")
-InfantryPortal.lua:23: InfantryPortal.kSquadSpawnFailureSound = PrecacheAsset("sound/ns2.fev/marine/common/squad_spawn_fail")
-InfantryPortal.lua:24: InfantryPortal.kSquadSpawnSound = PrecacheAsset("sound/ns2.fev/marine/common/squad_spawn")
-
-Sentry.lua:30: Sentry.kFireEffect = PrecacheAsset("cinematics/marine/sentry/fire.cinematic")
-Sentry.lua:31: Sentry.kBarrelSmokeEffect = PrecacheAsset("cinematics/marine/sentry/muzzle_smoke.cinematic")
-Sentry.lua:33: Sentry.kFireShellEffect = PrecacheAsset("cinematics/marine/sentry/fire_shell.cinematic")
-Sentry.lua:34: Sentry.kDeathEffect = PrecacheAsset("cinematics/marine/sentry/death.cinematic")
-Sentry.lua:35: //Sentry.kTracerEffect = PrecacheAsset("cinematics/marine/tracer.cinematic")
-Sentry.lua:37: Sentry.kRicochetEffect = "cinematics/materials/%s/ricochet.cinematic"
-Sentry.lua:20: Sentry.kSpinUpSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/sentr_spin_up")
-Sentry.lua:21: Sentry.kSpinDownSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/sentry_spin_down")
-Sentry.lua:22: Sentry.kAttackSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/sentry_fire_loop")
-Sentry.lua:24: Sentry.kSentryScanSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/sentry_scan")
-Sentry.lua:25: Sentry.kUnderAttackSound = PrecacheAsset("sound/ns2.fev/marine/voiceover/commander/sentry_taking_damage")
-Sentry.lua:26: Sentry.kFiringAlertSound = PrecacheAsset("sound/ns2.fev/marine/voiceover/commander/sentry_firing")
-Sentry.lua:27: Sentry.kRicochetMaterialSound = "sound/ns2.fev/materials/%s/ricochet"
-
-Extractor.lua:18: Extractor.kActiveSound = PrecacheAsset("sound/ns2.fev/marine/structures/extractor_active")
-Extractor.lua:19: Extractor.kDeploySound = PrecacheAsset("sound/ns2.fev/marine/structures/extractor_deploy")
-Extractor.lua:20: Extractor.kKilledSound = PrecacheAsset("sound/ns2.fev/marine/structures/extractor_death")
-Extractor.lua:21: Extractor.kHarvestedSound = PrecacheAsset("sound/ns2.fev/marine/structures/extractor_harvested")
-Extractor.lua:23: Extractor.kCollectionEffect = PrecacheAsset("cinematics/marine/extractor/collection_effect.cinematic")
-Extractor.lua:24: Extractor.kDeathEffect = PrecacheAsset("cinematics/marine/extractor/death.cinematic")
-
-
-Observatory.lua:19: Observatory.kDeathEffect = PrecacheAsset("cinematics/marine/observatory/death.cinematic")
-Observatory.lua:20: Observatory.kGlowingLightEffect = PrecacheAsset("cinematics/marine/observatory/glowing_light_effect.cinematic")
-
-RoboticsFactory.lua:16: RoboticsFactory.kActiveEffect = PrecacheAsset("cinematics/marine/roboticsfactory/active.cinematic")
-RoboticsFactory.lua:17: RoboticsFactory.kDeathEffect = PrecacheAsset("cinematics/marine/roboticsfactory/death.cinematic")
-
-ARC.lua:20: ARC.kDeploySound = PrecacheAsset("sound/ns2.fev/marine/structure/arc/deploy")
-ARC.lua:21: ARC.kFireSound = PrecacheAsset("sound/ns2.fev/marine/structures/arc/fire")
-ARC.lua:22: ARC.kFlybySound = PrecacheAsset("sound/ns2.fev/marine/structures/arc/flyby")
-ARC.lua:23: ARC.kHitSound = PrecacheAsset("sound/ns2.fev/marine/structures/arc/hit")
-ARC.lua:24: ARC.kScanSound = PrecacheAsset("sound/ns2.fev/marine/structures/arc/scan")
-ARC.lua:25: ARC.kUndeploySound = PrecacheAsset("sound/ns2.fev/marine/structures/arc/undeploy")
-ARC.lua:27: ARC.kScanEffect = PrecacheAsset("cinematics/marine/arc/scan.cinematic")
-ARC.lua:28: ARC.kFireEffect = PrecacheAsset("cinematics/marine/arc/fire.cinematic")
-ARC.lua:29: ARC.kFireShellEffect = PrecacheAsset("cinematics/marine/arc/fire_shell.cinematic")
-ARC.lua:30: ARC.kExplosionEffect = PrecacheAsset("cinematics/marine/arc/explosion.cinematic")
-ARC.lua:31: ARC.kDamagedEffect = PrecacheAsset("cinematics/marine/arc/damaged.cinematic")
-ARC.lua:32: ARC.kDeathEffect = PrecacheAsset("cinematics/marine/arc/destroyed.cinematic")
-
-*/

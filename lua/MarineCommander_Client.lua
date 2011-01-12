@@ -33,10 +33,11 @@ function MarineCommander:SetupHud()
 
     Commander.SetupHud(self)
     
-    GetFlashPlayer(kClassFlashIndex):Load(MarineCommander.kMenuFlash)
-    GetFlashPlayer(kClassFlashIndex):SetBackgroundOpacity(0)
+    // Working on replacing all these commander GUIs.
+    //GetFlashPlayer(kClassFlashIndex):Load(MarineCommander.kMenuFlash)
+    //GetFlashPlayer(kClassFlashIndex):SetBackgroundOpacity(0)
 
-    Client.BindFlashTexture("marine_buildmenu", MarineCommander.kBuildMenuTexture)
+    //Client.BindFlashTexture("marine_buildmenu", MarineCommander.kBuildMenuTexture)
     
 end
 
