@@ -33,6 +33,9 @@ function Marine:OnInitLocalClient()
         if self.waypoints == nil then
             self.waypoints = GetGUIManager():CreateGUIScriptSingle("GUIWaypoints")
         end
+		if self.experienceBar == nil then
+			self.experienceBar = GetGUIManager():CreateGUIScriptSingle("GUIExperience")
+		end
         
     end    
 end
@@ -48,6 +51,10 @@ function Marine:OnDestroyClient()
     if self.waypoints then
         self.waypoints = nil
         GetGUIManager():DestroyGUIScriptSingle("GUIWaypoints")
+    end
+	if self.experienceBar then
+        self.experienceBar = nil
+        GetGUIManager():DestroyGUIScriptSingle("GUIExperience")
     end
 
 end

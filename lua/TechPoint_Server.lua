@@ -24,7 +24,7 @@ end
 function TechPoint:SpawnCommandStructure(teamNumber)
 
     local alienTeam = (GetGamerules():GetTeam(teamNumber):GetTeamType() == kAlienTeamType)
-    local techId = ConditionalValue(alienTeam, kTechId.Hive, kTechId.CommandStation)
+    local techId = ConditionalValue(alienTeam, kTechId.Hive, kTechId.Armory)
     
     return CreateEntityForTeam(techId, Vector(self:GetOrigin()), teamNumber)
     

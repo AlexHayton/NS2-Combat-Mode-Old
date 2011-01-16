@@ -345,7 +345,7 @@ function PlayingTeam:SpawnInitialStructures(teamLocation)
     if(teamLocation ~= nil) then
 
         // Spawn tower at nearest unoccupied resource point    
-        self:SpawnResourceTower(teamLocation)
+        //self:SpawnResourceTower(teamLocation)
 
         // Spawn hive/command station at team location
         self:SpawnCommandStructure(teamLocation)

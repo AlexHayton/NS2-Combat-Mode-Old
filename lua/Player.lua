@@ -2533,6 +2533,10 @@ function Player:GetRank()
     return Experience_GetRank(self.experience)
 end
 
+function Player:GetNextRankExp()
+	return Experience_GetNextRankExp(Experience_GetRank(self.experience))
+end
+
 function Player:GetScoreboardChanged()
     return self.scoreboardChanged
 end

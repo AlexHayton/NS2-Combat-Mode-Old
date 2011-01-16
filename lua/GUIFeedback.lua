@@ -27,7 +27,7 @@ function GUIFeedback:Initialize()
     self.buildText:SetPosition(GUIFeedback.kTextOffset)
     self.buildText:SetColor(GUIFeedback.kTextColor)
     self.buildText:SetFontIsBold(true)
-    self.buildText:SetText("Beta Build " .. tostring(Shared.GetBuildNumber()))
+    self.buildText:SetText("Beta Build " .. tostring(Shared.GetBuildNumber()) .. " (COMBAT MODE)")
     
     self.feedbackText = GUI.CreateTextItem()
     self.feedbackText:SetFontSize(GUIFeedback.kFontSize)

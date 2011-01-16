@@ -490,10 +490,10 @@ function PlayerUI_GetPlayerExperience()
     return 0
 end
 
-function PlayerUI_GetPlayerNextRank()
+function PlayerUI_GetPlayerRankName()
     local player = Client.GetLocalPlayer()
     if player then
-        return Experience_GetNextRank(Client.GetLocalPlayer():GetPlayerRank())
+        return Experience_GetRankName(Client.GetLocalPlayer():GetTeamNumber(), Client.GetLocalPlayer():GetRank())
     end
     return 0
 end
@@ -1421,6 +1421,14 @@ function PlayerUI_ShowSayings()
     end
     return nil
 end
+
+function PlayerUI_ShowTechUpgrades()
+    local player = Client.GetLocalPlayer()    
+    if player then
+        return player:GetShowTechUpgrades()
+    end
+    return nil
+end	
 
 // return array of sayings
 function PlayerUI_GetSayings()

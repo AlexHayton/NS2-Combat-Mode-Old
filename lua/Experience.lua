@@ -32,19 +32,19 @@ end
 function Experience_GetRank(experience)
     // Find an efficient way to look this up. Is there a sort function?
     for rank,exp in ipairs(kRankExp) do
-        if (exp > experience) then
-            return rank - 1
+        if (exp >= experience) then
+            return rank
         end
     end
 end
 
-function Experience_GetNextRank(rank)
+function Experience_GetNextRankExp(rank)
     return kRankExp[rank + 1]
 end
 
 function Experience_GetRankName(teamname, rank)
     // Marines - a better way to detect this?
-    if (teamname == "Marines") then
+    if (teamname == 1) then
         return kMarineRanks[rank]
     else
         return kAlienRanks[rank]
@@ -60,23 +60,17 @@ function Experience_GrantNearbyExperience(pointOwner, points)
     local friendlies = GetGamerules():GetEntities("Player", pointOwner:GetTeamNumber(), pointOwner:GetOrigin(), kExperienceRadius)
     
     for index, entity in ipairs(friendlies) do
-    
-        //if (entity:GetOrigin() - pointOwner:GetOrigin()):GetLength() < kExperienceRadius then
+        if not entity:isa("Commander") and not entity == pointOwner then
 
-            if not entity:isa("Commander") and not entity == pointOwner then
-
-                // Make sure player can "see" nearby friend
-                local trace = Shared.TraceRay(pointOwner:GetOrigin(), entity:GetOrigin(), PhysicsMask.Bullets)
-                if trace.fraction == 1.0 or trace.entity == entity then
-                
-                    // Add the experience with reduction by a factor
-                    entity:AddExperience(points * kExperienceAssistModifier)
-                    
-                end
+            // Make sure player can "see" nearby friend
+            local trace = Shared.TraceRay(pointOwner:GetOrigin(), entity:GetOrigin(), PhysicsMask.Bullets)
+            if trace.fraction == 1.0 or trace.entity == entity then
+            
+                // Add the experience with reduction by a factor
+                entity:AddExperience(points * kExperienceAssistModifier)
                 
             end
             
-        //end
-        
+        end        
     end
 end

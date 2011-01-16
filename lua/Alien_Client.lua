@@ -263,6 +263,9 @@ function Alien:OnInitLocalClient()
         if self.hiveBlips == nil then
             self.hiveBlips = GetGUIManager():CreateGUIScriptSingle("GUIHiveBlips")
         end
+		if self.experienceBar == nil then
+			self.experienceBar = GetGUIManager():CreateGUIScriptSingle("GUIExperience")
+		end
                
     end
     
@@ -278,6 +281,10 @@ function Alien:OnDestroyClient()
         self.hiveBlips = nil
         GetGUIManager():DestroyGUIScriptSingle("GUIHiveBlips")
     end
+	if self.experienceBar then
+		self.experienceBar = nil
+		GetGUIManager():DestroyGUIScriptSingle("GUIExperience")
+	end
 
 end
 
