@@ -100,6 +100,7 @@ end
 
 // Changes the visual appearance of the player to the special edition version.
 function Player:MakeSpecialEdition()
+    self:SetModel(Player.kSpecialModelName)
 end
 
 // Not authoritative, only visual and information. Carbon is stored in the team.
@@ -145,6 +146,10 @@ function Player:OnTeamChange(newTeamNumber)
         // Send scoreboard changes to everyone    
         self:SetScoreboardChanged(true)
         
+        // Clear all hotkey groups on team change since old
+        // hotkey groups will be invalid.
+        self:InitializeHotkeyGroups()
+        
         // Tell team to send entire tech tree
         self.sendTechTreeBase = true
         
@@ -178,7 +183,12 @@ function Player:OnTakeDamage(damage, doer, point)
     
     // Play damage indicator for player
     if point ~= nil then
-        Server.SendNetworkMessage(self, "DamageIndicator", BuildDamageIndicatorMessage(point, damage), true)
+        local damageOrigin = doer:GetOrigin()
+        local doerParent = doer:GetParent()
+        if doerParent then
+            damageOrigin = doerParent:GetOrigin()
+        end
+        Server.SendNetworkMessage(self, "DamageIndicator", BuildDamageIndicatorMessage(damageOrigin, damage), true)
     end
     
 end
@@ -190,14 +200,6 @@ end
  * may be nil if the damage wasn't directional.
  */
 function Player:OnKill(damage, killer, doer, point, direction)
-
-    local killedSound = self:GetKilledSound(doer)
-    if killedSound ~= nil then
-    
-        // Play world sound instead of parented sound as entity is going away
-        Shared.PlayWorldSound(nil, killedSound, nil, self:GetOrigin())
-        
-    end
 
     local killerName = nil
     
@@ -298,8 +300,6 @@ function Player:OnUpdate(deltaTime)
             
         end
 
-    else
-        self:UpdateUse(deltaTime)
     end 
 
     /*local viewModel = self:GetViewModelEntity()
@@ -535,26 +535,36 @@ function Player:ProcessBuyAction(techId)
     
 end
 
-/* Spawns an item based on the entity (map) name and adds it to the player's inventory. */
-/* Make it the active weapon. */
+// Creates an item by mapname and spawns it at our feet.
 function Player:GiveItem(itemMapName)
 
     local newItem = nil
 
-    // Don't give it to the player if they already have it
-    if (itemMapName ~= nil and (self:GetItem(itemMapName) == nil)) then
+    if itemMapName then
     
-        // Calls OnSpawn    
-        newItem = CreateEntity(itemMapName, self:GetOrigin(), self:GetTeamNumber())
-        if(newItem ~= nil) then
-    
-            // Call OnTouch manually because collision not in yet
-            newItem:OnTouch(self)
+        newItem = CreateEntity(itemMapName, self:GetEyePos(), self:GetTeamNumber())
+        if newItem then
+
+            // If we already have an item which would occupy the same HUD slot, drop it
+
+            if (self.Drop and self.GetWeaponInHUDSlot) then
+
+                local hudSlot = newItem:GetHUDSlot()
+                local weapon  = self:GetWeaponInHUDSlot(hudSlot)
+
+                if (weapon ~= nil) then
+                    self:Drop( weapon )
+                end
+                
+            end
+
+            if newItem.OnCollision then
+                self:ClearActivity()
+                newItem:OnCollision(self)
+            end
             
         else
-        
-            Shared.Message("Couldn't create entity named " .. itemMapName .. ".")
-            
+            Print("Couldn't create entity named %s.", itemMapName)            
         end
         
     end
@@ -565,13 +575,32 @@ end
 
 function Player:AddWeapon(weapon, setActive)
     
-    weapon:SetParent(self)
+    local activeWeapon = self:GetActiveWeapon()
     
+    weapon:SetParent(self)
     self:ComputeHUDOrderedWeaponList()
     
+    // The active weapon could have been reindexed, so make sure
+    // we're storing the correct index
+    
+    if self.activeWeaponIndex ~= 0 then
+        
+        local weaponList = self:GetHUDOrderedWeaponList()
+    
+        for index, weapon in ipairs(weaponList) do
+            if (weapon == activeWeapon) then
+                self.activeWeaponIndex = index
+                break
+            end
+        end
+    
+    end   
+ 
     if setActive then
         self:SetActiveWeapon(weapon:GetMapName())
     end
+    
+    return true
     
 end
 
@@ -579,13 +608,34 @@ function Player:RemoveWeapon(weapon)
 
     // Switch weapons if we're dropping our current weapon
     local activeWeapon = self:GetActiveWeapon()    
-    if activeWeapon ~= nil and weapon:GetId() == activeWeapon:GetId() then
-        self:SelectNextWeapon()        
+    
+    if activeWeapon ~= nil and weapon == activeWeapon then
+        self.activeWeaponIndex = 0
+        self:SetViewModel(nil, nil)
     end
     
     // Delete weapon 
     weapon:SetParent(nil)
-    DestroyEntity(weapon)
+    
+    // We need to recompute out cached list since we've removed
+    // something from it.
+    self:ComputeHUDOrderedWeaponList()
+    
+    // The active weapon could have been reindexed, so make sure
+    // we're storing the correct index
+    
+    if self.activeWeaponIndex ~= 0 then
+        
+        local weaponList = self:GetHUDOrderedWeaponList()
+    
+        for index, weapon in ipairs(weaponList) do
+            if (weapon == activeWeapon) then
+                self.activeWeaponIndex = index
+                break
+            end
+        end
+    
+    end
     
 end
 
@@ -598,6 +648,10 @@ function Player:RemoveWeapons()
     for index, entity in ipairs(childEntities) do
         DestroyEntity(entity)
     end    
+
+    // We need to recompute out cached list since we've removed
+    // everything from it.
+    self:ComputeHUDOrderedWeaponList()
 
 end
 
@@ -651,13 +705,16 @@ function Player:AddScore(points)
     
 end
 
+function Player:GetExperience()
+    return self.experience
+end
+
 function Player:AddExperience(points)
-    // Tell client to display cool effect
     if(points ~= nil and points ~= 0) then
-        Server.SendCommand(self, "points " .. tostring(points))
-        self.score = Clamp(self.experience + points, 0, kMaxScore)
+        self.experience = Clamp(self.experience + points, 0, kMaxExperience)
         self:SetScoreboardChanged(true)        
     end
+end
 
 function Player:GetKills()
     return self.kills

@@ -15,6 +15,7 @@ Script.Load("lua/TechData.lua")
 Script.Load("lua/Utility.lua")
 Script.Load("lua/LiveScriptActor.lua")
 Script.Load("lua/PhysicsGroups.lua")
+Script.Load("lua/Experience.lua")
 
 class 'Player' (LiveScriptActor)
 
@@ -28,24 +29,16 @@ end
 
 Player.kMapName = "player"
 
-Player.kModelName = PrecacheAsset("models/marine/male/male.model")
-Player.kClientConnectSoundName = PrecacheAsset("sound/ns2.fev/common/connect")
-Player.kNotEnoughResourcesSound = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/more")
-Player.kInvalidSound = PrecacheAsset("sound/ns2.fev/common/invalid")
-Player.kTooltipSound = PrecacheAsset("sound/ns2.fev/common/tooltip")
-Player.kChatSound = PrecacheAsset("sound/ns2.fev/common/chat")
-
-Player.kFallMaterialSound = "sound/ns2.fev/materials/%s/fall"
-Player.kLeftFootstepMaterialSound = "sound/ns2.fev/materials/%s/footstep_left"
-Player.kRightFootstepMaterialSound = "sound/ns2.fev/materials/%s/footstep_right"
-
-PrecacheMultipleAssets(Player.kFallMaterialSound, kSurfaceList)
-PrecacheMultipleAssets(Player.kLeftFootstepMaterialSound, kSurfaceList)
-PrecacheMultipleAssets(Player.kRightFootstepMaterialSound, kSurfaceList)
+Player.kModelName                   = PrecacheAsset("models/marine/male/male.model")
+Player.kSpecialModelName            = PrecacheAsset("models/marine/male/male_special.model")
+Player.kClientConnectSoundName      = PrecacheAsset("sound/ns2.fev/common/connect")
+Player.kNotEnoughResourcesSound     = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/more")
+Player.kInvalidSound                = PrecacheAsset("sound/ns2.fev/common/invalid")
+Player.kTooltipSound                = PrecacheAsset("sound/ns2.fev/common/tooltip")
+Player.kChatSound                   = PrecacheAsset("sound/ns2.fev/common/chat")
 
 // Animations
 Player.kAnimRun = "run"
-Player.kAnimIdle = {{1, "idle"}}
 Player.kAnimTaunt = "taunt"
 Player.kAnimStartJump = "jumpin"
 Player.kAnimEndJump = "jumpout"
@@ -55,11 +48,12 @@ Player.kRunIdleSpeed = 1
 
 Player.kLoginBreakingDistance = 150
 Player.kUseRange  = 1.6
-Player.kUseHolsterTime = .3
+Player.kUseHolsterTime = .5
+Player.kDefaultBuildTime = .2
     
 Player.kGravity = -24
 Player.kMass = 90.7 // ~200 pounds (incl. armor, weapons)
-Player.kWalkBackwardSpeedScalar = 0.6
+Player.kWalkBackwardSpeedScalar = 0.4
 Player.kJumpHeight =  1   
 
 // The physics shapes used for player collision have a "skin" that makes them appear to float, this makes the shape
@@ -67,7 +61,7 @@ Player.kJumpHeight =  1
 Player.kSkinCompensation = 0.9
 Player.kXZExtents = 0.35
 Player.kYExtents = .95
-Player.kViewOffsetHeight = Player.kYExtents * 2 - .28 // Eyes a bit below the top of the head 
+Player.kViewOffsetHeight = Player.kYExtents * 2 - .28 // Eyes a bit below the top of the head. NS1 marine was 64" tall.
 Player.kFov = 90
 Player.kToolTipInterval = 18
 
@@ -153,6 +147,7 @@ local networkVars =
     
     timeOfDeath             = "float",
     timeOfLastUse           = "float",
+   
     timeOfLastWeaponSwitch  = "float",
     crouching               = "compensated boolean",
     timeOfCrouchChange      = "compensated interpolated float",
@@ -194,6 +189,9 @@ local networkVars =
     // Time when mode will end. Set to -1 to have it never end.
     modeTime                = "float",
     
+    primaryAttackLastFrame      = "boolean",
+    secondaryAttackLastFrame    = "boolean",
+    
     // Indicates how active the player has been
     outOfBreath             = "integer (0 to 255)",
     
@@ -202,7 +200,8 @@ local networkVars =
     baseRoll                = "float",
     
     // Experience system
-    experience              = "float",
+    experience              = string.format("integer (0 to %d)", kMaxExperience),
+    rank                    = string.format("integer (0 to %d)", kMaxRank),
     
     // The next point in the world to go to in order to reach an order target location
     nextOrderWaypoint       = "vector",
@@ -215,6 +214,9 @@ local networkVars =
     
     // Move, Build, etc.
     waypointType            = "enum kTechId",
+    
+    fallReadyForPlay        = "integer (0 to 3)",
+
 }
 
 function Player:OnCreate()
@@ -257,7 +259,10 @@ function Player:OnCreate()
         self.sendTechTreeBase = false
     end
     
-    self.showSayings = false
+    if Client then
+        self.showSayings = false
+    end
+    
     self.sayingsMenu = 0
     self.timeLastMenu = 0    
     self.timeLastSayingsAction = 0
@@ -273,6 +278,8 @@ function Player:OnCreate()
     self.leftFoot = true
     self.mode = kPlayerMode.Default
     self.modeTime = -1
+    self.primaryAttackLastFrame = false
+    self.secondaryAttackLastFrame = false
     self.outOfBreath = 0
     
     self.baseYaw = 0
@@ -283,7 +290,7 @@ function Player:OnCreate()
     self.viewModelId = Entity.invalidId
     
     self.usingStructure = nil
-    self.timeOfLastUse  = nil
+    self.timeOfLastUse  = 0
     self.timeOfLastWeaponSwitch = nil
     self.respawnQueueEntryTime = nil
 
@@ -304,6 +311,10 @@ function Player:OnCreate()
     self.flareStopTime = 0
     self.flareScalar = 1
     self.plasma = 0
+    
+    // Experience
+    self.experience = 0
+    self.rank = 0
         
     // Make the player kinematic so that bullets and other things collide with it.
     self:SetPhysicsType(Actor.PhysicsType.Kinematic)
@@ -341,8 +352,7 @@ function Player:OnInit()
     
     self:UpdateControllerFromEntity()
         
-    local animation = self:GetIdleAnimation()
-    self:SetAnimationWithBlending(animation, self:GetBlendTime(), true)
+    self:TriggerEffects("idle")
         
     if Server then
         self:SetNextThink(Player.kThinkInterval)
@@ -352,12 +362,53 @@ function Player:OnInit()
     // it needs to be preserved across player replacements.
     
     // Table of table of ids, in order of hotkey groups
+    self:InitializeHotkeyGroups()
+    
+end
+
+function Player:InitializeHotkeyGroups()
+
     self.hotkeyGroups = {}
     
     for i = 1, Player.kMaxHotkeyGroups do
         table.insert(self.hotkeyGroups, {})
     end
+
+end
+
+function Player:OnEntityChange(oldEntityId, newEntityId)
+
+    if Server then
     
+        // Loop through hotgroups and update accordingly
+        for i = 1, Player.kMaxHotkeyGroups do
+        
+            for index, entityId in ipairs(self.hotkeyGroups[i]) do
+            
+                if(entityId == oldEntityId) then
+                
+                    if(newEntityId ~= nil) then
+                    
+                        self.hotkeyGroups[i][index] = newEntityId
+                        
+                    else
+                    
+                        table.remove(self.hotkeyGroups[i], index)
+                        
+                    end
+                    
+                    if self.SendHotkeyGroup ~= nil then
+                        self:SendHotkeyGroup(i)
+                    end
+                    
+                end
+                
+            end
+            
+       end
+   
+   end
+   
 end
 
 function Player:GetStatusDescription()
@@ -449,6 +500,77 @@ function Player:OverrideInput(input)
         input.pitch = -input.pitch
     end
     
+    local maxPitch = Math.Radians(89.9)
+    input.pitch = Math.Clamp(input.pitch, -maxPitch, maxPitch)
+    
+    if self.timeClosedMenu and (Shared.GetTime() < self.timeClosedMenu + .25) then
+    
+        // Don't allow weapon firing
+        local removePrimaryAttackMask = bit.bxor(0xFFFFFFFF, Move.PrimaryAttack)
+        input.commands = bit.band(input.commands, removePrimaryAttackMask)
+        
+    end
+    
+    self:OverrideSayingsMenu(input)
+    
+end
+
+function Player:OverrideSayingsMenu(input)
+
+    if(self:GetHasSayings() and (bit.band(input.commands, Move.ToggleSayings1) ~= 0 or bit.band(input.commands, Move.ToggleSayings2) ~= 0)) then
+    
+        // If enough time has passed
+        if(self.timeLastSayingsAction == nil or (Shared.GetTime() > self.timeLastSayingsAction + .2)) then
+
+            local newMenu = ConditionalValue(bit.band(input.commands, Move.ToggleSayings1) ~= 0, 1, 2)
+
+            // If not visible, bring up menu
+            if(not self.showSayings) then
+            
+                self.showSayings = true
+                self.showSayingsMenu = newMenu
+                
+            // else if same menu and visible, hide it
+            elseif(newMenu == self.showSayingsMenu) then
+            
+                self.showSayings = false
+                self.showSayingsMenu = nil                
+            
+            // If different, change menu without showing or hiding
+            elseif(newMenu ~= self.showSayingsMenu) then
+            
+                self.showSayingsMenu = newMenu
+                
+            end
+            
+        end
+        
+        // Sayings toggles are handled client side.
+        local removeToggleSayingsMask = bit.bxor(0xFFFFFFFF, Move.ToggleSayings1)
+        input.commands = bit.band(input.commands, removeToggleSayingsMask)
+        removeToggleSayingsMask = bit.bxor(0xFFFFFFFF, Move.ToggleSayings2)
+        input.commands = bit.band(input.commands, removeToggleSayingsMask)
+
+        // Record time
+        self.timeLastSayingsAction = Shared.GetTime()
+        
+    end
+    
+    // Intercept any execute sayings commands.
+    if self.showSayings then
+        local weaponSwitchCommands = { Move.Weapon1, Move.Weapon2, Move.Weapon3, Move.Weapon4, Move.Weapon5 }
+        for i, weaponSwitchCommand in ipairs(weaponSwitchCommands) do
+            if bit.band(input.commands, weaponSwitchCommand) ~= 0 then
+                // Tell the server to execute this saying.
+                local message = BuildExecuteSayingMessage(i, self.showSayingsMenu)
+                Client.SendNetworkMessage("ExecuteSaying", message, true)
+                local removeWeaponMask = bit.bxor(0xFFFFFFFF, weaponSwitchCommand)
+                input.commands = bit.band(input.commands, removeWeaponMask)
+                self.showSayings = false
+            end
+        end
+    end
+
 end
 
 // Returns current FOV
@@ -536,32 +658,13 @@ function Player:GetMaxViewOffsetHeight()
     return Player.kViewOffsetHeight
 end
 
-function Player:TranslateViewModelAnimation(animSpecifier)
-
-    local animName = animSpecifier
-    
-    if (type(animSpecifier) == "table") then
-    
-        animName = chooseWeightedEntry(animSpecifier)
-        
-    end
-    
-    if (type(animName) ~= "string") then
-        Print("Player:TranslateViewModelAnimation(%s) - Must pass string or weighted table.", tostring(animSpecifier))
-        animName = nil
-    end
-    
-    return animName
-    
-end
-
 function Player:GetCanViewModelIdle()
-    return self:GetIsAlive()
+    return self:GetIsAlive() and self:GetCanNewActivityStart() and (self.mode == kPlayerMode.Default)
 end
 
 // Plays view model animation, given a string or a table of weighted entries.
 // Returns length of animation or 0 if animation wasn't found. 
-function Player:SetViewAnimation(animSpecifier, noForce, blend, speed)
+function Player:SetViewAnimation(animName, noForce, blend, speed)
 
     local length = 0.0
     
@@ -569,7 +672,6 @@ function Player:SetViewAnimation(animSpecifier, noForce, blend, speed)
         speed = 1
     end
     
-    local animName = self:TranslateViewModelAnimation(animSpecifier)
     if (animName ~= nil and animName ~= "") then
     
         local viewModel = self:GetViewModelEntity()
@@ -580,11 +682,19 @@ function Player:SetViewAnimation(animSpecifier, noForce, blend, speed)
             
             if blend then
                 success = viewModel:SetAnimationWithBlending(animName, self:GetBlendTime(), force, speed)
-                length = viewModel:GetAnimationLength(animName) / speed
-                
+                length = viewModel:GetAnimationLength(animName) / speed                
             else
                 success = viewModel:SetAnimation(animName, force, speed)
                 length = viewModel:GetAnimationLength(animName) / speed
+            end
+            
+            if success then
+            
+                if Client then
+                    self:UpdateRenderModel()
+                end
+                
+                viewModel:UpdateBoneCoords()
             end
             
             if not success and force then
@@ -607,7 +717,11 @@ function Player:GetViewAnimationLength(animName)
     
     local viewModel = self:GetViewModelEntity()
     if (viewModel ~= nil) then
-        length = viewModel:GetAnimationLength(animName)
+        if animName and animName ~= "" then
+            length = viewModel:GetAnimationLength(animName)
+        else 
+            length = viewModel:GetAnimationLength(nil)
+        end
     end
     
     return length
@@ -629,16 +743,12 @@ end
 
 function Player:SetVelocity(velocity)
 
-    if(ValidateValue(velocity, string.format("%s:SetVelocity - SetVelocity not valid, ignoring.", self:GetMapName()))) then
-    
-        VectorCopy(velocity, self.velocity)
+    VectorCopy(velocity, self.velocity)
 
-        // Snap to 0 when close to zero for network performance and our own sanity
-        if (math.abs(self.velocity:GetLength()) < Player.kMinimumPlayerVelocity) then
-        
-            self.velocity:Scale(0)
-            
-        end
+    // Snap to 0 when close to zero for network performance and our own sanity
+    if (math.abs(self.velocity:GetLength()) < Player.kMinimumPlayerVelocity) then
+    
+        self.velocity:Scale(0)
         
     end
     
@@ -651,34 +761,39 @@ function Player:GetController()
 end
 
 function Player:PrimaryAttack()
-    local weapon = self:GetActiveWeapon()
-    if(weapon ~= nil and self:GetCanNewActivityStart()) then
+
+    local weapon = self:GetActiveWeapon()    
+    if weapon and self:GetCanNewActivityStart() then
         weapon:OnPrimaryAttack(self)
     end
+    
 end
 
 function Player:SecondaryAttack()
-    local weapon = self:GetActiveWeapon()
-    
-    if(weapon ~= nil and self:GetCanNewActivityStart()) then
+
+    local weapon = self:GetActiveWeapon()        
+    if weapon and self:GetCanNewActivityStart() then
         weapon:OnSecondaryAttack(self)
     end
 
 end
 
 function Player:PrimaryAttackEnd()
+
     local weapon = self:GetActiveWeapon()
-    if(weapon ~= nil) then
+    if weapon then
         weapon:OnPrimaryAttackEnd(self)
     end
 
 end
 
 function Player:SecondaryAttackEnd()
+
     local weapon = self:GetActiveWeapon()
-    if(weapon ~= nil) then
+    if weapon then
         weapon:OnSecondaryAttackEnd(self)
     end
+    
 end
 
 function Player:SelectNextWeapon()
@@ -742,11 +857,6 @@ function Player:GetActiveWeaponName()
     
 end
 
-// Don't flinch when on fire, it looks too weird while running around
-function Player:GetFlinchFlamesAnimation(damage)
-    return ""
-end
-
 function Player:Reload()
     local weapon = self:GetActiveWeapon()
     if(weapon ~= nil and self:GetCanNewActivityStart()) then
@@ -764,27 +874,27 @@ function Player:Use()
     
     local startPoint = self:GetViewOffset() + self:GetOrigin()
     local viewCoords = self:GetViewAngles():GetCoords()
-    local effectCoords = nil
     
     local elapsedTime = 0
-    if(self.timeOfLastUse ~= nil) then
-        elapsedTime = math.min(Shared.GetTime() - self.timeOfLastUse, .2)
+    if self.timeOfLastUse ~= 0 then
+        elapsedTime = math.min(Shared.GetTime() - self.timeOfLastUse, Player.kDefaultBuildTime)
     end
     
     // Get entities in radius
-    local ents = GetEntitiesIsaInRadius("LiveScriptActor", -1, self:GetOrigin(), Player.kUseRange)
+    
+    local ents = GetEntitiesIsaInRadius("LiveScriptActor", self:GetTeamNumber(), self:GetOrigin(), Player.kUseRange)
     for index, entity in ipairs(ents) do
     
         // Look for attach point
         local attachPointName = entity:GetUseAttachPoint()
         
-        if attachPointName ~= "" and entity:GetCanBeUsed() then
+        if attachPointName ~= "" and entity:GetCanBeUsed(self) then
 
             local attachPoint = entity:GetAttachPointOrigin(attachPointName)
             local toAttachPoint = attachPoint - startPoint
             local legalUse = toAttachPoint:GetLength() < Player.kUseRange and viewCoords.zAxis:DotProduct(GetNormalizedVector(toAttachPoint)) > .8
             
-            if(legalUse and entity:OnUse(self, elapsedTime, true)) then
+            if(legalUse and entity:OnUse(self, elapsedTime, true, attachPoint)) then
             
                 success = true
                 
@@ -808,11 +918,7 @@ function Player:Use()
             
             if trace.entity:GetCanBeUsed(self) then
 
-                success = trace.entity:OnUse(self, elapsedTime, false)
-                if success then
-                    effectCoords = BuildCoords(Vector(0, 1, 0), viewCoords.zAxis)
-                    VectorCopy(trace.endPoint, effectCoords.origin)
-                end
+                success = trace.entity:OnUse(self, elapsedTime, false, trace.endPoint)
                 
             end
 
@@ -820,18 +926,16 @@ function Player:Use()
         
     end
     
+    // Put away weapon when we +use
     if success then
     
-        if effectCoords then
-        
-            // Play puff of sparks
-            Shared.CreateEffect(nil, MAC.kBuildEffect, nil, effectCoords)
-                
-            // Play weld/construct sound occasionally
-            Shared.PlayWorldSound(nil, MAC.kBuildSound, player, effectCoords.origin)
-            
-        end
     
+        if self:isa("Marine") and not self:GetWeaponHolstered() then
+            self:Holster(true)
+        end
+        
+        self:SetActivityEnd(Structure.kUseInterval)
+        
         self.timeOfLastUse = Shared.GetTime()
         
     end
@@ -853,15 +957,17 @@ end
 function Player:Buy()
 end
 
-function Player:Holster()
+function Player:Holster(force)
 
     local success = false
-    
     local weapon = self:GetActiveWeapon()
     
-    if(weapon ~= nil and self:GetCanNewActivityStart()) then
+    if weapon and (force or self:GetCanNewActivityStart()) then
     
         weapon:OnHolster(self)
+        
+        self.activeWeaponHolstered = true
+        
         success = true
         
     end
@@ -873,16 +979,17 @@ end
 function Player:Draw(previousWeaponName)
 
     local success = false
-    
     local weapon = self:GetActiveWeapon()
     
     if(weapon ~= nil and self:GetCanNewActivityStart()) then
     
         weapon:OnDraw(self, previousWeaponName)
-        success = true
         
+        self.activeWeaponHolstered = false
+        
+        success = true
     end
-    
+        
     return success
     
 end
@@ -993,6 +1100,8 @@ end
 // doesn't slow us down.
 function Player:ComputeForwardVelocity(input)
 
+    PROFILE("Player:ComputeForwardVelocity")
+
     local forwardVelocity = Vector(0, 0, 0)
 
     local move          = GetNormalizedVector(input.move)
@@ -1029,31 +1138,43 @@ end
 
 function Player:UpdateUse(deltaTime)
 
-    if not self:GetWeaponHolstered() and (self.timeOfLastUse ~= nil) and (Shared.GetTime() - self.timeOfLastUse < Player.kUseHolsterTime) then
-
-        self:Holster()
-        
     // Pull out weapon again if we haven't built for a bit
-    elseif(self:GetWeaponHolstered() and (self.timeOfLastUse ~= nil) and (Shared.GetTime() - self.timeOfLastUse > Player.kUseHolsterTime)) then
-    
-        self:Draw()
-        
+    if self:GetWeaponHolstered() and self:isa("Marine") and ((Shared.GetTime() - self.timeOfLastUse) > (Structure.kUseInterval + .2)) then    
+        self:Draw()        
     end 
 
     local viewModel = self:GetViewModelEntity()
-    if viewModel ~= nil then
-        viewModel:SetIsVisible(not self:GetWeaponHolstered())
+    if viewModel then
+        
+        local newVisState = not self:GetWeaponHolstered()
+        if newVisState ~= viewModel:GetIsVisible() then
+        
+            viewModel:SetIsVisible(newVisState)        
+            
+        end
+        
     end
     
+    self.updatedSinceUse = true
+        
 end
 
 // Make sure we can't move faster than our max speed (esp. when holding
 // down multiple keys, going down ramps, etc.)
-function Player:ClampSpeed(velocity)
+function Player:ClampSpeed(input, velocity)
+
+    PROFILE("Player:ClampSpeed")
 
     // Only clamp XZ speed so it feels better
     local moveSpeedXZ = velocity:GetLengthXZ()        
     local maxSpeed = self:GetMaxSpeed()
+    
+    // Players moving backwards can't go full speed    
+    if input.move.z < 0 then
+    
+        maxSpeed = maxSpeed * self:GetMaxBackwardSpeedScalar()
+        
+    end
     
     if (moveSpeedXZ > maxSpeed) then
     
@@ -1085,9 +1206,6 @@ function Player:UpdateMove(input)
             
         end
         
-        // Players moving backwards can't go full speed
-        input.move.z = math.max(input.move.z, -self:GetMaxBackwardSpeedScalar())
-
     end
     
 end
@@ -1157,31 +1275,20 @@ function Player:UpdateMovePhysics(input)
 
     PROFILE("Player:UpdateMovePhysics")
     
-    // Code below modifies origin and velocity, then it's set at end
-    local velocity = Vector( self:GetVelocity() )
-    ValidateValue(velocity, string.format("%s:UpdateMovePhysicsComplete - Velocity not valid when starting %s", self:GetMapName(), velocity:tostring()))
-    
     // Accelerate the movement by the velocity.
     local forwardVelocity = self:ComputeForwardVelocity(input)
-    ValidateValue(forwardVelocity, string.format("%s:UpdateMovePhysics - Computed forward velocity not valid: %s (time: %.2f)", self:GetMapName(), forwardVelocity:tostring(), input.time))
-    
-    velocity = velocity + forwardVelocity * input.time
-    ValidateValue(velocity, string.format("%s:UpdateMovePhysics - Velocity not valid after adding forwardVelocity: %s (time: %.2f)", self:GetMapName(), forwardVelocity:tostring(), input.time))
+    local velocity = self:GetVelocity() + forwardVelocity * input.time
     
     // Add in the friction force.
     local frictionForce = self:GetFrictionForce(input, velocity)
-    ValidateValue(frictionForce, string.format("%s:UpdateMovePhysics - Computed frictionForce not valid: %s (time: %.2f)", self:GetMapName(), frictionForce:tostring(), input.time))
 
     velocity = velocity + frictionForce * input.time
-    ValidateValue(velocity, string.format("%s:UpdateMovePhysics - Velocity not valid after applying friction: %s (time: %.2f)", self:GetMapName(), frictionForce:tostring(), input.time))
     
     // Don't apply gravity if we're on a ladder or standing still on the ground so we're not sliding down ramps
     if ((not self:GetIsOnLadder()) and (not (self:GetIsOnGround() and self:GetVelocity():GetLengthXZ() < Player.kMinVelocityForGravity) and self.gravityEnabled)) then
     
         // Update velocity with gravity after we update our position (it accounts for gravity and varying frame rates)
-        local gravity = Vector(0, self:GetGravityForce(input), 0) * input.time 
-        velocity = velocity + gravity
-        ValidateValue(velocity, string.format("%s:UpdateMovePhysics - Velocity not valid after gravity", self:GetMapName()))
+        velocity.y = velocity.y + self:GetGravityForce(input) * input.time
         
     end
     
@@ -1189,7 +1296,7 @@ function Player:UpdateMovePhysics(input)
     self:ModifyVelocity(input, velocity)
     
     // Clamp speed to max speed
-    self:ClampSpeed(velocity)
+    self:ClampSpeed(input, velocity)
     
     self:UpdatePosition(velocity, input.time)
     
@@ -1250,9 +1357,7 @@ function Player:OnProcessMove(input)
         self:PostUpdateMovePhysics(input, runningPrediction)
         
         // Animation transitions (walking, jumping, etc.)
-        if not runningPrediction then
-            self:UpdateAnimation(input.time)
-        end
+        self:UpdateAnimationTransitions(input.time)
         
         // Everything else
         self:UpdateMisc(input)
@@ -1280,6 +1385,13 @@ function Player:OnProcessMove(input)
             viewModel:SetPhysicsDirty()
         end
 
+    end
+    
+    if Server then
+        // Because we aren't predicting the use operation, we shouldn't predict
+        // the end of the use operation (or else with lag we can get rogue weapon
+        // drawing while holding down use)
+        self:UpdateUse(input.time)
     end
     
     SetRunningProcessMove(nil)
@@ -1440,8 +1552,7 @@ function Player:UpdatePosition(velocity, time)
     end
     
     if onGround then
-        local start = Vector(self:GetOrigin())
-        offset = self:PerformMovement(Vector(0, stepHeight, 0), 1) - start
+        offset = self:PerformMovement(Vector(0, stepHeight, 0), 1) - self:GetOrigin()
     end
     
     // First try moving capsule desired distance. We're done if we moved all the way without hitting anything.
@@ -1575,7 +1686,7 @@ function Player:GetIsOnGround()
         self.onGround = false
 
         // We're not on ground for a short time after we jump
-        if(self.timeOfLastJump == nil or (self:GetOverlayAnimation() ~= self:GetCustomAnimationName(Player.kAnimStartJump) or self:GetOverlayAnimationFinished())) then
+        if (self:GetOverlayAnimation() ~= self:GetCustomAnimationName(Player.kAnimStartJump) or self:GetOverlayAnimationFinished()) then
 
             self.onGround = self:GetGroundPosition()
             
@@ -1627,6 +1738,10 @@ end
 // If position parameter passed, set it to ground if right below us to avoid unnecessary falling.
 // If no position passed, use current origin.
 function Player:GetGroundPosition(position)
+
+    if self.controller == nil then
+        return false
+    end
 
     // Try to move the controller downward a small amount to determine if
     // we're on the ground.
@@ -1741,17 +1856,6 @@ function Player:GetPlayFootsteps()
     
 end
 
-function Player:PlayFallSound()
-
-    // Play special fall sound depending on material
-    local material = self:GetMaterialBelowPlayer()
-    
-    if(material ~= "") then
-        Shared.PlaySound(self, string.format(Player.kFallMaterialSound, material))
-    end
-
-end
-
 function Player:GetIsJumping()
 
     local overlayAnim = self:GetOverlayAnimation()
@@ -1771,9 +1875,9 @@ end
  * Called to update the animation playing on the player based on the current
  * state (not moving, jumping, etc.)
  */
-function Player:UpdateAnimation(timePassed)
+function Player:UpdateAnimationTransitions(timePassed)
 
-    PROFILE("Player:UpdateAnimation")
+    PROFILE("Player:UpdateAnimationTransitions")
     
     if (self.mode == kPlayerMode.Default and self:GetIsAlive()) then
     
@@ -1781,7 +1885,7 @@ function Player:UpdateAnimation(timePassed)
         // Also play jump animation when falling. 
         local overlayAnim = self:GetOverlayAnimation()
         local velocity    = self:GetVelocity()
-        
+
         // If we started jumping and finished animation, or if we've stepped off something, play falling animation, 
         if ( overlayAnim == self:GetCustomAnimationName(Player.kAnimStartJump) and (self.fallReadyForPlay == 0) and self:GetOverlayAnimationFinished() ) then
             
@@ -1791,26 +1895,23 @@ function Player:UpdateAnimation(timePassed)
             
         // If we're about to land, play land animation
         elseif (overlayAnim == self:GetCustomAnimationName(Player.kAnimJump) and (self.fallReadyForPlay == 1) and (((velocity.y < 0) and self:GetGroundPosition()) or self:GetIsOnGround())) then
+
+            // Play special fall sounds depending on material
+            self:TriggerEffects("fall", {surface = self:GetMaterialBelowPlayer()})
             
             self:SetOverlayAnimation(self:GetCustomAnimationName(Player.kAnimEndJump))
             
-            self:PlayFallSound()
             self.fallReadyForPlay = 2
             
         elseif (overlayAnim == self:GetCustomAnimationName(Player.kAnimEndJump) and self:GetOverlayAnimationFinished()) then
         
             self:SetOverlayAnimation("")
             
-            // Force idle after we land
-            self.nextIdleTime = 0
             self.fallReadyForPlay = 0
             
         end
   
         self:UpdateMoveAnimation()
-        
-        // Don't enable until working right
-        //self:UpdateRunIdle()
         
     end
     
@@ -1818,29 +1919,9 @@ function Player:UpdateAnimation(timePassed)
         
 end
 
-function Player:UpdateRunIdle()
-
-    local groundSpeed = self:GetVelocity():GetLengthXZ()
-    
-    local viewModel = self:GetViewModelEntity()
-    local activeWeapon = self:GetActiveWeapon()
-    
-    if viewModel ~= nil and activeWeapon ~= nil and viewModel:GetCanIdle() then
-    
-        local runIdleAnim = activeWeapon:GetRunIdleAnimation()
-        local playingRunIdle = (viewModel:GetAnimation() == runIdleAnim)
-
-        // Force idle once we pick up enough speed to play run idle or when we
-        // slow down enough to play regular idle
-        if ((groundSpeed > Player.kRunIdleSpeed) and not playingRunIdle) or ((groundSpeed < Player.kRunIdleSpeed) and playingRunIdle) then
-            
-            //Print("Setting view model nextIdle to %.2f", Shared.GetTime())
-            viewModel:ForceIdle()
-                
-        end
-        
-    end
-
+function Player:UpdateAnimation()
+    // Override the LiveScriptActor version since we explicitly call this during OnProcessMove
+    // for players (so we have consistent results on the client and server).
 end
 
 // Called by client/server UpdateMisc()
@@ -1861,10 +1942,6 @@ end
 
 function Player:UpdateScoreboard(input)
     self.showScoreboard = (bit.band(input.commands, Move.Scoreboard) ~= 0)
-end
-
-function Player:GetIdleAnimation()
-    return chooseWeightedEntry(Player.kAnimIdle)
 end
 
 function Player:UpdateMoveAnimation()
@@ -1902,11 +1979,6 @@ function Player:UpdateMode()
             
         end
 
-        local viewModelEntity = self:GetViewModelEntity()
-        if viewModelEntity ~= nil then
-            viewModelEntity:SetCanIdle( self.mode == kPlayerMode.Default )
-        end
-        
     end
     
 end
@@ -1914,7 +1986,7 @@ end
 function Player:UpdateWeapons(input)
 
     // Get list once a frame
-    if not Client or not Client.GetIsRunningPrediction() then
+    if not Shared.GetIsRunningPrediction() then
     
         self:ComputeHUDOrderedWeaponList()
 
@@ -1922,7 +1994,7 @@ function Player:UpdateWeapons(input)
         for index, weapon in ipairs(self.hudOrderedWeaponList) do
             weapon:OnProcessMove(self, input)
         end
-
+        
     end
         
 end
@@ -1983,20 +2055,21 @@ function Player:GetJumpHeight()
     return Player.kJumpHeight
 end
 
-function Player:PlayJumpSound()
-    self:PlayFootstepSound(true)
-end
-
 // If we jump, make sure to set self.timeOfLastJump to the current time
 function Player:HandleJump(input, velocity)
 
-    if (self:GetCanJump()) then
+    if self:GetCanJump() then
     
         // Compute the initial velocity to give us the desired jump
         // height under the force of gravity.
         velocity.y = math.sqrt(-2 * self:GetJumpHeight() * self:GetGravityForce(input))         
+
+        if not Shared.GetIsRunningPrediction() then
+            self:TriggerEffects("jump", {surface = self:GetMaterialBelowPlayer()})
+        end
         
-        self:PlayJumpSound()    
+        // TODO: Set this somehow (set on sounds for entity, not by sound name?)
+        //self:SetSoundParameter(soundName, "speed", self:GetFootstepSpeedScalar(), 1)
         
         self:SetOverlayAnimation(self:GetCustomAnimationName(Player.kAnimStartJump))
         
@@ -2007,7 +2080,7 @@ function Player:HandleJump(input, velocity)
     end
     
     // Jumping while on a ladder cancels being on the ladder
-    if (self:GetIsOnLadder()) then
+    if self:GetIsOnLadder() then
     
         self:SetIsOnLadder(false)
         
@@ -2017,11 +2090,16 @@ end
 
 function Player:OnTag(tagName)
 
+    //Print("%s:OnTag(%s)(play footsteps: %s)", self:GetClassName(), tagName, ToString(self:GetPlayFootsteps()))
+
     LiveScriptActor.OnTag(self, tagName)
 
     // Play footstep when foot hits the ground
     if(string.lower(tagName) == "step" and self:GetPlayFootsteps()) then
-        self:PlayFootstepSound()
+    
+        self.leftFoot = not self.leftFoot
+        self:TriggerEffects("footstep", {surface = self:GetMaterialBelowPlayer(), left = self.leftFoot})
+        
     end
     
 end
@@ -2036,43 +2114,8 @@ function Player:GetMaterialBelowPlayer()
     return GetSurfaceFromTrace(trace)    
 end
 
-function Player:GetLeftFootstepSound(surface)
-    return string.format(Player.kLeftFootstepMaterialSound, surface)
-end
-
-function Player:GetRightFootstepSound(surface)
-    return string.format(Player.kRightFootstepMaterialSound, surface)
-end
-
 function Player:GetFootstepSpeedScalar()
     return Clamp(self:GetVelocity():GetLength() / self:GetMaxSpeed(), 0, 1)
-end
-
-function Player:PlayFootstepSound(sendMessage)
-    
-    local surface = self:GetMaterialBelowPlayer()
-    if(surface ~= "") then
-    
-        local soundName = ""
-        
-        if(self.leftFoot) then
-            soundName = self:GetLeftFootstepSound(surface)
-        else
-            soundName = self:GetRightFootstepSound(surface)
-        end
-        
-        // Don't send network message because this is generated on the client
-        // when animation plays (conserves bandwidth)
-        if sendMessage or Client then
-            Shared.PlaySound(self, soundName)        
-        end
-        
-        self:SetSoundParameter(soundName, "speed", self:GetFootstepSpeedScalar(), 1)
-        
-        self.leftFoot = not self.leftFoot
-        
-    end
-    
 end
 
 function Player:CanDrawWeapon()
@@ -2115,8 +2158,18 @@ function Player:HandleAttacks(input)
     
 end
 
+function Player:GetPrimaryAttackLastFrame()
+    return self.primaryAttackLastFrame
+end
+
+function Player:GetSecondaryAttackLastFrame()
+    return self.secondaryAttackLastFrame
+end
+
 // Children can add or remove velocity according to special abilities, modes, etc.
 function Player:ModifyVelocity(input, velocity)   
+
+    PROFILE("Player:ModifyVelocity")
     
     // Must press jump multiple times to get multiple jumps 
     if (bit.band(input.commands, Move.Jump) ~= 0) and not self.jumpHandled then
@@ -2164,8 +2217,6 @@ function Player:HandleButtons(input)
             self.timeLastMenu = Shared.GetTime()
         end
         
-        self:UpdateSayingsMenu(input)
-        
     end
         
     // Remember when jump released
@@ -2187,10 +2238,9 @@ function Player:HandleButtons(input)
         self:Reload()
     end
 
-    // Temporarily removed weapon dropping until it can be fixed properly
-    //if ( bit.band(input.commands, Move.Drop) ~= 0 and self:isa("Marine") ) then
-    //    self:Drop()
-    //end
+    if ( bit.band(input.commands, Move.Drop) ~= 0 and self.Drop ) then
+        self:Drop()
+    end
     
     if ( bit.band(input.commands, Move.Taunt) ~= 0 ) then
         self:Taunt()
@@ -2222,43 +2272,6 @@ function Player:HandleButtons(input)
         self:SetCrouchState(newCrouchState)
     end
         
-end
-
-function Player:UpdateSayingsMenu(input)
-    
-    if(self:GetHasSayings() and (bit.band(input.commands, Move.ToggleSayings1) ~= 0 or bit.band(input.commands, Move.ToggleSayings2) ~= 0)) then
-    
-        // If enough time has passed
-        if(self.timeLastSayingsAction == nil or (Shared.GetTime() > self.timeLastSayingsAction + .1)) then
-
-            local newMenu = ConditionalValue(bit.band(input.commands, Move.ToggleSayings1) ~= 0, 1, 2)
-
-            // If not visible, bring up menu
-            if(not self.showSayings) then
-            
-                self.showSayings = true
-                self.showSayingsMenu = newMenu
-                
-            // else if same menu and visible, hide it
-            elseif(newMenu == self.showSayingsMenu) then
-            
-                self.showSayings = false
-                self.showSayingsMenu = nil                
-            
-            // If different, change menu without showing or hiding
-            elseif(newMenu ~= self.showSayingsMenu) then
-            
-                self.showSayingsMenu = newMenu
-                
-            end
-            
-        end
-
-        // Record time
-        self.timeLastSayingsAction = Shared.GetTime()
-        
-    end
-    
 end
 
 function Player:SetCrouchState(newCrouchState)
@@ -2363,6 +2376,9 @@ function Player:SetActiveWeapon(weaponMapName)
                 
                 newWeapon:SetIsVisible(true)
                 
+                // Always allow player to draw weapon
+                self:ClearActivity()
+                
                 newWeapon:OnDraw(self, previousWeaponName)
 
                 return true
@@ -2390,28 +2406,19 @@ end
 
 // SwitchWeapon or choose option from sayings menu if open
 // weaponindex starts at 1
-function Player:SwitchWeapon(weaponIndex, force)
+function Player:SwitchWeapon(weaponIndex)
 
     local success = false
     
     if( not self:GetIsCommander()) then
-    
-        if(self.showSayings) then
         
-            // Choose saying
-            self:ExecuteSaying(weaponIndex)
-            
-        elseif self:GetCanNewActivityStart() or force then
+        local weaponList = self:GetHUDOrderedWeaponList()
         
-            local weaponList = self:GetHUDOrderedWeaponList()
+        if(weaponIndex >= 1 and weaponIndex <= table.maxn(weaponList)) then
+        
+            success = self:SetActiveWeapon(weaponList[weaponIndex]:GetMapName())
             
-            if(weaponIndex >= 1 and weaponIndex <= table.maxn(weaponList)) then
-            
-                success = self:SetActiveWeapon(weaponList[weaponIndex]:GetMapName())
-                
-                self.timeOfLastWeaponSwitch = Shared.GetTime()
-                
-            end
+            self.timeOfLastWeaponSwitch = Shared.GetTime()
             
         end
         
@@ -2422,7 +2429,7 @@ function Player:SwitchWeapon(weaponIndex, force)
 end
 
 // Children should override with specific menu actions
-function Player:ExecuteSaying(index)
+function Player:ExecuteSaying(index, menu)
     self.executeSaying = index
 end
 
@@ -2502,12 +2509,11 @@ function Player:SetAnimAndMode(animName, mode)
     
     self.mode = mode
     
-    local viewModelEntity = self:GetViewModelEntity()
-    if viewModelEntity ~= nil then
-        viewModelEntity:SetCanIdle( self.mode == kPlayerMode.Default )
-    end
-    
     self.modeTime = Shared.GetTime() + self:GetAnimationLength(animName)
+    
+    if force then
+        Print("%s:SetAnimAndMode() - %s, %.2f)", self:GetClassName(), animName, self:GetAnimationLength(animName))
+    end
     
 end
 
@@ -2515,12 +2521,20 @@ function Player:GetCanBeUsed(player)
     return false
 end
 
-function Player:GetSpawnSound()
-    return Player.kClientConnectSoundName
-end
-
 function Player:GetScore()
     return self.score
+end
+
+function Player:GetExperience()
+    return self.experience
+end
+
+function Player:GetRank()
+    return Experience_GetRank(self.experience)
+end
+
+function Player:GetNextRankExp()
+	return Experience_GetNextRankExp(Experience_GetRank(self.experience))
 end
 
 function Player:GetScoreboardChanged()
@@ -2663,7 +2677,7 @@ function Player:GetChatSound()
 end
 
 function Player:GetNumHotkeyGroups()
-
+    
     local numGroups = 0
     
     for i = 1, Player.kMaxHotkeyGroups do

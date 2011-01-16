@@ -485,7 +485,15 @@ end
 function PlayerUI_GetPlayerExperience()
     local player = Client.GetLocalPlayer()
     if player then
-        return Client.GetLocalPlayer():GetPlayerExperience()
+        return Client.GetLocalPlayer():GetExperience()
+    end
+    return 0
+end
+
+function PlayerUI_GetPlayerRankName()
+    local player = Client.GetLocalPlayer()
+    if player then
+        return Experience_GetRankName(Client.GetLocalPlayer():GetTeamNumber(), Client.GetLocalPlayer():GetRank())
     end
     return 0
 end
@@ -520,6 +528,16 @@ function PlayerUI_GetPlayerMaxArmor()
         return player:GetMaxArmor()
     end
     return 0
+end
+
+function PlayerUI_GetPlayerIsParasited()
+
+    local player = Client.GetLocalPlayer()
+    if player then
+        return player:GetGameEffectMask(kGameEffect.Parasite)
+    end
+    return false
+
 end
 
 // For drawing health circles
@@ -581,7 +599,7 @@ function Player:UpdateCrossHairText()
         
         if self.traceReticle then
             
-            self.crossHairText = string.format("%s (id: %d) origin: %s", SafeClassName(trace.entity), trace.entity:GetId(), trace.entity:GetOrigin():tostring())
+            self.crossHairText = string.format("%s (id: %d) origin: %s, %.2f dist", SafeClassName(trace.entity), trace.entity:GetId(), trace.entity:GetOrigin():tostring(), (trace.endPoint - startPoint):GetLength())
 
             if trace.entity.GetExtents then
                 self.crossHairText = string.format("%s extents: %s", self.crossHairText, trace.entity:GetExtents():tostring())
@@ -654,6 +672,10 @@ function Player:UpdateCrossHairText()
     
                 self.crossHairTextColor = kEnemyColor
                 
+            elseif trace.entity:GetGameEffectMask(kGameEffect.Parasite) then
+            
+                self.crossHairTextColor = kParasitedTextColor
+                
             else
             
                 self.crossHairTextColor = kFriendlyNeutralColor
@@ -681,10 +703,9 @@ function Player:UpdateMisc(input)
 
     PROFILE("Player:UpdateMisc")
 
-    self:UpdateSharedMisc(input)
-
     if not Shared.GetIsRunningPrediction() then
-
+    
+        self:UpdateSharedMisc(input)
         self:UpdateCrossHairText()
         self:UpdateDamageIndicators()
         
@@ -778,13 +799,14 @@ function Player:UpdateClientEffects(deltaTime, isLocal)
     self:SetIsVisible(drawWorld)
     
     local activeWeapon = self:GetActiveWeapon()
-    if (activeWeapon ~= nil) then
+    if activeWeapon then
         activeWeapon:SetIsVisible( drawWorld )
     end
     
+    // Hide view model for other players and when in third person
     local viewModel = self:GetViewModelEntity()    
-    if(viewModel ~= nil) then
-        viewModel:SetIsVisible( not drawWorld )
+    if viewModel and drawWorld then
+        viewModel:SetIsVisible( false )
     end
     
     //self:UpdateCloaking()
@@ -805,6 +827,31 @@ function Player:UpdateClientEffects(deltaTime, isLocal)
         
     end
     
+end
+
+function Player:ExpireDebugText()
+
+    // Expire debug text items after lifetime has elapsed        
+    local numElements = table.maxn(gDebugTextList)
+
+    for i = 1, numElements do
+    
+        local elementPair = gDebugTextList[i]
+        
+        if elementPair and elementPair[1]:GetExpired() then
+        
+            GetGUIManager():DestroyGUIScript(elementPair[1])
+            
+            table.remove(gDebugTextList, i)
+                
+            numElements = numElements - 1
+            
+            i = i - 1
+            
+        end
+        
+    end
+        
 end
 
 function Player:UpdatePowerPointLights()
@@ -1154,6 +1201,9 @@ function Player:CloseMenu(flashIndex)
         Client.SetMouseCaptured(true)
         Client.SetMouseClipped(false)
         
+        // Quick work-around to not fire weapon when closing menu
+        self.timeClosedMenu = Shared.GetTime()
+        
         success = true
 
     end
@@ -1372,6 +1422,14 @@ function PlayerUI_ShowSayings()
     return nil
 end
 
+function PlayerUI_ShowTechUpgrades()
+    local player = Client.GetLocalPlayer()    
+    if player then
+        return player:GetShowTechUpgrades()
+    end
+    return nil
+end	
+
 // return array of sayings
 function PlayerUI_GetSayings()
 
@@ -1410,6 +1468,17 @@ function PlayerUI_GetLocationName()
     
 end
 
+function PlayerUI_IsACommander()
+
+    local player = Client.GetLocalPlayer()
+    if player ~= nil then
+        return player:isa("Commander")
+    end
+    
+    return false
+
+end
+
 /**
  * Damage indicators. Returns a array of damage indicators which are used to draw red arrows pointing towards
  * recent damage. Each damage indicator pair will consist of an alpha and a direction. The alpha is 0-1 and the
@@ -1436,12 +1505,12 @@ function PlayerUI_GetDamageIndicators()
             local worldX = indicatorTriple[1]
             local worldZ = indicatorTriple[2]
             
-            // Dot our view direction with direction to damage       
-            local normViewDir = GetNormalizedVectorXZ(player:GetViewAngles():GetCoords().zAxis)
-            local normDirToDamage = GetNormalizedVector(Vector(worldX, 0, worldZ) - Vector(player:GetOrigin().x, 0, player:GetOrigin().z))
-            local dotProduct = normViewDir:DotProduct(normDirToDamage)
+            local normDirToDamage = GetNormalizedVector(Vector(player:GetOrigin().x, 0, player:GetOrigin().z) - Vector(worldX, 0, worldZ))
+            local worldToView = player:GetViewAngles():GetCoords():GetInverse()
             
-            local directionRadians = math.acos(dotProduct)
+            local damageDirInView = worldToView:TransformVector(normDirToDamage)
+            
+            local directionRadians = math.atan2(damageDirInView.x, damageDirInView.z)
             if directionRadians < 0 then
                 directionRadians = directionRadians + 2 * math.pi
             end
@@ -1561,7 +1630,6 @@ function Player:OnUpdate(deltaTime)
     // Need to update pose parameters every frame to keep them smooth
     LiveScriptActor.OnUpdate(self, deltaTime)
     
-    self:UpdateUse(deltaTime)
     
     if not Client.GetIsRunningPrediction() then
     
@@ -1576,7 +1644,9 @@ function Player:OnUpdate(deltaTime)
         GetEffectManager():TriggerQueuedEffects()
     
         self:UpdateClientEffects(deltaTime, isLocal)
-    
+        
+        self:ExpireDebugText()
+
     end
     
 end
