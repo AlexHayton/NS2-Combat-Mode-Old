@@ -669,26 +669,34 @@ function PlayingTeam:Update(timePassed)
 
     // Compute tech tree availability only so often because it's very slooow
     if self.techTree ~= nil and (self.timeOfLastTechTreeUpdate == nil or Shared.GetTime() > self.timeOfLastTechTreeUpdate + PlayingTeam.kTechTreeUpdateTime) then
-    
-        self.techTree:ComputeAvailability()
 
         // Send tech tree base line to players that just switched teams or joined the game        
+		// Also refresh and update existing players' tech trees.
         local players = self:GetPlayers()
         
         for index, player in ipairs(players) do
+		
+		// Recompute all active tech trees.
+		if player:GetTechTree() ~= nil then
+		    player:GetTechTree():ComputeAvailability()
+		end
         
             if player:GetSendTechTreeBase() then
             
-                self.techTree:SendTechTreeBase(player)
+                if player:GetTechTree() ~= nil then            
+                    player:GetTechTree():SendTechTreeBase(player)
+                end
                 
                 player:ClearSendTechTreeBase()
                 
             end
+			
+			// Send research, availability, etc. tech node updates to players   
+            if player:GetTechTree() ~= nil then            
+                player:GetTechTree():SendTechTreeUpdates({ player })
+            end
             
         end
-        
-        // Send research, availability, etc. tech node updates to team players
-        self.techTree:SendTechTreeUpdates(players)
         
         self.timeOfLastTechTreeUpdate = Shared.GetTime()
         

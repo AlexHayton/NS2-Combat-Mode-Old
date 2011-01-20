@@ -4,12 +4,13 @@
 // lua\GUITechUpgrade.lua
 //
 // Created by: Brian Cronin (brianc@unknownworlds.com)
+// Modified by: Alex Hayton
 //
-// Manages the text request menu.
+// Manages the upgrade menu
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-class 'GUIRequests' (GUIScript)
+class 'GUITechUpgrade' (GUIScript)
 
 // Background constants.
 GUIRequests.kBackgroundXOffset = 0
@@ -39,8 +40,8 @@ function GUIRequests:Initialize()
     self.background:SetColor(GUIRequests.kBackgroundColor)
     self.background:SetIsVisible(false)
     
-    self.textSayings = { }
-    self.reuseSayingItems = { }
+    self.textTechUpgrades = { }
+    self.reuseTechUpgradeItems = { }
 
 end
 
@@ -53,10 +54,10 @@ end
 
 function GUIRequests:Update(deltaTime)
     
-    local visible = PlayerUI_ShowSayings()
+    local visible = PlayerUI_ShowTechUpgrades()
     if visible then
-        local sayings = PlayerUI_GetSayings()
-        self:UpdateSayings(sayings)
+        local upgradeList = PlayerUI_GetTechUpgrades()
+        self:UpdateTechUpgrades(upgradeList)
     end
     
     self:UpdateFading(deltaTime, visible)
@@ -82,16 +83,16 @@ function GUIRequests:UpdateFading(deltaTime, visible)
     
 end
 
-function GUIRequests:UpdateSayings(sayings)
+function GUIRequests:UpdateTechUpgrades(techUpgrades)
 
-    if sayings ~= nil then
-        if table.count(self.textSayings) ~= table.count(sayings) then
-            self:ResizeSayingsList(sayings)
+    if techUpgrades ~= nil then
+        if table.count(self.textTechUpgrades) ~= table.count(techUpgrades) then
+            self:ResizeTechUpgradesList(techUpgrades)
         end
 
         local currentYPos = 0
-        for i, textSaying in ipairs(self.textSayings) do
-            textSaying["Text"]:SetText(sayings[i])
+        for i, textSaying in ipairs(self.textTechUpgrades) do
+            textSaying["Text"]:SetText(techUpgrades[i])
             
             currentYPos = currentYPos + GUIRequests.kTextBackgroundItemBuffer + GUIRequests.kTextBackgroundHeightBuffer
             textSaying["Background"]:SetPosition(Vector(0, currentYPos, 0))
@@ -103,37 +104,37 @@ function GUIRequests:UpdateSayings(sayings)
         end
         
         local totalBackgroundHeight = GUIRequests.kTextFontSize + (GUIRequests.kTextBackgroundItemBuffer * 2) + (GUIRequests.kTextBackgroundHeightBuffer * 2)
-        totalBackgroundHeight = (table.count(self.textSayings) * totalBackgroundHeight) + (GUIRequests.kTextBackgroundItemBuffer * 2)
+        totalBackgroundHeight = (table.count(self.textTechUpgrades) * totalBackgroundHeight) + (GUIRequests.kTextBackgroundItemBuffer * 2)
         self.background:SetSize(Vector(GUIRequests.kBackgroundWidth, totalBackgroundHeight, 0))
     end
 
 end
 
-function GUIRequests:ResizeSayingsList(sayings)
+function GUIRequests:ResizeTechUpgradesList(techUpgrades)
     
-    while table.count(sayings) > table.count(self.textSayings) do
-        local newSayingItem = self:CreateSayingItem()
-        table.insert(self.textSayings, newSayingItem)
-        self.background:AddChild(newSayingItem["Background"])
-        newSayingItem["Background"]:SetIsVisible(true)
+    while table.count(techUpgrades) > table.count(self.textTechUpgrades) do
+        local newTechUpgradeItem = self:CreateTechUpgradeItem()
+        table.insert(self.textTechUpgrades, newTechUpgradeItem)
+        self.background:AddChild(newTechUpgradeItem["Background"])
+        newTechUpgradeItem["Background"]:SetIsVisible(true)
     end
     
-    while table.count(sayings) < table.count(self.textSayings) do
-        self.background:RemoveChild(self.textSayings[1]["Background"])
-        self.textSayings[1]["Background"]:SetIsVisible(false)
-        table.insert(self.reuseSayingItems, self.textSayings[1])
-        table.remove(self.textSayings, 1)
+    while table.count(techUpgrades) < table.count(self.textTechUpgrades) do
+        self.background:RemoveChild(self.textTechUpgrades[1]["Background"])
+        self.textTechUpgrades[1]["Background"]:SetIsVisible(false)
+        table.insert(self.reuseTechUpgradeItems, self.textTechUpgrades[1])
+        table.remove(self.textTechUpgrades, 1)
     end
 
 end
 
-function GUIRequests:CreateSayingItem()
+function GUIRequests:CreateTechUpgradeItem()
     
     // Reuse an existing player item if there is one.
-    if table.count(self.reuseSayingItems) > 0 then
-        local returnSayingItem = self.reuseSayingItems[1]
-        table.remove(self.reuseSayingItems, 1)
-        return returnSayingItem
+    if table.count(self.reuseTechUpgradeItems) > 0 then
+        local returnTechUpgradeItem = self.reuseTechUpgradeItems[1]
+        table.remove(self.reuseTechUpgradeItems, 1)
+        return returnTechUpgradeItem
     end
     
     local textBackground = GUI.CreateGraphicsItem()
@@ -141,16 +142,16 @@ function GUIRequests:CreateSayingItem()
     textBackground:SetColor(GUIRequests.kTextBackgroundColor)
     textBackground:SetInheritsParentAlpha(true)
     
-    local newSayingItem = GUI.CreateTextItem()
-    newSayingItem:SetFontSize(GUIRequests.kTextFontSize)
-    newSayingItem:SetAnchor(GUIItem.Left, GUIItem.Center)
-    newSayingItem:SetPosition(Vector(GUIRequests.kTextBackgroundWidthBuffer, 0, 0))
-    newSayingItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    newSayingItem:SetTextAlignmentY(GUITextItem.Align_Center)
-    newSayingItem:SetColor(GUIRequests.kTextSayingColor)
-    newSayingItem:SetInheritsParentAlpha(true)
-    textBackground:AddChild(newSayingItem)
+    local newTechUpgradeItem = GUI.CreateTextItem()
+    newTechUpgradeItem:SetFontSize(GUIRequests.kTextFontSize)
+    newTechUpgradeItem:SetAnchor(GUIItem.Left, GUIItem.Center)
+    newTechUpgradeItem:SetPosition(Vector(GUIRequests.kTextBackgroundWidthBuffer, 0, 0))
+    newTechUpgradeItem:SetTextAlignmentX(GUITextItem.Align_Min)
+    newTechUpgradeItem:SetTextAlignmentY(GUITextItem.Align_Center)
+    newTechUpgradeItem:SetColor(GUIRequests.kTextSayingColor)
+    newTechUpgradeItem:SetInheritsParentAlpha(true)
+    textBackground:AddChild(newTechUpgradeItem)
     
-    return { Background = textBackground, Text = newSayingItem }
+    return { Background = textBackground, Text = newTechUpgradeItem }
     
 end

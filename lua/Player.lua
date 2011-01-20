@@ -257,10 +257,12 @@ function Player:OnCreate()
     
     if Server then
         self.sendTechTreeBase = false
+		self.sendExperienceBase = false
     end
     
     if Client then
         self.showSayings = false
+		self.showTechUpgrades = false
     end
     
     self.sayingsMenu = 0
@@ -513,6 +515,62 @@ function Player:OverrideInput(input)
     
     self:OverrideSayingsMenu(input)
     
+end
+
+function Player:OverrideTechMenu(input)
+    if(self:GetHasTechUpgrades() and (bit.band(input.commands, Move.ToggleTechUpgrades) ~= 0)) then
+    
+        // If enough time has passed
+        if(self.timeLastTechUpgradesAction == nil or (Shared.GetTime() > self.timeLastTechUpgradesAction + .2)) then
+
+            local newMenu = ConditionalValue(bit.band(input.commands, Move.ToggleTechUpgrades) ~= 0, 1, 2)
+
+            // If not visible, bring up menu
+            if(not self.showTechUpgrades) then
+            
+                self.showTechUpgrades = true
+                self.showTechUpgradesMenu = newMenu
+                
+            // else if same menu and visible, hide it
+            elseif(newMenu == self.showTechUpgradesMenu) then
+            
+                self.showTechUpgrades = false
+                self.showTechUpgradesMenu = nil                
+            
+            // If different, change menu without showing or hiding
+            elseif(newMenu ~= self.showTechUpgradesMenu) then
+            
+                self.showTechUpgradesMenu = newMenu
+                
+            end
+            
+        end
+        
+        // TechUpgrades toggles are handled client side.
+        local removeToggleTechUpgradesMask = bit.bxor(0xFFFFFFFF, Move.ToggleTechUpgrades)
+        input.commands = bit.band(input.commands, removeToggleTechUpgradesMask)
+        removeToggleTechUpgradesMask = bit.bxor(0xFFFFFFFF, Move.ToggleTechUpgrades2)
+        input.commands = bit.band(input.commands, removeToggleTechUpgradesMask)
+
+        // Record time
+        self.timeLastTechUpgradesAction = Shared.GetTime()
+        
+    end
+    
+    // Intercept any execute sayings commands.
+    if self.showTechUpgrades then
+        local weaponSwitchCommands = { Move.Weapon1, Move.Weapon2, Move.Weapon3, Move.Weapon4, Move.Weapon5 }
+        for i, weaponSwitchCommand in ipairs(weaponSwitchCommands) do
+            if bit.band(input.commands, weaponSwitchCommand) ~= 0 then
+                // Tell the server to execute this saying.
+                local message = BuildExecuteTechUpgradeMessage(i, self.showTechUpgradesMenu)
+                Client.SendNetworkMessage("ExecuteTechUpgrade", message, true)
+                local removeWeaponMask = bit.bxor(0xFFFFFFFF, weaponSwitchCommand)
+                input.commands = bit.band(input.commands, removeWeaponMask)
+                self.showTechUpgrades = false
+            end
+        end
+    end
 end
 
 function Player:OverrideSayingsMenu(input)
@@ -2568,6 +2626,10 @@ end
 
 function Player:GetShowSayings()
     return self.showSayings
+end
+
+function Player:GetShowTechUpgrades()
+	return self.showTechUpgrades
 end
 
 // Tooltips

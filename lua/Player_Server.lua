@@ -108,12 +108,30 @@ function Player:SetCarbon(carbon)
     self.teamCarbon = math.max(math.min(carbon, 1000), 0)
 end
 
+// Unlike vanilla ns2, tech tree resides on the player object. Copy from the team.
+function Player:InitTechTree()
+    local techTree = nil
+    
+    local team = self:GetTeam()
+    if team ~= nil and team:isa("PlayingTeam") then
+        techTree = team:GetTechTree()
+    end
+end
+
 function Player:GetSendTechTreeBase()
     return self.sendTechTreeBase
 end
 
 function Player:ClearSendTechTreeBase()
     self.sendTechTreeBase = false
+end
+
+function Player:GetSendExperienceBase()
+	return self.sendExperienceBase
+end
+
+function Player:ClearSendExperienceBase()
+	self.sendExperienceBase = false
 end
 
 function Player:OnTeamChange(newTeamNumber)
@@ -150,9 +168,9 @@ function Player:OnTeamChange(newTeamNumber)
         // hotkey groups will be invalid.
         self:InitializeHotkeyGroups()
         
-        // Tell team to send entire tech tree
+        // Rebase and Send entire tech tree
+		self:InitTechTree()
         self.sendTechTreeBase = true
-        
     end
     
 end
@@ -817,16 +835,10 @@ function Player:AddTooltip(tooltipText)
     
 end
 
+// Unlike vanilla NS2, get the tech tree from the player object.
 function Player:GetTechTree()
-
-    local techTree = nil
     
-    local team = self:GetTeam()
-    if team ~= nil and team:isa("PlayingTeam") then
-        techTree = team:GetTechTree()
-    end
-    
-    return techTree
+    return self.techTree
 
 end
 
