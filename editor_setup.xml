@@ -45,7 +45,7 @@
             <radius>distance</radius>
         </sphere>
         
-        <parameter name="casts_shadows" type="boolean" label="Casts Shadows" default="true"/>
+        <parameter name="casts_shadows" type="boolean" label="Casts Shadows" default="false"/>
 		<parameter name="shadow_fade_rate" type="real" label="Shadow Fade Rate" default="0.25"/>
 		
     </class>
@@ -296,6 +296,8 @@
     <class name="location" help="Enter name location which is shown to players" >
 
 	<parent>trigger</parent> 
+
+        <parameter name="showOnMinimap" type="boolean" label="Show On Minimap" default="true"/>
 
     </class>
 
