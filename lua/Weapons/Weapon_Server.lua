@@ -47,8 +47,7 @@ function Weapon:SetWeaponWorldState(state)
         else
         
             self:SetPhysicsType(Actor.PhysicsType.None)
-                
-            self:SetPhysicsGroup(0)
+            self:SetPhysicsGroup(PhysicsGroup.WeaponGroup)
             
             self:UpdatePhysicsModel()
             

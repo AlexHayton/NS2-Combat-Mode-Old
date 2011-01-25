@@ -31,6 +31,15 @@ function MenuManager.SetMenu(fileName)
 end
 
 /**
+ * Returns the menu currently being displayed.
+ */
+function MenuManager.GetMenu()
+
+    return MenuManager.menuFlashPlayer
+
+end
+
+/**
  * Sets the cinematic that's displayed behind the main menu.
  */
 function MenuManager.SetMenuCinematic(fileName)

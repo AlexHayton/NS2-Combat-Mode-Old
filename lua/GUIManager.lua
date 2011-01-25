@@ -8,16 +8,35 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+kGUILayerDebugText = 0
+kGUILayerPlayerHUD = 1
+kGUILayerCommanderAlerts = 2
+kGUILayerCommanderHUD = 3
+kGUILayerMinimap = 4
+kGUILayerMinimapDynamicBlips = 5
+
 Script.Load("lua/GUIScript.lua")
 Script.Load("lua/GUIUtility.lua")
 
 class 'GUIManager'
+
+// Animation flags
+kAnimFlagSin = 0x00000001   // Animates time with sin instead of linearly (starts fast, eases in slow)
+kAnimFlagCos = 0x00000002   // Animates time with cos instead of linearly (starts slow, ends fast)
+
+// Animation stats.
+kAnimStarted = 1
+kAnimWaiting = 2
+
+// TODO: Add time delay
 
 function GUIManager:Initialize()
 
     self.scripts = { }
     self.scriptsSingle = { }
     self.animations = { }
+    
+    self.animationId = 1
 
 end
 
@@ -103,6 +122,17 @@ function GUIManager:DestroyGUIScriptSingle(scriptName)
     
 end
 
+function GUIManager:GetGUIScriptSingle(scriptName)
+
+    for index, script in ipairs(self.scriptsSingle) do
+        if script[2] == scriptName then
+            return script[1]
+        end
+    end
+    return nil
+
+end
+
 function GUIManager:NotifyGUIItemDestroyed(destroyedItem)
     
     // Remove any animations that reference the destroyed item.
@@ -119,17 +149,67 @@ function GUIManager:NotifyGUIItemDestroyed(destroyedItem)
 
 end
 
-// Operation should be a function that takes a GUIItem and a value to set.
-function GUIManager:StartAnimation(animatingItem, operation, startValue, endValue, animationTime)
+// Should not be called by anything but GUIManager.
+function GUIManager:_InternalCreateAnimation(state, animatingItem, operation, startValue, endValue, animationTime, flags)
 
     ASSERT(animatingItem ~= nil)
     ASSERT(operation ~= nil and type(operation) == "function")
+    ASSERT(type(startValue) ~= "nil")
+    ASSERT(type(endValue) ~= "nil")
     ASSERT(type(animationTime) == "number" and animationTime >= 0)
     
-    table.insert(self.animations, { Item = animatingItem, Operation = operation,
-                                    StartValue = startValue, EndValue = endValue,
-                                    AnimationTime = animationTime, Time = 0 })
+    local newAnimation = { Item = animatingItem, Operation = operation,
+                           StartValue = startValue, EndValue = endValue,
+                           AnimationTime = animationTime, Time = 0, Flags = flags,
+                           Id = self.animationId, Chained = { }, State = state }
+    table.insert(self.animations, newAnimation)
+    self.animationId = self.animationId + 1
+    
+    return newAnimation.Id
 
+end
+
+function GUIManager:_InternalGetAnimation(byId)
+
+    for index, animation in ipairs(self.animations) do
+        if animation.Id == byId then
+            return animation
+        end
+    end
+    return nil
+
+end
+
+// Operation should be a function that takes a GUIItem and a value to set.
+function GUIManager:StartAnimation(animatingItem, operation, startValue, endValue, animationTime, flags)
+
+    return self:_InternalCreateAnimation(kAnimStarted, animatingItem, operation, startValue, endValue, animationTime, flags)
+
+end
+
+// The chain animation will start after the passed in offOfAnimationId is atTime or finishes completely.
+function GUIManager:ChainAnimation(offOfAnimationId, atTime, animatingItem, operation, startValue, endValue, animationTime, flags)
+
+    local offOfAnimation = self:_InternalGetAnimation(offOfAnimationId)
+    if offOfAnimation then
+        local chainedAnimationId = self:_InternalCreateAnimation(kAnimWaiting, animatingItem, operation, startValue, endValue, animationTime, flags)
+        table.insert(offOfAnimation.Chained, { AtTime = atTime, Id = chainedAnimationId })
+        return chainedAnimationId
+    end
+    return nil
+
+end
+
+function GUIManager:GetIsAnimating(animatingItem)
+
+    for index, animation in ipairs(self.animations) do
+        if animation.Item == animatingItem and animation.State == kAnimStarted then
+            return true
+        end
+    end
+    
+    return false
+    
 end
 
 function GUIManager:Update(deltaTime)
@@ -150,20 +230,56 @@ function GUIManager:UpdateAnimations(deltaTime)
     local removeAnimations = { }
     for i, animation in ipairs(self.animations) do
     
-        // Ensure the time never goes past the final animation time.
-        animation.Time = math.min(animation.Time + deltaTime, animation.AnimationTime)
+        // Only update started animations.
+        if animation.State == kAnimStarted then
         
-        local timePercent = animation.Time / animation.AnimationTime
-        local lerpedValue = animation.StartValue + ((animation.EndValue - animation.StartValue) * timePercent)
-        animation.Operation(animation.Item, lerpedValue)
-        if animation.Time >= animation.AnimationTime then
-            table.insert(removeAnimations, animation)
+            // Ensure the time never goes past the final animation time.
+            animation.Time = math.min(animation.Time + deltaTime, animation.AnimationTime)
+            
+            // Lerp values generically (handles tables, numbers, Vectors, etc.)
+            local timePercent = animation.Time / animation.AnimationTime
+            
+            if animation.Flags and bit.band(animation.Flags, kAnimFlagSin) then
+                timePercent = math.sin(timePercent * math.pi/2)
+            end
+            
+            local lerpedValue = LerpGeneric(animation.StartValue, animation.EndValue, timePercent)
+            
+            animation.Operation(animation.Item, lerpedValue)
+            if animation.Time >= animation.AnimationTime then
+                table.insert(removeAnimations, animation)
+            end
+            
+            // Check if any chained animations should start.
+            self:_CheckChainedAnimations(animation)
+            
         end
     
     end
     
     for i, removeAnimation in ipairs(removeAnimations) do
         table.removevalue(self.animations, removeAnimation)
+    end
+
+end
+
+function GUIManager:_CheckChainedAnimations(animation)
+
+    local removeChainedAnimations = { }
+    for i, chainedAnimation in ipairs(animation.Chained) do
+        // Check if it is time for this chained animation to begin (or if
+        // the base animation is done).
+        if chainedAnimation.AtTime <= animation.Time or animation.Time >= animation.AnimationTime then
+            table.insert(removeChainedAnimations, chainedAnimation)
+            local chainedAnimation = self:_InternalGetAnimation(chainedAnimation.Id)
+            if chainedAnimation then
+                chainedAnimation.State = kAnimStarted
+            end
+        end
+    end
+    
+    for i, removeAnimation in ipairs(removeChainedAnimations) do
+        table.removevalue(animation.Chained, removeAnimation)
     end
 
 end

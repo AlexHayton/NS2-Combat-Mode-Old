@@ -444,7 +444,7 @@ function AlienTeam:InitTechTree()
     self.techTree:AddTargetedActivation(kTechId.DrifterParasite,      kTechId.DrifterParasiteTech, kTechId.None)
     
     self.techTree:AddResearchNode(kTechId.Melee1Tech,             kTechId.Whip,                kTechId.None)
-    self.techTree:AddResearchNode(kTechId.Armor1Tech,             kTechId.Crag,                kTechId.None)
+    self.techTree:AddResearchNode(kTechId.AlienArmor1Tech,        kTechId.Crag,                kTechId.None)
     
     // Tier 2
     self.techTree:AddSpecial(kTechId.TwoHives)
@@ -476,7 +476,7 @@ function AlienTeam:InitTechTree()
     self.techTree:AddTargetedActivation(kTechId.WhipBombard,                  kTechId.LobTech,             kTechId.MatureWhip)
     
     self.techTree:AddResearchNode(kTechId.Melee2Tech,             kTechId.Melee1Tech,                kTechId.HiveMass)
-    self.techTree:AddResearchNode(kTechId.Armor2Tech,             kTechId.Armor1Tech,          kTechId.HiveMass)
+    self.techTree:AddResearchNode(kTechId.AlienArmor2Tech,        kTechId.AlienArmor1Tech,          kTechId.HiveMass)
         
     // Tier 3
     self.techTree:AddSpecial(kTechId.ThreeHives)
@@ -485,7 +485,7 @@ function AlienTeam:InitTechTree()
     self.techTree:AddBuyNode(kTechId.Onos,                      kTechId.HiveColony,           kTechId.ThreeHives)
     
     self.techTree:AddResearchNode(kTechId.Melee3Tech,             kTechId.Melee2Tech,                kTechId.HiveColony)
-    self.techTree:AddResearchNode(kTechId.Armor3Tech,             kTechId.Armor2Tech,          kTechId.HiveColony)
+    self.techTree:AddResearchNode(kTechId.AlienArmor3Tech,        kTechId.AlienArmor2Tech,          kTechId.HiveColony)
     
     // Shift targeted ability    
     self.techTree:AddResearchNode(kTechId.EchoTech,               kTechId.MatureShift,         kTechId.HiveColony)

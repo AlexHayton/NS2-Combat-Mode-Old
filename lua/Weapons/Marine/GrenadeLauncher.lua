@@ -102,7 +102,8 @@ function GrenadeLauncher:OnSecondaryAttack(player)
             SetAnglesFromVector(grenade, viewCoords.zAxis)
             
             // Inherit player velocity?
-            local startVelocity = viewCoords.zAxis * 15 + Vector(0, 3, 0)
+            local startVelocity = viewCoords.zAxis * 15
+            startVelocity.y = startVelocity.y + 3
             grenade:SetVelocity(startVelocity)
             
             // Set grenade owner to player so we don't collide with ourselves and so we
@@ -172,10 +173,18 @@ end
 
 function GrenadeLauncher:UpdateViewModelPoseParameters(viewModel, input)
     
-    Rifle.UpdateViewModelPoseParameters(self, viewModel, input)
+    //Rifle.UpdateViewModelPoseParameters(self, viewModel, input)
     
     viewModel:SetPoseParam("hide_gl", 0)
     viewModel:SetPoseParam("gl_empty", ConditionalValue(self.auxClip == 0, 1, 0))    
+    
+end
+
+function GrenadeLauncher:GetEffectParams(tableParams)
+
+    Rifle.GetEffectParams(self, tableParams)
+    
+    tableParams[kEffectFilterEmpty] = ConditionalValue(self.auxClip == 0, true, false)
     
 end
 

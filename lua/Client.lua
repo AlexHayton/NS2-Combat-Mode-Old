@@ -64,7 +64,7 @@ function DestroyLevelObjects()
     // Remove all of the props.
     for index, models in ipairs(Client.propList) do
         Client.DestroyRenderModel(models[1])
-        Shared.DestroyPhysicsModel(models[2])
+        Shared.DestroyCollisionObject(models[2])
     end
     Client.propList = { }
 
@@ -284,6 +284,7 @@ function ParsePropStatic(groupName, values)
 
     // Create the physical representation of the prop.
     local physicsModel = Shared.CreatePhysicsModel(values.model, false, coords, CoordsArray(), nil) 
+    physicsModel:SetPhysicsType(CollisionObject.Static)
 
     // Handle commander mode properties
     renderModel.commAlpha = GetAndCheckValue(values.commAlpha, 0, 1, "commAlpha", 1, true)

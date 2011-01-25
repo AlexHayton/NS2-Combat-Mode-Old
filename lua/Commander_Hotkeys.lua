@@ -14,13 +14,10 @@ function Commander:HandleCommanderHotkeys(input)
     
         if input.hotkey ~= 0 then
         
-            // Translate hotkey into player button
-            for index, techId in ipairs(self.menuTechButtons) do
-        
-                if self.menuTechButtonsAllowed[index] then
+            for index, hotkey in ipairs(kGridHotkeys) do
+            
+                if (input.hotkey == hotkey) and self.menuTechButtonsAllowed[index] then
                 
-                    local hotkey = LookupTechData(techId, kTechDataHotkey)
-                    
                     // Check if the last hotkey was released.
                     if hotkey ~= nil and self.lastHotkeyIndex ~= index then
                     
@@ -32,15 +29,13 @@ function Commander:HandleCommanderHotkeys(input)
                     // key pressed unless it has been released first.
                     if hotkey ~= nil and input.hotkey == hotkey and self.lastHotkeyIndex ~= index then
                         
-                        Shared.Message("doing SetHotkeyHit now")
-                        
                         self:SetHotkeyHit(index)
                         self.lastHotkeyIndex = index
                         
                         break
                         
                     end
-                    
+                        
                 end
                 
             end

@@ -66,7 +66,12 @@ if (Server) then
         RadiusDamage(hitEntities, self:GetOrigin(), Grenade.kDamageRadius, Grenade.kMaxDamage, self)
 
         local surface = GetSurfaceFromEntity(targetHit)        
-        self:TriggerEffects("grenade_explode", {surface = surface})
+        local params = {surface = surface}
+        if not targetHit then
+            params[kEffectHostCoords] = BuildCoords(Vector(0, 1, 0), self:GetCoords().zAxis, self:GetOrigin(), 1)
+        end
+        
+        self:TriggerEffects("grenade_explode", params)
 
         // Destroy first, just in case there are script errors below somehow
         DestroyEntity(self)

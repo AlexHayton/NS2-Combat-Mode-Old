@@ -39,6 +39,7 @@ function EnumToString(enumTable, enumNumber)
         if value == enumNumber then
             return key
         end      
+        return nil
     end
     
     if enumTable == nil then
@@ -434,6 +435,54 @@ function SlerpDegrees(current, target, rate)
     
 end
 
+// Lerps between any two color, vector or numerical values. Can also lerp between
+// two tables with any of these values (but must have the same number of elements
+// and same order of types).
+function LerpGeneric(startValue, targetValue, percentage)
+
+    local lerpedValue = 0
+    
+    ASSERT(percentage >= 0)
+    ASSERT(percentage <= 1)
+    
+    // If table, call recursively on values in it
+    if type(startValue) == "table" then
+    
+        if table.count(startValue) ~= table.count(targetValue) then
+            Print("LerpGeneric(): startValue and targetValue tables not the same size (%s, %s)", ToString(startValue), ToString(targetValue))
+        else
+        
+            lerpedValue = {}
+            for index, value in ipairs(startValue) do
+                table.insert(lerpedValue, LerpGeneric(startValue[index], targetValue[index], percentage))
+            end
+            
+        end
+        
+    // Colors
+    elseif type(startValue) == "userdata" and startValue.r and startValue.g and startValue.b and startValue.a then
+    
+        lerpedValue = Color(startValue.r + (targetValue.r - startValue.r) * percentage, 
+                            startValue.g + (targetValue.g - startValue.g) * percentage,
+                            startValue.b + (targetValue.b - startValue.b) * percentage,
+                            startValue.a + (targetValue.a - startValue.a) * percentage)
+                            
+    elseif type(startValue) == "userdata" and startValue.x and startValue.y and startValue.z then
+    
+        lerpedValue = Vector(startValue.x + (targetValue.x - startValue.x) * percentage, 
+                            startValue.y + (targetValue.y - startValue.y) * percentage,
+                            startValue.z + (targetValue.z - startValue.z) * percentage)
+
+    elseif type(startValue) == "number" then
+        lerpedValue = startValue + ((targetValue - startValue) * percentage)
+    else
+        Print("LerpGeneric(): Can't handle type \"%s\".", type(startValue))
+    end
+    
+    return lerpedValue
+    
+end
+
 function GetClientServerString()
     return ConditionalValue(Client, "Client", "Server")
 end
@@ -453,6 +502,8 @@ function ToString(t)
             return t:tostring()
         elseif t:isa("Trace") then
             return string.format("trace fraction: %.2f entity: %s", t.fraction, SafeClassName(t.entity))
+        elseif t:isa("Color") then            
+            return string.format("color rgba: %.2f, %.2f, %.2f, %.2f", t.r, t.g, t.g, t.a)
         elseif t.GetClassName then
             return t:GetClassName()
         else
@@ -854,9 +905,9 @@ end
 function GetColorForPlayer(player)
 
     if(player ~= nil) then
-        if(player:isa("Marine") or player:isa("MarineCommander")) then
+        if player:GetTeamNumber() == kTeam1Index then
             return kMarineTeamColor
-        elseif(player:isa("Alien") or player:isa("AlienCommander")) then
+        elseif player:GetTeamNumber() == kTeam2Index then
             return kAlienTeamColor
         end
     end

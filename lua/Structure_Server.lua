@@ -92,6 +92,15 @@ function Structure:GetResearchProgress()
     
 end
 
+function Structure:AbortResearch()
+    if(self.researchProgress > 0) then
+        local researchNode = self:GetTeam():GetTechTree():GetTechNode(self.researchingId)
+        if researchNode ~= nil then
+            researchNode.researching = false
+        end
+    end
+end
+
 function Structure:GetDamagedAlertId()
 
     local team = self:GetTeam()
@@ -350,7 +359,6 @@ function Structure:OnTeamChange(teamNumber)
 end
 
 function Structure:OnKill(damage, killer, doer, point, direction)
-    
     if(self:GetIsAlive()) then
     
         self.buildTime = 0
@@ -365,7 +373,8 @@ function Structure:OnKill(damage, killer, doer, point, direction)
         end
         
         self:ClearAttached()
-        
+        self:AbortResearch()
+		
         LiveScriptActor.OnKill(self, damage, killer, doer, point, direction)
         
     end
@@ -651,7 +660,9 @@ function Structure:PerformAction(techNode, position)
         // Amount to get back at full health
         local carbonBack = LookupTechData(self:GetTechId(), kTechDataCostKey) * self:GetHealthScalar() * self:GetRecycleScalar()
         self:GetTeam():AddCarbon(carbonBack)
-        
+		
+		self:AbortResearch()
+		
         self:TriggerEffects("recycle")
         
         local team = self:GetTeam()

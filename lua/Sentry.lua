@@ -22,8 +22,8 @@ Sentry.kSpinDownSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/sentr
 Sentry.kAttackSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/sentry_fire_loop")
 
 Sentry.kSentryScanSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/sentry_scan")
-Sentry.kUnderAttackSound = PrecacheAsset("sound/ns2.fev/marine/voiceover/commander/sentry_taking_damage")
-Sentry.kFiringAlertSound = PrecacheAsset("sound/ns2.fev/marine/voiceover/commander/sentry_firing")
+Sentry.kUnderAttackSound = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/sentry_taking_damage")
+Sentry.kFiringAlertSound = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/sentry_firing")
 Sentry.kRicochetMaterialSound = "sound/ns2.fev/materials/%s/ricochet"
 
 // New effects

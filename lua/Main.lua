@@ -64,6 +64,8 @@ function OnClientDisconnected(reason)
     GetGUIManager():DestroyGUIScriptSingle("GUIDamageIndicators")
     GetGUIManager():DestroyGUIScriptSingle("GUIDeathMessages")
     GetGUIManager():DestroyGUIScriptSingle("GUIChat")
+    GetGUIManager():DestroyGUIScriptSingle("GUIMinimap")
+    GetGUIManager():DestroyGUIScriptSingle("GUIMapAnnotations")
     // Marine GUIs
     GetGUIManager():DestroyGUIScriptSingle("GUIMarineHUD")
     GetGUIManager():DestroyGUIScriptSingle("GUIWaypoints")

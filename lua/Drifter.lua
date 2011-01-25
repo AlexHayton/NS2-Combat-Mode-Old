@@ -174,17 +174,7 @@ function Drifter:ProcessJustSpawned()
 
     if(table.maxn(ents) == 1) then
     
-        local hive = ents[1]
-        hive:CopyOrders(self)
-        
-        // Convert rally orders to move and we're done
-        for index, order in ipairs(self.orders) do
-        
-            if(order:GetType() == kTechId.SetRally) then
-                order:SetType(kTechId.Move)
-            end
-            
-        end
+        self:ProcessRallyOrder(ents[1])
         
     end  
     
@@ -275,7 +265,7 @@ function Drifter:OnThink()
                                 // Check to make sure there is infestation here
                                 local success = false
                                 local createdStructureId = -1
-                                success, createdStructureId = commander:AttemptToBuild(techId, currentOrder:GetLocation(), nil, nil, self)
+                                success, createdStructureId = commander:AttemptToBuild(techId, currentOrder:GetLocation(), math.random() * 2 * math.pi, nil, nil, self)
                                     
                                 if(success) then
                                 

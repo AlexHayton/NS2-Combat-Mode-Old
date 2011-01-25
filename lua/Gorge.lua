@@ -45,7 +45,6 @@ Gorge.kHealth = kGorgeHealth
 Gorge.kArmor = kGorgeArmor
 Gorge.kFov = 95
 Gorge.kDamageEnergyFactor = 3.0     // Damage per alien energy unit that can be soaked
-Gorge.kAcceleration = 70
 Gorge.kJumpHeight = 1.2
 Gorge.kStartSlideForce = 14
 Gorge.kViewOffsetHeight = .6
@@ -393,10 +392,6 @@ function Gorge:GetMaxSpeed()
     
     return Gorge.kMaxGroundSpeed
     
-end
-
-function Gorge:GetAcceleration()
-    return Gorge.kAcceleration
 end
 
 function Gorge:GetMass()

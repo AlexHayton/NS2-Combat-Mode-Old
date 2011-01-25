@@ -32,8 +32,6 @@ end
 
 function GUIEmbryoHUD:Uninitialize()
 
-    GUIScript.Uninitialize(self)
-
     if self.evolveText then
     
         GUI.DestroyItem(self.evolveText)
@@ -50,7 +48,7 @@ function GUIEmbryoHUD:Update(deltaTime)
         local player = Client.GetLocalPlayer()
         
         if player and player:isa("Embryo") then
-            self.evolveText:SetText(string.format("Evolving %d%%...", math.floor(self.evolvePercentage)))
+            self.evolveText:SetText(string.format("Evolving %d%%...", math.floor(player.evolvePercentage)))
         end
         
     end

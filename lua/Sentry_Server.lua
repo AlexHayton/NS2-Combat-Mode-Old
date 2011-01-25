@@ -414,7 +414,7 @@ function Sentry:FireBullets()
                     trace.entity:TakeDamage(Sentry.kDamagePerBullet, self, self, endPoint, direction)
                 
                 else
-                    TriggerHitEffects(self, trace.entity, trace.endPoint, GetSurfaceFromTrace(trace))    
+                    TriggerHitEffects(self, trace.entity, trace.endPoint, trace.surface)    
                 end
                 
                 end

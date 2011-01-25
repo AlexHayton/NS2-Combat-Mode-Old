@@ -166,7 +166,8 @@ function Alien:OnUpdate(deltaTime)
 end
 
 function Alien:GetRecuperationRate()
-    return Alien.kEnergyRecuperationRate
+    local scalar = ConditionalValue(self:GetGameEffectMask(kGameEffect.OnFire), kOnFireEnergyRecuperationScalar, 1)
+    return scalar * Alien.kEnergyRecuperationRate
 end
 
 function Alien:MovementModifierChanged(newMovementModifierState, input)

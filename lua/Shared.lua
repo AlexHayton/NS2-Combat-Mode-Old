@@ -28,6 +28,7 @@ Script.Load("lua/LiveScriptActor.lua")
 Script.Load("lua/Order.lua")
 Script.Load("lua/PropDynamic.lua")
 Script.Load("lua/Blip.lua")
+Script.Load("lua/MapBlip.lua")
 
 // Neutral structures
 Script.Load("lua/Structure.lua")

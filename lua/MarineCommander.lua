@@ -20,7 +20,7 @@ end
 
 MarineCommander.kSentryFiringSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/sentry_firing")
 MarineCommander.kSentryTakingDamageSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/sentry_taking_damage")
-MarineCommander.kSoldierLostSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/soldier_lost")
+MarineCommander.kSoldierLostSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/soldier_lost")
 MarineCommander.kSoldierNeedsAmmoSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/soldier_needs_ammo")
 MarineCommander.kSoldierNeedsHealthSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/soldier_needs_health")
 MarineCommander.kSoldierNeedsOrderSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/soldier_needs_order")

@@ -13,78 +13,96 @@ Script.Load("lua/GUIScript.lua")
 
 class 'GUIResourceDisplay' (GUIScript)
 
-// Settings:
-// settingsTable.Width
-// settingsTable.BackgroundAnchorX
-// settingsTable.BackgroundAnchorY
-// settingsTable.X
-// settingsTable.Y
-// settingsTable.IsAlien
+GUIResourceDisplay.kBackgroundTextureAlien = "ui/alien_commander_background.dds"
+GUIResourceDisplay.kBackgroundTextureMarine = "ui/marine_commander_background.dds"
+GUIResourceDisplay.kBackgroundTextureCoords = { X1 = 755, Y1 = 342, X2 = 990, Y2 = 405 }
+GUIResourceDisplay.kBackgroundWidth = GUIResourceDisplay.kBackgroundTextureCoords.X2 - GUIResourceDisplay.kBackgroundTextureCoords.X1
+GUIResourceDisplay.kBackgroundHeight = GUIResourceDisplay.kBackgroundTextureCoords.Y2 - GUIResourceDisplay.kBackgroundTextureCoords.Y1
+GUIResourceDisplay.kBackgroundYOffset = 10
 
-GUIResourceDisplay.kIconSize = 24
+GUIResourceDisplay.kPersonalResourceIcon = { Width = 0, Height = 0, X = 0, Y = 0, Coords = { X1 = 774, Y1 = 417, X2 = 804, Y2 = 446 } }
+GUIResourceDisplay.kPersonalResourceIcon.Width = GUIResourceDisplay.kPersonalResourceIcon.Coords.X2 - GUIResourceDisplay.kPersonalResourceIcon.Coords.X1
+GUIResourceDisplay.kPersonalResourceIcon.Height = GUIResourceDisplay.kPersonalResourceIcon.Coords.Y2 - GUIResourceDisplay.kPersonalResourceIcon.Coords.Y1
+
+GUIResourceDisplay.kTeamResourceIcon = { Width = 0, Height = 0, X = 0, Y = 0, Coords = { X1 = 844, Y1 = 412, X2 = 882, Y2 = 450 } }
+GUIResourceDisplay.kTeamResourceIcon.Width = GUIResourceDisplay.kTeamResourceIcon.Coords.X2 - GUIResourceDisplay.kTeamResourceIcon.Coords.X1
+GUIResourceDisplay.kTeamResourceIcon.Height = GUIResourceDisplay.kTeamResourceIcon.Coords.Y2 - GUIResourceDisplay.kTeamResourceIcon.Coords.Y1
+GUIResourceDisplay.kTeamResourceIcon.X = -5
+GUIResourceDisplay.kTeamResourceIcon.Y = -4
+
+GUIResourceDisplay.kResourceTowerIcon = { Width = 0, Height = 0, X = 0, Y = 0, Coords = { X1 = 918, Y1 = 418, X2 = 945, Y2 = 444 } }
+GUIResourceDisplay.kResourceTowerIcon.Width = GUIResourceDisplay.kResourceTowerIcon.Coords.X2 - GUIResourceDisplay.kResourceTowerIcon.Coords.X1
+GUIResourceDisplay.kResourceTowerIcon.Height = GUIResourceDisplay.kResourceTowerIcon.Coords.Y2 - GUIResourceDisplay.kResourceTowerIcon.Coords.Y1
+GUIResourceDisplay.kResourceTowerIcon.X = -GUIResourceDisplay.kResourceTowerIcon.Width / 2
+
 GUIResourceDisplay.kFontSize = 16
-GUIResourceDisplay.kIconTextureName = "ui/resources.dds"
-GUIResourceDisplay.kIconTextureWidth = 32
-GUIResourceDisplay.kIconTextureHeight = 32
-GUIResourceDisplay.kIconXOffset = 5
+GUIResourceDisplay.kIconTextXOffset = 5
+GUIResourceDisplay.kIconXOffset = 30
 
 function GUIResourceDisplay:Initialize(settingsTable)
 
+    self.textureName = ConditionalValue(CommanderUI_IsAlienCommander(), GUIResourceDisplay.kBackgroundTextureAlien, GUIResourceDisplay.kBackgroundTextureMarine)
+    
     // Background.
     self.background = GUI.CreateGraphicsItem()
-    self.background:SetSize(Vector(settingsTable.Width, GUIResourceDisplay.kIconSize, 0))
-    self.background:SetAnchor(settingsTable.BackgroundAnchorX, settingsTable.BackgroundAnchorY)
-    self.background:SetPosition(Vector(settingsTable.X, settingsTable.Y, 0))
-    // The background is an invisible container only.
-    self.background:SetColor(Color(0, 0, 0, 0))
+    self.background:SetSize(Vector(GUIResourceDisplay.kBackgroundWidth, GUIResourceDisplay.kBackgroundHeight, 0))
+    self.background:SetAnchor(GUIItem.Middle, GUIItem.Top)
+    self.background:SetPosition(Vector(-GUIResourceDisplay.kBackgroundWidth / 2, GUIResourceDisplay.kBackgroundYOffset, 0))
+    self.background:SetTexture(self.textureName)
+    self.background:SetColor(Color(1, 1, 1, 0.75))
+    GUISetTextureCoordinatesTable(self.background, GUIResourceDisplay.kBackgroundTextureCoords)
     
-    // Plasma display.
-    self.plasmaIcon = GUI.CreateGraphicsItem()
-    self.plasmaIcon:SetSize(Vector(GUIResourceDisplay.kIconSize, GUIResourceDisplay.kIconSize, 0))
-    self.plasmaIcon:SetAnchor(GUIItem.Left, GUIItem.Top)
-    self.plasmaIcon:SetTexture(GUIResourceDisplay.kIconTextureName)
-    self.plasmaIcon:SetTexturePixelCoordinates(0, GUIResourceDisplay.kIconTextureHeight,
-                                               GUIResourceDisplay.kIconTextureWidth, GUIResourceDisplay.kIconTextureHeight * 2)
-    self.background:AddChild(self.plasmaIcon)
+    // Personal display.
+    self.personalIcon = GUI.CreateGraphicsItem()
+    self.personalIcon:SetSize(Vector(GUIResourceDisplay.kPersonalResourceIcon.Width, GUIResourceDisplay.kPersonalResourceIcon.Height, 0))
+    self.personalIcon:SetAnchor(GUIItem.Left, GUIItem.Center)
+    local personalIconX = GUIResourceDisplay.kPersonalResourceIcon.X + GUIResourceDisplay.kIconXOffset
+    local personalIconY = GUIResourceDisplay.kPersonalResourceIcon.Y + -GUIResourceDisplay.kPersonalResourceIcon.Height / 2
+    self.personalIcon:SetPosition(Vector(personalIconX, personalIconY, 0))
+    self.personalIcon:SetTexture(self.textureName)
+    GUISetTextureCoordinatesTable(self.personalIcon, GUIResourceDisplay.kPersonalResourceIcon.Coords)
+    self.background:AddChild(self.personalIcon)
 
-    self.plasmaText = GUI.CreateTextItem()
-    self.plasmaText:SetFontSize(GUIResourceDisplay.kFontSize)
-    self.plasmaText:SetAnchor(GUIItem.Right, GUIItem.Center)
-    self.plasmaText:SetTextAlignmentX(GUITextItem.Align_Min)
-    self.plasmaText:SetTextAlignmentY(GUITextItem.Align_Center)
-    self.plasmaText:SetPosition(Vector(GUIResourceDisplay.kIconXOffset, 0, 0))
-    self.plasmaText:SetColor(Color(1, 1, 1, 1))
-    self.plasmaText:SetFontIsBold(true)
-    self.plasmaIcon:AddChild(self.plasmaText)
+    self.personalText = GUI.CreateTextItem()
+    self.personalText:SetFontSize(GUIResourceDisplay.kFontSize)
+    self.personalText:SetAnchor(GUIItem.Right, GUIItem.Center)
+    self.personalText:SetTextAlignmentX(GUITextItem.Align_Min)
+    self.personalText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.personalText:SetPosition(Vector(GUIResourceDisplay.kIconTextXOffset, 0, 0))
+    self.personalText:SetColor(Color(1, 1, 1, 1))
+    self.personalText:SetFontIsBold(true)
+    self.personalIcon:AddChild(self.personalText)
     
-    // Carbon display.
-    self.carbonIcon = GUI.CreateGraphicsItem()
-    self.carbonIcon:SetSize(Vector(GUIResourceDisplay.kIconSize, GUIResourceDisplay.kIconSize, 0))
-    self.carbonIcon:SetAnchor(GUIItem.Middle, GUIItem.Top)
-    self.carbonIcon:SetPosition(Vector(-GUIResourceDisplay.kIconSize / 2, 0, 0))
-    self.carbonIcon:SetTexture(GUIResourceDisplay.kIconTextureName)
-    self.carbonIcon:SetTexturePixelCoordinates(0, 0,
-                                               GUIResourceDisplay.kIconTextureWidth, GUIResourceDisplay.kIconTextureHeight)
-    self.background:AddChild(self.carbonIcon)
+    // Team display.
+    self.teamIcon = GUI.CreateGraphicsItem()
+    self.teamIcon:SetSize(Vector(GUIResourceDisplay.kTeamResourceIcon.Width, GUIResourceDisplay.kTeamResourceIcon.Height, 0))
+    self.teamIcon:SetAnchor(GUIItem.Middle, GUIItem.Center)
+    local teamIconX = GUIResourceDisplay.kTeamResourceIcon.X + -GUIResourceDisplay.kTeamResourceIcon.Width / 2
+    local teamIconY = GUIResourceDisplay.kTeamResourceIcon.Y + -GUIResourceDisplay.kPersonalResourceIcon.Height / 2
+    self.teamIcon:SetPosition(Vector(teamIconX, teamIconY, 0))
+    self.teamIcon:SetTexture(self.textureName)
+    GUISetTextureCoordinatesTable(self.teamIcon, GUIResourceDisplay.kTeamResourceIcon.Coords)
+    self.background:AddChild(self.teamIcon)
 
-    self.carbonText = GUI.CreateTextItem()
-    self.carbonText:SetFontSize(GUIResourceDisplay.kFontSize)
-    self.carbonText:SetAnchor(GUIItem.Right, GUIItem.Center)
-    self.carbonText:SetTextAlignmentX(GUITextItem.Align_Min)
-    self.carbonText:SetTextAlignmentY(GUITextItem.Align_Center)
-    self.carbonText:SetPosition(Vector(GUIResourceDisplay.kIconXOffset, 0, 0))
-    self.carbonText:SetColor(Color(1, 1, 1, 1))
-    self.carbonText:SetFontIsBold(true)
-    self.carbonIcon:AddChild(self.carbonText)
+    self.teamText = GUI.CreateTextItem()
+    self.teamText:SetFontSize(GUIResourceDisplay.kFontSize)
+    self.teamText:SetAnchor(GUIItem.Right, GUIItem.Center)
+    self.teamText:SetTextAlignmentX(GUITextItem.Align_Min)
+    self.teamText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.teamText:SetPosition(Vector(GUIResourceDisplay.kIconTextXOffset, 0, 0))
+    self.teamText:SetColor(Color(1, 1, 1, 1))
+    self.teamText:SetFontIsBold(true)
+    self.teamIcon:AddChild(self.teamText)
     
     // Tower display.
     self.towerIcon = GUI.CreateGraphicsItem()
-    self.towerIcon:SetSize(Vector(GUIResourceDisplay.kIconSize, GUIResourceDisplay.kIconSize, 0))
-    self.towerIcon:SetAnchor(GUIItem.Right, GUIItem.Top)
-    self.towerIcon:SetPosition(Vector(-GUIResourceDisplay.kIconSize, 0, 0))
-    self.towerIcon:SetTexture(GUIResourceDisplay.kIconTextureName)
-    self.towerIcon:SetTexturePixelCoordinates(0, GUIResourceDisplay.kIconTextureHeight * ConditionalValue(settingsTable.IsAlien, 3, 4),
-                                              GUIResourceDisplay.kIconTextureWidth, GUIResourceDisplay.kIconTextureHeight * ConditionalValue(settingsTable.IsAlien, 4, 5))
+    self.towerIcon:SetSize(Vector(GUIResourceDisplay.kResourceTowerIcon.Width, GUIResourceDisplay.kResourceTowerIcon.Height, 0))
+    self.towerIcon:SetAnchor(GUIItem.Right, GUIItem.Center)
+    local towerIconX = GUIResourceDisplay.kResourceTowerIcon.X + -GUIResourceDisplay.kResourceTowerIcon.Width - GUIResourceDisplay.kIconXOffset
+    local towerIconY = GUIResourceDisplay.kResourceTowerIcon.Y + -GUIResourceDisplay.kResourceTowerIcon.Height / 2
+    self.towerIcon:SetPosition(Vector(towerIconX, towerIconY, 0))
+    self.towerIcon:SetTexture(self.textureName)
+    GUISetTextureCoordinatesTable(self.towerIcon, GUIResourceDisplay.kResourceTowerIcon.Coords)
     self.background:AddChild(self.towerIcon)
 
     self.towerText = GUI.CreateTextItem()
@@ -92,7 +110,7 @@ function GUIResourceDisplay:Initialize(settingsTable)
     self.towerText:SetAnchor(GUIItem.Right, GUIItem.Center)
     self.towerText:SetTextAlignmentX(GUITextItem.Align_Min)
     self.towerText:SetTextAlignmentY(GUITextItem.Align_Center)
-    self.towerText:SetPosition(Vector(GUIResourceDisplay.kIconXOffset, 0, 0))
+    self.towerText:SetPosition(Vector(GUIResourceDisplay.kIconTextXOffset, 0, 0))
     self.towerText:SetColor(Color(1, 1, 1, 1))
     self.towerText:SetFontIsBold(true)
     self.towerIcon:AddChild(self.towerText)
@@ -100,17 +118,17 @@ function GUIResourceDisplay:Initialize(settingsTable)
 end
 
 function GUIResourceDisplay:Uninitialize()
-
+    
     GUI.DestroyItem(self.background)
     self.background = nil
     
 end
 
 function GUIResourceDisplay:Update(deltaTime)
-
-    self.plasmaText:SetText(ToString(PlayerUI_GetPlayerResources()))
     
-    self.carbonText:SetText(ToString(PlayerUI_GetTeamResources()))
+    self.personalText:SetText(ToString(PlayerUI_GetPlayerResources()))
+    
+    self.teamText:SetText(ToString(PlayerUI_GetTeamResources()))
     
     self.towerText:SetText(ToString(CommanderUI_GetTeamHarvesterCount()))
     

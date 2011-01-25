@@ -295,6 +295,33 @@ function Commander:ControlClickSelectEntities(pickVec, screenStartVec, screenEnd
     
 end
 
+function Commander:SelectAllPlayers()
+
+    local selectionIds = {}
+    
+    local players = {}
+    if Server then
+        players = GetGamerules():GetPlayers(self:GetTeamNumber())
+    else
+        players = GetEntitiesIsa("Player", self:GetTeamNumber())
+    end
+    
+    for index, player in ipairs(players) do
+    
+        if player:GetIsAlive() and not player:isa("Commander") then
+        
+            table.insert(selectionIds, player:GetId())
+            
+        end
+        
+    end
+    
+    if table.count(selectionIds) > 0 then
+        self:SetSelection(selectionIds)
+    end
+    
+end
+
 // Convenience function that takes list of entity ids and converts to {entityId, timeSelected} pairs. 
 // Tests and external code will want to use this instead of InternalSetSelection(). Can also take
 // an entityId by itself.

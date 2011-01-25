@@ -14,14 +14,33 @@ kAlienWeaponEffects =
     {
         // For hit effects, classname is the target
         generalHitEffects =
-        {        
-            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "Spike", done = true},
-            
+        {
+            {sound = "", classname = "Structure", done = true},
+            {sound = "", classname = "Alien", done = true},
+            {sound = "", classname = "Marine", done = true},
+           //bite hit
+            {sound = "sound/ns2.fev/alien/skulk/bite_hit_%s", doer = "BiteLeap"},
+            {player_cinematic = "cinematics/materials/%s/bash.cinematic", doer = "BiteLeap", done = true}, 
+           //spit hit
             {sound = "sound/ns2.fev/alien/gorge/spit_hit", doer = "Spit"},
-            {cinematic = "cinematics/alien/gorge/spit_impact.cinematic", doer = "Spit", done = true},
-            
-            {sound = "sound/ns2.fev/alien/skulk/bite_hit_marine", doer = "BiteLeap", classname = "Marine", done = true},
-            {sound = "sound/ns2.fev/alien/skulk/bite_hit_%s", doer = "BiteLeap", done = true},
+            {player_cinematic = "cinematics/alien/gorge/spit_impact.cinematic", doer = "Spit", done = true},        
+           //spike hit
+            {player_cinematic = "cinematics/alien/lerk/spike_impact.cinematic", doer = "Spike"},
+            {sound = "sound/ns2.fev/materials/%s/spike_ricochet", doer = "Spike", done = true},
+           //snipe hit
+            {player_cinematic = "cinematics/alien/lerk/snipe_impact.cinematic", doer = "Spikes"},
+            {sound = "sound/ns2.fev/materials/%s/spike_ricochet", doer = "Spikes", done = true},
+           //hydra spikes hit
+            {player_cinematic = "cinematics/alien/hydra/spike_impact.cinematic", doer = "HydraSpike"},
+            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "HydraSpike", done = true},
+           //swipe hit
+            {player_cinematic = "cinematics/materials/%s/scrape.cinematic", doer = "SwipeBlink"},
+            {sound = "sound/ns2.fev/materials/metal/bone_scrape", doer = "SwipeBlink", surface = "metal", done = true},
+            {sound = "sound/ns2.fev/materials/%s/scrape", doer = "SwipeBlink", done = true},
+           //stab hit
+            {player_cinematic = "cinematics/materials/%s/scrape.cinematic", doer = "StabBlink"},
+            {sound = "sound/ns2.fev/materials/%s/scrape", doer = "StabBlink", done = true},
+          //add onos gore
         },
     },
 
@@ -42,9 +61,8 @@ kAlienWeaponEffects =
         {
             // Skulk
             // "fxnode_bitesaliva"
-            //{viewmodel_animation = {{1, "bite_idle"}, {.1, "bite_idle2"}, {.5, "bite_idle3"}, {.4, "bite_idle4"}}, classname = "BiteLeap", done = true},
-            {viewmodel_animation = "bite_idle", classname = "BiteLeap", done = true},
-            {viewmodel_animation = {{1, "bite_idle"}/*, {.1, "bite_idle2"}, {.5, "bite_idle3"}, {.4, "bite_idle4"}*/}, classname = "Parasite", done = true},
+            {viewmodel_animation = {{1, "bite_idle"}, {.5, "bite_idle3"}}, classname = "BiteLeap", done = true},
+            {viewmodel_animation = {{1, "bite_idle4"}/*, {.1, "bite_idle2"}, {.5, "bite_idle3"}, {.4, "bite_idle4"}*/}, classname = "Parasite", done = true},
             
             // Gorge
             {viewmodel_animation = { {1, "idle"}, {.3, "idle2"}, {.05, "idle3"} }, classname = "SpitSpray", done = true},            
@@ -65,8 +83,8 @@ kAlienWeaponEffects =
         
         alienViewModelCinematics =
         {
-            {viewmodel_cinematic = "cinematics/alien/lerk/spore_view_idle.cinematic", classname = "Spores", attach_point = "fxnode_hole_left"},
-            {viewmodel_cinematic = "cinematics/alien/lerk/spore_view_idle.cinematic", classname = "Spores", attach_point = "fxnode_hole_right"},
+            //{viewmodel_cinematic = "cinematics/alien/lerk/spore_view_idle.cinematic", classname = "Spores", attach_point = "fxnode_hole_left"},
+            //{viewmodel_cinematic = "cinematics/alien/lerk/spore_view_idle.cinematic", classname = "Spores", attach_point = "fxnode_hole_right"},
         },
 
     },
@@ -92,7 +110,7 @@ kAlienWeaponEffects =
         biteAttackEffects = 
         {
             {sound = "sound/ns2.fev/alien/skulk/bite"},
-            {viewmodel_animation = {{.03, "bite_attack1slow"}, {.03, "bite_attack2slow"}, {1, "bite_attack3slow"}, {1, "bite_attack4slow"}}},
+            {viewmodel_animation = "bite_attack"},
             {overlay_animation = "bite"},
         },
     },
@@ -102,7 +120,7 @@ kAlienWeaponEffects =
     {
         biteAltAttackEffects = 
         {
-            // TODO: Take volume or hasLeap 
+            // TODO: Take volume or hasLeap
             {sound = "sound/ns2.fev/alien/skulk/bite_alt"},
             {viewmodel_animation = "bite_leap"},
         },
@@ -122,6 +140,7 @@ kAlienWeaponEffects =
         parasiteHitEffects = 
         {
             {sound = "sound/ns2.fev/alien/skulk/parasite_hit"},
+            
         },
     },
     

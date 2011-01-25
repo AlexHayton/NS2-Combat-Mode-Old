@@ -27,3 +27,15 @@ function GUIItemContainsPoint(guiItem, pointX, pointY)
     return false, 0, 0
 
 end
+
+function GUISetColor(item, color)
+    item:SetColor(color)   
+end
+
+// Pass in a GUIItem and a table with named X1, Y1, X2, Y2 elements.
+// These are pixel coordinates.
+function GUISetTextureCoordinatesTable(item, coordinateTable)
+
+    item:SetTexturePixelCoordinates(coordinateTable.X1, coordinateTable.Y1,
+                                    coordinateTable.X2, coordinateTable.Y2)
+end

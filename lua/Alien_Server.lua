@@ -26,10 +26,12 @@ function Alien:Evolve(techId)
         
         if not self:GetIsOnGround() then
         
+            Print("You must be on the ground to evolve.")
             // Pop up tooltip
             self:AddTooltipOncePer("You must be on the ground to evolve.", 3)
             
-        elseif GetHasRoomForCapsule(eggExtents, position, physicsMask, self) and GetHasRoomForCapsule(newAlienExtents, position, physicsMask, self) then
+        elseif GetHasRoomForCapsule(eggExtents, position + Vector(0, eggExtents.y, 0), physicsMask, self) and
+               GetHasRoomForCapsule(newAlienExtents, position + Vector(0, newAlienExtents.y, 0), physicsMask, self) then
         
             self:RemoveChildren()
             
@@ -62,6 +64,7 @@ function Alien:Evolve(techId)
         else
         
             // Pop up tooltip
+            Print("You need more room to evolve.")
             self:AddTooltipOncePer("You need more room to evolve.", 3)
             
         end        
@@ -103,6 +106,24 @@ function Alien:OnInit()
     
     self.abilityEnergy = Ability.kMaxEnergy
 
+end
+
+// Increase armor absorption the depending on our defensive upgrade level
+function Alien:GetArmorAbsorbPercentage(damageType)
+
+    local baseArmorAbsorption = Player.GetArmorAbsorbPercentage(self, damageType)
+    
+    local bonusArmorAbsorption = 1    
+    if(GetTechSupported(self, kTechId.AlienArmor3Tech, true)) then
+        bonusArmorAbsorption = kAlienArmor3
+    elseif(GetTechSupported(self, kTechId.AlienArmor2Tech, true)) then
+        bonusArmorAbsorption = kAlienArmor2
+    elseif(GetTechSupported(self, kTechId.AlienArmor1Tech, true)) then
+        bonusArmorAbsorption = kAlienArmor1
+    end
+
+    return baseArmorAbsorption * bonusArmorAbsorption
+    
 end
 
 function Alien:MakeSpecialEdition()

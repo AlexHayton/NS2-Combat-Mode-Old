@@ -311,6 +311,24 @@ function OnCommandGotoIdleWorker(client)
     
 end
 
+function OnCommandGotoPlayerAlert(client)
+
+    local player = client:GetControllingPlayer()
+    if player:GetIsCommander() then
+        player:GotoPlayerAlert()
+    end
+    
+end
+
+function OnCommandSelectAllPlayers(client)
+
+    local player = client:GetControllingPlayer()
+    if player.SelectAllPlayers then
+        player:SelectAllPlayers()
+    end
+    
+end
+
 function OnCommandSetSquad(client, squadIndexString)
 
     local player = client:GetControllingPlayer()
@@ -352,7 +370,9 @@ end
 
 function OnCommandSetFOV(client, fovValue)
     local player = client:GetControllingPlayer()
-    player:SetFov(tonumber(fovValue))
+    if Shared.GetDevMode() then
+        player:SetFov(tonumber(fovValue))
+    end
 end
 
 function OnCommandSkulk(client)
@@ -673,6 +693,8 @@ Event.Hook("Console_logout",                OnCommandLogout)
 Event.Hook("Console_buy",                   OnCommandBuy)
 Event.Hook("Console_clearselect",           OnCommandClearSelect)
 Event.Hook("Console_gotoidleworker",        OnCommandGotoIdleWorker)
+Event.Hook("Console_gotoplayeralert",       OnCommandGotoPlayerAlert)
+Event.Hook("Console_selectallplayers",      OnCommandSelectAllPlayers)
 
 // Cheats
 Event.Hook("Console_carbon",                OnCommandCarbon)

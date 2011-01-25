@@ -172,13 +172,12 @@ function Blink:GetBlinkPosition(player)
             trace = Shared.TraceRay(justInsideObject, justInsideObject + Vector(playerViewDirection * 1) + Vector(0, 8, 0), PhysicsMask.AllButPCsAndRagdolls, EntityFilterOne(trace.entity))            
 
             trace = Shared.TraceRay(trace.endPoint, originalBlinkPosition, PhysicsMask.AllButPCsAndRagdolls, EntityFilterTwo(player, self))
-            
+          
             // To avoid floor interpenetration
-            VectorCopy(trace.endPoint, blinkPosition)
+            blinkPosition = trace.endPoint + Vector(0, .025, 0)
             
-            blinkPosition = blinkPosition + Vector(0, .025, 0)
-            
-            validPosition = GetHasRoomForCapsule(player:GetExtents(), blinkPosition, PhysicsMask.AllButPCsAndRagdolls, player)
+            local extents = player:GetExtents()
+            validPosition = GetHasRoomForCapsule(extents, blinkPosition + Vector(0, extents.y, 0), PhysicsMask.AllButPCsAndRagdolls, player)
             
             // Make sure we can see ghost (to be sure it's not outside the level)
             if validPosition then

@@ -30,6 +30,7 @@ PhysicsGroup = enum
         'RagdollGroup',             // Ragdolls are in this group
         'PlayerControllersGroup',   // Bullets will not collide with this group.
         'PlayerGroup',              // Ignored for movement
+        'WeaponGroup',
         'ProjectileGroup',          // Includes dropped weapons
         'CommanderPropsGroup',
         'CommanderUnitGroup',       // Macs, Drifters, doors, etc.
@@ -41,10 +42,10 @@ PhysicsGroup = enum
 PhysicsMask = enum
     {
         // Filters anything that should not be collided with for player movement.
-        Movement = CreateGroupsFilterMask(PhysicsGroup.RagdollGroup, PhysicsGroup.PlayerGroup, PhysicsGroup.ProjectileGroup),
+        Movement = CreateGroupsFilterMask(PhysicsGroup.RagdollGroup, PhysicsGroup.PlayerGroup, PhysicsGroup.ProjectileGroup, PhysicsGroup.WeaponGroup),
         
         // For Drifters, MACs
-        AIMovement = CreateGroupsFilterMask(PhysicsGroup.RagdollGroup, PhysicsGroup.PlayerGroup, PhysicsGroup.AttachClassGroup),
+        AIMovement = CreateGroupsFilterMask(PhysicsGroup.RagdollGroup, PhysicsGroup.PlayerGroup, PhysicsGroup.AttachClassGroup, PhysicsGroup.WeaponGroup),
         
         // Use these with trace functions to determine which entities we collide with. Use the filter to then
         // ignore specific entities. 
@@ -54,7 +55,10 @@ PhysicsMask = enum
         AllButPCsAndRagdolls = CreateGroupsFilterMask(PhysicsGroup.PlayerControllersGroup, PhysicsGroup.RagdollGroup),
         
         // Shooting and hive sight
-        Bullets = CreateGroupsFilterMask(PhysicsGroup.PlayerControllersGroup, PhysicsGroup.RagdollGroup, PhysicsGroup.CollisionGeometryGroup),
+        Bullets = CreateGroupsFilterMask(PhysicsGroup.PlayerControllersGroup, PhysicsGroup.RagdollGroup, PhysicsGroup.CollisionGeometryGroup, PhysicsGroup.WeaponGroup),
+
+        // Melee attacks
+        Melee = CreateGroupsFilterMask(PhysicsGroup.PlayerControllersGroup, PhysicsGroup.RagdollGroup, PhysicsGroup.CollisionGeometryGroup, PhysicsGroup.WeaponGroup),
 
         // Allows us to mark props as non interfering for commander selection (culls out any props with commAlpha < 1)
         CommanderSelect = CreateGroupsFilterMask(PhysicsGroup.PlayerControllersGroup, PhysicsGroup.RagdollGroup, PhysicsGroup.CommanderPropsGroup),

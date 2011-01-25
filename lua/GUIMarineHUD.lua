@@ -73,6 +73,7 @@ GUIMarineHUD.kLowHealthPercent = 0.2
 function GUIMarineHUD:Initialize()
 
     self.background = GUI.CreateGraphicsItem()
+    self.background:SetLayer(kGUILayerPlayerHUD)
     self.background:SetSize(Vector(GUIMarineHUD.kBackgroundWidth, GUIMarineHUD.kBackgroundHeight, 0))
     self.background:SetAnchor(GUIItem.Left, GUIItem.Bottom)
     self.background:SetPosition(Vector(0, -GUIMarineHUD.kBackgroundHeight, 0) + GUIMarineHUD.kBackgroundOffset)
