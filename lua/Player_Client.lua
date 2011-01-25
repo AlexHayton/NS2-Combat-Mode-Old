@@ -83,14 +83,6 @@ function PlayerUI_GetCrosshairValues()
    
 end
 
-/**
- * Get waypoint data
- * Returns single-dimensional array of fields in the format screenX, screenY, drawRadius, waypointType
- */
-function PlayerUI_GetWaypointInfo()
-    return {}   
-end
-
 function PlayerUI_GetNextWaypointActive()
 
     local player = Client.GetLocalPlayer()
@@ -239,6 +231,28 @@ function PlayerUI_GetNextWaypointInScreenspace()
     
     return returnTable
 
+end
+
+function PlayerUI_GetOrderInfo()
+
+    local orderInfo = {}
+    
+    // Hard-coded for testing
+    local player = Client.GetLocalPlayer()
+    if player then
+    
+        for index, order in ipairs(GetEntitiesIsa("Order")) do
+        
+            table.insert(orderInfo, order.orderType)
+            table.insert(orderInfo, order.orderParam)
+            table.insert(orderInfo, order.orderLocation)
+            table.insert(orderInfo, order.orderOrientation)
+            
+        end
+        
+    end
+    
+    return orderInfo
 end
 
 /**
@@ -994,19 +1008,6 @@ end
 // Called on the Client only, after OnInit(), for a ScriptActor that is controlled by the local player.
 // Ie, the local player is controlling this Marine and wants to intialize local UI, flash, etc.
 function Player:OnInitLocalClient()
-
-    // Only create base HUDs the first time a player is created
-    if not gFlashPlayers then
-    
-        // Alpha send feedback swf
-        //GetFlashPlayer(kFeedbackFlashIndex):Load(Player.kFeedbackFlash)
-        //GetFlashPlayer(kFeedbackFlashIndex):SetBackgroundOpacity(0)
-
-        // Main HUD for all classes (scoreboard, death messages, chat, etc.)
-        //GetFlashPlayer(kSharedFlashIndex):Load(Player.kSharedHUDFlash)
-        //GetFlashPlayer(kSharedFlashIndex):SetBackgroundOpacity(0)
-        
-    end
     
     // Only create base HUDs the first time a player is created.
     // We only ever want one of these.
@@ -1017,11 +1018,16 @@ function Player:OnInitLocalClient()
     GetGUIManager():CreateGUIScriptSingle("GUIDamageIndicators")
     GetGUIManager():CreateGUIScriptSingle("GUIDeathMessages")
     GetGUIManager():CreateGUIScriptSingle("GUIChat")
+    self.minimapScript = GetGUIManager():CreateGUIScriptSingle("GUIMinimap")
+    GetGUIManager():CreateGUIScriptSingle("GUIMapAnnotations")
     
-    // In case we were commanding on map reset
-    Client.SetMouseVisible(false)
-    Client.SetMouseCaptured(true)
-    Client.SetMouseClipped(false)
+    // In case we were commanding on map reset, hide the mouse
+    // unless a menu is visible.
+    if MenuManager.GetMenu() == nil then
+        Client.SetMouseVisible(false)
+        Client.SetMouseCaptured(true)
+        Client.SetMouseClipped(false)
+    end
     
     // Re-enable skybox rendering after commanding
     SetSkyboxDrawState(true)
@@ -1079,7 +1085,7 @@ function Player:OnDestroy()
 
     LiveScriptActor.OnDestroy(self)
     
-    Shared.DestroyPhysicsController(self.controller)
+    Shared.DestroyCollisionObject(self.controller)
     self.controller = nil
 
     if (self.viewModel ~= nil) then
@@ -1197,9 +1203,13 @@ function Player:CloseMenu(flashIndex)
     
         RemoveFlashPlayer(flashIndex)
     
-        Client.SetMouseVisible(false)
-        Client.SetMouseCaptured(true)
-        Client.SetMouseClipped(false)
+        // Do not take away mouse from the player if they are a commander.
+        // They are going to want the mouse.
+        if not self:GetIsCommander() then
+            Client.SetMouseVisible(false)
+            Client.SetMouseCaptured(true)
+            Client.SetMouseClipped(false)
+        end
         
         // Quick work-around to not fire weapon when closing menu
         self.timeClosedMenu = Shared.GetTime()
@@ -1210,6 +1220,12 @@ function Player:CloseMenu(flashIndex)
     
     return success
     
+end
+
+function Player:ShowMap(showMap)
+
+    self.minimapScript:ShowMap(showMap)
+
 end
 
 function Player:GetWeaponAmmo()
@@ -1468,6 +1484,38 @@ function PlayerUI_GetLocationName()
     
 end
 
+function PlayerUI_GetOrigin()
+
+    local player = Client.GetLocalPlayer()    
+    if player ~= nil then
+        return player:GetOrigin()
+    end
+    
+    return Vector(0, 0, 0)
+
+end
+
+function PlayerUI_GetEyePos()
+
+    local player = Client.GetLocalPlayer()    
+    if player ~= nil then
+        return player:GetEyePos()
+    end
+    
+    return Vector(0, 0, 0)
+    
+end
+
+function PlayerUI_GetForwardNormal()
+
+    local player = Client.GetLocalPlayer()    
+    if player ~= nil then
+        return player:GetCameraViewCoords().zAxis
+    end
+    return Vector(0, 0, 1)
+
+end
+
 function PlayerUI_IsACommander()
 
     local player = Client.GetLocalPlayer()
@@ -1477,6 +1525,81 @@ function PlayerUI_IsACommander()
     
     return false
 
+end
+
+function PlayerUI_GetTeamColor()
+
+    local player = Client.GetLocalPlayer()
+    return ColorIntToColor(GetColorForPlayer(player))
+    
+end
+
+/**
+ * Returns all locations as a name and origin.
+ */
+function PlayerUI_GetLocationData()
+
+    local returnData = { }
+    local locationEnts = GetLocations()
+    for i, location in ipairs(locationEnts) do
+        if location:GetShowOnMinimap() then
+            table.insert(returnData, { Name = location:GetName(), Origin = location:GetOrigin() })
+        end
+    end
+    return returnData
+
+end
+
+/**
+ * Converts world coordinates into normalized map coordinates.
+ */
+function PlayerUI_GetMapXY(worldX, worldZ)
+
+    local player = Client.GetLocalPlayer()
+    local success, mapX, mapY = player:GetMapXY(worldX, worldZ)
+    return mapX, mapY
+
+end
+
+/**
+ * Returns a linear array of static blip data
+ * X position, Y position, X texture offset, Y texture offset, kMinimapBlipType, kMinimapBlipTeam
+ *
+ * Eg {0.5, 0.5, 0, 0, 3, 1}
+ */
+function PlayerUI_GetStaticMapBlips()
+
+    player = Client.GetLocalPlayer()
+    
+    local blipsData = {}
+    
+    if player then
+    
+        local mapBlips = GetEntitiesIsa("MapBlip")
+        
+        for index, blip in ipairs(mapBlips) do
+            
+            local blipOrigin = blip:GetOrigin()
+            local posX, posY = PlayerUI_GetMapXY(blipOrigin.x, blipOrigin.z)
+            table.insert(blipsData, posX)
+            table.insert(blipsData, posY)
+            table.insert(blipsData, 0)
+            table.insert(blipsData, 0)
+            table.insert(blipsData, blip:GetType())
+            local blipTeam = kMinimapBlipTeam.Neutral
+            if blip:GetTeam() == player:GetTeamNumber() then
+                blipTeam = kMinimapBlipTeam.Friendly
+            elseif blip:GetTeam() == GetEnemyTeamNumber(player:GetTeamNumber()) then
+                blipTeam = kMinimapBlipTeam.Enemy
+            end
+            table.insert(blipsData, blipTeam)
+            
+        end
+        
+    end
+    
+    return blipsData
+    
 end
 
 /**
@@ -1590,7 +1713,7 @@ function Player:OnSynchronized()
     local player = Client.GetLocalPlayer()
     
     if player ~= nil then
-    
+        
         // Make sure to call OnInit() for client entities that have been propagated by the server
         if(not self.clientInitedOnSynch) then
         

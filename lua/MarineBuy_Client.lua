@@ -22,7 +22,7 @@ local kIconIndexToTechId = {
 local kUpgradeIconRowSize = 6
 
 local kIconIndexToUpgradeId = {
-    kTechId.Armor1Tech, kTechId.Armor2Tech, kTechId.Armor3Tech,
+    kTechId.Armor1, kTechId.Armor2, kTechId.Armor3,
     kTechId.RifleUpgrade, kTechId.NerveGas, kTechId.FlamethrowerAltTech
 }
 

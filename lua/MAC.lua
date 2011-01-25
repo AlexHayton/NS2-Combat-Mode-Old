@@ -320,17 +320,7 @@ function MAC:ProcessJustSpawned()
 
     if(table.maxn(ents) == 1) then
     
-        local commandStation = ents[1]
-        commandStation:CopyOrders(self)
-        
-        // Convert rally orders to move and we're done
-        for index, order in ipairs(self.orders) do
-        
-            if(order:GetType() == kTechId.SetRally) then
-                order:SetType(kTechId.Move)
-            end
-            
-        end
+        self:ProcessRallyOrder(ents[1])
         
     end  
 
@@ -439,7 +429,7 @@ function MAC:ProcessBuildConstruct()
                 
                 if(team:GetCarbon() >= cost) then
               
-                    local success, createdStructureId = commander:AttemptToBuild(techId, currentOrder:GetLocation(), nil, nil, self)
+                    local success, createdStructureId = commander:AttemptToBuild(techId, currentOrder:GetLocation(), math.random() * 2 * math.pi, nil, nil, self)
                     
                     // Now construct it
                     if(success) then

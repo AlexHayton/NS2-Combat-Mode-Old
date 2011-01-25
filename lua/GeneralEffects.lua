@@ -30,7 +30,7 @@ kGeneralEffectData =
             {sound = "sound/ns2.fev/marine/structures/mac/hover", classname = "MAC", done = true},            
             {sound = "sound/ns2.fev/alien/drifter/spawn", classname = "Drifter", done = true},
             
-            {sound = "sound/ns2.fev/alien/structures/generic_spawn_large", isalien = true, done = true},
+            {sound = "sound/ns2.fev/alien/structures/spawn_small", isalien = true, done = true},
             {sound = "sound/ns2.fev/marine/structures/generic_spawn", isalien = false, done = true},
             
         },
@@ -52,8 +52,7 @@ kGeneralEffectData =
             {sound = "sound/ns2.fev/alien/structures/hive_deploy", classname = "Hive", done = true},
             {sound = "sound/ns2.fev/marine/structures/command_station_open", classname = "CommandStation", done = true},
             {sound = "sound/ns2.fev/marine/structures/extractor_deploy", classname = "Extractor", done = true},
-            {sound = "sound/ns2.fev/marine/structures/deploy_small", classname = "Harvester", done = true},
-            {sound = "sound/ns2.fev/alien/structures/hydra/deploy", classname = "Hydra", done = true},
+            {sound = "sound/ns2.fev/alien/structures/deploy_small", classname = "Hydra", done = true},
             {sound = "sound/ns2.fev/alien/structures/deploy_large", isalien = true, done = true},
             {sound = "sound/ns2.fev/marine/structures/generic_deploy", isalien = false, done = true},            
         },        
@@ -100,14 +99,57 @@ kGeneralEffectData =
     flinch =
     {
         generalFlinchCinematicEffects =
-        {        
-            {cinematic = "cinematics/alien/structures/hit_big.cinematic", classname = "Structure", isalien = true, flinch_severe = true, done = true},
-            {cinematic = "cinematics/alien/structures/hit.cinematic", classname = "Structure", isalien = true, done = true},
-            {cinematic = "cinematics/marine/structures/hit_big.cinematic", classname = "Structure", isalien = false, flinch_severe = true, done = true},
-            {cinematic = "cinematics/marine/structures/hit.cinematic", classname = "Structure", isalien = false, done = true},
-            
+        {
+        //add sounds for generic hits
+        //spit hit all
+            {sound = "sound/ns2.fev/alien/gorge/spit_hit", doer = "Spit"},
+            {cinematic = "cinematics/alien/gorge/spit_impact.cinematic", doer = "Spit", done = true},
+        //spikes hit structure
+            {cinematic = "cinematics/alien/lerk/spike_impact.cinematic", doer = "Spike", classname = "Structure"},
+            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "Spike", classname = "Structure", done = true},
+            {cinematic = "cinematics/alien/lerk/snipe_impact.cinematic", doer = "Spikes", classname = "Structure"},
+            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "Spikes", classname = "Structure", done = true},
+            {cinematic = "cinematics/alien/hydra/spike_impact.cinematic", doer = "HydraSpike", classname = "Structure"},
+            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "HydraSpike", classname = "Structure", done = true},
+        
+        //generic buildings        
+            {cinematic = "cinematics/alien/structures/hit_big.cinematic", classname = "Structure", isalien = true, flinch_severe = true},
+            {sound = "sound/ns2.fev/materials/organic/bash",  classname = "Structure", isalien = true, flinch_severe = true, done = true},
+            {cinematic = "cinematics/alien/structures/hit.cinematic", classname = "Structure", isalien = true},
+            {sound = "sound/ns2.fev/materials/organic/bash",  classname = "Structure", isalien = true, done = true},
+            {cinematic = "cinematics/marine/structures/hit_big.cinematic", classname = "Structure", isalien = false, flinch_severe = true},
+            {sound = "sound/ns2.fev/materials/metal/bash",  classname = "Structure", isalien = false, flinch_severe = true, done = true},
+            {cinematic = "cinematics/marine/structures/hit.cinematic", classname = "Structure", isalien = false},
+            {sound = "sound/ns2.fev/materials/metal/bash",  classname = "Structure", isalien = false, done = true},
+       //rifle alt hit TODO      
+       //bullet hit alien  
+            {cinematic = "cinematics/alien/bullet_hit.cinematic", doer = "ClipWeapon", classname = "Alien"},
+            {sound = "sound/ns2.fev/materials/organic/ricochet", doer = "ClipWeapon", classname = "Alien", done = true},  
+        //axe hit alien
+            {sound = "sound/ns2.fev/materials/organic/metal_scrape", doer = "Axe", classname = "Alien"},
+            {cinematic = "cinematics/alien/axe_hit.cinematic", doer = "Axe", classname = "Alien", done = true},
+        //bite hit marine
+            {sound = "sound/ns2.fev/alien/skulk/bite_hit_marine", doer = "BiteLeap", classname = "Marine"},
+            {cinematic = "cinematics/marine/bite_hit.cinematic", doer = "BiteLeap", classname = "Marine", done = true},   
+        //stab hit marine
+            {cinematic = "cinematics/marine/slash_hit.cinematic", doer = "StabBlink", classname = "Marine"},
+            {sound = "sound/ns2.fev/alien/fade/stab_marine", doer = "StabBlink", classname = "Marine", done = true},
+        //swipe hit marine
+            {cinematic = "cinematics/marine/slash_hit.cinematic", doer = "SwipeBlink", classname = "Marine"},
+            {sound = "sound/ns2.fev/alien/fade/swipe_hit_marine", doer = "SwipeBlink", classname = "Marine", done = true},
+        //spike hit marine
+            {cinematic = "cinematics/marine/spike_hit.cinematic", doer = "Spike", classname = "Marine"},
+            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "Spike", classname = "Marine", done = true}, 
+        //snipe hit marine
+            {cinematic = "cinematics/marine/spike_hit.cinematic", doer = "Spikes", classname = "Marine"},
+            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "Spikes", classname = "Marine", done = true},
+        //hdyra hit marine
+            {cinematic = "cinematics/marine/spike_hit.cinematic", doer = "HydraSpike", classname = "Marine"},
+            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "HydraSpike", classname = "Marine", done = true},
+        //generic
             {cinematic = "cinematics/alien/hit.cinematic", classname = "Alien", done = true},
-            {cinematic = "cinematics/marine/hit.cinematic", classname = "Marine", done = true},            
+            {cinematic = "cinematics/marine/hit.cinematic", classname = "Marine", done = true},
+        
         },
         
         generalFlinchAnimations =
@@ -134,7 +176,10 @@ kGeneralEffectData =
             {sound = "sound/ns2.fev/alien/fade/wound", classname = "Fade", stop = true},           
             {sound = "sound/ns2.fev/alien/onos/wound", classname = "Onos", stop = true},           
             {sound = "sound/ns2.fev/alien/structures/harvester_wound", classname = "Harvester", stop = true},                       
-            {sound = "sound/ns2.fev/alien/structures/hive_wound", classname = "Hive", stop = true},                       
+            {sound = "sound/ns2.fev/alien/structures/hive_wound", classname = "Hive", stop = true},
+            {sound = "sound/ns2.fev/marine/common/wound_serious", classname = "Marine", flinch_severe = true, stop = true},
+            {sound = "sound/ns2.fev/marine/common/wound", classname = "Marine", stop = true},
+                       
             
             // TODO: Add common/near_death sound
         },
@@ -197,24 +242,7 @@ kGeneralEffectData =
             {cinematic = "cinematics/materials/%s/grenade_explosion.cinematic", classname = "Grenade", done = true},
             {cinematic = "cinematics/marine/mac/death.cinematic", classname = "MAC", done = true},
             {cinematic = "cinematics/marine/arc/destroyed.cinematic", classname = "ARC", done = true},
-            {cinematic = "cinematics/alien/structures/death_small.cinematic", classname = "Drifter"},
-            
-            {cinematic = "cinematics/marine/commandstation/death.cinematic", classname = "CommandStation", done = true},
-            {cinematic = "cinematics/marine/infantryportal/death.cinematic", classname = "InfantryPortal", done = true},
-            {cinematic = "cinematics/marine/sentry/death.cinematic", classname = "Sentry", done = true},
-            {cinematic = "cinematics/marine/extractor/death.cinematic", classname = "Extractor", done = true},
-            {cinematic = "cinematics/marine/roboticsfactory/death.cinematic", classname = "RoboticsFactory", done = true},
-            {cinematic = "cinematics/marine/observatory/death.cinematic", classname = "Observatory", done = true},
-            
-            {cinematic = "cinematics/alien/structures/death_large.cinematic", classname = "Crag", done = true},
-            {cinematic = "cinematics/alien/structures/death_large.cinematic", classname = "Shift", done = true},
-            {cinematic = "cinematics/alien/structures/death_large.cinematic", classname = "Shade", done = true},
-            {cinematic = "cinematics/alien/structures/death_large.cinematic", classname = "Whip", done = true},
-            {cinematic = "cinematics/alien/structures/death_large.cinematic", classname = "Hive", done = true},
-            {cinematic = "cinematics/alien/egg/burst.cinematic", classname = "Egg", done = true},
-            
-            {cinematic = "cinematics/alien/structures/death_small.cinematic", classname = "Structure", isalien = true, done = true},
-            {cinematic = "cinematics/marine/structures/generic_death.cinematic", isalien = false, classname = "Structure", done = true},            
+            {cinematic = "cinematics/alien/structures/death_small.cinematic", classname = "Drifter", done = true},
         },
       
         // Play world sound instead of parented sound as entity is going away?
@@ -224,8 +252,8 @@ kGeneralEffectData =
             
             {stop_sound = "sound/ns2.fev/marine/structures/mac/hover", classname = "MAC"},
             {stop_sound = "sound/ns2.fev/marine/structures/mac/thrusters", classname = "MAC"},
-            {sound = "sound/ns2.fev/marine/structures/mac/death", classname = "MAC", done = true},
             
+            {sound = "sound/ns2.fev/marine/structures/mac/death", classname = "MAC", done = true},
             {sound = "sound/ns2.fev/alien/drifter/death", classname = "Drifter", done = true},
             {sound = "sound/ns2.fev/alien/skulk/death", classname = "Skulk", done = true},
             {sound = "sound/ns2.fev/alien/gorge/death", classname = "Gorge", done = true},
@@ -233,16 +261,7 @@ kGeneralEffectData =
             {sound = "sound/ns2.fev/alien/fade/death", classname = "Fade", done = true},
             {sound = "sound/ns2.fev/alien/onos/death", classname = "Onos", done = true},
             {sound = "sound/ns2.fev/marine/common/death", classname = "Marine", done = true},
-            {sound = "sound/ns2.fev/marine/structures/", classname = "Extractor", done = true},
             {sound = "sound/ns2.fev/marine/structures/extractor_death", classname = "Extractor", done = true},
-            {sound = "sound/ns2.fev/alien/structures/harvester_death", classname = "Harvester", done = true},
-            {sound = "sound/ns2.fev/alien/structures/hydra/death", classname = "Hydra", done = true},
-            {sound = "sound/ns2.fev/alien/structures/hive_death", classname = "Hive", done = true},
-            {sound = "sound/ns2.fev/alien/structures/death_axe", classname = "Structure", isalien = true, doer = "Axe", done = true},            
-            {sound = "sound/ns2.fev/alien/structures/egg/death", classname = "Egg", done = true},
-            {sound = "sound/ns2.fev/alien/structures/death_grenade", classname = "Structure", isalien = true, doer = "Grenade", done = true},
-            {sound = "sound/ns2.fev/alien/structures/death_small", classname = "Structure", isalien = true, done = true},
-            {sound = "sound/ns2.fev/marine/structures/generic_death", classname = "Structure", isalien = false, done = true},
         },
         
         deathAnimations =
@@ -267,10 +286,8 @@ kGeneralEffectData =
             // Play world sounds at spawn point
             //{sound = "sound/ns2.fev/marine/commander/spawn", isalien = false},
             {sound = "sound/ns2.fev/marine/structures/generic_spawn", isalien = false, done = true},
-            
             {sound = "sound/ns2.fev/alien/structures/generic_spawn_large", classname = "Hive", done = true},
-            {sound = "sound/ns2.fev/alien/structures/generic_spawn", classname = "Hive", done = true},
-            
+            {sound = "sound/ns2.fev/alien/structures/spawn_small", done = true},
         },
         
         commanderCreateCinematics =
@@ -279,7 +296,8 @@ kGeneralEffectData =
             {cinematic = "cinematics/alien/structures/spawn_small.cinematic", isalien = true, done = true},            
             
             {cinematic = "cinematics/marine/structures/spawn_building_big.cinematic", classname = "CommandStation", done = true},
-            {cinematic = "cinematics/marine/structures/spawn_building.cinematic", isalien = false, done = true},            
+            {cinematic = "cinematics/marine/structures/spawn_building.cinematic", classname = "Structure", isalien = false, done = true},
+            {cinematic = "cinematics/marine/spawn_item.cinematic", isalien = false, done = true},            
         },
     },
     
@@ -288,7 +306,7 @@ kGeneralEffectData =
     {
         commanderCreateLocalEffects =
         {
-            {private_sound = "sound/ns2.fev/alien/commander/spawn_2d", isalien = true},
+            {private_sound = "sound/ns2.fev/alien/commander/spawn_2", isalien = true},
             {private_sound = "sound/ns2.fev/marine/commander/spawn_2d", isalien = false},
         },
     },

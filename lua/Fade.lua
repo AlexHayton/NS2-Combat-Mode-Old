@@ -38,7 +38,6 @@ Fade.kMass = 158 // ~350 pounds
 Fade.kJumpHeight = 1
 Fade.kMaxSpeed = 6.5
 Fade.kStabSpeed = .5
-Fade.kAcceleration = 100
 Fade.kBlinkEnergyCost = 40
 
 if(Server) then
@@ -95,10 +94,6 @@ function Fade:GetMaxSpeed()
     // Take into account crouching
     return ( 1 - self:GetCrouchAmount() * Player.kCrouchSpeedScalar ) * baseSpeed
 
-end
-
-function Fade:GetAcceleration()
-    return Fade.kAcceleration
 end
 
 function Fade:GetMass()

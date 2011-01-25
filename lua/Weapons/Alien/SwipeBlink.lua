@@ -88,7 +88,7 @@ function SwipeBlink:OnThink()
                 else
                 
                     // Play special bite hit sound depending on material
-                    local surface = GetSurfaceFromTrace(trace)
+                    local surface = trace.surface
                     if(surface ~= "") then
                         Shared.PlayWorldSound(nil, string.format(SwipeBlink.kScrapeMaterialSound, surface), nil, trace.endPoint)
                     end

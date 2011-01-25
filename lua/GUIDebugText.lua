@@ -16,6 +16,7 @@ GUIDebugText.kWorldVerticalRiseAmount = 1
 function GUIDebugText:Initialize()
 
     self.debugText = GUI.CreateTextItem()
+    self.debugText:SetLayer(kGUILayerDebugText)
     self.debugText:SetFontSize(20)
     self.debugText:SetAnchor(GUIItem.Left, GUIItem.Top)
     self.debugText:SetTextAlignmentX(GUITextItem.Align_Center)

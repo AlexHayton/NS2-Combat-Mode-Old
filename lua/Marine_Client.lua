@@ -36,6 +36,12 @@ function Marine:OnInitLocalClient()
 		if self.experienceBar == nil then
 			self.experienceBar = GetGUIManager():CreateGUIScriptSingle("GUIExperience")
 		end
+        if self.guiOrders == nil then
+            self.guiOrders = GetGUIManager():CreateGUIScriptSingle("GUIOrders")
+        end
+        if self.guiSquad == nil then
+            self.guiSquad = GetGUIManager():CreateGUIScriptSingle("GUISquad")
+        end
         
     end    
 end
@@ -55,6 +61,14 @@ function Marine:OnDestroyClient()
 	if self.experienceBar then
         self.experienceBar = nil
         GetGUIManager():DestroyGUIScriptSingle("GUIExperience")
+    end
+    if self.guiOrders then
+        self.guiOrders = nil
+        GetGUIManager():DestroyGUIScriptSingle("GUIOrders")
+    end
+    if self.guiSquad then
+        self.guiSquad = nil
+        GetGUIManager():DestroyGUIScriptSingle("GUISquad")
     end
 
 end

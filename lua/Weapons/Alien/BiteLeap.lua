@@ -14,7 +14,7 @@ class 'BiteLeap' (Ability)
 
 BiteLeap.kMapName = "bite"
 
-BiteLeap.kRange = .6       // 60" inches in NS1
+BiteLeap.kRange = 0.8     // 60" inches in NS1
 
 function BiteLeap:GetEnergyCost(player)
     return kBiteEnergyCost

@@ -136,19 +136,23 @@ function Observatory:PerformActivation(techId, position, commander)
 
     local success = false
     
-    if techId == kTechId.Scan then
-    
-        self:TriggerScan(position)
-        success = true
+	if self:GetIsBuilt() then
+	
+		if techId == kTechId.Scan then
+		
+			self:TriggerScan(position)
+			success = true
 
-    elseif techId == kTechId.DistressBeacon then
+		elseif techId == kTechId.DistressBeacon then
+		
+			success = self:TriggerDistressBeacon()
+			
+		else        
+			success = LiveScriptActor.PerformActivation(self, techId, position, commander)
+		end
     
-        success = self:TriggerDistressBeacon()
-        
-    else        
-        success = LiveScriptActor.PerformActivation(self, techId, position, commander)
-    end
-    
+	end
+	
     return success
     
 end

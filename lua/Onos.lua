@@ -49,7 +49,6 @@ Onos.kChargeMaxSpeed = 9
 Onos.kMaxWalkSpeed = 5
 Onos.kLeapMaxSpeed = 25
 
-Onos.kAcceleration = 25
 Onos.kHealth = kOnosHealth
 Onos.kArmor = kOnosArmor
 Onos.kChargeEnergyCost = .1
@@ -279,10 +278,6 @@ function Onos:GetMaxSpeed()
     
     return Onos.kLeapMaxSpeed
     
-end
-
-function Onos:GetAcceleration()
-    return Onos.kAcceleration
 end
 
 // Half a ton

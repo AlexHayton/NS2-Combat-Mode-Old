@@ -57,20 +57,18 @@ kMarineStructureEffects =
     death =
     {
         marineStructureDeathCinematics =
-        {        
-            {cinematic = "cinematics/marine/armory/death.cinematic", classname = "Armory", done = true},
-            {cinematic = "cinematics/marine/infantryportal/death.cinematic", classname = "InfantryPortal", done = true},
-            {cinematic = "cinematics/marine/commandstation/death.cinematic", classname = "CommandStation", done = true},
+        {
             {cinematic = "cinematics/marine/sentry/death.cinematic", classname = "Sentry", done = true},
-            {cinematic = "cinematics/marine/roboticsfactory/death.cinematic", classname = "RoboticsFactory", done = true},
-            {cinematic = "cinematics/marine/extractor/death.cinematic", classname = "Extractor", done = true},
-            {cinematic = "cinematics/marine/observatory/death.cinematic", classname = "Observatory", done = true},
+            {cinematic = "cinematics/marine/structures/death_small.cinematic", classname = "Observatory", done = true},
+            {cinematic = "cinematics/marine/infantryportal/death.cinematic", classname = "InfantryPortal", done = true},
+            {cinematic = "cinematics/marine/structures/death_large.cinematic", isalien = false, classname = "Structure", done = true},
         },
         
         marineStructureDeathSounds =
         {
             {sound = "sound/ns2.fev/marine/structures/command_station_death", classname = "CommandStation", done = true},
             {sound = "sound/ns2.fev/marine/structures/extractor_death", classname = "Extractor", done = true},
+            {sound = "sound/ns2.fev/marine/structures/generic_death", classname = "Structure", isalien = false, done = true},
         },
     },
     

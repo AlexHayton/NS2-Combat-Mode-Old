@@ -327,10 +327,55 @@ function Player:GenerateMove()
             
         end
         
+        // Trigger request when marine need them (health, ammo, orders)
+        self:TriggerAlerts()
+        
     end
     
     return move
 
+end
+
+function Player:TriggerAlerts()
+
+    local team = self:GetTeam()
+    if self:isa("Marine") and team and team.TriggerAlert then
+    
+        local primaryWeapon = nil
+        local weapons = self:GetHUDOrderedWeaponList()        
+        if table.count(weapons) > 0 then
+            primaryWeapon = weapons[1]
+        end
+        
+        // Don't ask for stuff too often
+        if not self.timeOfLastRequest or (Shared.GetTime() > self.timeOfLastRequest + 9) then
+        
+            // Ask for health if we need it
+            if self:GetHealthScalar() < .4 and (math.random() < .3) then
+            
+                self:PlaySound(marineRequestSayingsSounds[2])
+                team:TriggerAlert(kTechId.MarineAlertNeedMedpack, self)
+                self.timeOfLastRequest = Shared.GetTime()
+                
+            // Ask for ammo if we need it            
+            elseif primaryWeapon and primaryWeapon:isa("ClipWeapon") and (primaryWeapon:GetAmmo() < primaryWeapon:GetMaxAmmo()*.4) and (math.random() < .25) then
+            
+                self:PlaySound(marineRequestSayingsSounds[3])
+                team:TriggerAlert(kTechId.MarineAlertNeedAmmo, self)
+                self.timeOfLastRequest = Shared.GetTime()
+                
+            elseif (not self:GetHasOrder()) and (math.random() < .2) then
+            
+                self:PlaySound(marineRequestSayingsSounds[4])
+                team:TriggerAlert(kTechId.MarineAlertNeedOrder, self)
+                self.timeOfLastRequest = Shared.GetTime()
+                
+            end
+            
+        end
+        
+    end
+    
 end
 
 function Player:InitializeBot()
@@ -382,4 +427,27 @@ function Player:UpdateTeam(joinTeam)
         
     end
     
+end
+
+function Player:UpdateOrder()
+
+    // Complete order if we're close to it, no need to be exact
+    local order = self:GetCurrentOrder()
+    if order then
+    
+        local orderType = order:GetType()
+        
+        if (orderType == kTechId.Move) or (orderType == kTechId.SquadMove) then
+
+            local orderLocation = order:GetLocation()
+            local orderDist = (self:GetOrigin() - orderLocation):GetLength()
+            
+            if orderDist < .75 then
+                self:CompletedCurrentOrder()
+            end
+            
+        end
+        
+    end
+
 end

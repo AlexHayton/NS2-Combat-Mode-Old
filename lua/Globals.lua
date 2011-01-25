@@ -127,8 +127,8 @@ kMinimapBlipType = enum( { 'TechPoint', 'ResourcePoint', 'Structure', 'Player', 
 // 2 = neutral
 kMinimapBlipTeam = enum( {'Friendly', 'Enemy', 'Neutral'} )
 
-// How often to send minimap blips - and when to expire them
-kMinimapBlipLifetime = 1.5
+// How long commander alerts should last (from NS1)
+kAlertExpireTime = 20
 
 // Bit mask table for non-stackable game effects.
 // Always keep "Max" as last element.
@@ -209,6 +209,7 @@ kLibSwfUndefined = 2147483648
 kMaxPlayers = 32
 
 kMaxIdleWorkers = 127
+kMaxPlayerAlerts = 127
 
 // Max distance to propagate entities with
 kMaxRelevancyDistance = 40
@@ -229,4 +230,10 @@ kGraphicsYResolutionOptionsKey = "graphics/display/y-resolution"
 
 kMouseSensitivityScalar         = 50
 
-
+// Maps tech buttons to keys in "grid" system
+kGridHotkeys =
+{
+    Move.Q, Move.W, Move.E, Move.R,
+    Move.A, Move.S, Move.D, Move.F,
+    Move.Z, Move.X, Move.C, Move.V,
+}

@@ -392,7 +392,15 @@ function EffectManager:InternalGetEffectMatches(triggeringEntity, assetEntry, ta
             local triggerFilterValue = tableParams[filterName]
         
             // Check class and doer names via :isa
-            if (filterName == kEffectFilterClassName) or (filterName == kEffectFilterDoerName) then
+         
+            if filterName == kEffectFilterDoerName then
+                
+                // Check the class hierarchy
+                if triggerFilterValue == nil or not Entity.isa( triggerFilterValue, filterValue ) then
+                    return false
+                end
+                                    
+            elseif (filterName == kEffectFilterClassName) then
 
                 if triggeringEntity and triggeringEntity:isa("ViewModel") and triggeringEntity:GetWeapon() and triggeringEntity:GetWeapon():isa(filterValue) then
                 

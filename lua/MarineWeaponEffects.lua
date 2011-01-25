@@ -12,11 +12,19 @@ kMarineWeaponEffects =
     {
         // For hit effects, classname is the target
         generalHitEffects =
-        {        
+        {      
+            {sound = "", classname = "Structure", done = true},
+            {sound = "", classname = "Alien", done = true},
+            {sound = "", classname = "Marine", done = true},
+           //rifle, sentry, shotgun, pistol hit
             {player_cinematic = "cinematics/materials/%s/ricochet.cinematic", doer = "ClipWeapon"},
             {sound = "sound/ns2.fev/materials/%s/ricochet", doer = "ClipWeapon", done = true},
-            
-            {player_cinematic = "cinematics/materials/%s/axe.cinematic", doer = "Axe", done = true},
+           //axe hit
+            {player_cinematic = "cinematics/materials/%s/scrape.cinematic", doer = "Axe"},
+            {sound = "sound/ns2.fev/materials/%s/metal_scrape", doer = "Axe", surface = "metal", done = true},
+           //rifle alt is below
+           //grenade is below
+           //add flamethrower searing hit effect/sound
         },
     },
     
@@ -59,10 +67,9 @@ kMarineWeaponEffects =
             // TODO: Put in fidgets when standing still
             // {.05, "idle3"}, {.02, "idle4"}
             {viewmodel_animation = {{.7, "idle"}}, classname = "Pistol", empty = true, done = true},
-            
             {viewmodel_animation = {{1.0, "idle"}, {.5, "idle3"}, {.05, "idle4"}, {.05, "idle5"}}, classname = "Rifle", done = true},
             {viewmodel_animation = {{1.2, "idle"}, {.03, "idle2"}/*, {.05, "idle3"}*/}, classname = "Shotgun", done = true},
-            {viewmodel_animation = { {1.0, "idle"}, {.05, "idle2"}, {.04, "idle3"}, {.4, "idle4"}, {.04, "idle5"} }, classname = "Flamethrower", done = true},
+            {viewmodel_animation = {{1.0, "idle"}, {.05, "idle2"}, {.04, "idle3"}, {.4, "idle4"}, {.04, "idle5"}}, classname = "Flamethrower", done = true},
         }
     },
 
@@ -111,12 +118,13 @@ kMarineWeaponEffects =
             
             // First-person and weapon shell casings
             {
-                viewmodel_cinematic = { 
+                viewmodel_cinematic = 
+                    { 
                     {1, "cinematics/marine/rifle/shell.cinematic"}, 
                     {1, "cinematics/marine/rifle/shell2.cinematic"},
                     {1, "cinematics/marine/rifle/shell3.cinematic"},
                     {1, "cinematics/marine/rifle/shell4.cinematic"},
-                    {1, "cinematics/marine/rifle/shell5.cinematic"}
+                    {1, "cinematics/marine/rifle/shell5.cinematic"},
                     }, 
                     
                 attach_point = "fxnode_riflecasing"            
@@ -164,11 +172,9 @@ kMarineWeaponEffects =
     rifle_alt_attack_hit = 
     {
         rifleAltAttackHitSoundEffects = 
-        {
+        {   
             {cinematic = "cinematics/materials/%s/bash.cinematic"},
-            {sound = "sound/ns2.fev/marine/rifle/alt_hit_living", classname = "Player", done = true},
-            {sound = "sound/ns2.fev/marine/rifle/alt_hit_living", isalien = true, done = true},
-            {sound = "sound/ns2.fev/marine/rifle/alt_hit_hard", classname = nil, done = true},
+            {sound = "sound/ns2.fev/materials/%s/bash", done = true},
         },
         
     },
@@ -273,20 +279,24 @@ kMarineWeaponEffects =
     {
         glAttackEffects =
         {
-            {viewmodel_animation = "attack_grenade", force = true},
+            {viewmodel_animation = "attack_grenade", empty = false, force = true},
             {sound = "sound/ns2.fev/marine/rifle/fire_grenade"},
-            {overlay_animation = "grenadelauncher_attack_grenade"},
+            {overlay_animation = "grenadelauncher_attack_grenade", done = true},
             
             // First-person and weapon shell casings
-            {viewmodel_cinematic = "cinematics/marine/gl/shell.cinematic", attach_point = "fxnode_riflecasing"},            
-            {weapon_cinematic = "cinematics/marine/gl/shell.cinematic", attach_point = "fxnode_riflecasing"},            
+            //{viewmodel_cinematic = "cinematics/marine/gl/shell.cinematic", attach_point = "fxnode_riflecasing"},            
+            //{weapon_cinematic = "cinematics/marine/gl/shell.cinematic", attach_point = "fxnode_riflecasing", done = true},
+            {viewmodel_animation = "attack_grenade_empty", empty = true, force = true},
+            {sound = "sound/ns2.fev/marine/common/empty", empty = true, done = true},
+            
+            
         },
     },
     
     flamethrower_attack = 
     {
-        flamethrowerAttackCinematics = {
-
+        flamethrowerAttackCinematics = 
+        {
             // If we're out of ammo, play 'flame out' effect
             {viewmodel_cinematic = "cinematics/marine/flamethrower/flameout.cinematic", attach_point = "fxnode_flamethrowermuzzle", empty = true},
             {weapon_cinematic = "cinematics/marine/flamethrower/flameout.cinematic", attach_point = "fxnode_flamethrowermuzzle", empty = true, done = true},
@@ -308,7 +318,8 @@ kMarineWeaponEffects =
     
     flamethrower_attack_end = 
     {
-        flamethrowerAttackEndCinematics = {
+        flamethrowerAttackEndCinematics = 
+        {
             {stop_sound = "sound/ns2.fev/marine/flamethrower/attack_loop"},
             {stop_sound = "sound/ns2.fev/marine/flamethrower/attack_start"},
             {sound = "sound/ns2.fev/marine/flamethrower/attack_end"},

@@ -192,7 +192,7 @@ function Rifle:PerformMeleeAttack(player)
             
         end
         
-        self:TriggerEffects("rifle_alt_attack_hit", {classname = hitClassname, isalien = isAlien, surface = GetSurfaceFromTrace(trace)})
+        self:TriggerEffects("rifle_alt_attack_hit", {classname = hitClassname, isalien = isAlien, surface = trace.surface})
         
     end
     

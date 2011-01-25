@@ -40,6 +40,8 @@ function Weapon:OnCreate()
 
     ScriptActor.OnCreate(self)
     
+    self:SetPhysicsGroup(PhysicsGroup.WeaponGroup)
+    
     self:SetUpdates(true)
     
     self.reverseX = false
@@ -144,48 +146,27 @@ function Weapon:AttackMeleeCapsule(player, damage, range)
 
     local viewOffset = player:GetViewOffset()
     local startPoint = viewOffset + player:GetOrigin()
-    local endPoint = startPoint + player:GetViewAngles():GetCoords().zAxis * range
+    local endPoint   = startPoint + player:GetViewAngles():GetCoords().zAxis * range
+
+    // Trace using a box so that unlike bullet attacks we don't require precise targeting
+    local extents = Vector(0.25, 0.25, 0.25)
     
-    local hitSomething = false
-    local entityHit = nil
-    local materialHit = ""
+    local filter = EntityFilterTwo(player, self)
+    local trace  = Shared.TraceBox(extents, startPoint, endPoint, PhysicsMask.Melee, filter)
+
+    if trace.fraction < 1 then
     
-    while true do
-    
-        // const Vec3& sweepStart, const Vec3& sweepEnd, Real capsuleRadius, Real capsuleHeight, unsigned int groupsMask, EntityFilter* filter
-        local capsuleHeight, capsuleRadius = player:GetTraceCapsule()
-        local filter = EntityFilterOne(player)
-        local trace = Shared.TraceCapsule(startPoint, endPoint, capsuleRadius, capsuleHeight, PhysicsMask.AllButPCs, filter)
-            
-        if (trace.fraction < 1) then
         
-            if(trace.entity ~= player) then
-        
-                if Server then
-                
-                    local direction = (trace.endPoint - startPoint):GetUnit()
-                    self:ApplyMeleeHitEffects(player, damage, trace.entity, trace.endPoint, direction)
-                    
-                end
-                
-                TriggerHitEffects(self, trace.entity, trace.endPoint, GetSurfaceFromTrace(trace))
-                
-                return true, trace
-                
-            else
-            
-                // Trace again so we don't hit ourselves
-                startPoint = trace.endPoint
-                
-            end 
-       
-        else
-        
-            return false, trace
-            
+        if Server then
+            local direction = (trace.endPoint - startPoint):GetUnit()
+            self:ApplyMeleeHitEffects(player, damage, trace.entity, trace.endPoint, direction)
         end
         
+        TriggerHitEffects(self, trace.entity, trace.endPoint, trace.surface)
+        
     end
+    
+    return trace.fraction < 1, trace
     
 end
 

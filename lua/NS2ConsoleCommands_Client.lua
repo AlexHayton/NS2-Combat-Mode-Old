@@ -154,13 +154,6 @@ function OnCommandRandomDebug()
     
 end
 
-function OnCommandMinimapBlipMessage(blipMessage)
-    local comm = Client.GetLocalPlayer()
-    if comm and comm:isa("Commander") then
-        comm:OnBlipMessage(ParseMinimapBlipMessage(blipMessage))
-    end
-end
-
 function OnCommandLocation(client)
 
     local player = Client.GetLocalPlayer()
@@ -202,4 +195,3 @@ Event.Hook("Console_changegcsettingclient", OnCommandChangeGCSettingClient)
 
 Client.HookNetworkMessage("SelectAndGoto",      OnCommandSelectAndGoto)
 Client.HookNetworkMessage("DamageIndicator",    OnCommandDamageIndicator)
-Client.HookNetworkMessage("MinimapBlipMessage",        OnCommandMinimapBlipMessage)

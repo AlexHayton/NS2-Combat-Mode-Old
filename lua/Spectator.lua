@@ -312,10 +312,6 @@ function Spectator:SetOrder(order, clearExisting, insertFirst)
 
 end
 
-function Spectator:CopyOrdersFrom(source)
-
-end
-
 function Spectator:CopyOrders(dest)
 
 end

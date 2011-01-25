@@ -107,7 +107,7 @@ end
 
 // Returns true or false, as well as the entity id of the new structure (or -1 if false)
 // pickVec optional (for AI units). In those cases, builderEntity will be the entity doing the building.
-function Commander:AttemptToBuild(techId, origin, pickVec, buildTech, builderEntity)
+function Commander:AttemptToBuild(techId, origin, orientation, pickVec, buildTech, builderEntity)
 
     local legalBuildPosition = false
     local position = nil
@@ -132,6 +132,11 @@ function Commander:AttemptToBuild(techId, origin, pickVec, buildTech, builderEnt
         local newEnt = CreateEntityForCommander(techId, position, self)
         
         if newEnt ~= nil then
+        
+            // If orientation yaw specified, set it
+            if orientation then
+                newEnt:SetAngles(Angles(0, orientation, 0))
+            end
             
             local isAlien = false
             if newEnt.GetIsAlienStructure then
@@ -164,7 +169,7 @@ end
 
 // Return whether action should continue to be processed for the next selected unit. Position will be nil
 // for non-targeted actions and will be the world position target for the action for targeted actions.
-function Commander:ProcessTechTreeActionForEntity(techNode, position, pickVec, entity, force)
+function Commander:ProcessTechTreeActionForEntity(techNode, position, pickVec, orientation, entity, force)
 
     local success = false
     local keepProcessing = true
@@ -206,7 +211,7 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, pickVec, e
                                 
             elseif(techNode:GetIsBuild()) then
             
-                success = self:AttemptToBuild(techId, position, pickVec, false)
+                success = self:AttemptToBuild(techId, position, orientation, pickVec, false)
                 if success then 
                     keepProcessing = false
                 end
@@ -243,7 +248,7 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, pickVec, e
                 
             elseif(techNode:GetIsBuy()) then
             
-                success = self:AttemptToBuild(techId, position, pickVec, false)
+                success = self:AttemptToBuild(techId, position, orientation, pickVec, false)
                 
             end
             
@@ -305,8 +310,15 @@ function Commander:OrderEntities(orderTechId, trace, orientation)
     
     if (trace.fraction < 1) then
 
+        // Give order to selection
         local orderEntities = {}
-        table.copy(self.selectedSubGroupEntities, orderEntities)
+        for tableIndex, entityPair in ipairs(self.selectedEntities) do
+    
+            local entityIndex = entityPair[1]
+            local entity = Shared.GetEntity(entityIndex)
+            table.insert(orderEntities, entity)
+            
+        end
         
         // Give order to ourselves for testing
         if GetGamerules():GetOrderSelf() then
@@ -317,8 +329,7 @@ function Commander:OrderEntities(orderTechId, trace, orientation)
         
         for tableIndex, entity in ipairs(orderEntities) do
 
-            local type = entity:GiveOrder(orderTechId, targetId, trace.endPoint, orientation, not self.queuingOrders, false)
-                            
+            local type = entity:GiveOrder(orderTechId, targetId, trace.endPoint, orientation, not self.queuingOrders, false)                            
             
             if(type == kTechId.None) then            
                 invalid = true    
@@ -414,7 +425,7 @@ function Commander:ProcessTechTreeAction(techId, pickVec, orientation, worldCoor
             
                 local actionSuccess = false
                 local keepProcessing = false
-                actionSuccess, keepProcessing = self:ProcessTechTreeActionForEntity(techNode, targetPosition, pickVec, selectedEntity)
+                actionSuccess, keepProcessing = self:ProcessTechTreeActionForEntity(techNode, targetPosition, pickVec, orientation, selectedEntity)
                 
                 // Successful if just one of our entities handled action
                 if(actionSuccess) then
@@ -458,6 +469,23 @@ function Commander:GetIsEntityHotgrouped(entity)
                 
             end
             
+        end
+        
+    end
+    
+    return false
+    
+end
+
+function Commander:GetSelectionHasOrder(orderEntity)
+
+    for tableIndex, entityPair in ipairs(self.selectedEntities) do
+    
+        local entityIndex = entityPair[1]
+        local entity = Shared.GetEntity(entityIndex)
+        
+        if entity and entity.GetHasSpecifiedOrder and entity:GetHasSpecifiedOrder(orderEntity) then
+            return true
         end
         
     end
@@ -538,14 +566,14 @@ function Commander:SendHotkeyGroup(number)
 end
 
 // Send alert to player unless we recently sent the exact same alert. Returns true if it was sent.
-function Commander:SendAlert(techId, entity)
+function Commander:TriggerAlert(techId, entity)
 
     ASSERT(entity ~= nil)
     
     local entityId = entity:GetId()
     local time = Shared.GetTime()
     
-    for index, alert in ipairs(self.sentAlerts) do
+    for index, alert in ipairs(self.alerts) do
     
         if (alert[1] == techId) and (alert[2] == entityId) and (alert[3] > (time - PlayingTeam.kRepeatAlertInterval)) then
         
@@ -558,15 +586,11 @@ function Commander:SendAlert(techId, entity)
     local location = Vector(entity:GetOrigin())
     Server.SendCommand(self, string.format("minimapalert %d %.2f %.2f %d %d", techId, location.x, location.z, entity:GetId(), entity:GetTechId())) 
 
-    // Insert new triple: techid/entityid/timesent
-    table.insert(self.sentAlerts, {techId, entityId, time})
+    // Insert new generic alert triple: techid/entityid/timesent
+    table.insert(self.alerts, {techId, entityId, time})
     
     return true
     
-end
-
-function Commander:GetSentAlerts()
-    return self.sentAlerts
 end
 
 // After logging in to the command station, send all hotkey groups. After that, only
@@ -647,6 +671,37 @@ function Commander:UpdateNumIdleWorkers()
     
 end
 
+function Commander:UpdateAlerts()
+    
+    if self.lastTimeUpdatedPlayerAlerts == nil or (Shared.GetTime() > self.lastTimeUpdatedPlayerAlerts + .25) then
+    
+        // Expire old alerts so they don't stack up
+        function expireOldAlert(triple)
+            return Shared.GetTime() > (triple[3] + kAlertExpireTime)
+        end
+        
+        table.removeConditional(self.alerts, expireOldAlert)
+    
+        // Count number of player request alerts to draw on Commander HUD
+        local numPlayerAlerts = 0        
+        for index, triple in ipairs(self.alerts) do
+        
+            local alertType = LookupTechData(triple[1], kTechDataAlertType, nil)
+            
+            if alertType == kAlertType.Request then
+                numPlayerAlerts = numPlayerAlerts + 1
+            end
+            
+        end
+        
+        self.numPlayerAlerts = Clamp(numPlayerAlerts, 0, kMaxPlayerAlerts)
+        
+        self.lastTimeUpdatedPlayerAlerts = Shared.GetTime()
+        
+    end
+    
+end
+
 function Commander:GotoIdleWorker()
     
     local success = false
@@ -697,6 +752,39 @@ function Commander:GotoIdleWorker()
         
     end
             
+end
+
+function Commander:GotoPlayerAlert()
+
+    for index, triple in ipairs(self.alerts) do
+        
+        local alertType = LookupTechData(triple[1], kTechDataAlertType, nil)
+            
+        if alertType == kAlertType.Request then
+        
+            self.lastTimeUpdatedPlayerAlerts = nil
+            
+            local playerAlertId = triple[2]
+            local player = Shared.GetEntity(playerAlertId)
+            
+            if player then
+            
+                table.remove(self.alerts, index)
+                
+                self:SetSelection( { playerAlertId } )
+                
+                Server.SendNetworkMessage(self, "SelectAndGoto", BuildSelectAndGotoMessage(playerAlertId), true)
+                
+                return true
+                
+            end
+            
+        end
+            
+    end
+    
+    return false
+    
 end
 
 function Commander:Logout()

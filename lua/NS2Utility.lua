@@ -324,18 +324,6 @@ function GetSurfaceFromEntity(entity)
     
 end
 
-function GetSurfaceFromTrace(trace)
-
-    if((trace.entity ~= nil and trace.entity:isa("Structure") and trace.entity:GetTeamType() == kAlienTeamType)) then
-        return "organic"
-    elseif((trace.entity ~= nil and trace.entity:isa("Structure") and trace.entity:GetTeamType() == kMarineTeamType)) then
-        return "thin_metal"
-    end
-
-    return trace.surface
-    
-end
-
 // Trace line to each target to make sure it's not blocked by a wall 
 function GetWallBetween(startPoint, endPoint, ignoreEntity)
 
@@ -840,15 +828,19 @@ function GetCanSeeEntity(seeingEntity, targetEntity)
     
 end
 
+function GetLocations()
+
+    if Server then
+        return Server.locationList
+    else        
+        return GetEntitiesIsa("Location")
+    end
+
+end
+
 function GetLocationForPoint(point)
 
-    local ents = {}
-    
-    if Server then
-        ents = Server.locationList
-    else
-        ents = GetEntitiesIsa("Location")
-    end
+    local ents = GetLocations()
     
     for index, location in ipairs(ents) do
     
@@ -870,12 +862,7 @@ function GetLocationEntitiesNamed(name)
     
     if name ~= nil and name ~= "" then
     
-        local ents = {}
-        if Server then
-            ents = Server.locationList
-        else        
-            ents = GetEntitiesIsa("Location")
-        end
+        local ents = GetLocations()
         
         for index, location in ipairs(ents) do
         
@@ -982,7 +969,7 @@ function GetHasRoomForCapsule(extents, position, physicsMask, ignoreEntity)
     if extents ~= nil then
     
         local filter = ConditionalValue(ignoreEntity, EntityFilterOne(ignoreEntity), nil)
-        return Shared.CollideBox(extents, position, physicsMask, filter)
+        return not Shared.CollideBox(extents, position, physicsMask, filter)
         
     else
         Print("GetHasRoomForCapsule(): Extents not valid.")
@@ -1114,7 +1101,7 @@ function TriggerHitEffects(doer, target, origin, surface)
         tableParams[kEffectHostCoords] = Coords.GetIdentity()
     end
     
-    GetEffectManager():TriggerEffects("hit_effect", tableParams, doer)
+    GetEffectManager():TriggerEffects("hit_effect", tableParams, target)
     
 end
 

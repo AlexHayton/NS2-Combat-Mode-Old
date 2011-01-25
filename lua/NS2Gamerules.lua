@@ -54,6 +54,10 @@ function NS2Gamerules:SetGameState(state)
         local frozenState = (state == kGameState.Countdown) and (not Shared.GetDevMode())
         self.team1:SetFrozenState(frozenState)
         self.team2:SetFrozenState(frozenState)
+        
+        if self.gameState == kGameState.Started then
+            self.gameStartTime = Shared.GetTime()
+        end
 
     end
     
@@ -592,17 +596,103 @@ function NS2Gamerules:UpdatePings()
 end
 
 function NS2Gamerules:UpdateMinimapBlips()
-
-    if(self.timeToSendMinimapBlips == nil or Shared.GetTime() > self.timeToSendMinimapBlips) then
     
-        self.team1:SendBlipList()
-        self.team2:SendBlipList()
+    if GetGamerules():GetGameStarted() then
         
-        self.timeToSendMinimapBlips = Shared.GetTime() + kMinimapBlipLifetime
+        // MapBlips aren't script actors, so can't use GetGamerules() functions
+        local mapBlips = GetEntitiesIsa("MapBlip")
         
-    end     
-    
+        for entIndex, entity in ipairs(GetGamerules():GetAllScriptActors()) do
+        
+            local success, blipType, blipTeam = self:GetMinimapBlipTypeAndTeam(entity)
+            
+            if success then
+            
+                CreateUpdateMapBlip(mapBlips, entity, blipType, blipTeam)
+                
+            end        
+            
+        end
+        
+        // Now sync the sighted entities with the blip entities, creating or deleting them
+        self:DeleteOldMapBlips(mapBlips)
+        
+    end
 
+end
+
+function NS2Gamerules:DeleteOldMapBlips(mapBlips)
+
+    for i, blip in ipairs(mapBlips) do
+        if Shared.GetEntity(blip:GetOwnerEntityId()) == nil then
+            DestroyEntity(blip)
+        end
+    end
+
+end
+
+function NS2Gamerules:GetMinimapBlipTypeAndTeam(entity)
+
+    local success = false
+    local blipType = 0
+    local blipTeam = 0
+    
+    // Don't display blips for ResourceTowers or CommandStructures as
+    // they will have a blip under them for the Resource/Tech Point already or
+    // they are not important enough to display.
+    if entity:isa("CommandStructure") or entity:isa("ResourceTower") or
+       entity:isa("Egg") then
+        return success, blipType, blipTeam
+    end
+    
+    // World entities
+    if entity:isa("Door") then
+    
+        blipType = kMinimapBlipType.Door
+        
+    elseif entity:isa("ResourcePoint") then
+
+        blipType = kMinimapBlipType.ResourcePoint
+        if entity:GetAttached() then
+            blipTeam = entity:GetAttached():GetTeamNumber()
+        end
+    
+    elseif entity:isa("TechPoint") then
+    
+        blipType = kMinimapBlipType.TechPoint
+        if entity:GetAttached() then
+            blipTeam = entity:GetAttached():GetTeamNumber()
+        end
+        
+    // Don't display PowerPoints unless they are in an unpowered state.
+    elseif entity:isa("PowerPoint") then
+    
+        // Important to have this statement inside the isa("PowerPoint") statement.
+        if entity:GetLightMode() == kLightMode.NoPower then
+            blipType = kMinimapBlipType.PowerPoint
+        end
+    
+    // Players and structures.
+    elseif entity:GetIsVisible() then
+    
+        if entity:isa("Player") or entity:isa("MAC") or entity:isa("Drifter") then
+            blipType = kMinimapBlipType.Player 
+        elseif entity:isa("Structure") then
+            blipType = kMinimapBlipType.Structure
+        end
+        
+        blipTeam = entity:GetTeamNumber()
+        
+    end
+    
+    if blipType ~= 0 then
+        
+        success = true
+        
+    end
+
+    return success, blipType, blipTeam
+    
 end
 
 function NS2Gamerules:OnMapPostLoad()
@@ -731,7 +821,11 @@ function NS2Gamerules:EndGame(winningTeam)
         losingTeam:AddTooltip(loseMsg)
         
         self.team1:ClearRespawnQueue()
-        self.team2:ClearRespawnQueue()  
+        self.team2:ClearRespawnQueue()
+        
+        local gameLengthString = string.format("%.2f", Shared.GetTime() - self.gameStartTime)
+        local urlString = "http://unknownworldsstats.appspot.com/statendgame?version=" .. ToString(Shared.GetBuildNumber()) .. "&winner=" .. ToString(winningTeam:GetTeamType()) .. "&length=" .. gameLengthString .. "&map=" .. Shared.GetMapName()
+        Shared.GetWebpage(urlString, function (data) end)
         
     end
 
@@ -1004,6 +1098,18 @@ function NS2Gamerules:GetIsRelevant(player, entity, noRecurse)
             relevant = (dist < kHiveSightMaxRange)
         end
         
+    elseif entity:isa("MapBlip") then
+    
+        if (entity:GetOwnerEntityId() ~= player:GetId()) then
+            relevant = entity:GetTeam() ~= GetEnemyTeamNumber(player:GetTeamNumber())
+            relevant = relevant or entity:GetIsSighted()
+        end
+
+    // Send orders given to players to those players
+    elseif entity:isa("Order") and player:isa("Marine") then
+
+        relevant = (player.GetHasSpecifiedOrder and player:GetHasSpecifiedOrder(entity))
+        
     // Remove LOS check for perf while debugging
     elseif(player:GetIsCommander() and not entity:isa("Blip")) then
     
@@ -1011,7 +1117,17 @@ function NS2Gamerules:GetIsRelevant(player, entity, noRecurse)
         if entity:isa("PropDynamic") and entity.commAlpha ~= nil and entity.commAlpha < 1 then
         
             relevant = false
+
+        // Send orders if they belong to a unit is selected
+        elseif(entity:isa("Order") and player:isa("Commander")) then
+        
+            relevant = player:GetSelectionHasOrder(entity)
             
+        // Send down all players to the commander so select all works
+        elseif entity:isa("Player") and not entity:isa("Commander") and not entity:isa("Spectator") and (entity:GetTeamNumber() == player:GetTeamNumber()) then
+        
+            relevant = true
+
         // Send our hotgroups and also the command station we're in
         elseif(player:GetIsEntitySelected(entity) or player:GetIsEntityHotgrouped(entity) or player:GetIsEntityIdleWorker(entity) or (player:GetHostCommandStructure():GetId() == entity:GetId())) then
         

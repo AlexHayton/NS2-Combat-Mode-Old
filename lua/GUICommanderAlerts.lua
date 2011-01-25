@@ -54,17 +54,33 @@ end
 function GUICommanderAlerts:SendKeyEvent(key, down)
 
     local numberMessages = table.count(self.messages)
-    if down and key == InputKey.Space and numberMessages > 0 then
-        local latestMessage = self.messages[numberMessages]
-        local entityIsRelevant = Shared.GetEntity(latestMessage["EntityId"])
-        if entityIsRelevant then
-            CommanderUI_ClickedEntityAlert(latestMessage["EntityId"])
-        else
-            CommanderUI_ClickedLocationAlert(latestMessage["MapX"], latestMessage["MapZ"])
+    if down and numberMessages > 0 then
+        if key == InputKey.Space then
+            local latestMessage = self.messages[numberMessages]
+            self:AlertClicked(latestMessage)
+            return true
+        elseif key == InputKey.MouseButton0 then
+            local mouseX, mouseY = Client.GetCursorPosScreen()
+            for i, message in ipairs(self.messages) do
+                if GUIItemContainsPoint(message["Background"], mouseX, mouseY) then
+                    self:AlertClicked(message)
+                    return true
+                end
+            end
         end
-        return true
     end
     return false
+
+end
+
+function GUICommanderAlerts:AlertClicked(alertMessage)
+
+    local entityIsRelevant = Shared.GetEntity(alertMessage["EntityId"])
+    if entityIsRelevant then
+        CommanderUI_ClickedEntityAlert(alertMessage["EntityId"])
+    else
+        CommanderUI_ClickedLocationAlert(alertMessage["MapX"], alertMessage["MapZ"])
+    end
 
 end
 
@@ -148,7 +164,6 @@ function GUICommanderAlerts:AddMessage(text, iconXOffset, iconYOffset, entityId,
     insertMessage["Icon"]:SetAnchor(GUIItem.Left, GUIItem.Center)
     insertMessage["Icon"]:SetPosition(Vector(GUICommanderAlerts.kBadgeWidthBuffer, -iconScaledHeight / 2, 0))
     insertMessage["Icon"]:SetTexture("ui/" .. CommanderUI_MenuImage() .. ".dds")
-    local menuImageWidth, menuImageHeight = CommanderUI_MenuImageSize()
     
     local pixelXOffset = iconXOffset * GUICommanderAlerts.kIconWidth
     local pixelYOffset = iconYOffset * GUICommanderAlerts.kIconHeight
@@ -169,6 +184,7 @@ function GUICommanderAlerts:AddMessage(text, iconXOffset, iconYOffset, entityId,
     // Only set children the first time this message is created.
     if insertMessage["Background"] == nil then
         insertMessage["Background"] = GUI.CreateGraphicsItem()
+        insertMessage["Background"]:SetLayer(kGUILayerCommanderAlerts)
         insertMessage["Background"]:AddChild(insertMessage["Icon"])
         insertMessage["Icon"]:AddChild(insertMessage["Message"])
     end
@@ -183,4 +199,15 @@ function GUICommanderAlerts:AddMessage(text, iconXOffset, iconYOffset, entityId,
 
     table.insert(self.messages, insertMessage)
     
+end
+
+function GUICommanderAlerts:ContainsPoint(pointX, pointY)
+
+    for i, message in ipairs(self.messages) do
+        if GUIItemContainsPoint(message["Background"], pointX, pointY) then
+            return true
+        end
+    end
+    return false
+
 end

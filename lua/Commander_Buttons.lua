@@ -54,7 +54,7 @@ function CommanderUI_MenuButtonTooltip(index)
         techId = player.menuTechButtons[index]        
         
         tooltipText = techTree:GetDescriptionText(techId)
-        hotkey = LookupTechData(techId, kTechDataHotkey, "")
+        hotkey = kGridHotkeys[index]
         
         if hotkey ~= "" then
             hotkey = gHotkeyDescriptions[hotkey]
@@ -527,8 +527,9 @@ function Commander:InitTechTreeMaterialOffsets()
     self.kAlienTechIdToMaterialOffset[kTechId.DrifterParasiteTech] = 74
     self.kAlienTechIdToMaterialOffset[kTechId.DrifterParasite] = 75
     self.kAlienTechIdToMaterialOffset[kTechId.PiercingTech] = 76
-    self.kAlienTechIdToMaterialOffset[kTechId.Armor3Tech] = 77
-
+    
+    self.kAlienTechIdToMaterialOffset[kTechId.AlienArmor3Tech] = 77
+    
     // Upgrades #1
     self.kAlienTechIdToMaterialOffset[kTechId.AdrenalineTech] = 80
     self.kAlienTechIdToMaterialOffset[kTechId.CorpulenceTech] = 81
@@ -545,8 +546,8 @@ function Commander:InitTechTreeMaterialOffsets()
     self.kAlienTechIdToMaterialOffset[kTechId.Melee1Tech] = 91
     self.kAlienTechIdToMaterialOffset[kTechId.Melee2Tech] = 92
     self.kAlienTechIdToMaterialOffset[kTechId.Melee3Tech] = 93
-    self.kAlienTechIdToMaterialOffset[kTechId.Armor1Tech] = 94
-    self.kAlienTechIdToMaterialOffset[kTechId.Armor2Tech] = 95   
+    self.kAlienTechIdToMaterialOffset[kTechId.AlienArmor1Tech] = 94
+    self.kAlienTechIdToMaterialOffset[kTechId.AlienArmor2Tech] = 95   
     
 end
 

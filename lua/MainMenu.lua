@@ -26,8 +26,13 @@ function LeaveMenu()
     MenuManager.SetMenuCinematic(nil)
     MenuManager.StopMusic(mainMenuMusic)
     
-    Client.SetMouseVisible(false)
-    Client.SetMouseCaptured(true)
+    local localPlayer = Client.GetLocalPlayer()
+    // Only make the mouse invisible if there is no local player
+    // or that local player isn't a commander.
+    if not localPlayer or not localPlayer:GetIsCommander() then
+        Client.SetMouseVisible(false)
+        Client.SetMouseCaptured(true)
+    end
     
 end
 

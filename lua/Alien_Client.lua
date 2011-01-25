@@ -15,7 +15,7 @@ Alien.kHUDFlash = "ui/alien_hud.swf"
 Alien.kBuyHUDFlash = "ui/alien_buy.swf"
 Alien.kBuyHUDTexture = "ui/alien_buildmenu.dds"
 
-// Returns all the info about all hive sight blips so it can be rendered by Flash.
+// Returns all the info about all hive sight blips so it can be rendered by the UI.
 // Returns single-dimensional array of fields in the format screenX, screenY, drawRadius, blipType
 function PlayerUI_GetBlipInfo()
 

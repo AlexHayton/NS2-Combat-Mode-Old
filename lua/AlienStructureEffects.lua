@@ -41,14 +41,16 @@ kAlienStructureEffects =
         alienStructureDeathParticleEffect =
         {        
             // Plays the first effect that evalutes to true
+            
             {cinematic = "cinematics/alien/structures/death_large.cinematic", classname = "Hive", done = true},
             {cinematic = "cinematics/alien/structures/death_small.cinematic", isalien = true, classname = "Structure", done = true},
         },
         
         alienStructureDeathSounds =
         {
-            {sound = "sound/alien/structures/hive_death", classname = "Hive", done = true},
-            {sound = "sound/alien/structures/harvester_death", classname = "Harvester", done = true},
+            {sound = "sound/ns2.fev/alien/structures/harvester_death", classname = "Harvester", done = true},
+            {sound = "sound/ns2.fev/alien/structures/hive_death", classname = "Hive", done = true},
+            {sound = "sound/ns2.fev/alien/structures/death_small", classname = "Structure", isalien = true, done = true},
         },
         
         alienStructureDeathStopSounds =
@@ -170,7 +172,7 @@ kAlienStructureEffects =
     {
         hiveMetabolizeEffects =
         {
-            {sound = "sound/ns2.fev/alien/metabolize"},
+            {sound = "sound/ns2.fev/alien/healing_mound_heal"},
             
             {cinematic = "cinematics/alien/metabolize_large.cinematic", classname = "Hive", done = true},
             {cinematic = "cinematics/alien/metabolize_large.cinematic", classname = "Onos", done = true},

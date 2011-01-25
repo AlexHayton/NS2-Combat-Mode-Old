@@ -27,6 +27,8 @@ function GUIBorderBackground:Initialize(settingsTable)
     self.partTextureWidth = settingsTable.TexturePartWidth
     self.partTextureHeight = settingsTable.TexturePartHeight
     
+    self.parts = { }
+    
     local textureName = settingsTable.TextureName
     
     // Corner parts.
@@ -36,8 +38,9 @@ function GUIBorderBackground:Initialize(settingsTable)
     else
         self.topLeftBackground:SetColor(Color(0, 0, 0, 0))
     end
-    self.topLeftBackground:SetTexturePixelCoordinates(settingsTable.TextureCoordinates[1].X1, settingsTable.TextureCoordinates[1].Y1, settingsTable.TextureCoordinates[1].X2, settingsTable.TextureCoordinates[1].Y2)
+    GUISetTextureCoordinatesTable(self.topLeftBackground, settingsTable.TextureCoordinates[1])
     self.background:AddChild(self.topLeftBackground)
+    table.insert(self.parts, self.topLeftBackground)
     
     self.topRightBackground = GUI.CreateGraphicsItem()
     if textureName and string.len(textureName) > 0 then
@@ -45,8 +48,9 @@ function GUIBorderBackground:Initialize(settingsTable)
     else
         self.topRightBackground:SetColor(Color(0, 0, 0, 0))
     end
-    self.topRightBackground:SetTexturePixelCoordinates(settingsTable.TextureCoordinates[3].X1, settingsTable.TextureCoordinates[3].Y1, settingsTable.TextureCoordinates[3].X2, settingsTable.TextureCoordinates[3].Y2)
+    GUISetTextureCoordinatesTable(self.topRightBackground, settingsTable.TextureCoordinates[3])
     self.background:AddChild(self.topRightBackground)
+    table.insert(self.parts, self.topRightBackground)
     
     self.bottomLeftBackground = GUI.CreateGraphicsItem()
     if textureName and string.len(textureName) > 0 then
@@ -54,8 +58,9 @@ function GUIBorderBackground:Initialize(settingsTable)
     else
         self.bottomLeftBackground:SetColor(Color(0, 0, 0, 0))
     end
-    self.bottomLeftBackground:SetTexturePixelCoordinates(settingsTable.TextureCoordinates[7].X1, settingsTable.TextureCoordinates[7].Y1, settingsTable.TextureCoordinates[7].X2, settingsTable.TextureCoordinates[7].Y2)
+    GUISetTextureCoordinatesTable(self.bottomLeftBackground, settingsTable.TextureCoordinates[7])
     self.background:AddChild(self.bottomLeftBackground)
+    table.insert(self.parts, self.bottomLeftBackground)
     
     self.bottomRightBackground = GUI.CreateGraphicsItem()
     if textureName and string.len(textureName) > 0 then
@@ -63,8 +68,9 @@ function GUIBorderBackground:Initialize(settingsTable)
     else
         self.bottomRightBackground:SetColor(Color(0, 0, 0, 0))
     end
-    self.bottomRightBackground:SetTexturePixelCoordinates(settingsTable.TextureCoordinates[9].X1, settingsTable.TextureCoordinates[9].Y1, settingsTable.TextureCoordinates[9].X2, settingsTable.TextureCoordinates[9].Y2)
+    GUISetTextureCoordinatesTable(self.bottomRightBackground, settingsTable.TextureCoordinates[9])
     self.background:AddChild(self.bottomRightBackground)
+    table.insert(self.parts, self.bottomRightBackground)
     
     // Scaled middle parts.
     self.topMiddleBackground = GUI.CreateGraphicsItem()
@@ -73,8 +79,9 @@ function GUIBorderBackground:Initialize(settingsTable)
     else
         self.topMiddleBackground:SetColor(Color(0, 0, 0, 0))
     end
-    self.topMiddleBackground:SetTexturePixelCoordinates(settingsTable.TextureCoordinates[2].X1, settingsTable.TextureCoordinates[2].Y1, settingsTable.TextureCoordinates[2].X2, settingsTable.TextureCoordinates[2].Y2)
+    GUISetTextureCoordinatesTable(self.topMiddleBackground, settingsTable.TextureCoordinates[2])
     self.background:AddChild(self.topMiddleBackground)
+    table.insert(self.parts, self.topMiddleBackground)
     
     self.bottomMiddleBackground = GUI.CreateGraphicsItem()
     if textureName and string.len(textureName) > 0 then
@@ -82,8 +89,9 @@ function GUIBorderBackground:Initialize(settingsTable)
     else
         self.bottomMiddleBackground:SetColor(Color(0, 0, 0, 0))
     end
-    self.bottomMiddleBackground:SetTexturePixelCoordinates(settingsTable.TextureCoordinates[8].X1, settingsTable.TextureCoordinates[8].Y1, settingsTable.TextureCoordinates[8].X2, settingsTable.TextureCoordinates[8].Y2)
+    GUISetTextureCoordinatesTable(self.bottomMiddleBackground, settingsTable.TextureCoordinates[8])
     self.background:AddChild(self.bottomMiddleBackground)
+    table.insert(self.parts, self.bottomMiddleBackground)
     
     self.leftCenterBackground = GUI.CreateGraphicsItem()
     if textureName and string.len(textureName) > 0 then
@@ -91,8 +99,9 @@ function GUIBorderBackground:Initialize(settingsTable)
     else
         self.leftCenterBackground:SetColor(Color(0, 0, 0, 0))
     end
-    self.leftCenterBackground:SetTexturePixelCoordinates(settingsTable.TextureCoordinates[4].X1, settingsTable.TextureCoordinates[4].Y1, settingsTable.TextureCoordinates[4].X2, settingsTable.TextureCoordinates[4].Y2)
+    GUISetTextureCoordinatesTable(self.leftCenterBackground, settingsTable.TextureCoordinates[4])
     self.background:AddChild(self.leftCenterBackground)
+    table.insert(self.parts, self.leftCenterBackground)
     
     self.rightCenterBackground = GUI.CreateGraphicsItem()
     if textureName and string.len(textureName) > 0 then
@@ -100,8 +109,9 @@ function GUIBorderBackground:Initialize(settingsTable)
     else
         self.rightCenterBackground:SetColor(Color(0, 0, 0, 0))
     end
-    self.rightCenterBackground:SetTexturePixelCoordinates(settingsTable.TextureCoordinates[6].X1, settingsTable.TextureCoordinates[6].Y1, settingsTable.TextureCoordinates[6].X2, settingsTable.TextureCoordinates[6].Y2)
+    GUISetTextureCoordinatesTable(self.rightCenterBackground, settingsTable.TextureCoordinates[6])
     self.background:AddChild(self.rightCenterBackground)
+    table.insert(self.parts, self.rightCenterBackground)
     
     // Middle part.
     self.middleBackground = GUI.CreateGraphicsItem()
@@ -110,8 +120,9 @@ function GUIBorderBackground:Initialize(settingsTable)
     else
         self.middleBackground:SetColor(Color(0, 0, 0, 0))
     end
-    self.middleBackground:SetTexturePixelCoordinates(settingsTable.TextureCoordinates[5].X1, settingsTable.TextureCoordinates[5].Y1, settingsTable.TextureCoordinates[5].X2, settingsTable.TextureCoordinates[5].Y2)
+    GUISetTextureCoordinatesTable(self.middleBackground, settingsTable.TextureCoordinates[5])
     self.background:AddChild(self.middleBackground)
+    table.insert(self.parts, self.middleBackground)
     
     // Now that they are all created, set their initial sizes.
     self:SetSize(Vector(self.width, self.height, 0))
@@ -191,6 +202,12 @@ function GUIBorderBackground:SetSize(sizeVector)
 
 end
 
+function GUIBorderBackground:SetLayer(setLayer)
+
+    self.background:SetLayer(setLayer)
+
+end
+
 function GUIBorderBackground:SetPosition(setPosition)
 
     self.background:SetPosition(setPosition)
@@ -206,6 +223,14 @@ end
 function GUIBorderBackground:SetIsVisible(setIsVisible)
 
     self.background:SetIsVisible(setIsVisible)
+
+end
+
+function GUIBorderBackground:SetColor(setColor)
+
+    for i, item in ipairs(self.parts) do
+        item:SetColor(setColor)
+    end
 
 end
 

@@ -82,7 +82,7 @@ Player.kStartRunMaxSpeed = Player.kWalkMaxSpeed
 Player.kRunMaxSpeed = 6.25              // 10 miles an hour = 16,093 meters/hour = 4.4 meters/second (increase for FPS tastes)
 Player.kMaxWalkableNormal =  math.cos( math.rad(45) )
 
-Player.kAcceleration = 200
+Player.kAcceleration = 50
 Player.kRunAcceleration = 300
 Player.kLadderAcceleration = 50
 
@@ -191,7 +191,6 @@ local networkVars =
     
     primaryAttackLastFrame      = "boolean",
     secondaryAttackLastFrame    = "boolean",
-    
     // Indicates how active the player has been
     outOfBreath             = "integer (0 to 255)",
     
@@ -235,7 +234,7 @@ function Player:OnCreate()
     self.viewYaw        = 0
     self.viewPitch      = 0
     self.viewRoll       = 0
-    self.maxExtents     = Vector()
+    self.maxExtents     = Vector( LookupTechData(self:GetTechId(), kTechDataMaxExtents, Vector(Player.kXZExtents, Player.kYExtents, Player.kXZExtents)) )
     self.viewOffset     = Vector()
 
     self.desiredCameraDistance = 0
@@ -319,7 +318,6 @@ function Player:OnCreate()
     self.rank = 0
         
     // Make the player kinematic so that bullets and other things collide with it.
-    self:SetPhysicsType(Actor.PhysicsType.Kinematic)
     self:SetPhysicsGroup(PhysicsGroup.PlayerGroup)
     
     self.nextOrderWaypoint = nil
@@ -350,8 +348,6 @@ function Player:OnInit()
     
     self:SetFov(self:GetStartFov())
     
-    VectorCopy(Vector(Player.kXZExtents, Player.kYExtents, Player.kXZExtents), self.maxExtents)
-    
     self:UpdateControllerFromEntity()
         
     self:TriggerEffects("idle")
@@ -365,6 +361,8 @@ function Player:OnInit()
     
     // Table of table of ids, in order of hotkey groups
     self:InitializeHotkeyGroups()
+    
+    self:LoadHeightmap()
     
 end
 
@@ -720,6 +718,47 @@ function Player:GetCanViewModelIdle()
     return self:GetIsAlive() and self:GetCanNewActivityStart() and (self.mode == kPlayerMode.Default)
 end
 
+function Player:LoadHeightmap()
+
+    // Load height map
+    self.heightmap = HeightMap()   
+    local heightmapFilename = string.format("maps/overviews/%s.hmp", Shared.GetMapName())
+    
+    if(not self.heightmap:Load(heightmapFilename)) then
+        Shared.Message("Couldn't load height map " .. heightmapFilename)
+        self.heightmap = nil
+    end
+
+end
+
+function Player:GetHeightmap()
+    return self.heightmap
+end
+
+// worldX => -map y
+// worldZ => +map x
+function Player:GetMapXY(worldX, worldZ)
+
+    local success = false
+    local mapX = 0
+    local mapY = 0
+
+    if self.heightmap then
+        mapX = self.heightmap:GetMapX(worldZ)
+        mapY = self.heightmap:GetMapY(worldX)
+    else
+        Print("Player:GetMapXY(): heightmap is nil")
+        return false, 0, 0
+    end
+
+    if mapX >= 0 and mapX <= 1 and mapY >= 0 and mapY <= 1 then
+        success = true
+    end
+
+    return success, mapX, mapY
+
+end
+
 // Plays view model animation, given a string or a table of weighted entries.
 // Returns length of animation or 0 if animation wasn't found. 
 function Player:SetViewAnimation(animName, noForce, blend, speed)
@@ -1061,15 +1100,7 @@ function Player:GetExtents()
 end
 
 function Player:GetMaxExtents()
-
-    local extents = LookupTechData(self:GetTechId(), kTechDataMaxExtents)
-    if extents == nil then
-        // Just in case callers try to modify
-        extents = Vector(self.maxExtents)
-    end
-    
-    return extents
-    
+    return Vector(self.maxExtents)    
 end
 
 /**
@@ -1503,6 +1534,8 @@ end
  */
 function Player:PerformMovement(offset, maxTraces, velocity)
 
+    PROFILE("Player:PerformMovement")
+
     local hitEntities = nil
     
     if self.controller then
@@ -1873,8 +1906,8 @@ function Player:UpdateControllerFromEntity()
         
         if capsuleHeight ~= 0 or capsuleRadius ~= 0 then
 
-            self.controller:SetHeight( capsuleHeight * Player.kSkinCompensation )
-            self.controller:SetRadius( capsuleRadius * Player.kSkinCompensation )
+            self.controller:SetupCapsule( capsuleRadius * Player.kSkinCompensation,
+                capsuleHeight * Player.kSkinCompensation, self.controller:GetCoords() )
             
         end
         
@@ -2169,7 +2202,7 @@ function Player:GetMaterialBelowPlayer()
     // surface the player is on
     fixedOrigin.y = fixedOrigin.y + self:GetExtents().y / 2
     local trace = Shared.TraceRay(fixedOrigin, fixedOrigin + Vector(0, -(2.5*self:GetExtents().y + .1), 0), PhysicsMask.AllButPCs, EntityFilterOne(self))
-    return GetSurfaceFromTrace(trace)    
+    return trace.surface
 end
 
 function Player:GetFootstepSpeedScalar()
@@ -2270,7 +2303,7 @@ function Player:HandleButtons(input)
         end
         
         // When exit hit, bring up menu
-        if(bit.band(input.commands, Move.Exit) ~= 0 and (Shared.GetTime() > (self.timeLastMenu + .3)) and (Client ~= nil)) then
+        if (bit.band(input.commands, Move.Exit) ~= 0 and (Shared.GetTime() > (self.timeLastMenu + .3)) and (Client ~= nil)) then
             ExitPressed()
             self.timeLastMenu = Shared.GetTime()
         end
@@ -2278,7 +2311,7 @@ function Player:HandleButtons(input)
     end
         
     // Remember when jump released
-    if(bit.band(input.commands, Move.Jump) == 0) then
+    if (bit.band(input.commands, Move.Jump) == 0) then
         self.jumpHandled = false
     end
     
@@ -2328,6 +2361,10 @@ function Player:HandleButtons(input)
     local newCrouchState = (bit.band(input.commands, Move.Crouch) ~= 0)
     if(self.crouching ~= newCrouchState) then
         self:SetCrouchState(newCrouchState)
+    end
+    
+    if Client then
+        self:ShowMap(bit.band(input.commands, Move.ShowMap) ~= 0)
     end
         
 end
@@ -2568,11 +2605,7 @@ function Player:SetAnimAndMode(animName, mode)
     self.mode = mode
     
     self.modeTime = Shared.GetTime() + self:GetAnimationLength(animName)
-    
-    if force then
-        Print("%s:SetAnimAndMode() - %s, %.2f)", self:GetClassName(), animName, self:GetAnimationLength(animName))
-    end
-    
+       
 end
 
 function Player:GetCanBeUsed(player)

@@ -11,17 +11,10 @@ Script.Load("lua/Commander_Buttons.lua")
 Script.Load("lua/Commander_FocusPanel.lua")
 Script.Load("lua/Commander_HotkeyPanel.lua")
 Script.Load("lua/Commander_IdleWorkerPanel.lua")
+Script.Load("lua/Commander_PlayerAlertPanel.lua")
 Script.Load("lua/Commander_ResourcePanel.lua")
 Script.Load("lua/Commander_SelectionPanel.lua")
 Script.Load("lua/Commander_SquadsPanel.lua")
-
-// Keeping this in for a while as I expect some further work may be required
-// on mouse over UI detection soon
-function CommanderUI_UpdateMouseOverUIStateDI(name, X, Y, width, height, alpha)
-
-    Shared.Message("name: " .. name .. " X: " .. X .. " Y: " .. Y .. " width: " .. width .. " height: " .. height .. " alpha: " .. alpha)
-
-end
 
 function CommanderUI_UpdateMouseOverUIState(overUI)
 
@@ -58,7 +51,7 @@ function CommanderUI_MenuImageSize()
 
     local player = Client.GetLocalPlayer()
     if(player and player:isa("AlienCommander")) then
-        return 640, 1024
+        return 640, 1040
     end
     
     return 960, 960
@@ -73,13 +66,6 @@ function CommanderUI_IsAlienCommander()
     end
     
     return false
-    
-end
-
-function CommanderUI_GetTeamColor()
-
-    local player = Client.GetLocalPlayer()
-    return ColorIntToColor(GetColorForPlayer(player))
     
 end
 
@@ -158,17 +144,6 @@ function CommanderUI_ViewFarPlanePoints()
 end
 
 /**
- * Converts world coordinates into normalized map coordinates.
- */
-function CommanderUI_GetMapXY(worldX, worldZ)
-
-    local player = Client.GetLocalPlayer()
-    local success, mapX, mapY = player:GetMapXY(worldX, worldZ)
-    return mapX, mapY
-
-end
-
-/**
  * Return horizontal scale (geometry/pixel)       
  */
 function CommanderUI_MapLayoutHorizontalScale()
@@ -238,14 +213,14 @@ function CommanderUI_MapClicked(x, y, button, index)
     
 end
 
-function CommanderUI_OnMousePressGOBRIAN(mouseButton, x, y)
+function CommanderUI_OnMousePress(mouseButton, x, y)
 
     local player = Client.GetLocalPlayer()
     player:ClientOnMousePress(mouseButton, x, y)
     
 end
 
-function CommanderUI_OnMouseReleaseGOBRIAN(mouseButton, x, y)
+function CommanderUI_OnMouseRelease(mouseButton, x, y)
 
     local player = Client.GetLocalPlayer()
     
@@ -314,16 +289,22 @@ function Commander:OnDestroy()
     
     if self.hudSetup == true then
     
-        RemoveFlashPlayer(kClassFlashIndex)
-        
         GetGUIManager():DestroyGUIScriptSingle("GUICommanderAlerts")
-        GetGUIManager():DestroyGUIScriptSingle("GUIMinimap")
-        if self:GetTeamType() == kMarineTeamType then
-            GetGUIManager():DestroyGUIScriptSingle("GUISelectionPanel")
-            GetGUIManager():DestroyGUIScriptSingle("GUICommanderButtons")
-            GetGUIManager():DestroyGUIScriptSingle("GUIHotkeyIcons")
-        end
+        GetGUIManager():DestroyGUIScriptSingle("GUISelectionPanel")
+        
+        GetGUIManager():DestroyGUIScript(self.buttonsScript)
+        self.buttonsScript = nil
+        
+        GetGUIManager():DestroyGUIScriptSingle("GUIHotkeyIcons")
+        GetGUIManager():DestroyGUIScriptSingle("GUICommanderLogout")
+        GetGUIManager():DestroyGUIScriptSingle("GUIResourceDisplay")
         GetGUIManager():DestroyGUIScriptSingle("GUICommanderManager")
+        
+        GetGUIManager():DestroyGUIScriptSingle("GUIPlayerNames")
+        self.guiPlayerNames = nil
+        
+        GetGUIManager():DestroyGUIScriptSingle("GUIOrders")
+        self.guiOrders = nil        
         
         self:DestroyGhostStructure()
         self:DestroySelectionCircles()
@@ -353,31 +334,28 @@ function Commander:DestroySelectionCircles()
 end
 
 // Creates ghost structure that is positioned where building would go
-function Commander:CreateGhostStructureIfNeeded(techId)
+function Commander:CreateGhostStructure(techId)
 
     local techNode = GetTechNode(techId)
     
     if(techNode ~= nil and (techNode:GetIsBuild() or techNode:GetIsBuy())) then
     
-        if(techId ~= self.ghostStructureId) then
+        self:DestroyGhostStructure()
         
-            self:DestroyGhostStructure()
+        ASSERT(self.ghostStructure == nil)
+        
+        local modelName = LookupTechData(techId, kTechDataModel)
+        
+        if modelName then
+        
+            local modelIndex = Shared.GetModelIndex(modelName)
+            self.ghostStructure = Client.CreateRenderModel(RenderScene.Zone_Default)
             
-            local modelName = LookupTechData(techId, kTechDataModel)
-            
-            if(modelName ~= nil and self.ghostStructure == nil) then
-            
-                local modelIndex = Shared.GetModelIndex(modelName)
-                self.ghostStructure = Client.CreateRenderModel(RenderScene.Zone_Default)
-                
-                self.ghostStructure:SetModel(modelIndex)
-                self.ghostStructureId = techId
-                self.ghostStructureValid = false
-                                
-            end
-            
+            self.ghostStructure:SetModel(modelIndex)
+            self.ghostStructureValid = false
+                            
         end
-    
+            
     else
         self:DestroyGhostStructure()
     end
@@ -408,7 +386,7 @@ function Commander:UpdateGhostGuides()
 
         self:DestroyGhostGuides()
     
-        local techId = self.ghostStructureId
+        local techId = self.currentTechId
         if techId ~= nil and techId ~= kTechId.None then
             
             // If entity can only be placed within range of attach structures, get all the ents that
@@ -490,7 +468,6 @@ function Commander:DestroyGhostStructure()
     
         Client.DestroyRenderModel(self.ghostStructure)
         self.ghostStructure = nil
-        self.ghostStructureId = kTechId.None
         self.ghostStructureValid = nil
         
     end
@@ -498,24 +475,39 @@ function Commander:DestroyGhostStructure()
 end
 
 // Update ghost structure position to show where building would go
-function Commander:UpdateGhostStructure(x, y)
+function Commander:UpdateGhostStructureVisuals()
 
-    if(self.ghostStructure ~= nil) then
-           
-        local valid, position, attachEntity = GetIsBuildPickVecLegal(self.ghostStructureId, self, CreatePickRay(self, x, y), Commander.kStructureSnapRadius)
+    if self.ghostStructure then
+
+        local x, y = Client.GetCursorPosScreen()           
+        local valid, position, attachEntity = GetIsBuildPickVecLegal(self.currentTechId, self, CreatePickRay(self, x, y), Commander.kStructureSnapRadius)
         
-        local coords = Coords.GetIdentity()
+        local coords = Coords.GetIdentity()        
+
+        if self.specifyingOrientation then
         
-        if attachEntity then
+            // Preserve position, but update angle from mouse (pass pitch yaw roll to Angles)
+            local angles = Angles(0, self.orientationAngle, 0)
+            coords = BuildCoordsFromDirection(angles:GetCoords().zAxis, self.ghostStructure:GetCoords().origin)
+            
+        elseif attachEntity then        
+         
             coords = attachEntity:GetAngles():GetCoords()
+            VectorCopy(position, coords.origin)
+            
+        else
+            VectorCopy(position, coords.origin)
         end
         
-        VectorCopy(position, coords.origin)        
-        self.ghostStructure:SetCoords(coords)
+        self.ghostStructure:SetCoords(coords)        
 
-        // TODO: Update color of ghost structure depending on valid
-        self.ghostStructureValid = valid
-        self.ghostStructure:SetIsVisible(valid)
+        if not self.specifyingOrientation then
+
+            // TODO: Update color of ghost structure depending on valid
+            self.ghostStructureValid = valid
+            self.ghostStructure:SetIsVisible(valid)
+            
+        end
         
     end
 
@@ -546,7 +538,7 @@ end
  * Called when the user drags out a selection box. The coordinates are in
  * pixel space.
  */
-function CommanderUI_SelectMarqueeGOBRIAN(selectStartX, selectStartY, selectEndX, selectEndY)
+function CommanderUI_SelectMarquee(selectStartX, selectStartY, selectEndX, selectEndY)
    
     local player = Client.GetLocalPlayer()        
     player:SelectMarquee(selectStartX, selectStartY, selectEndX, selectEndY)
@@ -556,7 +548,7 @@ end
 /**
  * Called by Flash when the mouse is at the edge of the screen.
  */
-function CommanderUI_ScrollViewGOBRIAN(deltaX, deltaY) 
+function CommanderUI_ScrollView(deltaX, deltaY) 
    
     local player = Client.GetLocalPlayer()        
     player.scrollX = deltaX
@@ -606,28 +598,20 @@ function CommanderUI_TargetedAction(index, x, y, button)
             VectorCopy(pickRay, normalizedPickRay)
             
         end
+
+        // Don't destroy ghost when they first place the sentry - allow commander to specify orientation
+        if techId ~= kTechId.Sentry or player.specifyingOrientation then
         
-        player:SendTargetedAction(techId, normalizedPickRay)
-        player:DestroyGhostStructure()
+            player:SendTargetedAction(techId, normalizedPickRay)
+            player:SetCurrentTech(kTechId.None)
+            
+        end
+        
+        // Don't allow selection until next mouse up
+        player.mouseButtonUpSinceAction[button] = false
         
     end
     
-end
-
-function CommanderUI_MousingAction(index, x, y)
-
-    local player = Client.GetLocalPlayer()
-    
-    if(CommanderUI_MenuButtonRequiresTarget(index)) then
-    
-        local techId = GetTechIdFromButtonIndex(index)
-        player:CreateGhostStructureIfNeeded(techId)
-        player:UpdateGhostStructure(x, y)
-        
-    else
-        player:DestroyGhostStructure()
-    end
-
 end
 
 /**
@@ -640,16 +624,16 @@ function CommanderUI_IsValid(button, x, y)
     local valid = false
     
     local player = Client.GetLocalPlayer()
-    if player.ghostStructureId ~= nil and player.ghostStructureId ~= kTechId.None then
+    if player.currentTechId ~= nil and player.currentTechId ~= kTechId.None then
 
         // To allow canceling structures, esp. ones with attach points (this button index seems off by 1)
         if button == 2 then
             valid = true
         else
         
-            local techNode = GetTechNode(player.ghostStructureId)
+            local techNode = GetTechNode(player.currentTechId)
             if techNode ~= nil and (techNode:GetIsBuild() or techNode:GetIsBuy()) then
-                valid = GetIsBuildPickVecLegal(player.ghostStructureId, player, CreatePickRay(player, x, y), Commander.kStructureSnapRadius)
+                valid = GetIsBuildPickVecLegal(player.currentTechId, player, CreatePickRay(player, x, y), Commander.kStructureSnapRadius)
             else
                 valid = true
             end
@@ -662,36 +646,6 @@ function CommanderUI_IsValid(button, x, y)
     end
     
     return valid
-    
-end
-
-/**
- * Returns a linear array of static blip data
- * X position, Y position, X texture offset, Y texture offset, kMinimapBlipType, kMinimapBlipTeam
- *
- * Eg {0.5, 0.5, 0, 0, 3, 1}
- */
-function CommanderUI_GetStaticMapBlips()
-
-    local blips = {}
-    
-    local commander = Client.GetLocalPlayer()
-    local time = Shared.GetTime()
-    
-    for index, blipPair in ipairs(commander.minimapBlips) do
-    
-        local blip = blipPair[2]
-        
-        table.insert(blips, blip[2])
-        table.insert(blips, blip[3])
-        table.insert(blips, 0)
-        table.insert(blips, 0)
-        table.insert(blips, blip[4])
-        table.insert(blips, blip[5])
-        
-    end    
-    
-    return blips
     
 end
 
@@ -770,63 +724,6 @@ function Commander:GetAndClearAlertMessages()
 
 end
 
-function Commander:OnBlipMessage(entityId, minimapNormX, minimapNormY, blipType, blipTeam)
-
-    // Update blip if already have one with this id
-    local existingBlipIndex = nil
-    for index, blipPair in ipairs(self.minimapBlips) do
-    
-        if blipPair[2][1] == entityId then
-        
-            existingBlipIndex = index
-            
-            break
-            
-        end
-        
-    end
-
-    // Update blip     
-    if existingBlipIndex then
-    
-        local existingBlip = self.minimapBlips[existingBlipIndex]
-        
-        existingBlip[1] = Shared.GetTime()
-        
-        existingBlip[2][2] = minimapNormX
-        existingBlip[2][3] = minimapNormY
-        existingBlip[2][4] = blipType
-        existingBlip[2][5] = blipTeam
-    
-    else
-    
-        // Insert as new blip pair: {time, {entityId, minimapNormX, minimapNormY, blipType, blipTeam}}
-        table.insert(self.minimapBlips, {Shared.GetTime(), {entityId, minimapNormX, minimapNormY, blipType, blipTeam}})
-    
-    end
-    
-end
-
-// Get rid of any old blips. Create new table because you can't delete entries out of old table easily!
-function Commander:ExpireMinimapBlips()
-
-    local newBlips = {}
-    
-    local time = Shared.GetTime()
-    
-    for index, blip in ipairs(self.minimapBlips) do
-
-        // Don't expire blips immediately to account for networking delay    
-        if time < (blip[1] + kMinimapBlipLifetime + .5) then
-            table.insert(newBlips, blip)
-        end
-        
-    end
-    
-    self.minimapBlips = newBlips
-    
-end
-
 function Commander:OnInitLocalClient()
 
     Player.OnInitLocalClient(self)
@@ -861,6 +758,14 @@ function Commander:OnInitLocalClient()
     self.alertBlips = {}
     
     self.alertMessages = {}
+
+    if self.guiOrders == nil then
+        self.guiOrders = GetGUIManager():CreateGUIScriptSingle("GUIOrders")
+    end
+    
+    if self.guiPlayerNames == nil then
+        self.guiPlayerNames = GetGUIManager():CreateGUIScriptSingle("GUIPlayerNames")
+    end
     
     self.cursorOverUI = false
     
@@ -902,7 +807,7 @@ function Commander:OverrideInput(input)
     // Move to position if minimap clicked or idle work clicked
     if self.setScrollPosition then
     
-        input.commands = Move.Minimap
+        input.commands = bit.bor(input.commands, Move.Minimap)
         
         // Put in yaw and pitch because they are 16 bits
         // each. Without them we get a "settling" after
@@ -987,9 +892,6 @@ function Commander:SetupHud()
     Client.SetMouseCaptured(false)
     Client.SetMouseClipped(true)
     
-    Client.UnbindFlashTexture("map")
-    Client.BindFlashTexture("map", "maps/overviews/" .. Shared.GetMapName() .. ".tga")
-    
     self.menuTechButtons = {}
     
     // Create circle for display under cursor
@@ -1000,16 +902,32 @@ function Commander:SetupHud()
     
     self.entityIdUnderCursor = Entity.invalidId
     
-    GetGUIManager():CreateGUIScriptSingle("GUICommanderAlerts")
-    local minimapScript = GetGUIManager():CreateGUIScriptSingle("GUIMinimap")
+    local alertsScript = GetGUIManager():CreateGUIScriptSingle("GUICommanderAlerts")
+    // Every Player already has a GUIMinimap.
+    local minimapScript = GetGUIManager():GetGUIScriptSingle("GUIMinimap")
+    minimapScript:SetBackgroundMode(GUIMinimap.kModeMini)
     // Only the marines have a selection panel right now.
-    if self:GetTeamType() == kMarineTeamType then
-        GetGUIManager():CreateGUIScriptSingle("GUISelectionPanel")
-        GetGUIManager():CreateGUIScriptSingle("GUICommanderButtons")
-        local hotkeyIconScript = GetGUIManager():CreateGUIScriptSingle("GUIHotkeyIcons")
-        minimapScript:GetBackground():AddChild(hotkeyIconScript:GetBackground())
-    end
-    GetGUIManager():CreateGUIScriptSingle("GUICommanderManager")
+    local selectionPanelScript = GetGUIManager():CreateGUIScriptSingle("GUISelectionPanel")
+    
+    local buttonsScriptName = ConditionalValue(self:GetTeamType() == kAlienTeamType, "GUICommanderButtonsAliens", "GUICommanderButtonsMarines")
+    self.buttonsScript = GetGUIManager():CreateGUIScript(buttonsScriptName)
+    minimapScript:SetButtonsScript(self.buttonsScript)
+    
+    local hotkeyIconScript = GetGUIManager():CreateGUIScriptSingle("GUIHotkeyIcons")
+    local logoutScript = GetGUIManager():CreateGUIScriptSingle("GUICommanderLogout")
+    GetGUIManager():CreateGUIScriptSingle("GUIResourceDisplay")
+    
+    minimapScript:GetBackground():AddChild(hotkeyIconScript:GetBackground())
+    local managerScript = GetGUIManager():CreateGUIScriptSingle("GUICommanderManager")
+    
+    // The manager needs to know about other commander UI scripts for things like
+    // making sure mouse clicks don't click through UI elements.
+    managerScript:AddChildScript(alertsScript)
+    managerScript:AddChildScript(minimapScript)
+    managerScript:AddChildScript(selectionPanelScript)
+    managerScript:AddChildScript(self.buttonsScript)
+    managerScript:AddChildScript(hotkeyIconScript)
+    managerScript:AddChildScript(logoutScript)
     
     self.hudSetup = true
     
@@ -1022,7 +940,7 @@ function Commander:Logout()
 end
 
 function Commander:ClickSelect(x, y)
-   
+    
     local pickVec = CreatePickRay( self, x, y)
     
     if(self.controlClick) then
@@ -1145,13 +1063,15 @@ function Commander:UpdateClientEffects(deltaTime, isLocal)
         local x = xScalar * Client.GetScreenWidth()
         local y = yScalar * Client.GetScreenHeight()
         
-        if self.ghostStructure == nil then
+        if self.ghostStructure == nil and not self.cursorOverUI then
             self.entityIdUnderCursor = self:GetUnitIdUnderCursor(  CreatePickRay( self, x, y) )
         else
             self.entityIdUnderCursor = Entity.invalidId
         end
         
         self:UpdateOrientationAngle(x, y)
+        
+        self:UpdateGhostStructureVisuals()        
         
         self:UpdateSelectionCircles()
         
@@ -1339,9 +1259,9 @@ function Commander:UpdateCursor()
         baseCursor = "BuildTargetDefault"
     
     // Or if we're targeting an ability
-    elseif self.targetedModeTechId ~= nil and self.targetedModeTechId ~= kTechId.None then
+    elseif self.currentTechId ~= nil and self.currentTechId ~= kTechId.None then
     
-        local techNode = GetTechNode(self.targetedModeTechId)
+        local techNode = GetTechNode(self.currentTechId)
         
         if((techNode ~= nil) and techNode:GetRequiresTarget()) then
 
@@ -1377,15 +1297,19 @@ function Commander:ClientOnMousePress(mouseButton, x, y)
 
     self.mouseButtonDown[mouseButton + 1] = true
     
-    if(mouseButton == 0) then
-
-        // Only allowed when there is not a ghost structure or the structure is valid.
-        if self.ghostStructure == nil then
-            local techNode = GetTechNode(self.targetedModeTechId)
-            if((self.targetedModeTechId == nil) or (techNode == nil) or not techNode:GetRequiresTarget()) then
-                // Select things near click.
-                self:ClickSelect(x, y)
+    if self.mouseButtonUpSinceAction[mouseButton + 1] then
+        
+        if(mouseButton == 0) then
+            
+            // Only allowed when there is not a ghost structure or the structure is valid.
+            if self.ghostStructure == nil then
+                local techNode = GetTechNode(self.currentTechId)
+                if((self.currentTechId == nil) or (techNode == nil) or not techNode:GetRequiresTarget()) then
+                    // Select things near click.
+                    self:ClickSelect(x, y)
+                end
             end
+            
         end
         
     end
@@ -1403,36 +1327,37 @@ function Commander:ClientOnMouseRelease(mouseButton, x, y)
         // Don't do anything if we're ghost structure is at invalid place
         if self.ghostStructure == nil or self.ghostStructureValid == true then
 
-            // If we're in a mode, clear it and handle it
-            local techNode = GetTechNode(self.targetedModeTechId)
-            if((self.targetedModeTechId ~= nil) and (techNode ~= nil) and techNode:GetRequiresTarget()) then
+            // See if we have indicated an orientation for the structure yet (sentries only right now)
+            if((self.currentTechId == kTechId.Sentry) and not self.specifyingOrientation) then
             
-                // See if we have indicated an orientation for the structure yet (sentries only right now)
-                if((self.targetedModeTechId == kTechId.Sentry) and not self.specifyingOrientation) then
+                // Compute world position where we will place this entity
+                local trace = GetCommanderPickTarget(self, normalizedPickRay, false, true)
+                VectorCopy(trace.endPoint, self.specifyingOrientationPosition)
                 
-                    // Compute world position where we will place this entity
-                    local trace = GetCommanderPickTarget(self, normalizedPickRay, false, true)
-                    VectorCopy(trace.endPoint, self.specifyingOrientationPosition)
-                    
-                    self.specifyingOrientationPickVec = Vector()
-                    VectorCopy(normalizedPickRay, self.specifyingOrientationPickVec)
-                    
-                    self.specifyingOrientation = true
-                    
-                    self:UpdateOrientationAngle(x, y)
-                    
-                else
+                self.specifyingOrientationPickVec = Vector()
+                VectorCopy(normalizedPickRay, self.specifyingOrientationPickVec)
+                
+                self.specifyingOrientation = true
+                
+                self:UpdateOrientationAngle(x, y)
+                
+            else
             
-                    local techNode = GetTechNode(self.targetedModeTechId)
+                // If we're in a mode, clear it and handle it
+                local techNode = GetTechNode(self.currentTechId)
+                if((self.currentTechId ~= nil) and (techNode ~= nil) and techNode:GetRequiresTarget()) then
+            
+                    local techNode = GetTechNode(self.currentTechId)
                     if(techNode ~= nil and techNode.available) then
 
                         local orientationAngle = ConditionalValue(self.specifyingOrientation, self.orientationAngle, NetworkRandom() * 2*math.pi)
-                        if((self.targetedModeTechId == kTechId.CommandStation) or (self.targetedModeTechId == kTechId.Hive)) then
+                        if((self.currentTechId == kTechId.CommandStation) or (self.currentTechId == kTechId.Hive)) then
                             orientationAngle = 0
                         end
                         
                         local pickVec = ConditionalValue(self.specifyingOrientation, self.specifyingOrientationPickVec, normalizedPickRay)
-                        self:SendTargetedOrientedAction(self.targetedModeTechId, pickVec, orientationAngle)
+                        self:SendTargetedOrientedAction(self.currentTechId, pickVec, orientationAngle)
+                        self:SetCurrentTech(kTechId.None)
                         
                         displayConfirmationEffect = true
 
@@ -1443,7 +1368,8 @@ function Commander:ClientOnMouseRelease(mouseButton, x, y)
                 end
                 
                 // Clear mode after executed
-                self.targetedModeTechId = kTechId.None
+                self.currentTechId = kTechId.None
+                self.specifyingOrientation = false
                 
             end
             
@@ -1453,7 +1379,7 @@ function Commander:ClientOnMouseRelease(mouseButton, x, y)
     elseif(mouseButton == 1) then
        
         if self.ghostStructure ~= nil then
-            self:DestroyGhostStructure()
+            player:SetCurrentTech(kTechId.None)
         else
             self:SendTargetedAction(kTechId.Default, normalizedPickRay)
             displayConfirmationEffect = true
@@ -1472,6 +1398,7 @@ function Commander:ClientOnMouseRelease(mouseButton, x, y)
     end
     
     self.mouseButtonDown[mouseButton + 1] = false
+    self.mouseButtonUpSinceAction[mouseButton + 1] = true
     
 end
 
@@ -1502,17 +1429,26 @@ function Commander:SetCurrentTech(techId)
 
     // Change menu if it is a menu
     local techNode = GetTechNode(techId)
+    
     if(techNode ~= nil and techNode:GetIsMenu()) then
     
         self.menuTechId = techId
         
     end
-
-    // Send action up to server. Necessary for even menu changes as 
-    // server validates all actions.
-    self:SendAction(techId)
     
+    if techNode and not techNode:GetRequiresTarget() and not techNode:GetIsBuy() then
+    
+        // Send action up to server. Necessary for even menu changes as 
+        // server validates all actions.
+        self:SendAction(techId)
+        
+    end 
+   
     // Remember this techId, which we need during ClientOnMouseRelease()
-    self.targetedModeTechId = techId
+    self.currentTechId = techId
+    
+    self.specifyingOrientation = false
+    
+    self:CreateGhostStructure(techId)
     
 end

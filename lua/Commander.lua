@@ -55,6 +55,7 @@ local networkVars =
     timeScoreboardPressed   = "float",
     focusGroupIndex         = string.format("integer (0 to %d)", Commander.kMaxSubGroupIndex - 1),
     numIdleWorkers          = string.format("integer (0 to %d)", kMaxIdleWorkers),
+    numPlayerAlerts         = string.format("integer (0 to %d)", kMaxPlayerAlerts),
     commanderCancel         = "boolean",
     commandStationId        = "entityid",
     // Set to a number after a hotgroup is selected, so we know to jump to it next time we try to select it
@@ -73,15 +74,15 @@ function Commander:OnInit()
     self:SetIsVisible(false)
     
     self:SetDefaultSelection()
-
-    self:LoadHeightmap()
     
     if(Client) then
 
         self.drawResearch = false
         
-        // Remember which buttons are down
+        // Remember which buttons are down.
         self.mouseButtonDown = {false, false, false}
+        // Start off assuming all buttons are up.
+        self.mouseButtonUpSinceAction = {true, true, true}
         
         self.specifyingOrientation = false
         self.orientationAngle = 0
@@ -91,8 +92,6 @@ function Commander:OnInit()
         self.scrollY = 0
        
         self.timeSinceUpdateMenu = 0
-        
-        self.minimapBlips = {}
                 
     end
     
@@ -106,13 +105,14 @@ function Commander:OnInit()
         // client has been replaced by commander
         self.timeToSendHotkeyGroups = Shared.GetTime() + .5
         
-        self.sentAlerts = {}
+        self.alerts = {}
         
     end
 
     self.timeScoreboardPressed = 0
     self.focusGroupIndex = 0
     self.numIdleWorkers = 0
+    self.numPlayerAlerts = 0
     self.positionBeforeJump = Vector(0, 0, 0)
     self:SetSelectMode(Commander.kSelectMode.None)
     self.commandStationId = Entity.invalidId
@@ -132,23 +132,6 @@ end
 
 function Commander:GetMaxViewOffsetHeight()
     return 0
-end
-
-function Commander:LoadHeightmap()
-
-    // Load height map
-    self.heightmap = HeightMap()   
-    local heightmapFilename = string.format("maps/overviews/%s.hmp", Shared.GetMapName())
-    
-    if(not self.heightmap:Load(heightmapFilename)) then
-        Shared.Message("Couldn't load height map " .. heightmapFilename)
-        self.heightmap = nil
-    end
-
-end
-
-function Commander:GetHeightmap()
-    return self.heightmap
 end
 
 function Commander:GetTeamType()
@@ -182,6 +165,10 @@ function Commander:HandleButtons(input)
     self:HandleCommanderHotkeys(input)
     
     self:HandleScoreboardSubgroups(input)
+    
+    if Client then
+        self:ShowMap(bit.band(input.commands, Move.ShowMap) ~= 0)
+    end
     
 end
 
@@ -251,14 +238,15 @@ function Commander:UpdateMovePhysics(input)
     
     local finalPos = Vector()
     
+    local heightmap = self:GetHeightmap()
     // If minimap clicked, go right to that position
     if (bit.band(input.commands, Move.Minimap) ~= 0) then
 
         // Translate from panel coords to world coordinates described by minimap
-        if(self.heightmap ~= nil) then
+        if(heightmap ~= nil) then
             
             // Store normalized minimap coords in yaw and pitch
-            finalPos = Vector(self.heightmap:GetWorldX(tonumber(input.pitch)), 0, self.heightmap:GetWorldZ(tonumber(input.yaw)))
+            finalPos = Vector(heightmap:GetWorldX(tonumber(input.pitch)), 0, heightmap:GetWorldZ(tonumber(input.yaw)))
             
             // Add in extra x offset to center view where we're told, not ourselves
             finalPos.x = finalPos.x - Commander.kViewOffsetXHeight
@@ -281,11 +269,11 @@ function Commander:UpdateMovePhysics(input)
     end
     
     // Set commander height according to height map (allows commander to move off height map, but uses clipped values to determine height)
-    if(self.heightmap ~= nil) then
+    if(heightmap ~= nil) then
     
-        finalPos.x = self.heightmap:ClampXToMapBounds(finalPos.x)
-        finalPos.z = self.heightmap:ClampZToMapBounds(finalPos.z)
-        finalPos.y = self.heightmap:GetElevation(finalPos.x, finalPos.z) + Commander.kDefaultCommanderHeight
+        finalPos.x = heightmap:ClampXToMapBounds(finalPos.x)
+        finalPos.z = heightmap:ClampZToMapBounds(finalPos.z)
+        finalPos.y = heightmap:GetElevation(finalPos.x, finalPos.z) + Commander.kDefaultCommanderHeight
 
     else
     
@@ -315,12 +303,17 @@ function Commander:GetNumIdleWorkers()
     return self.numIdleWorkers
 end
 
+function Commander:GetNumPlayerAlerts()
+    return self.numPlayerAlerts
+end
+
 function Commander:UpdateMisc(input)
 
     PROFILE("Commander:UpdateMisc")
 
     if Server then
         self:UpdateNumIdleWorkers()
+        self:UpdateAlerts()
     end
     
     if Client and not Client.GetIsRunningPrediction() then
@@ -405,8 +398,9 @@ end
  */
 function Commander:GetScrollPositionX()
     local scrollPositionX = 1
-    if(self.heightmap ~= nil) then
-        scrollPositionX = self.heightmap:GetMapX( self:GetOrigin().z )
+    local heightmap = self:GetHeightmap()
+    if(heightmap ~= nil) then
+        scrollPositionX = heightmap:GetMapX( self:GetOrigin().z )
     end
     return scrollPositionX
 end
@@ -416,8 +410,9 @@ end
  */
 function Commander:GetScrollPositionY()
     local scrollPositionY = 1
-    if(self.heightmap ~= nil) then
-        scrollPositionY = self.heightmap:GetMapY( self:GetOrigin().x + Commander.kViewOffsetXHeight )
+    local heightmap = self:GetHeightmap()
+    if(heightmap ~= nil) then
+        scrollPositionY = heightmap:GetMapY( self:GetOrigin().x + Commander.kViewOffsetXHeight )
     end
     return scrollPositionY
 end
@@ -450,29 +445,6 @@ function Commander:GetCurrentTechButtons(techId, entity)
     
     return techButtons
 
-end
-
-// worldX => -map y
-// worldZ => +map x
-function Commander:GetMapXY(worldX, worldZ)
-
-    local success = false
-    local mapX = nil
-    local mapY = nil
-    
-    if self.heightmap then
-        mapX = self.heightmap:GetMapX(worldZ)
-        mapY = self.heightmap:GetMapY(worldX)
-    else
-        Print("Commander:GetMapXY(): heightmap is nil")        
-    end
-    
-    if mapX >= 0 and mapX <= 1 and mapY >= 0 and mapY <= 1 then
-        success = true
-    end
-    
-    return success, mapX, mapY
-    
 end
 
 // Updates hotkeys to account for entity changes. Pass both parameters to indicate
@@ -541,9 +513,7 @@ function Commander:OnUpdate(deltaTime)
     
         self:UpdateHotkeyGroups()
         self:UpdateTeamHarvesterCount()
-
-    else
-        self:ExpireMinimapBlips()        
+      
     end
         
 end

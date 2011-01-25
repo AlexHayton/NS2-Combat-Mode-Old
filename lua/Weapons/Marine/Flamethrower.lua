@@ -29,7 +29,7 @@ Flamethrower.kPilotCinematic = PrecacheAsset("cinematics/marine/flamethrower/pil
 Flamethrower.kScorchedCinematic = PrecacheAsset("cinematics/marine/flamethrower/scorched.cinematic")
 
 Flamethrower.kAttackDelay = kFlamethrowerFireDelay
-Flamethrower.kRange = 10
+Flamethrower.kRange = 8
 Flamethrower.kDamage = kFlamethrowerDamage
 
 local networkVars = { }

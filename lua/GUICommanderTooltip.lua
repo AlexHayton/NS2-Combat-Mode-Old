@@ -19,16 +19,24 @@ class 'GUICommanderTooltip' (GUIScript)
 // settingsTable.Y
 // settingsTable.TexturePartWidth
 // settingsTable.TexturePartHeight
-// settingsTable.IsAlienTooltip
 
-GUICommanderTooltip.kAlienBackgroundTexture = "ui/alien_buildmenu.dds"
+GUICommanderTooltip.kAlienBackgroundTexture = "ui/alien_commander_background.dds"
 GUICommanderTooltip.kMarineBackgroundTexture = "ui/marine_commander_background.dds"
+
+GUICommanderTooltip.kBackgroundTopCoords = { X1 = 758, Y1 = 452, X2 = 987, Y2 = 487 }
+GUICommanderTooltip.kBackgroundTopHeight = GUICommanderTooltip.kBackgroundTopCoords.Y2 - GUICommanderTooltip.kBackgroundTopCoords.Y1
+GUICommanderTooltip.kBackgroundCenterCoords = { X1 = 758, Y1 = 487, X2 = 987, Y2 = 505 }
+GUICommanderTooltip.kBackgroundBottomCoords = { X1 = 758, Y1 = 505, X2 = 987, Y2 = 536 }
+GUICommanderTooltip.kBackgroundBottomHeight = GUICommanderTooltip.kBackgroundBottomCoords.Y2 - GUICommanderTooltip.kBackgroundBottomCoords.Y1
+
+GUICommanderTooltip.kBackgroundExtraXOffset = 8
+GUICommanderTooltip.kBackgroundExtraYOffset = 20
 
 GUICommanderTooltip.kResourceIconTexture = "ui/resources.dds"
 
 GUICommanderTooltip.kTextFontSize = 16
-GUICommanderTooltip.kTextXOffset = 10
-GUICommanderTooltip.kTextYOffset = GUICommanderTooltip.kTextFontSize - 4
+GUICommanderTooltip.kTextXOffset = 30
+GUICommanderTooltip.kTextYOffset = GUICommanderTooltip.kTextFontSize + 10
 
 GUICommanderTooltip.kHotkeyFontSize = 16
 GUICommanderTooltip.kHotkeyXOffset = 5
@@ -36,8 +44,8 @@ GUICommanderTooltip.kHotkeyXOffset = 5
 GUICommanderTooltip.kResourceIconSize = 32
 GUICommanderTooltip.kResourceIconTextureWidth = 32
 GUICommanderTooltip.kResourceIconTextureHeight = 32
-GUICommanderTooltip.kResourceIconXOffset = -5
-GUICommanderTooltip.kResourceIconYOffset = 5
+GUICommanderTooltip.kResourceIconXOffset = -30
+GUICommanderTooltip.kResourceIconYOffset = 20
 
 GUICommanderTooltip.kResourceColors = { Color(0, 1, 0, 1), Color(0.2, 0.4, 1, 1), Color(1, 0, 1, 1) }
 
@@ -58,34 +66,18 @@ GUICommanderTooltip.kInfoYOffset = 10
 
 function GUICommanderTooltip:Initialize(settingsTable)
 
-    local textureName = GUICommanderTooltip.kMarineBackgroundTexture
-    if settingsTable.IsAlienTooltip then
-        textureName = GUICommanderTooltip.kAlienBackgroundTexture
+    self.textureName = GUICommanderTooltip.kMarineBackgroundTexture
+    if CommanderUI_IsAlienCommander() then
+        self.textureName = GUICommanderTooltip.kAlienBackgroundTexture
     end
-    settingsTable.TextureName = textureName
-    settingsTable.TextureCoordinates = { }
-    if settingsTable.IsAlienTooltip then
-    else
-        table.insert(settingsTable.TextureCoordinates, { X1 = 0, Y1 = 0, X2 = 60, Y2 = 46 })
-        table.insert(settingsTable.TextureCoordinates, { X1 = 100, Y1 = 0, X2 = 158, Y2 = 46 })
-        table.insert(settingsTable.TextureCoordinates, { X1 = 196, Y1 = 0, X2 = 255, Y2 = 46 })
-        table.insert(settingsTable.TextureCoordinates, { X1 = 0, Y1 = 106, X2 = 60, Y2 = 148 })
-        table.insert(settingsTable.TextureCoordinates, { X1 = 101, Y1 = 106, X2 = 158, Y2 = 148 })
-        table.insert(settingsTable.TextureCoordinates, { X1 = 196, Y1 = 106, X2 = 255, Y2 = 148 })
-        table.insert(settingsTable.TextureCoordinates, { X1 = 0, Y1 = 210, X2 = 60, Y2 = 255 })
-        table.insert(settingsTable.TextureCoordinates, { X1 = 100, Y1 = 210, X2 = 158, Y2 = 255 })
-        table.insert(settingsTable.TextureCoordinates, { X1 = 196, Y1 = 210, X2 = 255, Y2 = 255 })
-    end
-
-    self.background = GUIBorderBackground()
-    self.background:Initialize(settingsTable)
-    self.background:SetAnchor(GUIItem.Left, GUIItem.Top)
     
     self.tooltipWidth = settingsTable.Width
     self.tooltipHeight = settingsTable.Height
     
     self.tooltipX = settingsTable.X
     self.tooltipY = settingsTable.Y
+    
+    self:InitializeBackground()
     
     self.text = GUI.CreateTextItem()
     self.text:SetFontSize(GUICommanderTooltip.kTextFontSize)
@@ -192,19 +184,45 @@ function GUICommanderTooltip:Initialize(settingsTable)
     
 end
 
+function GUICommanderTooltip:InitializeBackground()
+
+    self.backgroundTop = GUI.CreateGraphicsItem()
+    self.backgroundTop:SetAnchor(GUIItem.Left, GUIItem.Top)
+    self.backgroundTop:SetSize(Vector(self.tooltipWidth, self.tooltipHeight, 0))
+    self.backgroundTop:SetTexture(self.textureName)
+    GUISetTextureCoordinatesTable(self.backgroundTop, GUICommanderTooltip.kBackgroundTopCoords)
+    
+    self.background = self.backgroundTop
+    
+    self.backgroundCenter = GUI.CreateGraphicsItem()
+    self.backgroundCenter:SetAnchor(GUIItem.Left, GUIItem.Bottom)
+    self.backgroundCenter:SetSize(Vector(self.tooltipWidth, self.tooltipHeight, 0))
+    self.backgroundCenter:SetTexture(self.textureName)
+    GUISetTextureCoordinatesTable(self.backgroundCenter, GUICommanderTooltip.kBackgroundCenterCoords)
+    self.backgroundTop:AddChild(self.backgroundCenter)
+    
+    self.backgroundBottom = GUI.CreateGraphicsItem()
+    self.backgroundBottom:SetAnchor(GUIItem.Left, GUIItem.Bottom)
+    self.backgroundBottom:SetSize(Vector(self.tooltipWidth, GUICommanderTooltip.kBackgroundBottomHeight, 0))
+    self.backgroundBottom:SetTexture(self.textureName)
+    GUISetTextureCoordinatesTable(self.backgroundBottom, GUICommanderTooltip.kBackgroundBottomCoords)
+    self.backgroundCenter:AddChild(self.backgroundBottom)
+
+end
+
 function GUICommanderTooltip:Uninitialize()
 
     // Everything is attached to the background so uninitializing it will destroy all items.
-    self.background:Uninitialize()
-    self.background = nil
+    if self.background then
+        GUI.DestroyItem(self.background)
+    end
     
 end
 
 function GUICommanderTooltip:UpdateData(text, hotkey, costNumber, requires, enables, info, typeNumber)
 
     local totalTextHeight = self:CalculateTotalTextHeight(text, requires, enables, info)
-    self.background:SetSize(Vector(self.tooltipWidth, self.tooltipHeight + totalTextHeight, 0))
-    self.background:GetBackground():SetPosition(Vector(self.tooltipX, self.tooltipY - totalTextHeight, 0))
+    self:UpdateSizeAndPosition(totalTextHeight)
     
     self.text:SetText(text)
     self.hotkey:SetText("( " .. hotkey .. " )")
@@ -282,6 +300,17 @@ function GUICommanderTooltip:CalculateTotalTextHeight(text, requires, enables, i
 
 end
 
+function GUICommanderTooltip:UpdateSizeAndPosition(totalTextHeight)
+    
+    local topAndBottomHeight = GUICommanderTooltip.kBackgroundTopHeight - GUICommanderTooltip.kBackgroundBottomHeight
+    local adjustedHeight = self.tooltipHeight + totalTextHeight - topAndBottomHeight
+    self.backgroundCenter:SetSize(Vector(self.tooltipWidth, adjustedHeight, 0))
+    
+    local adjustedY = self.tooltipY - self.tooltipHeight - totalTextHeight - topAndBottomHeight - GUICommanderTooltip.kBackgroundExtraYOffset
+    self.background:SetPosition(Vector(self.tooltipX + GUICommanderTooltip.kBackgroundExtraXOffset, adjustedY, 0))
+
+end
+
 function GUICommanderTooltip:SetIsVisible(setIsVisible)
 
     self.background:SetIsVisible(setIsVisible)
@@ -290,6 +319,6 @@ end
 
 function GUICommanderTooltip:GetBackground()
 
-    return self.background:GetBackground()
+    return self.background
 
 end
