@@ -155,34 +155,6 @@ function BuildEntityChangedMessage(oldId, newId)
     
 end
 
-// entityId, worldPosition (Vector), kMinimapBlipType, kMinimapBlipTeam
-local kBlipMessage =
-{
-    entityId = "entityid",                  // 2 bytes
-    minimapX = "integer (0 to 511)",        // 9 bits
-    minimapY = "integer (0 to 511)",        // 9 bits
-    blipType = "enum kMinimapBlipType",     // 2 bits
-    blipTeam = "enum kMinimapBlipTeam",     // 2 bits
-}
-
-function BuildMinimapBlipMessage(entId, mapX, mapY, type, team)
-
-    local t = {}
-    
-    t.entityId = entId
-    t.minimapX = mapX * 511
-    t.minimapY = mapY * 511
-    t.blipType = type
-    t.blipTeam = team
-    
-    return t
-
-end
-
-function ParseMinimapBlipMessage(blipMessage)
-    return blipMessage.entityId, blipMessage.minimapX/511, blipMessage.minimapY/511, blipMessage.blipType, blipMessage.blipTeam
-end
-
 // Selection
 local kMarqueeSelectMessage =
 {
@@ -304,7 +276,7 @@ function BuildCommTargetedActionMessage(techId, x, y, z, orientationRadians)
 end
 
 function ParseCommTargetedActionMessage(t)
-    return t.techId, Vector(t.x, t.y, t.z), t.orientationRadius
+    return t.techId, Vector(t.x, t.y, t.z), t.orientationRadians
 end
 
 local kTracerMessage = 

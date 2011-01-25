@@ -137,3 +137,9 @@ function GUIHotkeyIcons:GetBackground()
     return self.background
 
 end
+
+function GUIHotkeyIcons:ContainsPoint(pointX, pointY)
+
+    return GUIItemContainsPoint(self:GetBackground(), pointX, pointY)
+
+end

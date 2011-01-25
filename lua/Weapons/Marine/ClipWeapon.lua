@@ -324,7 +324,7 @@ function ClipWeapon:FireBullets(player, bulletsToShoot, range, penetration)
         local spreadAngle = self:GetSpread() * self:GetInaccuracyScalar() / 2
         
         local randomAngle  = NetworkRandom() * math.pi * 2
-        local randomRadius = NetworkRandom() * math.tan(spreadAngle)
+        local randomRadius = NetworkRandom() * NetworkRandom() * math.tan(spreadAngle)
         
         local fireDirection = viewCoords.zAxis + (viewCoords.xAxis * math.cos(randomAngle) + viewCoords.yAxis * math.sin(randomAngle)) * randomRadius
         fireDirection:Normalize()
@@ -346,6 +346,8 @@ function ClipWeapon:FireBullets(player, bulletsToShoot, range, penetration)
                 
             end
             
+            //DebugLine(startPoint, trace.endPoint, 15, ConditionalValue(trace.entity, 1, 0), ConditionalValue(trace.entity, 0, 1), ConditionalValue(trace.entity, 0, 0), 1)
+            
             if not blockedByUmbra then
             
                 if trace.entity then
@@ -365,12 +367,13 @@ function ClipWeapon:FireBullets(player, bulletsToShoot, range, penetration)
             if not blockedByUmbra and ((bullet % effectFrequency) == 0) then
             
                 local impactPoint = trace.endPoint - GetNormalizedVector(endPoint - startPoint) * Weapon.kHitEffectOffset
-                TriggerHitEffects(self, trace.entity, impactPoint, GetSurfaceFromTrace(trace))                
+                local surfaceName = trace.surface
+                TriggerHitEffects(self, trace.entity, impactPoint, surfaceName)                
                 
                 // If we are far away from our target, trigger a private sound so we can hear we hit something
                 if (trace.endPoint - player:GetOrigin()):GetLength() > 5 then
                     
-                    player:TriggerEffects("hit_effect_local")
+                    player:TriggerEffects("hit_effect_local", {surface = surfaceName})
                     
                 end
                 

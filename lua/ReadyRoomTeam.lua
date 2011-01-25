@@ -21,6 +21,8 @@ function ReadyRoomTeam:ReplaceRespawnPlayer(player, origin, angles)
 
     self:RespawnPlayer(newPlayer, origin, angles)
     
+    newPlayer:ClearGameEffects()
+    
     return (newPlayer ~= nil), newPlayer
     
 end

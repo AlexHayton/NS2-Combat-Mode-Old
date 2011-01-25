@@ -117,6 +117,8 @@ function OnVirtualClientThink(client, deltaTime)
                     player:ChooseOrder()
                 end
                 
+                player:UpdateOrder()
+                
             end
 
         end

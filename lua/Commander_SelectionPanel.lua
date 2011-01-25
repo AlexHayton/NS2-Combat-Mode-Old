@@ -26,6 +26,21 @@ function CommanderUI_GetSelectedEntities()
 end
 
 /**
+ * Player is selecting all active players. Sets local selection and sends command to server.
+ */
+function CommanderUI_ClickedSelectAllPlayers()
+    
+    local player = Client.GetLocalPlayer()
+    if player and player.SelectAllPlayers then
+    
+        player:SelectAllPlayers()        
+        Client.ConsoleCommand("selectallplayers")
+        
+    end
+        
+end
+
+/**
  * Get up to 2 <text>,[0-1] pairs in linear array for bargraphs on the commander selection
  */
 function CommanderUI_GetCommandBargraphs()

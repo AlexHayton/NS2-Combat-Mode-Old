@@ -15,7 +15,8 @@ class 'GUISelectionPanel' (GUIScript)
 GUISelectionPanel.kFontName = "Arial"
 GUISelectionPanel.kFontColor = Color(1, 1, 1)
 
-GUISelectionPanel.kSelectionTexture = "ui/marine_commander.dds"
+GUISelectionPanel.kSelectionTextureMarines = "ui/marine_commander.dds"
+GUISelectionPanel.kSelectionTextureAliens = "ui/alien_commander.dds"
 
 // The panel will scale with the screen resolution. It is based on
 // this screen width.
@@ -47,16 +48,20 @@ GUISelectionPanel.kSelectedCustomTextYOffset = 20
 
 function GUISelectionPanel:Initialize()
 
+    self.textureName = GUISelectionPanel.kSelectionTextureMarines
+    if CommanderUI_IsAlienCommander() then
+        self.textureName = GUISelectionPanel.kSelectionTextureAliens
+    end
     self.background = GUI.CreateGraphicsItem()
     self.background:SetAnchor(GUIItem.Middle, GUIItem.Bottom)
-    self.background:SetTexture(GUISelectionPanel.kSelectionTexture)
+    self.background:SetTexture(self.textureName)
     self.background:SetTexturePixelCoordinates(50, 0, 50 + 182, 165)
     
     self.backgroundRightEndCap = GUI.CreateGraphicsItem()
     self.backgroundRightEndCap:SetAnchor(GUIItem.Right, GUIItem.Top)
     self.backgroundRightEndCap:SetSize(Vector(GUISelectionPanel.kPanelEndCapWidth, GUISelectionPanel.kPanelHeight, 0))
     self.backgroundRightEndCap:SetPosition(Vector(-GUISelectionPanel.kPanelEndCapWidth, 0, 0))
-    self.backgroundRightEndCap:SetTexture(GUISelectionPanel.kSelectionTexture)
+    self.backgroundRightEndCap:SetTexture(self.textureName)
     self.backgroundRightEndCap:SetTexturePixelCoordinates(240, 0, 240 + 36, 165)
     self.background:AddChild(self.backgroundRightEndCap)
     
@@ -64,7 +69,7 @@ function GUISelectionPanel:Initialize()
     self.backgroundLeftEndCap:SetAnchor(GUIItem.Left, GUIItem.Top)
     self.backgroundLeftEndCap:SetSize(Vector(GUISelectionPanel.kPanelEndCapWidth, GUISelectionPanel.kPanelHeight, 0))
     self.backgroundLeftEndCap:SetPosition(Vector(-GUISelectionPanel.kPanelEndCapWidth, 0, 0))
-    self.backgroundLeftEndCap:SetTexture(GUISelectionPanel.kSelectionTexture)
+    self.backgroundLeftEndCap:SetTexture(self.textureName)
     self.backgroundLeftEndCap:SetTexturePixelCoordinates(0, 0, 36, 165)
     self.background:AddChild(self.backgroundLeftEndCap)
     
@@ -135,9 +140,9 @@ function GUISelectionPanel:InitializeSingleSelectionItems()
     incrementBarSettings.IncrementWidth = 7
     incrementBarSettings.IncrementHeight = 12
     incrementBarSettings.IncrementSpacing = 2
-    incrementBarSettings.TextureName = GUISelectionPanel.kSelectionTexture
+    incrementBarSettings.TextureName = self.textureName
     incrementBarSettings.TextureCoordinates = { X = 0, Y = 244, Width = 7, Height = 12 }
-    incrementBarSettings.IncrementColor = CommanderUI_GetTeamColor()
+    incrementBarSettings.IncrementColor = PlayerUI_GetTeamColor()
     incrementBarSettings.LowPercentage = 0.25
     incrementBarSettings.LowPercentageIncrementColor = Color(1, 0, 0, 1)
     self.healthBar = GUIIncrementBar()
@@ -332,4 +337,10 @@ function GUISelectionPanel:SetIconTextureCoordinates(selectedIcon, entityId)
         selectedIcon:SetIsVisible(false)
     end
     
+end
+
+function GUISelectionPanel:ContainsPoint(pointX, pointY)
+
+    return GUIItemContainsPoint(self.background, pointX, pointY)
+
 end

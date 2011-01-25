@@ -777,4 +777,16 @@
   <file>
     <filename>Structure_Client.lua</filename>
   </file>
+  <file>
+    <filename>Commander_PlayerAlertPanel.lua</filename>
+  </file>
+  <file>
+    <filename>GUIOrders.lua</filename>
+  </file>
+  <file>
+    <filename>GUIPlayerNames.lua</filename>
+  </file>
+  <file>
+    <filename>GUISquad.lua</filename>
+  </file>
 </project>

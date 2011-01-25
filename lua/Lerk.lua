@@ -47,7 +47,6 @@ Lerk.kRegularGravityScalar = -7
 Lerk.kFlightGravityScalar = -4
 Lerk.kMaxWalkSpeed = 2.8            // Lerks walk slowly to encourage flight
 Lerk.kMaxSpeed = 13
-Lerk.kAcceleration = 115
 Lerk.kAirAcceleration = 4
 Lerk.kHealth = kLerkHealth
 Lerk.kArmor = kLerkArmor
@@ -91,7 +90,7 @@ function Lerk:GetMaxSpeed()
 end
 
 function Lerk:GetAcceleration()
-    return ConditionalValue(self:GetIsOnGround(), Lerk.kAcceleration, Lerk.kAirAcceleration)
+    return ConditionalValue(self:GetIsOnGround(), Alien.GetAcceleration(self), Lerk.kAirAcceleration)
 end
 
 function Lerk:GetMass()

@@ -81,7 +81,7 @@ function Gore:PerformPrimaryAttack(player)
         local materialName = trace.surface
         
         // Play special hit sound depending on material
-        local surface = GetSurfaceFromTrace(trace)
+        local surface = trace.surface
         if(surface ~= "") then
             Shared.PlayWorldSound(nil, string.format(Gore.kHitMaterialSoundSpec, surface), nil, trace.endPoint)
         end

@@ -49,7 +49,7 @@ function Player:OnDestroy()
 
     LiveScriptActor.OnDestroy(self)
     
-    Shared.DestroyPhysicsController(self.controller)
+    Shared.DestroyCollisionObject(self.controller)
     self.controller = nil
    
     local team = self:GetTeam()
@@ -426,7 +426,7 @@ function Player:CopyPlayerDataFrom(player)
     
     self.waypointType = player.waypointType
     
-    self:CopyOrdersFrom(player)
+    player:CopyOrders(self)
         
 end
 

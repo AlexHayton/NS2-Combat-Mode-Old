@@ -29,6 +29,7 @@ function Projectile:CreatePhysics()
         // Projectiles need to have continuous collision detection so they
         // don't tunnel through walls and other objects.
         self.physicsBody:SetCCDEnabled(true)
+        self.physicsBody:SetPhysicsType( CollisionObject.Dynamic )
     end
     
 end
@@ -102,9 +103,7 @@ function Projectile:SetOwner(player)
     
         // Make sure the owner cannot collide with the projectile
         Shared.SetPhysicsObjectCollisionsEnabled(self.physicsBody, player:GetController(), false)
-        // As well as the owner's PhysicsModel
-        player:GetPhysicsModel():SetCollisionsEnabled(self.physicsBody, false)
-        
+
     end
     
     return success
@@ -130,4 +129,4 @@ end
 
 // Register for callbacks when projectiles collide with the world
 Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, 0 )
-
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, PhysicsGroup.PlayerControllersGroup)

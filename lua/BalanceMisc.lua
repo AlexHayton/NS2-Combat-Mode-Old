@@ -69,3 +69,7 @@ kEnergizeEnergyIncrease = .2
 // Rate of fire increase per level
 kFuryROFIncrease = .15
 
+kSprayDouseOnFireChance = .5
+
+// Players and structures get energy back at this rate when on fire 
+kOnFireEnergyRecuperationScalar = .2

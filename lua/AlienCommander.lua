@@ -17,8 +17,6 @@ AlienCommander.kChatSound = PrecacheAsset("sound/ns2.fev/alien/common/chat")
 AlienCommander.kUpgradeCompleteSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/upgrade_complete")
 AlienCommander.kResearchCompleteSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/research_complete")
 AlienCommander.kStructureUnderAttackSound = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/base_under_attack")
-AlienCommander.kBuildMenuTexture = "ui/alien_buildmenu.dds"
-AlienCommander.kMenuFlash = "ui/alien_commander.swf"
 
 function AlienCommander:GetTeamType()
     return kAlienTeamType
@@ -32,14 +30,6 @@ if(Client) then
 function AlienCommander:SetupHud()
 
     Commander.SetupHud(self)
-    
-    GetFlashPlayer(kClassFlashIndex):Load(AlienCommander.kMenuFlash)
-    GetFlashPlayer(kClassFlashIndex):SetBackgroundOpacity(0)
-    
-    Client.BindFlashTexture("alien_buildmenu", AlienCommander.kBuildMenuTexture)
-    Client.BindFlashTexture("alien_upgradeicons", Alien.kUpgradeIconsTexture)
-    Client.BindFlashTexture("alien_focusicons", Alien.kFocusIconsTexture)
-    Client.BindFlashTexture("alien_portraiticons", Alien.kPortraitIconsTexture)
     
 end
 end

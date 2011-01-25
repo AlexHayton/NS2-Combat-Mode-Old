@@ -5,6 +5,32 @@
 //    Created by:   Charlie Cleveland (charlie@unknownworlds.com)
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
+
+function LiveScriptActor:OnCreate()    
+
+    ScriptActor.OnCreate(self)
+    
+    // Current orders. List of order entity ids.
+    self.orders = {}
+    
+end
+
+function LiveScriptActor:CopyOrders(dest)
+
+    table.copy(self.orders, dest.orders)
+    
+    dest.hasOrder = self.hasOrder
+    
+    dest.orderX = self.orderX
+    dest.orderY = self.orderY
+    dest.orderZ = self.orderZ
+    
+    dest.orderType = self.orderType
+    
+    self:OrderChanged()
+    
+end
+
 function LiveScriptActor:CopyDataFrom(player)
 
     self.gameEffectsFlags = player.gameEffectsFlags
@@ -27,6 +53,18 @@ end
 
 function LiveScriptActor:GetHasOrder()
     return self.hasOrder
+end
+
+function LiveScriptActor:UpdateEnergy(timePassed)
+
+    local scalar = ConditionalValue(self:GetGameEffectMask(kGameEffect.OnFire), kOnFireEnergyRecuperationScalar, 1)
+    local count = self:GetStackableGameEffectCount(kEnergizeGameEffect)
+    local energyRate = (kEnergyUpdateRate * scalar) + kEnergyUpdateRate * count * kEnergizeEnergyIncrease
+    
+    if(timePassed > 0 and self.maxEnergy ~= nil and self.maxEnergy > 0) then
+        self.energy = math.min(self.energy + timePassed * energyRate, self.maxEnergy)
+    end
+    
 end
 
 function LiveScriptActor:Upgrade(newTechId)
@@ -178,6 +216,10 @@ function LiveScriptActor:OnTakeDamage(damage, doer, point)
     local flinchParams = {damagetype = damageType, flinch_severe = ConditionalValue(damage > 20, true, false)}
     if point then
         flinchParams[kEffectHostCoords] = Coords.GetTranslation(point)
+    end
+    
+    if doer then
+        flinchParams[kEffectFilterDoerName] = doer:GetClassName()
     end
     
     self:TriggerEffects("flinch", flinchParams)
@@ -365,10 +407,34 @@ function LiveScriptActor:GiveOrder(orderType, targetId, targetOrigin, orientatio
 
 end
 
+function LiveScriptActor:DestroyOrders()
+    
+    // Delete all order entities
+    for index, orderEntId in ipairs(self.orders) do
+        local orderEnt = Shared.GetEntity(orderEntId)
+        DestroyEntity(orderEnt)            
+    end
+    
+    table.clear(self.orders)
+
+end
+
+function LiveScriptActor:GetHasSpecifiedOrder(orderEnt)
+
+    for index, orderEntId in ipairs(self.orders) do
+        if orderEntId == orderEnt:GetId() then
+            return true
+        end
+    end
+    
+    return false
+
+end
+
 function LiveScriptActor:SetOrder(order, clearExisting, insertFirst)
 
-    if(clearExisting) then
-        table.clear(self.orders)
+    if clearExisting then
+        self:DestroyOrders()        
     end
 
     // Override location of order so floating units stay off the ground
@@ -381,20 +447,13 @@ function LiveScriptActor:SetOrder(order, clearExisting, insertFirst)
     end
     
     if(insertFirst) then
-        table.insert(self.orders, 1, order)
+        table.insert(self.orders, 1, order:GetId())
     else    
-        table.insert(self.orders, order)
+        table.insert(self.orders, order:GetId())
     end
     
     self:OrderChanged()
 
-end
-
-function LiveScriptActor:CopyOrdersFrom(source)
-    if source.orders and self.orders then
-        table.copy(source.orders, self.orders)
-        self:OrderChanged()
-    end
 end
 
 function LiveScriptActor:GetCurrentOrder()
@@ -402,18 +461,44 @@ function LiveScriptActor:GetCurrentOrder()
     local currentOrder = nil
     
     if(table.maxn(self.orders) > 0) then
-        currentOrder = self.orders[1]    
+        local orderId = self.orders[1] 
+        currentOrder = Shared.GetEntity(orderId)
     end
 
     return currentOrder
     
 end
 
+// Convert rally orders to move and we're done
+function LiveScriptActor:ProcessRallyOrder(originatingEntity)
+
+    originatingEntity:CopyOrders(self)
+    
+    // Convert rally orders to move and we're done
+    for index, orderId in ipairs(self.orders) do
+    
+        local order = Shared.GetEntity(orderId)
+        
+        if(order and (order:GetType() == kTechId.SetRally)) then
+            order:SetType(kTechId.Move)
+        end
+        
+    end
+    
+end
+
 function LiveScriptActor:CompletedCurrentOrder()
 
-    self:OnOrderComplete(self.orders[1])
+    local currentOrder = self:GetCurrentOrder()
+    if currentOrder then
     
-    table.remove(self.orders, 1)
+        self:OnOrderComplete(currentOrder)
+    
+        DestroyEntity(currentOrder)
+        
+        table.remove(self.orders, 1)
+        
+    end
     
     self:OrderChanged()
     
@@ -421,8 +506,12 @@ end
 
 function LiveScriptActor:ClearOrders()
 
-    table.clear(self.orders)
-    self:OrderChanged()
+    if table.count(self.orders) > 0 then
+    
+        self:DestroyOrders()
+        self:OrderChanged()
+        
+    end
     
 end
 
@@ -815,7 +904,7 @@ function LiveScriptActor:MeleeAttack(target, time)
         target:TakeDamage(self:GetMeleeAttackDamage(), attacker, self, trace.endPoint, direction)
 
         // Play hit effects
-        TriggerHitEffects(self, target, trace.endPoint, GetSurfaceFromTrace(trace))
+        TriggerHitEffects(self, target, trace.endPoint, trace.surface)
             
         self.timeOfLastAttack = Shared.GetTime()
         

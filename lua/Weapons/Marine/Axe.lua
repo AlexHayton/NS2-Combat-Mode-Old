@@ -15,11 +15,6 @@ Axe.kMapName = "axe"
 Axe.kModelName = PrecacheAsset("models/marine/axe/axe.model")
 Axe.kViewModelName = PrecacheAsset("models/marine/axe/axe_view.model")
 
-Axe.kScrapeMaterialSound = "sound/ns2.fev/materials/%s/scrape"
-Axe.kMetalScrapeMaterialSound = "sound/ns2.fev/materials/%s/metal_scrape"
-PrecacheMultipleAssets(Axe.kScrapeMaterialSound, kSurfaceList)
-PrecacheMultipleAssets(Axe.kMetalScrapeMaterialSound, kSurfaceList)
-
 // Use only single attack until we have shared random numbers
 
 Axe.kDamage = kAxeDamage
@@ -89,21 +84,8 @@ function Axe:OnPrimaryAttack(player)
     // when not interrupted
     player:SetActivityEnd(self:GetPrimaryAttackDelay() * player:GetCatalystFireModifier())
     
-    self:DoMelee()
+    self:AttackMeleeCapsule(player, Axe.kDamage, self:GetRange())
     
-end
-
-function Axe:DoMelee()
-
-    local player = self:GetParent()
-    local hit, trace = self:AttackMeleeCapsule(player, Axe.kDamage, self:GetRange())
-    
-    // Play scraping sound depending on material
-    local surface = GetSurfaceFromTrace(trace)
-    if(surface ~= "") then
-        Shared.PlayWorldSound(nil, string.format(Axe.kMetalScrapeMaterialSound, surface), nil, trace.endPoint)
-    end
-
 end
 
 function Axe:OnTag(tagName)

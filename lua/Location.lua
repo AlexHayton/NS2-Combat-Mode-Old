@@ -16,6 +16,10 @@ Location.kMapName = "location"
 function Location:OnInit()
 
     self.teamNumber = 0
+    // Default to show.
+    if self.showOnMinimap == nil then
+        self.showOnMinimap = true
+    end
 
     Trigger.OnInit(self)
     
@@ -23,6 +27,12 @@ function Location:OnInit()
     
     self:SetPropagate(Entity.Propagate_Always)
     
+end
+
+function Location:GetShowOnMinimap()
+
+    return self.showOnMinimap
+
 end
 
 function Location:OnLoad()

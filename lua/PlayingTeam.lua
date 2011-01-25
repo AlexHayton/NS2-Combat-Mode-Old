@@ -229,14 +229,13 @@ function PlayingTeam:TriggerAlert(techId, entity)
                 
             end
             
-            // Send minimap ping to commanders
+            // Send minimap ping and alert notification to commanders
             for i, playerIndex in ipairs(self.playerIds) do
 
                 local player = Shared.GetEntity(playerIndex)
                 if(player ~= nil and player:isa("Commander")) then
                 
-                    // Send minimap ping also
-                    player:SendAlert(techId, entity)                    
+                    player:TriggerAlert(techId, entity)                    
                     
                 end
                 
@@ -250,23 +249,6 @@ function PlayingTeam:TriggerAlert(techId, entity)
     
     return triggeredAlert
     
-end
-
-// Send alert to all team commanders so it pings minimap
-function PlayingTeam:SendMinimapAlert(techId, entity)
-
-    for i, playerIndex in ipairs(self.playerIds) do
-
-        local player = Shared.GetEntity(playerIndex)
-        if(player ~= nil and player:isa("Commander")) then
-        
-            player:SendAlert(techId, entity)
-            Server.SendCommand(player, minimapAlertCommand) 
-            
-        end
-        
-    end
-
 end
 
 function PlayingTeam:SetCarbon(amount)
@@ -841,13 +823,13 @@ function PlayingTeam:ProcessEntityHelp(player)
         elseif entity:isa("Extractor") then
             if enemy and player:AddTooltipOncePer("This Extractor generates resources for your enemy. Destroy it!") then
                 return true
-            elseif not enemy and player:AddTooltipOncePer("Extractors give 1 plasma to each player and 1 carbon to your team every " .. kResourceTowerResourceInterval .." seconds.") then
+            elseif not enemy and player:AddTooltipOncePer("Extractors give 1 resource to each player and your team every " .. kResourceTowerResourceInterval .." seconds.") then
                 return true
             end
         elseif entity:isa("Harvester") then
             if enemy and player:AddTooltipOncePer("This Harvester generates resources for your enemy. Destroy it!") then
                 return true
-            elseif not enemy and player:AddTooltipOncePer("Harvesters give 1 plasma to every player and 1 carbon to your team every " .. kResourceTowerResourceInterval .. " seconds.") then
+            elseif not enemy and player:AddTooltipOncePer("Harvesters give 1 resource to every player and your team every " .. kResourceTowerResourceInterval .. " seconds.") then
                 return true
             end
         elseif entity:isa("Egg") then
@@ -901,148 +883,6 @@ function PlayingTeam:UpdateHelp()
         self.timeOfLastHelpCheck = Shared.GetTime()
         
     end 
-    
-end
-
-function PlayingTeam:GetMinimapBlipTypeAndTeam(entity)
-
-    local success = false
-    local blipType = 0
-    local blipTeam = 0
-    
-    // Don't display blips for ResourceTowers or CommandStructures as
-    // they will have a blip under them for the Resource/Tech Point already or
-    // they are not important enough to display.
-    if entity:isa("CommandStructure") or entity:isa("ResourceTower") or
-       entity:isa("Egg") then
-        return success, blipType, blipTeam
-    end
-    
-    // World entities
-    if entity:isa("Door") then
-    
-        blipType = kMinimapBlipType.Door
-        
-    elseif entity:isa("ResourcePoint") then
-
-        blipType = kMinimapBlipType.ResourcePoint
-    
-    elseif entity:isa("TechPoint") then
-    
-        blipType = kMinimapBlipType.TechPoint
-        
-    // Don't display PowerPoints unless they are in an unpowered state.
-    elseif entity:isa("PowerPoint") then
-    
-        // Important to have this statement inside the isa("PowerPoint") statement.
-        if entity:GetLightMode() == kLightMode.NoPower then
-            blipType = kMinimapBlipType.PowerPoint
-        end
-    
-    // Friendly players and structures
-    elseif entity:GetIsVisible() then
-    
-        if entity:GetTeamNumber() == self:GetTeamNumber() then
-    
-            if entity:isa("Player") or entity:isa("MAC") or entity:isa("Drifter") then
-                blipType = kMinimapBlipType.Player 
-            elseif entity:isa("Structure") then
-                blipType = kMinimapBlipType.Structure
-            end
-            
-            blipTeam = kMinimapBlipTeam.Friendly
-        
-        // Visible enemy players and structures
-        elseif entity:GetIsSighted() then
-        
-            if entity:isa("Player") then
-                blipType = kMinimapBlipType.Player 
-            elseif entity:isa("Structure") then
-                blipType = kMinimapBlipType.Structure
-            end
-            
-            blipTeam = kMinimapBlipTeam.Enemy
-            
-        end
-        
-    end
-    
-    if blipType ~= 0 then
-    
-        if blipTeam == 0 then
-        
-            local teamEntity = entity
-            // If the entity isn't on a team but has an attached entity, use
-            // the attached entity instead. This makes finding the team for a
-            // ResourcePoint easier.
-            if entity:GetTeamNumber() == kTeamReadyRoom and entity:GetAttached() then
-                teamEntity = entity:GetAttached()
-            end
-            
-            if teamEntity:GetTeamNumber() == kTeamReadyRoom then
-                blipTeam = kMinimapBlipTeam.Neutral
-            elseif teamEntity:GetTeamNumber() == self:GetTeamNumber() then
-                blipTeam = kMinimapBlipTeam.Friendly
-            elseif teamEntity:GetTeamNumber() == GetEnemyTeamNumber(self:GetTeamNumber()) then
-                blipTeam = kMinimapBlipTeam.Enemy
-            end
-            
-        end
-        
-        success = true
-        
-    end
-
-    return success, blipType, blipTeam
-    
-end
-
-function PlayingTeam:SendBlipList()
-
-    local commanders = {}
-    
-    for i, playerIndex in ipairs(self.playerIds) do
-    
-        local player = Shared.GetEntity(playerIndex)
-        if(player ~= nil and player:isa("Commander")) then
-        
-            table.insertunique(commanders, player)
-            
-        end
-        
-    end    
-
-    if table.count(commanders) > 0 then
-    
-        // Loop through all entities
-        local entities = GetEntitiesIsa("ScriptActor")
-        
-        // Send entity if friendly, visible or if a resource point, attach point or door
-        for index, entity in ipairs(entities) do
-        
-            local success, blipType, blipTeam = self:GetMinimapBlipTypeAndTeam(entity)
-            
-            if success then
-            
-                local origin = entity:GetOrigin()
-                local mapX, mapZ 
-                success, mapX, mapZ = commanders[1]:GetMapXY(origin.x, origin.z)
-                
-                if success then
-                
-                    local blipMessage = BuildMinimapBlipMessage(entity:GetId(), mapX, mapZ, blipType, blipTeam)
-                    
-                    for playerIndex, player in ipairs(commanders) do
-                        Server.SendNetworkMessage(player, "MinimapBlipMessage", blipMessage, true)
-                    end
-                    
-                end
-                
-            end
-        
-        end
-        
-    end
     
 end
 

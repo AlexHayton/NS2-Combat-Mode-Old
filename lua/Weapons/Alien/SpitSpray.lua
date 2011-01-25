@@ -21,6 +21,7 @@ SpitSpray.kSpitSpeed = 40
 SpitSpray.kHealthSprayEnergyCost = kHealsprayEnergyCost
 SpitSpray.kMinHeal = 5
 SpitSpray.kHealRadius = 3.5
+SpitSpray.kBaseHealAmount = 13      // Heal by base amount + percentage of max health
 SpitSpray.kHealthPercent = 0.05
 SpitSpray.kHealingSprayDamage = kHealsprayDamage
 SpitSpray.kHealthSprayDelay = kHealsprayFireDelay
@@ -67,7 +68,7 @@ function SpitSpray:CreateSpitProjectile(player)
         
         local viewAngles = player:GetViewAngles()
         local viewCoords = viewAngles:GetCoords()
-        local startPoint = player:GetViewOffset() + player:GetOrigin()
+        local startPoint = player:GetViewOffset() + player:GetOrigin() + viewCoords.zAxis * 1
         
         local spit = CreateEntity(Spit.kMapName, startPoint, player:GetTeamNumber())
         SetAnglesFromVector(spit, viewCoords.zAxis)
@@ -116,18 +117,21 @@ function SpitSpray:HealEntities(player)
         if( targetEntity ~= player ) then
             
             local isHurtPlayer = (GetEnemyTeamNumber(player:GetTeamNumber()) == targetEntity:GetTeamNumber())
-            local isHealPlayer = (player:GetTeamNumber() == targetEntity:GetTeamNumber())
+            local isHealTarget = (player:GetTeamNumber() == targetEntity:GetTeamNumber())
             // GetHealthScalar() factors in health and armor.
             if targetEntity:GetHealthScalar() < 1 then
                 
                 // TODO: Traceline to target to make sure we don't go through objects (or check line of sight because of area effect?)
-                if isHealPlayer then
+                if isHealTarget then
                     
-                    local health = math.max(SpitSpray.kMinHeal, targetEntity:GetMaxHealth() * SpitSpray.kHealthPercent)
+                    // Heal entities by base amount plus a scaleable amount so it is helpful vs. weak targets yet doesn't take forever to heal hives (NS1)
+                    local health = SpitSpray.kBaseHealAmount + math.max(SpitSpray.kMinHeal, targetEntity:GetMaxHealth() * SpitSpray.kHealthPercent)
                     targetEntity:AddHealth( health )
                     
-                    // Put out entities on fire 
-                    targetEntity:SetGameEffectMask(kGameEffect.OnFire, false)
+                    // Put out entities on fire sometimes
+                    if math.random() < kSprayDouseOnFireChance then
+                        targetEntity:SetGameEffectMask(kGameEffect.OnFire, false)
+                    end
                     
                 elseif isHurtPlayer then
                 

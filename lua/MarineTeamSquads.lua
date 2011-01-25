@@ -115,7 +115,7 @@ end
 
 function GetColorForSquad(squadIndex)
 
-    if(squadIndex > 0 and squadIndex <= GetMaxSquads()) then
+    if squadIndex and (squadIndex > 0) and (squadIndex <= GetMaxSquads()) then
         return kSquadColors[squadIndex]
     end
     

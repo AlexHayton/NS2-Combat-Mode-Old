@@ -16,7 +16,7 @@ function MarineCommander:OnInitLocalClient()
     Commander.OnInitLocalClient(self)
     
     self:InitSquadSelectionScreenEffects()
-
+    
 end
 
 function MarineCommander:OnDestroyClient()
@@ -26,7 +26,7 @@ function MarineCommander:OnDestroyClient()
     if(self.DestroySquadSelectionScreenEffects ~= nil) then
         self:DestroySquadSelectionScreenEffects()
     end
-
+    
 end
 
 function MarineCommander:SetupHud()

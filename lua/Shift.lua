@@ -23,7 +23,7 @@ Shift.kModelName = PrecacheAsset("models/alien/shift/shift.model")
 
 Shift.kEchoSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/shift/echo")
 Shift.kEnergizeSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/shift/energize")
-Shift.kEnergizeTargetSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/shift/energize_target")
+Shift.kEnergizeTargetSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/shift/energize_player")
 //Shift.kRecallSoundEffect = PrecacheAsset("sound/ns2.fev/alien/structures/shift/recall")
 
 Shift.kEchoEffect = PrecacheAsset("cinematics/alien/shift/echo.cinematic")

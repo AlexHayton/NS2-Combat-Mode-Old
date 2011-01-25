@@ -22,12 +22,22 @@ class 'GUIButton' (GUIScript)
 // settingsTable.DefaultState, HoverState, and PressState table with X1, Y1, X2, Y2 texture coordinates
 // settingsTable.PressCallback function with no parameters
 
+GUIButton.kTooltipFontSize = 16
+
 function GUIButton:Initialize(settingsTable)
     
     self.button = GUI.CreateGraphicsItem()
     self.button:SetSize(Vector(settingsTable.Width, settingsTable.Height, 0))
     self.button:SetPosition(Vector(settingsTable.X, settingsTable.Y, 0))
     self.button:SetTexture(settingsTable.TextureName)
+    
+    self.tooltip = GUI.CreateTextItem()
+    self.tooltip:SetFontSize(GUIButton.kTooltipFontSize)
+    self.tooltip:SetAnchor(GUIItem.Left, GUIItem.Top)
+    self.tooltip:SetTextAlignmentX(GUITextItem.Align_Min)
+    self.tooltip:SetTextAlignmentY(GUITextItem.Align_Max)
+    self.tooltip:SetIsVisible(false)
+    self.button:AddChild(self.tooltip)
     
     self.defaultState = { X1 = settingsTable.DefaultState.X1, Y1 = settingsTable.DefaultState.Y1, X2 = settingsTable.DefaultState.X2, Y2 = settingsTable.DefaultState.Y2 }
     self.hoverState = { X1 = settingsTable.HoverState.X1, Y1 = settingsTable.HoverState.Y1, X2 = settingsTable.HoverState.X2, Y2 = settingsTable.HoverState.Y2 }
@@ -52,12 +62,15 @@ function GUIButton:Update(deltaTime)
     local mouseX, mouseY = Client.GetCursorPosScreen()
     local containsPoint, withinX, withinY = GUIItemContainsPoint(self.button, mouseX, mouseY)
     if containsPoint then
+        self.tooltip:SetIsVisible(true)
+        self.tooltip:SetPosition(Vector(withinX, withinY, 0))
         if self.mousePressed then
             self:SetState(self.pressState)
         else
             self:SetState(self.hoverState)
         end
     else
+        self.tooltip:SetIsVisible(false)
         self:SetState(self.defaultState)
     end
     
@@ -85,8 +98,20 @@ end
 function GUIButton:SetState(stateTable)
 
     self.currentState = stateTable
-    self.button:SetTexturePixelCoordinates(stateTable.X1, stateTable.Y1, stateTable.X2, stateTable.Y2)
+    GUISetTextureCoordinatesTable(self.button, self.currentState)
     
+end
+
+function GUIButton:SetTooltipText(setText, setIsBold, setTextColor)
+
+    self.tooltip:SetText(setText)
+    if setIsBold then
+        self.tooltip:SetFontIsBold(setIsBold)
+    end
+    if setTextColor then
+        self.tooltip:SetColor(setTextColor)
+    end
+
 end
 
 function GUIButton:SetAnchor(horzAnchor, vertAnchor)

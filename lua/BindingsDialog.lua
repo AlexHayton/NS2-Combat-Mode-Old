@@ -37,7 +37,8 @@ local defaults = {
     {"Weapon5", "5"},
     {"Scoreboard", "Tab"},
     {"ToggleConsole", "Grave"},
-	{"ToggleFlashlight","F"}
+	{"ToggleFlashlight","F"},
+	{"ShowMap","M"}
 }
 
 // Order, names, description of keys in menu
@@ -71,6 +72,7 @@ local globalControlBindings = {
     "Weapon5", "input", "Weapon #5", "5",
     "ToggleConsole", "input", "Toggle Console", "Grave",
     "ToggleFlashlight", "input", "Flashlight", "F",
+    "ShowMap", "input", "Show Map", "M",
 }
 
 local specialKeys = {

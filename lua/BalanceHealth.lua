@@ -38,6 +38,11 @@ kBalanceAutoHealMaxPercentPerSecond = 0.5
 kStartHealthScalar = 0.3        
 kCarapaceHealthPerArmor = 3        
         
+kAlienArmor1 = 1.1
+kAlienArmor2 = 1.2
+kAlienArmor3 = 1.3
+        
+        
 kArmoryHealth = 2400    kArmoryArmor = 0    kArmoryPointValue = 10
 kAdvancedArmoryHealth = 4000    kAdvancedArmoryArmor = 0    kAdvancedArmoryPointValue = 40
         
@@ -79,3 +84,25 @@ kMatureShadeHealth = 900    kMatureShadeArmor = 0    kMatureShadePointValue = 15
 kHydraHealth = 250    kHydraArmor = 0    kHydraPointValue = 5
         
 kPowerPointHealth = 5000    kPowerPointArmor = 0    kPowerPointPointValue = 15
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        

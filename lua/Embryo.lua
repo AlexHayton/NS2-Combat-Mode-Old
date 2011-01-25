@@ -49,8 +49,7 @@ function Embryo:OnInitLocalClient()
 
     Alien.OnInitLocalClient(self)
     
-    // Disabled for now
-    //self.embryoHUD = GetGUIManager():CreateGUIScript("GUIEmbryoHUD")
+    self.embryoHUD = GetGUIManager():CreateGUIScript("GUIEmbryoHUD")
     
 end
 

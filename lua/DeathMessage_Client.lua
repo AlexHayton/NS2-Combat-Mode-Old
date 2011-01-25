@@ -61,7 +61,6 @@ end
 
 function InitDeathMessages(player)
 
-    Client.BindFlashTexture("death_messages", "ui/messages_icons.dds")
     queuedDeathMessages = {}
     
 end

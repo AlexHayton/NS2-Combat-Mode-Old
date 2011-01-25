@@ -85,22 +85,11 @@ local networkVars =
     
 }
 
-function LiveScriptActor:OnCreate()    
-
-    ScriptActor.OnCreate(self)
-    
-    // Current orders
-    self.orders = {}
-    
-end
-
 function LiveScriptActor:DestroyPhysicsController()
 
     if self.controller ~= nil then
-    
-        Shared.DestroyPhysicsController(self.controller)
+        Shared.DestroyCollisionObject(self.controller)
         self.controller = nil
-        
     end
 
 end
@@ -110,20 +99,6 @@ function LiveScriptActor:OnDestroy()
     self:DestroyPhysicsController()
     
     ScriptActor.OnDestroy(self)
-    
-end
-
-function LiveScriptActor:CopyOrders(dest)
-
-    table.copy(self.orders, dest.orders)
-    
-    dest.hasOrder = self.hasOrder
-    
-    dest.orderX = self.orderX
-    dest.orderY = self.orderY
-    dest.orderZ = self.orderZ
-    
-    dest.orderType = self.orderType
     
 end
 
@@ -192,8 +167,11 @@ function LiveScriptActor:CreateController(physicsGroup, capsuleHeight, capsuleRa
         self.controller = Shared.CreatePhysicsController(self)
         self.controller:SetGroup( physicsGroup )
         
-        self.controller:SetHeight( capsuleHeight )
-        self.controller:SetRadius( capsuleRadius )
+        self.controller:SetupCapsule( capsuleRadius, capsuleHeight, self.controller:GetCoords() )
+        
+        // Make the controller kinematic so physically simulated objects will
+        // interact/collide with it.
+        self.controller:SetPhysicsType( CollisionObject.Kinematic )
         
     else
         Print("%s:CreateController(): Already has a controller.", self:GetClassName())
@@ -389,17 +367,6 @@ function LiveScriptActor:AddEnergy(amount)
     self.energy = math.max(math.min(self.energy, self.maxEnergy), 0)
 end
 
-function LiveScriptActor:UpdateEnergy(timePassed)
-
-    local count = self:GetStackableGameEffectCount(kEnergizeGameEffect)
-    local energyRate = kEnergyUpdateRate * (1 + count * kEnergizeEnergyIncrease)
-    
-    if(timePassed > 0 and self.maxEnergy ~= nil and self.maxEnergy > 0) then
-        self.energy = math.min(self.energy + timePassed * energyRate, self.maxEnergy)
-    end
-    
-end
-
 function LiveScriptActor:GetMaxEnergy()
     return self.maxEnergy
 end
@@ -428,6 +395,10 @@ function LiveScriptActor:OnUpdate(deltaTime)
     if Server then
         self:UpdateJustKilled()
     end
+    
+    if (self.controller ~= nil and not self:GetIsAlive()) then
+        self:DestroyPhysicsController()
+    end        
     
     if self.timeLastUpdate ~= nil then
 

@@ -4,26 +4,47 @@
 //
 //    Created by:   Charlie Cleveland (charlie@unknownworlds.com)
 //
-// An order that is given to an AI unit.
+// An order that is given to an AI unit or player.
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-class 'Order' 
+class 'Order' (Entity)
+
+Order.kMapName = "order"
+
+Order.networkVars =
+{
+    // No need to send entId as the entity origin is updated every frame
+    orderType           = "enum kTechId",
+    orderParam          = "integer",
+    orderLocation       = "vector",
+    orderOrientation    = "float",
+}
+
+function Order:OnCreate()
+
+    self.orderType = kTechId.None
+    self.orderParam = -1
+    self.orderLocation = Vector(0, 0, 0)
+    self.orderOrientation = 0
+    
+    //self:SetIsVisible(false)
+    
+end
 
 function Order:Initialize(orderType, orderParam, position, orientation)
 
     self.orderType = orderType
     self.orderParam = orderParam
     
-    if(orientation ~= nil) then
+    if orientation then
         self.orderOrientation = orientation
     end
     
-    if(position) then
-        self.orderLocation = Vector()
+    if position then
         VectorCopy(position, self.orderLocation)
-    else
-        self.orderLocation = nil
+    //else
+    //    self.orderLocation = nil
     end
     
 end
@@ -77,9 +98,13 @@ function Order:GetOrientation()
     return self.orderOrientation
 end
 
+function Order:OnGetIsRelevant(player)
+    return GetGamerules():GetIsRelevant(player, self)   
+end
+
 function CreateOrder(orderType, orderParam, position, orientation)
 
-    local newOrder = Order()
+    local newOrder = CreateEntity(Order.kMapName)
        
     newOrder:Initialize(orderType, orderParam, position, tonumber(orientation))
     
@@ -144,3 +169,5 @@ function GetOrderTargetIsWeldTarget(order, doerTeamNumber)
     return nil
 
 end
+
+Shared.LinkClassToMap( "Order", Order.kMapName, Order.networkVars )

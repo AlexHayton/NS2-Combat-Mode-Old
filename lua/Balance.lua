@@ -143,14 +143,19 @@ kSapCost = 2
 kStompCost = 2	
 kBoneShieldCost = 2	
 	
+kMelee1ResearchCost = 15	
+kMelee2ResearchCost = 25	
+kMelee3ResearchCost = 35	
+kAlienArmor1ResearchCost = 15	
+kAlienArmor2ResearchCost = 25	
+kAlienArmor3ResearchCost = 35	
+	
 	
 kPlayingTeamInitialCarbon = 50	
 	
 kPlayerInitialPlasma = 10	
 	
 kResourceTowerResourceInterval = 12	
-	
-	
 	
 // MARINE DAMAGE	
 kRifleDamage = 10	
@@ -195,12 +200,12 @@ kShotgunMinDamageRange = 20
 kShotgunMaxDamageRange = 2	
 kShotgunSpreadDegrees = 20	
 	
-kFlamethrowerDamage = 25
-kFlamethrowerDamageType = kDamageType.Flame
-kFlamethrowerFireDelay = 0.5
-kFlamethrowerClipSize = 20
-
-kBurnDamagePerSecond = 10    
+kFlamethrowerDamage = 20	
+kFlamethrowerDamageType = kDamageType.Flame	
+kFlamethrowerFireDelay = 0.5	
+kFlamethrowerClipSize = 15	
+	
+kBurnDamagePerSecond = 8	
 	
 kMinigunDamage = 25	
 kMinigunDamageType = kDamageType.Normal	
@@ -381,16 +386,16 @@ kHarvesterBuildTime = 20
 kDrifterFlareTechResearchTime = 25	
 	
 kCragBuildTime = 20	
-kMatureCragBuildTime = 20	
+kMatureCragResearchTime = 30	
 	
 kWhipBuildTime = 20	
-kMatureWhipBuildTime = 20	
+kMatureWhipResearchTime = 30	
 	
 kShiftBuildTime = 20	
-kMatureShiftBuildTime = 20	
+kMatureShiftResearchTime = 30	
 	
 kShadeBuildTime = 20	
-kMatureShadeBuildTime = 20	
+kMatureShadeResearchTime = 30	
 	
 kHydraBuildTime = 12	
 	
