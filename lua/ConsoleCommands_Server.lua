@@ -150,6 +150,17 @@ function OnCommandThirdperson(client, distance)
     
 end
 
+// Cheat to grant experience. Saves me having to bite power nodes all day!
+function OnCommandGrantExperience(client, experience)
+	if (client ~= nil and Shared.GetCheatsEnabled()) then
+		local player = client:GetControllingPlayer()
+		player:AddExperience(experience)
+		Print ("Granted " .. tostring(experience) .. " experience to the player")
+	else
+		Print ("Cheats are disabled")
+	end
+end
+
 function OnCommandRoundReset(client)
     if (client ~= nil and Shared.GetCheatsEnabled()) then
         GetGamerules():ResetGame()    
@@ -227,3 +238,4 @@ Event.Hook("Console_reset",                 OnCommandRoundReset)
 Event.Hook("Console_updateping",            OnCommandUpdatePing)
 Event.Hook("Console_anim_debug",            OnCommandAnimDebug)
 Event.Hook("Console_effect_debug",          OnCommandEffectDebug)
+Event.Hook("Console_grantexperience",     OnCommandGrantExperience)

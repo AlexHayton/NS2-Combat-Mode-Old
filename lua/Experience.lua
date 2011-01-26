@@ -7,9 +7,9 @@
 // Manages the experience ranks and generic functions for dealing with experience.
 //
 
-kRankExp = { 0, 10, 20, 40, 80, 150, 300, kMaxExperience }
-kMarineRanks = { "Private", "Private First Class", "Sergeant", "Lieutenant", "Commander", "General", "Master General" }
-kAlienRanks = { "Worm", "Slug", "Parasite", "Crawler", "Hunter", "Beast", "Overlord" }
+kRankExp = { 10.0, 20.0, 40.0, 80.0, 150.0, 300.0, kMaxExperience}
+kMarineRanks = { "Private", "Private First Class", "Sergeant", "Lieutenant", "Commander", "General", "Master General", "Commander-in-Chief" }
+kAlienRanks = { "Worm", "Slug", "Parasite", "Crawler", "Hunter", "Beast", "Overlord", "Deity" }
 kExperienceRadius = 10
 kDamageModifiers = { PowerPoint=0.1, InfantryPortal=0.2, CommandStation=0.2 }
 kExperienceDamageModifier = 0.1
@@ -26,20 +26,20 @@ function Experience_ComputeExperience(hitentity, damage)
 end
 
 function Experience_GetNumSkillsAvailable(rank)
-    return rank + 1
+    return rank
 end
 
 function Experience_GetRank(experience)
-    // Find an efficient way to look this up. Is there a sort function?
-    for rank,exp in ipairs(kRankExp) do
-        if (exp >= experience) then
-            return rank
-        end
-    end
+    // Find an efficient way to look this up.
+	for rank,exp in ipairs(kRankExp) do
+		if (exp > experience) then
+			return rank
+		end
+	end
 end
 
 function Experience_GetNextRankExp(rank)
-    return kRankExp[rank + 1]
+    return kRankExp[rank]
 end
 
 function Experience_GetRankName(teamname, rank)

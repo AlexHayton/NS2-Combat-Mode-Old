@@ -58,7 +58,7 @@ kMaxScore = 9999
 kMaxKills = 254
 kMaxDeaths = 254
 kMaxPing = 999
-kMaxExperience = 2000
+kMaxExperience = 2000.0
 
 // Surface list. Add more materials here to precache ricochets, bashes, footsteps, etc
 // Used with PrecacheMultipleAssets

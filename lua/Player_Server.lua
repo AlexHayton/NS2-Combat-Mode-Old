@@ -729,8 +729,14 @@ end
 
 function Player:AddExperience(points)
     if(points ~= nil and points ~= 0) then
+		local oldExperience = self.experience
+		local nextRank = Experience_GetNextRankExp(Experience_GetRank(self.experience))
         self.experience = Clamp(self.experience + points, 0, kMaxExperience)
-        self:SetScoreboardChanged(true)        
+		
+		if (oldExperience + points >= nextRank) then
+			self:AddTooltip(string.format("Congratulations! You have reached rank %s (%s)", tostring(self:GetRank()), Experience_GetRankName(self:GetTeamNumber(), self:GetRank())))
+			self:SetScoreboardChanged(true)        
+		end
     end
 end
 

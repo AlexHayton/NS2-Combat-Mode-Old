@@ -512,6 +512,20 @@ function PlayerUI_GetPlayerRankName()
     return 0
 end
 
+// Returns the progression to the next rank as a number between 0 and 1.
+function PlayerUI_GetExperienceProgression()
+	local player = Client.GetLocalPlayer()
+	if player then
+		local thisRankExp = 0
+		if (Client.GetLocalPlayer():GetRank() > 1) then
+			thisRankExp = Experience_GetNextRankExp(Client.GetLocalPlayer():GetRank() - 1)
+		end
+		local nextRankExp = Experience_GetNextRankExp(Client.GetLocalPlayer():GetRank())
+		return (Client.GetLocalPlayer():GetExperience() - thisRankExp) / (nextRankExp - thisRankExp)
+	end
+	return 0
+end
+
 function PlayerUI_GetPlayerRank()
     local player = Client.GetLocalPlayer()
     if player then
@@ -1532,6 +1546,20 @@ function PlayerUI_GetTeamColor()
     local player = Client.GetLocalPlayer()
     return ColorIntToColor(GetColorForPlayer(player))
     
+end
+
+function PlayerUI_GetTeamType()
+
+	local player = Client.GetLocalPlayer()
+	if (player:GetTeam() ~= nil) then	
+		if (player:GetTeam():isa("MarineTeam")) then
+			return "Marines"
+		elseif (player:GetTeam():isa("AlienTeam")) then
+			return "Aliens"
+		end
+	end
+	return "Spectator"
+	
 end
 
 /**
