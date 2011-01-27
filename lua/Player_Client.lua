@@ -499,7 +499,7 @@ end
 function PlayerUI_GetPlayerExperience()
     local player = Client.GetLocalPlayer()
     if player then
-        return Client.GetLocalPlayer():GetExperience()
+        return player:GetExperience()
     end
     return 0
 end
@@ -507,7 +507,7 @@ end
 function PlayerUI_GetPlayerRankName()
     local player = Client.GetLocalPlayer()
     if player then
-        return Experience_GetRankName(Client.GetLocalPlayer():GetTeamNumber(), Client.GetLocalPlayer():GetRank())
+        return Experience_GetRankName(player:GetTeamNumber(), player:GetRank())
     end
     return 0
 end
@@ -517,11 +517,11 @@ function PlayerUI_GetExperienceProgression()
 	local player = Client.GetLocalPlayer()
 	if player then
 		local thisRankExp = 0
-		if (Client.GetLocalPlayer():GetRank() > 1) then
-			thisRankExp = Experience_GetNextRankExp(Client.GetLocalPlayer():GetRank() - 1)
+		if (player:GetRank() > 1) then
+			thisRankExp = Experience_GetNextRankExp(player:GetRank() - 1)
 		end
-		local nextRankExp = Experience_GetNextRankExp(Client.GetLocalPlayer():GetRank())
-		return (Client.GetLocalPlayer():GetExperience() - thisRankExp) / (nextRankExp - thisRankExp)
+		local nextRankExp = Experience_GetNextRankExp(player:GetRank())
+		return (player:GetExperience() - thisRankExp) / (nextRankExp - thisRankExp)
 	end
 	return 0
 end
@@ -529,7 +529,7 @@ end
 function PlayerUI_GetPlayerRank()
     local player = Client.GetLocalPlayer()
     if player then
-        return Client.GetLocalPlayer():GetRank()
+        return player:GetRank()
     end
     return 0
 end
@@ -1551,10 +1551,11 @@ end
 function PlayerUI_GetTeamType()
 
 	local player = Client.GetLocalPlayer()
-	if (player:GetTeam() ~= nil) then	
-		if (player:GetTeam():isa("MarineTeam")) then
+	local teamNumber = player:GetTeamNumber()
+	if (teamNumber ~= nil and teamNumber > 0) then	
+		if teamNumber == 1 then
 			return "Marines"
-		elseif (player:GetTeam():isa("AlienTeam")) then
+		else
 			return "Aliens"
 		end
 	end
