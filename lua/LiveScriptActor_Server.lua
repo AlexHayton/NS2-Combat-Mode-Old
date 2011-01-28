@@ -12,6 +12,10 @@ function LiveScriptActor:OnCreate()
     
     // Current orders. List of order entity ids.
     self.orders = {}
+	
+	// List of people who have damaged me.
+	self.damageList = {}
+	self.totalDamage = 0
     
 end
 
@@ -156,14 +160,28 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
             if pointOwner ~= nil and not pointOwner:isa("Player") then
                 pointOwner = pointOwner:GetOwner()
             end
-            
-            // Award Experience
-            if(pointOwner ~= nil and pointOwner:isa("Player") and pointOwner:GetTeamNumber() ~= self:GetTeamNumber()) then
-                local damagetaken = armorUsed + healthUsed
-                local experience = Experience_ComputeExperience(self, damagetaken)
-                
-                pointOwner:AddExperience(experience)
-                Experience_GrantNearbyExperience(pointOwner, experience)
+			
+			// Experience Calculations:
+			// Grant experience for damaging structures and also make a note of the total damage done 
+			// by each player for when we die
+			if(pointOwner ~= nil and pointOwner:isa("Player") and pointOwner:GetTeamNumber() ~= self:GetTeamNumber()) then
+			
+				local damageTaken = armorUsed + healthUsed
+		
+				// Award Experience for damaging structures
+				if (self:isa("Structure")) then
+					local experience = Experience_ComputeExperience(self, damageTaken)
+					
+					pointOwner:AddExperience(experience)
+					Experience_GrantNearbyExperience(pointOwner, experience)
+				end
+				
+				// Record the player in the assists table
+				if (not self.damageList[pointOwner]) then 
+					self.damageList[pointOwner] = 0
+				end
+                self.damageList[pointOwner] = self.damageList[pointOwner] + damageTaken
+				self.totalDamage = self.totalDamage + damageTaken
             end
                 
             if (oldHealth > 0 and self.health == 0) then
@@ -284,6 +302,21 @@ function LiveScriptActor:OnKill(damage, attacker, doer, point, direction)
     if(pointOwner ~= nil and pointOwner:isa("Player") and pointOwner:GetTeamNumber() ~= self:GetTeamNumber()) then
         pointOwner:AddScore(self:GetPointValue())
     end
+	
+	if(pointOwner ~= nil and pointOwner:isa("Player") and pointOwner:GetTeamNumber() ~= self:GetTeamNumber()) then
+		// Give experience for the kill
+		local experience = Experience_ComputeExperience(self, self:GetPointValue()*100)
+		local assistExperience = Experience_ComputeExperience(self, self:GetPointValue()*10)
+		
+		pointOwner:AddExperience(experience)
+		Experience_GrantNearbyExperience(pointOwner, experience)
+		
+		// Give experience for any assists.
+		// At the moment the record persists after you die. Not sure whether to keep this.
+		for damager, damageInflicted in ipairs(self.damageList) do
+			damager:AddExperience(assistExperience * damageInflicted / self.totalDamage)
+		end
+	end
 
     self.alive = false
     

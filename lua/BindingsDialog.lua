@@ -63,7 +63,7 @@ local globalControlBindings = {
     "Taunt", "input", "Taunt", "Z",
     "ToggleSayings1", "input", "Sayings #1", "X",
     "ToggleSayings2", "input", "Sayings #2", "C",
-	"ToggleTechUpgrades", "input", "Tech Upgrade", "M",
+	"ToggleTechUpgrades", "input", "Tech Upgrade", "N",
     "VoiceChat", "input", "Use microphone", "LeftAlt",
     "TextChat", "input", "Public chat", "Y",
     "TeamChat", "input", "Team chat", "Return",
