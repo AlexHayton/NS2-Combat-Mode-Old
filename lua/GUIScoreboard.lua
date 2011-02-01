@@ -136,17 +136,17 @@ function GUIScoreboard:CreateTeamBackground(color)
     
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
-    // Exp  text item.
-    local expItem = GUI.CreateTextItem()
-    expItem:SetFontName(GUIScoreboard.kFontName)
-    expItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
-    expItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    expItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    expItem:SetTextAlignmentY(GUITextItem.Align_Min)
-    expItem:SetPosition(Vector(currentColumnX, 5, 0))
-    expItem:SetColor(color)
-    expItem:SetText("Exp")
-    teamItem:AddChild(expItem)
+    // Rank text item.
+    local rankItem = GUI.CreateTextItem()
+    rankItem:SetFontName(GUIScoreboard.kFontName)
+    rankItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
+    rankItem:SetAnchor(GUIItem.Left, GUIItem.Top)
+    rankItem:SetTextAlignmentX(GUITextItem.Align_Min)
+    rankItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    rankItem:SetPosition(Vector(currentColumnX, 5, 0))
+    rankItem:SetColor(color)
+    rankItem:SetText("Rank")
+    teamItem:AddChild(rankItem)
     
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
@@ -297,7 +297,9 @@ function GUIScoreboard:UpdateTeam(updateTeam)
         local kills = tostring(teamScores[currentPlayerIndex + 2])
         local deaths = tostring(teamScores[currentPlayerIndex + 3])
         local isCommander = teamScores[currentPlayerIndex + 4]
-        local expStr= tostring(teamScores[currentPlayerIndex + 7])
+		// Uncomment this to enable display of rank name. It doesn't look quite right because the column width is too small!
+        //local rankStr= ConditionalValue(tostring(Experience_GetRankName(updateTeam["TeamNumber"], teamScores[currentPlayerIndex + 7])), "-")
+		local rankStr= ConditionalValue(isLocalTeam, tostring(teamScores[currentPlayerIndex + 7]), "-")
         local plasmaStr = ConditionalValue(isLocalTeam, tostring(teamScores[currentPlayerIndex + 5]), "-")
         local ping = teamScores[currentPlayerIndex + 6]
         local pingStr = tostring(ping)
@@ -328,7 +330,7 @@ function GUIScoreboard:UpdateTeam(updateTeam)
         player["Deaths"]:SetText(deaths)
         player["Plasma"]:SetText(plasmaStr)
         player["Ping"]:SetText(pingStr)
-        player["Exp"]:SetText(expStr)
+        player["Rank"]:SetText(rankStr)
         if ping < GUIScoreboard.kLowPingThreshold then
             player["Ping"]:SetColor(GUIScoreboard.kLowPingColor)
         elseif ping < GUIScoreboard.kMedPingThreshold then
@@ -406,16 +408,16 @@ function GUIScoreboard:CreatePlayerItem()
     
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
-    // Exp text item.
-    local expItem = GUI.CreateTextItem()
-    expItem:SetFontName(GUIScoreboard.kFontName)
-    expItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
-    expItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    expItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    expItem:SetTextAlignmentY(GUITextItem.Align_Min)
-    expItem:SetPosition(Vector(currentColumnX, 5, 0))
-    expItem:SetColor(Color(1, 1, 1, 1))
-    playerItem:AddChild(expItem)
+    // Rank text item.
+    local rankItem = GUI.CreateTextItem()
+    rankItem:SetFontName(GUIScoreboard.kFontName)
+    rankItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
+    rankItem:SetAnchor(GUIItem.Left, GUIItem.Top)
+    rankItem:SetTextAlignmentX(GUITextItem.Align_Min)
+    rankItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    rankItem:SetPosition(Vector(currentColumnX, 5, 0))
+    rankItem:SetColor(Color(1, 1, 1, 1))
+    playerItem:AddChild(rankItem)
     
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX    
     
@@ -469,6 +471,6 @@ function GUIScoreboard:CreatePlayerItem()
     pingItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(pingItem)
     
-    return { Background = playerItem, Name = playerNameItem, Score = scoreItem, Kills = killsItem, Deaths = deathsItem, Plasma = resItem, Ping = pingItem, Exp = expItem }
+    return { Background = playerItem, Name = playerNameItem, Score = scoreItem, Kills = killsItem, Deaths = deathsItem, Plasma = resItem, Ping = pingItem, Rank = rankItem }
     
 end

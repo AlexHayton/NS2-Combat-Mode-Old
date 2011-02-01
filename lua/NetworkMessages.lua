@@ -10,6 +10,7 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Globals.lua")
 Script.Load("lua/TechTreeConstants.lua")
+Script.Load("lua/Experience.lua")
 
 // From TechNode.kTechNodeVars
 local kTechNodeUpdateMessage = 
@@ -76,7 +77,7 @@ local kScoresMessage =
     deaths = string.format("integer (0 to %d)", kMaxDeaths),
     plasma = string.format("integer (0 to %d)", kMaxResources),
     isCommander = "boolean",
-    experience = string.format("integer (0 to %d)", kMaxExperience)
+    rank = string.format("integer (0 to %d)", kMaxRank)
 }
 
 function BuildScoresMessage(player)
@@ -91,7 +92,7 @@ function BuildScoresMessage(player)
     t.deaths = player:GetDeaths()
     t.plasma = player:GetPlasma()
     t.isCommander = player:isa("Commander")
-    t.experience = player:GetExperience()
+    t.rank = player:GetRank()
     
     return t
     

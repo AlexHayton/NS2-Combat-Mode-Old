@@ -3,19 +3,21 @@
 //
 // Created by: Alex Hayton (alex.hayton@gmail.com)
 //
-// Manages the experience ranks and generic functions
 // Manages the experience ranks and generic functions for dealing with experience.
 //
 
+// Local globals
 kRankExp = { 10.0, 20.0, 40.0, 80.0, 150.0, 300.0, kMaxExperience}
 kMarineRanks = { "Private", "Private First Class", "Sergeant", "Lieutenant", "Commander", "General", "Master General", "Commander-in-Chief" }
 kAlienRanks = { "Worm", "Slug", "Parasite", "Crawler", "Hunter", "Beast", "Overlord", "Deity" }
 kExperienceRadius = 10
 kDamageModifiers = { PowerPoint=0.1, InfantryPortal=0.2, CommandStation=0.2 }
+
+// Proper globals
+kMaxRank = table.maxn(kRankExp) - 1
+kMaxExperience = 2000.0
 kExperienceDamageModifier = 0.1
 kExperienceAssistModifier = 0.5
-
-kMaxRank = table.maxn(kRankExp) - 1
 
 function Experience_ComputeExperience(hitentity, damage)
     // Special rules for powerpoints etc.
@@ -44,6 +46,10 @@ end
 
 function Experience_GetRankName(teamname, rank)
     // Marines - a better way to detect this?
+	if (teamname == 0) then
+		return "Spectator"
+	end
+	
     if (teamname == 1) then
         return kMarineRanks[rank]
     else

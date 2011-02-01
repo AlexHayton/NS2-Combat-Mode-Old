@@ -17,7 +17,7 @@ kScoreboardDataIndexDeaths = 6
 kScoreboardDataIndexIsCommander = 7
 kScoreboardDataIndexPlasma = 8
 kScoreboardDataIndexPing = 9
-kScoreboardDataIndexExperience = 10
+kScoreboardDataIndexRank = 10
 
 function Scoreboard_Clear()
 
@@ -39,7 +39,7 @@ function Scoreboard_OnResetGame()
         playerRecord[kScoreboardDataIndexDeaths] = 0
         playerRecord[kScoreboardDataIndexIsCommander] = false
         playerRecord[kScoreboardDataIndexPlasma] = 0
-        playerRecord[kScoreboardDataIndexExperience] = 0
+        playerRecord[kScoreboardDataIndexRank] = 1
         
     end 
 
@@ -66,7 +66,7 @@ function Scoreboard_OnClientDisconnect(clientIndex)
     
 end
 
-function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, kills, deaths, plasma, isCommander, experience)
+function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, kills, deaths, plasma, isCommander, rank)
     
     // Lookup record for player and update it
     for i = 1, table.maxn(playerData) do
@@ -83,7 +83,7 @@ function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, ki
             playerRecord[kScoreboardDataIndexDeaths] = deaths
             playerRecord[kScoreboardDataIndexIsCommander] = isCommander
             playerRecord[kScoreboardDataIndexPlasma] = plasma
-            playerRecord[kScoreboardDataIndexExperience] = experience
+            playerRecord[kScoreboardDataIndexRank] = rank
             
             return
             
@@ -102,7 +102,7 @@ function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, ki
     playerRecord[kScoreboardDataIndexIsCommander] = isCommander
     playerRecord[kScoreboardDataIndexPlasma] = 0
     playerRecord[kScoreboardDataIndexPing] = 0
-    playerRecord[kScoreboardDataIndexExperience] = experience
+    playerRecord[kScoreboardDataIndexRank] = rank
     
     table.insert(playerData, playerRecord )
     
@@ -187,7 +187,7 @@ function GetScoreData(teamNumberTable)
     
         if(table.find(teamNumberTable, playerRecord[kScoreboardDataIndexEntityTeamNumber])) then
         
-            // Name, score, kills, deaths, isCommander, ping, Experience
+            // Name, score, kills, deaths, isCommander, ping, rank
             table.insert(scoreData, playerRecord[kScoreboardDataIndexName])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexScore])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexKills])
@@ -195,7 +195,7 @@ function GetScoreData(teamNumberTable)
             table.insert(scoreData, playerRecord[kScoreboardDataIndexIsCommander])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexPlasma])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexPing])
-            table.insert(scoreData, playerRecord[kScoreboardDataIndexExperience])
+            table.insert(scoreData, playerRecord[kScoreboardDataIndexRank])
             
         end
         

@@ -35,7 +35,7 @@ function OnCommandOnClientDisconnect(clientIndexString)
 end
 
 function OnCommandScores(scoreTable)
-    Scoreboard_SetPlayerData(scoreTable.clientId, scoreTable.playerName, scoreTable.teamNumber, scoreTable.score, scoreTable.kills, scoreTable.deaths, scoreTable.plasma, scoreTable.isCommander, scoreTable.experience)
+    Scoreboard_SetPlayerData(scoreTable.clientId, scoreTable.playerName, scoreTable.teamNumber, scoreTable.score, scoreTable.kills, scoreTable.deaths, scoreTable.plasma, scoreTable.isCommander, scoreTable.rank)
 end
 
 // Notify scoreboard and anything else when a player changes into a new player

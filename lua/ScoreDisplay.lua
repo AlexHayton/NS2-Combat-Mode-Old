@@ -8,7 +8,7 @@
 //=============================================================================
 
 local pendingScore = 0
-local pendingExperience = 0
+local pendingRank = 0
 
 
 /**
@@ -30,19 +30,19 @@ function ScoreDisplayUI_SetNewScore(score)
 end
 
 /**
- * Gets current score variable, returns it and sets var to 0
+ * Gets current rank variable, returns it and sets var to 0
  */
-function ScoreDisplayUI_GetNewExperience()
-    local tempExperience = pendingExperience
-    pendingExperience = 0
+function ScoreDisplayUI_GetNewRank()
+    local tempRank = pendingRank
+    pendingRank = 0
     
-    return tempExperience
+    return tempRank
 end
 
 
 /**
  * Called to set latest score
  */
-function ScoreDisplayUI_SetNewExperience(score)
-    pendingExperience = score
+function ScoreDisplayUI_SetNewRank(rank)
+    pendingRank = rank
 end

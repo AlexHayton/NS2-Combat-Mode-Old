@@ -1029,6 +1029,8 @@ function Player:OnInitLocalClient()
     GetGUIManager():CreateGUIScriptSingle("GUIScoreboard")
     GetGUIManager():CreateGUIScriptSingle("GUINotifications")
     GetGUIManager():CreateGUIScriptSingle("GUIRequests")
+	GetGUIManager():CreateGUIScriptSingle("GUITechUpgrade")
+	GetGUIManager():CreateGUIScriptSingle("GUIExperience")
     GetGUIManager():CreateGUIScriptSingle("GUIDamageIndicators")
     GetGUIManager():CreateGUIScriptSingle("GUIDeathMessages")
     GetGUIManager():CreateGUIScriptSingle("GUIChat")
@@ -1469,6 +1471,16 @@ function PlayerUI_GetSayings()
         sayings = player:GetSayings()
     end
     return sayings
+    
+end
+
+// return array of sayings
+function PlayerUI_GetTechUpgrades()
+
+    local techUpgrades = nil
+    local player = Client.GetLocalPlayer()        
+    techUpgrades = { }
+    return techUpgrades
     
 end
 
