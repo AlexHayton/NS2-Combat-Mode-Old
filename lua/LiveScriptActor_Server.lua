@@ -141,6 +141,25 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
 
         // highdamage cheat speeds things up for testing
         damage = damage * GetGamerules():GetDamageMultiplier()
+		
+		// Moved the friendly fire check to here.
+		if (attacker ~= nil) then
+			// Check if this is an axe/welder hit
+			local isHealing = false
+			if (attacker:isa("Marine") and attacker:GetActiveWeapon():isa("Axe")) then
+				isAxeHit = true
+			end
+		
+			// Is the player friendly and not an axe hit?
+			if ((attacker:GetTeamNumber() == self:GetTeamNumber()) and not GetGamerules():GetFriendlyFire() and not isAxeHit) then
+				damage = 0
+			end
+			
+			// Deal with axe/welder healing
+			if (isAxeHit and self:isa("Structure")) then
+				damage = damage*-1
+			end
+		end
         
         // Children can override to change damage according to player mode, damage type, etc.
         local armorUsed, healthUsed

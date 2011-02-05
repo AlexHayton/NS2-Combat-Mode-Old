@@ -2652,7 +2652,11 @@ function Player:GetHasTechUpgrades()
 end
 
 function Player:GetTechUpgrades()
-	return {}
+	local techTree = GetTechTree()
+	local availableTech = {}
+	table.insert(availableTech, kTechId.Armor1)
+	table.insert(availableTech, kTechId.Weapons1)
+	return availableTech
 end
 
 function Player:GetSayings()

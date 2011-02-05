@@ -138,12 +138,10 @@ function NS2Gamerules:CanEntityDoDamageTo(attacker, target)
     end
     
     // Same teams not allowed to hurt each other unless friendly fire enabled
+	// Move this check to later on.
     local teamsOK = true
-    if attacker ~= nil then
 
-        teamsOK = (attacker:GetTeamNumber() ~= target:GetTeamNumber()) or self:GetFriendlyFire()
-        
-    end
+    //teamsOK = (attacker:GetTeamNumber() ~= target:GetTeamNumber()) or self:GetFriendlyFire()
     
     // Allow damage of own stuff when testing
     return teamsOK

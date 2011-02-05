@@ -92,7 +92,7 @@ function GUITechUpgrade:UpdateTechUpgrades(techUpgrades)
 
         local currentYPos = 0
         for i, textSaying in ipairs(self.textTechUpgrades) do
-            textSaying["Text"]:SetText(techUpgrades[i])
+            textSaying["Text"]:SetText(LookupTechData(techUpgrades[i], kTechDataDisplayName))
             
             currentYPos = currentYPos + GUITechUpgrade.kTextBackgroundItemBuffer + GUITechUpgrade.kTextBackgroundHeightBuffer
             textSaying["Background"]:SetPosition(Vector(0, currentYPos, 0))

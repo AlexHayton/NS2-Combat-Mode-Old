@@ -1479,7 +1479,9 @@ function PlayerUI_GetTechUpgrades()
 
     local techUpgrades = nil
     local player = Client.GetLocalPlayer()        
-    techUpgrades = { }
+	if (player:GetHasTechUpgrades()) then
+		techUpgrades = player:GetTechUpgrades()
+	end
     return techUpgrades
     
 end
