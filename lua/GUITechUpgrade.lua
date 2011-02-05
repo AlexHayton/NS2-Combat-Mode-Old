@@ -22,13 +22,20 @@ GUITechUpgrade.kBackgroundFadeRate = 0.25
 
 // Text constants.
 GUITechUpgrade.kTextFontSize = 18
-GUITechUpgrade.kTextSayingColor = Color(1, 1, 1, 1)
+GUITechUpgrade.kTextColor = Color(1, 1, 1, 1)
 // This is how much of a buffer around the text the background extends.
 GUITechUpgrade.kTextBackgroundWidthBuffer = 4
 GUITechUpgrade.kTextBackgroundHeightBuffer = 2
 // This is the amount of space between text background items.
 GUITechUpgrade.kTextBackgroundItemBuffer = 2
 GUITechUpgrade.kTextBackgroundColor = Color(0.4, 0.4, 0.4, 1)
+
+GUITechUpgrade.kTextNotificationMaxAlpha = 0.9
+GUITechUpgrade.kTextNotificationMinAlpha = 0.4
+GUITechUpgrade.kTextNotificationPulseRate = 0.2
+GUITechUpgrade.kTextNotificationOffset = Vector(100, 100, 0)
+GUITechUpgrade.kTextNotificationMarineColor = Color(0.6, 0.4, 0.6, 1)
+GUITechUpgrade.kTextNotificationAlienColor = Color(0.6, 0.4, 0.6, 1)
 
 function GUITechUpgrade:Initialize()
     
@@ -39,7 +46,24 @@ function GUITechUpgrade:Initialize()
     self.background:SetSize(Vector(GUITechUpgrade.kBackgroundWidth, 0, 0))
     self.background:SetColor(GUITechUpgrade.kBackgroundColor)
     self.background:SetIsVisible(false)
+	
+	self.backgroundNotification = GUI.CreateGraphicsItem()
+    self.backgroundNotification:SetAnchor(GUIItem.Center, GUIItem.Center)
+    self.backgroundNotification:SetColor(GUITechUpgrade.kTextBackgroundColor)
+	self.backgroundNotification:SetIsVisible(false)
+	
+	// Create the notification when a new upgrade is available
+	self.textNotification = GUI.CreateTextItem()
+	self.textNotification:SetFontSize(GUITechUpgrade.kTextFontSize)
+	self.textNotification:SetAnchor(GUIItem.Center, GUIItem.Center)
+	self.textNotification:SetPosition(GUITechUpgrade.kTextNotificationOffset)
+	self.textNotification:SetTextAlignmentX(GUITextItem.Align_Min)
+	self.textNotification:SetTextAlignmentY(GUITextItem.Align_Center)
+	self.textNotification:SetColor(GUITechUpgrade.kTextColor)
+	self.backgroundNotification:AddChild(self.textNotification)
     
+	self.notificationAlpha = GUITechUpgrade.kTextNotificationMaxAlpha
+	self.notificationTargetAlpha = GUITechUpgrade.kTextNotificationMinAlpha
     self.textTechUpgrades = { }
     self.reuseTechUpgradeItems = { }
 
@@ -49,31 +73,34 @@ function GUITechUpgrade:Uninitialize()
 
     GUI.DestroyItem(self.background)
     self.background = nil
+	GUI.DestroyItem(self.backgroundNotification)
+	self.backgroundNotification = nil
     
 end
 
 function GUITechUpgrade:Update(deltaTime)
     
-    local visible = PlayerUI_ShowTechUpgrades()
-    if visible then
-        local upgradeList = PlayerUI_GetTechUpgrades()
+    local menuVisible = PlayerUI_ShowTechUpgrades()
+	local upgradeList = PlayerUI_GetTechUpgrades()
+    if menuVisible then
         self:UpdateTechUpgrades(upgradeList)
     end
     
-    self:UpdateFading(deltaTime, visible)
+	self:UpdateNotification(deltaTime, menuVisible, upgradeList)
+    self:UpdateFading(deltaTime, menuVisible)
     
 end
 
-function GUITechUpgrade:UpdateFading(deltaTime, visible)
+function GUITechUpgrade:UpdateFading(deltaTime, menuVisible)
     
-    if visible then
+    if menuVisible then
         self.background:SetIsVisible(true)
         self.background:SetColor(GUITechUpgrade.kBackgroundColor)
     end
     
     local fadeAmt = deltaTime * (1 / GUITechUpgrade.kBackgroundFadeRate)
     local currentColor = self.background:GetColor()
-    if not visible and currentColor.a ~= 0 then
+    if not menuVisible and currentColor.a ~= 0 then
         currentColor.a = Slerp(currentColor.a, 0, fadeAmt)
         self.background:SetColor(currentColor)
         if currentColor.a == 0 then
@@ -81,6 +108,38 @@ function GUITechUpgrade:UpdateFading(deltaTime, visible)
         end
     end
     
+end
+
+function GUITechUpgrade:UpdateNotification(deltaTime, menuVisible, upgradeList)
+
+	// Show a notification if there are tech upgrades available and the menu is hidden
+	local notificationVisible = false
+	
+	if (upgradeList ~= nil) then
+		if (not menuVisible) then
+			// Show the notification
+			notificationVisible = true
+		
+			// Oscillate the notification alpha
+			if (self.notificationAlpha >= GUITechUpgrade.kTextNotificationMaxAlpha) then
+				self.notificationTargetAlpha = GUITechUpgrade.kTextNotificationMinAlpha
+			elseif (self.notificationAlpha <= GUITechUpgrade.kTextNotificationMinAlpha) then
+				self.notificationTargetAlpha = GUITechUpgrade.kTextNotificationMaxAlpha
+			end
+			self.notificationAlpha = Slerp(self.notificationAlpha, self.notificationTargetAlpha, GUITechUpgrade.kTextNotificationPulseRate*deltaTime)
+			
+			// Set the colour based on the team type
+			if (PlayerUI_GetTeamType() == "Marines") then
+				self.textNotification:SetColor(Color(GUITechUpgrade.kTextNotificationMarineColor.r, GUITechUpgrade.kTextNotificationMarineColor.g, GUITechUpgrade.kTextNotificationMarineColor.b, self.notificationAlpha))
+			else
+				self.textNotification:SetColor(Color(GUITechUpgrade.kTextNotificationAlienColor.r, GUITechUpgrade.kTextNotificationAlienColor.g, GUITechUpgrade.kTextNotificationAlienColor.b, self.notificationAlpha))
+			end
+		end
+	end
+	
+	self.textNotification:SetIsVisible(notificationVisible)
+	self.backgroundNotification:SetIsVisible(notificationVisible)
+
 end
 
 function GUITechUpgrade:UpdateTechUpgrades(techUpgrades)
@@ -91,16 +150,16 @@ function GUITechUpgrade:UpdateTechUpgrades(techUpgrades)
         end
 
         local currentYPos = 0
-        for i, textSaying in ipairs(self.textTechUpgrades) do
-            textSaying["Text"]:SetText(LookupTechData(techUpgrades[i], kTechDataDisplayName))
+        for i, techId in ipairs(self.textTechUpgrades) do
+            techId["Text"]:SetText(LookupTechData(techUpgrades[i], kTechDataDisplayName))
             
             currentYPos = currentYPos + GUITechUpgrade.kTextBackgroundItemBuffer + GUITechUpgrade.kTextBackgroundHeightBuffer
-            textSaying["Background"]:SetPosition(Vector(0, currentYPos, 0))
+            techId["Background"]:SetPosition(Vector(0, currentYPos, 0))
             currentYPos = currentYPos + GUITechUpgrade.kTextFontSize + GUITechUpgrade.kTextBackgroundItemBuffer + GUITechUpgrade.kTextBackgroundHeightBuffer
             
             local totalWidth = GUITechUpgrade.kBackgroundWidth - (GUITechUpgrade.kTextBackgroundWidthBuffer * 2)
             local totalHeight = GUITechUpgrade.kTextFontSize + (GUITechUpgrade.kTextBackgroundHeightBuffer * 2)
-            textSaying["Background"]:SetSize(Vector(totalWidth, totalHeight, 0))
+            techId["Background"]:SetSize(Vector(totalWidth, totalHeight, 0))
         end
         
         local totalBackgroundHeight = GUITechUpgrade.kTextFontSize + (GUITechUpgrade.kTextBackgroundItemBuffer * 2) + (GUITechUpgrade.kTextBackgroundHeightBuffer * 2)
@@ -148,7 +207,7 @@ function GUITechUpgrade:CreateTechUpgradeItem()
     newTechUpgradeItem:SetPosition(Vector(GUITechUpgrade.kTextBackgroundWidthBuffer, 0, 0))
     newTechUpgradeItem:SetTextAlignmentX(GUITextItem.Align_Min)
     newTechUpgradeItem:SetTextAlignmentY(GUITextItem.Align_Center)
-    newTechUpgradeItem:SetColor(GUITechUpgrade.kTextSayingColor)
+    newTechUpgradeItem:SetColor(GUITechUpgrade.kTextColor)
     newTechUpgradeItem:SetInheritsParentAlpha(true)
     textBackground:AddChild(newTechUpgradeItem)
     

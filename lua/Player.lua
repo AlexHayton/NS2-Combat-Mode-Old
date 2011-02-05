@@ -2648,7 +2648,11 @@ function Player:GetHasSayings()
 end
 
 function Player:GetHasTechUpgrades()
-	return true
+	if (table.maxn(self:GetTechUpgrades()) > 0) then
+		return true
+	else
+		return false
+	end
 end
 
 function Player:GetTechUpgrades()
