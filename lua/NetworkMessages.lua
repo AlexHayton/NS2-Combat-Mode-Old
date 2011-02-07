@@ -326,6 +326,26 @@ function ParseExecuteSayingMessage(t)
     return t.sayingIndex, t.sayingsMenu
 end
 
+local kExecuteTechUpgradeMessage =
+{
+	techId = "string (50)"
+}
+
+//Test
+function BuildExecuteTechUpgradeMessage(techIdUpgrade)
+
+    local t = {}
+    
+    t.techId = techIdUpgrade
+    
+    return t
+    
+end
+
+function ParseExecuteTechUpgradeMessage(t)
+    return t.techId
+end
+
 Shared.RegisterNetworkMessage("EntityChanged", kEntityChangedMessage)
 Shared.RegisterNetworkMessage("ResetMouse", {} )
 Shared.RegisterNetworkMessage("MinimapBlipMessage", kBlipMessage)
@@ -345,3 +365,4 @@ Shared.RegisterNetworkMessage("Tracer", kTracerMessage)
 
 // Player actions
 Shared.RegisterNetworkMessage("ExecuteSaying", kExecuteSayingMessage)
+Shared.RegisterNetworkMessage("ExecuteTechUpgrade", kExecuteTechUpgradeMessage)

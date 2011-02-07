@@ -110,12 +110,18 @@ end
 
 // Unlike vanilla ns2, tech tree resides on the player object. Copy from the team.
 function Player:InitTechTree()
-    local techTree = nil
+	self.techTree = nil
     
     local team = self:GetTeam()
     if team ~= nil and team:isa("PlayingTeam") then
-        techTree = team:GetTechTree()
+        self.techTree = team:GetTechTree()
     end
+end
+
+function Player:ExecuteTechUpgrade(techId)
+
+	
+
 end
 
 function Player:GetSendTechTreeBase()

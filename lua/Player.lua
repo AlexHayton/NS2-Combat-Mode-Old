@@ -559,7 +559,7 @@ function Player:OverrideTechMenu(input)
             if bit.band(input.commands, weaponSwitchCommand) ~= 0 then
                 // Tell the server to upgrade this tech.
 				// Possibly delegate this to player_server?
-                local message = BuildExecuteTechUpgradeMessage(i, self.showTechUpgradesMenu)
+                local message = BuildExecuteTechUpgradeMessage(self:GetTechUpgrades()[i])
                 Client.SendNetworkMessage("ExecuteTechUpgrade", message, true)
                 local removeWeaponMask = bit.bxor(0xFFFFFFFF, weaponSwitchCommand)
                 input.commands = bit.band(input.commands, removeWeaponMask)
@@ -2660,6 +2660,7 @@ function Player:GetTechUpgrades()
 	local availableTech = {}
 	table.insert(availableTech, kTechId.Armor1)
 	table.insert(availableTech, kTechId.Weapons1)
+	table.insert(availableTech, kTechId.ShotgunTech)
 	return availableTech
 end
 

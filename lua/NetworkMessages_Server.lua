@@ -85,6 +85,15 @@ function OnCommandExecuteSaying(client, message)
 
 end
 
+//Test
+function OnCommandExecuteTechUpgrade(client, message)
+
+    local player = client:GetControllingPlayer()
+    local techId = ParseExecuteTechUpgradeMessage(message)
+    player:ExecuteTechUpgrade(techId)
+	
+end
+
 Server.HookNetworkMessage("MarqueeSelect",              OnCommandCommMarqueeSelect)
 Server.HookNetworkMessage("ClickSelect",                OnCommandCommClickSelect)
 Server.HookNetworkMessage("ControlClickSelect",         OnCommandCommControlClickSelect)
@@ -92,3 +101,4 @@ Server.HookNetworkMessage("CommAction",                 OnCommandCommAction)
 Server.HookNetworkMessage("CommTargetedAction",         OnCommandCommTargetedAction)
 Server.HookNetworkMessage("CommTargetedActionWorld",    OnCommandCommTargetedActionWorld)
 Server.HookNetworkMessage("ExecuteSaying",              OnCommandExecuteSaying)
+Server.HookNetworkMessage("ExecuteTechUpgrade",              OnCommandExecuteTechUpgrade)
