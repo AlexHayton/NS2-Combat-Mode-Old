@@ -115,13 +115,40 @@ function Player:InitTechTree()
     local team = self:GetTeam()
     if team ~= nil and team:isa("PlayingTeam") then
         self.techTree = team:GetTechTree()
+		self.techTree:ComputeAvailability()
+		sendTechTreeBase = true
     end
+end
+
+function Player:GetTechUpgrades()
+	return self.techTree:GetAvailableUpgrades()	
 end
 
 function Player:ExecuteTechUpgrade(techId)
 
+	local techTree = self:GetTechTree()
+	local node = techTree:GetTechNode(techId)
+	if node == nil then
+    
+        Print("PlayingTeam:ExecuteTechUpgrade(): Couldn't find tech node %d", researchId)
+        return false
+        
+    end
+    
+    node:SetResearched(true)
+	node.available = true
+	techTree:SetTechNodeChanged(node)
+	techTree:ComputeAvailability()
 	
+	// Increment the upgrades counter
+	self.upgradesTaken = self.upgradesTaken + 1
 
+end
+
+// Clear all the player's skills/upgrades.
+function Player:ClearSkills()
+	self:InitTechTree()
+	self.upgradesTaken = 0
 end
 
 function Player:GetSendTechTreeBase()
@@ -173,12 +200,19 @@ function Player:OnTeamChange(newTeamNumber)
         // Clear all hotkey groups on team change since old
         // hotkey groups will be invalid.
         self:InitializeHotkeyGroups()
-        
-        // Rebase and Send entire tech tree
-		self:InitTechTree()
-        self.sendTechTreeBase = true
     end
     
+end
+
+function Player:SetTeamNumber(teamNumber)
+
+	// Call the superclass function
+	ScriptActor.SetTeamNumber(self, teamNumber)
+
+	// Rebase and Send entire tech tree
+	self:InitTechTree()
+	self.sendTechTreeBase = true
+
 end
 
 function Player:GetRequestsScores()
@@ -741,7 +775,7 @@ function Player:AddExperience(points)
 		
 		if (oldExperience + points >= nextRank) then
 			self:AddTooltip(string.format("Congratulations! You have reached rank %s (%s)", tostring(self:GetRank()), Experience_GetRankName(self:GetTeamNumber(), self:GetRank())))
-			self:SetScoreboardChanged(true)        
+			self:SetScoreboardChanged(true)  
 		end
     end
 end

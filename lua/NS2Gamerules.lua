@@ -36,10 +36,10 @@ NS2Gamerules.kCountdownSound     = PrecacheAsset("sound/ns2.fev/common/countdown
 function NS2Gamerules:BuildTeam(teamType)
 
     if(teamType == kAlienTeamType) then
-        return AlienTeam()
+        return AlienTeamCombat()
     end
     
-    return MarineTeam()
+    return MarineTeamCombat()
     
 end
 
@@ -138,10 +138,12 @@ function NS2Gamerules:CanEntityDoDamageTo(attacker, target)
     end
     
     // Same teams not allowed to hurt each other unless friendly fire enabled
-	// Move this check to later on.
     local teamsOK = true
+    if attacker ~= nil then
 
-    //teamsOK = (attacker:GetTeamNumber() ~= target:GetTeamNumber()) or self:GetFriendlyFire()
+    teamsOK = (attacker:GetTeamNumber() ~= target:GetTeamNumber()) or self:GetFriendlyFire()
+        
+    end
     
     // Allow damage of own stuff when testing
     return teamsOK

@@ -200,7 +200,6 @@ local networkVars =
     
     // Experience system
     experience              = string.format("integer (0 to %d)", kMaxExperience),
-    rank                    = string.format("integer (0 to %d)", kMaxRank),
 	// Number of upgrades chosen
 	upgradesTaken              = string.format("integer (0 to %d)", kMaxRank),
     
@@ -318,7 +317,7 @@ function Player:OnCreate()
     
     // Experience
     self.experience = 0
-    self.rank = 0
+	self.upgradesTaken = 0
         
     // Make the player kinematic so that bullets and other things collide with it.
     self:SetPhysicsGroup(PhysicsGroup.PlayerGroup)
@@ -2648,21 +2647,25 @@ function Player:GetHasSayings()
 end
 
 function Player:GetHasTechUpgrades()
-	if (table.maxn(self:GetTechUpgrades()) > 0) then
+	if (table.maxn(self:GetTechUpgrades()) > 0 and self.upgradesTaken < self:GetRank()) then
 		return true
 	else
 		return false
 	end
 end
 
-function Player:GetTechUpgrades()
-	local techTree = GetTechTree()
+/*function Player:GetTechUpgrades()
+	return {}
+	
 	local availableTech = {}
 	table.insert(availableTech, kTechId.Armor1)
 	table.insert(availableTech, kTechId.Weapons1)
 	table.insert(availableTech, kTechId.ShotgunTech)
+	table.insert(availableTech, kTechId.Shotgun)
+	table.insert(availableTech, kTechId.Fade)
 	return availableTech
-end
+	
+end*/
 
 function Player:GetSayings()
     return {}

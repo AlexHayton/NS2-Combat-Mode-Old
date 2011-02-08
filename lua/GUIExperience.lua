@@ -1,8 +1,7 @@
 //
-// lua\GUIScoreboard.lua
+// lua\GUIExperience.lua
 //
 // Created by: Alex Hayton (alex.hayton@gmail.com)
-// Based on GUIExperience.lua
 //
 // Manages the experience bar for both teams
 //

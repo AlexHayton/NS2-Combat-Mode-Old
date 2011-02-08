@@ -261,6 +261,23 @@ function GetTechUpgradesFromTech(upgradeTechId, techId)
     
 end
 
+
+function TechTree:GetAvailableUpgrades()
+
+	local availableUpgrades = {}
+	
+	for index, techNode in pairs(self.nodeList) do
+	
+		if (techNode:GetCanResearch()) then
+			table.insert(availableUpgrades, techNode:GetTechId())
+		end
+	
+	end
+	
+	return availableUpgrades
+	
+end
+
 function TechTree:ComputeUpgradedTechIdsSupportingId(techId)
 
     local techIds = {}

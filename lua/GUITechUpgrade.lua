@@ -3,8 +3,8 @@
 //
 // lua\GUITechUpgrade.lua
 //
-// Created by: Brian Cronin (brianc@unknownworlds.com)
-// Modified by: Alex Hayton
+// Created by: Alex Hayton
+// Based on: GUIRequests.lua
 //
 // Manages the upgrade menu
 //
@@ -33,7 +33,7 @@ GUITechUpgrade.kTextBackgroundColor = Color(0.4, 0.4, 0.4, 1)
 GUITechUpgrade.kTextNotificationMaxAlpha = 1.0
 GUITechUpgrade.kTextNotificationMinAlpha = 0.7
 GUITechUpgrade.kTextNotificationPulseRate = 0.1
-GUITechUpgrade.kTextNotificationOffset = Vector(20, 200, 0)
+GUITechUpgrade.kTextNotificationOffset = Vector(20, 170, 0)
 GUITechUpgrade.kTextNotificationMarineColor = Color(0.0, 0.6, 0.9, 1)
 GUITechUpgrade.kTextNotificationAlienColor = Color(0.8, 0.4, 0.4, 1)
 GUITechUpgrade.kTextNotificationMessage = "Upgrades available..."

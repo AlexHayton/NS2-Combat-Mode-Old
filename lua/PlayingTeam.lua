@@ -657,11 +657,6 @@ function PlayingTeam:Update(timePassed)
         local players = self:GetPlayers()
         
         for index, player in ipairs(players) do
-		
-		// Recompute all active tech trees.
-		if player:GetTechTree() ~= nil then
-		    player:GetTechTree():ComputeAvailability()
-		end
         
             if player:GetSendTechTreeBase() then
             

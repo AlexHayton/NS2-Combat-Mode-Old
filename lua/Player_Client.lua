@@ -1828,6 +1828,10 @@ function Player:UpdateGUI()
 
 end
 
+function Player:GetTechUpgrades()
+	return GetTechTree():GetAvailableUpgrades()	
+end
+
 function Player:UpdateChat(input)
 
     // Enter chat message

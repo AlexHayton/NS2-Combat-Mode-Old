@@ -328,7 +328,7 @@ end
 
 local kExecuteTechUpgradeMessage =
 {
-	techId = "string (50)"
+	techId = "enum kTechId"
 }
 
 //Test

@@ -14,8 +14,8 @@ Script.Load("lua/Button.lua")
 Script.Load("lua/TechData.lua")
 
 Script.Load("lua/EggSpawn.lua")
-Script.Load("lua/MarineTeam.lua")
-Script.Load("lua/AlienTeam.lua")
+Script.Load("lua/MarineTeamCombat.lua")
+Script.Load("lua/AlienTeamCombat.lua")
 Script.Load("lua/TeamJoin.lua")
 Script.Load("lua/Bot.lua")
 

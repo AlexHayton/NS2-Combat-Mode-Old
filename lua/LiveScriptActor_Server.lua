@@ -150,11 +150,6 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
 			if (attacker:isa("Marine") and attacker:GetActiveWeapon():isa("Axe")) then
 				isAxeHit = true
 			end
-		
-			// Is the player friendly and not an axe hit?
-			if ((attacker:GetTeamNumber() == self:GetTeamNumber() and not GetGamerules():GetFriendlyFire()) and not isAxeHit) then
-				damage = 0
-			end
 			
 			// Deal with axe/welder healing
 			if (isAxeHit and self:isa("Structure")) then
@@ -169,10 +164,9 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
         
         local oldHealth = self.health
         
-        self.armor = self.armor - armorUsed
-        self.health = math.max(self.health - healthUsed, 0)
-        
         if (damage > 0 and not isHealing) then
+		    self.armor = self.armor - armorUsed
+			self.health = math.max(self.health - healthUsed, 0)
         
             self:OnTakeDamage(damage, doer, point)
             
