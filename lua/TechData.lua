@@ -415,7 +415,20 @@ function BuildTechData()
         { [kTechDataId] = kTechId.AlienAlertStructureUnderAttack,               [kTechDataAlertSound] = AlienCommander.kStructureUnderAttackSound,          [kTechDataAlertType] = kAlertType.Info,     [kTechDataAlertText] = "Structure under attack"},
         { [kTechDataId] = kTechId.AlienAlertGorgeBuiltHarvester,                [kTechDataAlertType] = kAlertType.Info,                                     [kTechDataAlertText] = "Gorge building Harvester"},
         { [kTechDataId] = kTechId.AlienAlertNotEnoughResources,                 [kTechDataAlertSound] = Alien.kNotEnoughResourcesSound,                     [kTechDataAlertType] = kAlertType.Info,     [kTechDataAlertText] = "Not enough resources"},
-
+		
+		// "Combat Mode" skills
+		// Aliens
+		{ [kTechDataId] = kTechId.LerkTech,      [kTechDataCostKey] = 0,     [kTechDataResearchTimeKey] = 1, [kTechDataDisplayName] = "Unlock Lerk", [kTechDataHotkey] = Move.F, [kTechDataTooltipInfo] = "Unlocks the Lerk class" },
+		{ [kTechDataId] = kTechId.FadeTech,      [kTechDataCostKey] = 0,     [kTechDataResearchTimeKey] = 1, [kTechDataDisplayName] = "Unlock Fade", [kTechDataHotkey] = Move.F, [kTechDataTooltipInfo] = "Unlocks the Fade class" },
+		{ [kTechDataId] = kTechId.OnosTech,      [kTechDataCostKey] = 0,     [kTechDataResearchTimeKey] = 1, [kTechDataDisplayName] = "Unlock Onos", [kTechDataHotkey] = Move.F, [kTechDataTooltipInfo] = "Unlocks the Onos class" },
+		{ [kTechDataId] = kTechId.Whip1Tech,      [kTechDataCostKey] = 0,     [kTechDataResearchTimeKey] = 1, [kTechDataDisplayName] = "Whip Skills #1", [kTechDataHotkey] = Move.F, [kTechDataTooltipInfo] = "Whip Skills #1" },
+		{ [kTechDataId] = kTechId.Whip2Tech,      [kTechDataCostKey] = 0,     [kTechDataResearchTimeKey] = 1, [kTechDataDisplayName] = "Whip Skills #2", [kTechDataHotkey] = Move.F, [kTechDataTooltipInfo] = "Whip Skills #2" },
+		{ [kTechDataId] = kTechId.Crag1Tech,      [kTechDataCostKey] = 0,     [kTechDataResearchTimeKey] = 1, [kTechDataDisplayName] = "Crag Skills #1", [kTechDataHotkey] = Move.F, [kTechDataTooltipInfo] = "Crag Skills #1" },
+		{ [kTechDataId] = kTechId.Crag2Tech,      [kTechDataCostKey] = 0,     [kTechDataResearchTimeKey] = 1, [kTechDataDisplayName] = "Crag Skills #2", [kTechDataHotkey] = Move.F, [kTechDataTooltipInfo] = "Crag Skills #2" },
+		
+		// Marines
+		{ [kTechDataId] = kTechId.MedPackTech,      [kTechDataCostKey] = 0,     [kTechDataResearchTimeKey] = 1, [kTechDataDisplayName] = "Med/Ammo Packs", [kTechDataHotkey] = Move.F, [kTechDataTooltipInfo] = "Med/Ammo Packs" },
+		{ [kTechDataId] = kTechId.ScanTech,      [kTechDataCostKey] = 0,     [kTechDataResearchTimeKey] = 1, [kTechDataDisplayName] = "Portable Scanner", [kTechDataHotkey] = Move.F, [kTechDataTooltipInfo] = "Portable Scanner" },
     }
 
     return techData

@@ -43,7 +43,7 @@ kAlienArmor2 = 1.2
 kAlienArmor3 = 1.3
         
         
-kArmoryHealth = 2400    kArmoryArmor = 0    kArmoryPointValue = 10
+kArmoryHealth = 10000    kArmoryArmor = 0    kArmoryPointValue = 10
 kAdvancedArmoryHealth = 4000    kAdvancedArmoryArmor = 0    kAdvancedArmoryPointValue = 40
         
 kCommandStationHealth = 10000    kCommandStationArmor = 0    kCommandStationPointValue = 25

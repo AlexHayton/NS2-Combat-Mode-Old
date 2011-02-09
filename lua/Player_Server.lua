@@ -196,6 +196,8 @@ function Player:OnTeamChange(newTeamNumber)
 
         // Send scoreboard changes to everyone    
         self:SetScoreboardChanged(true)
+		self:InitTechTree()
+		self.upgradesTaken = 0
         
         // Clear all hotkey groups on team change since old
         // hotkey groups will be invalid.
@@ -271,6 +273,19 @@ function Player:OnKill(damage, killer, doer, point, direction)
         killerName = pointOwner:GetName()
         pointOwner:AddKill()        
         pointOwner:AddScore(self:GetPointValue())
+		
+		// Give experience for the kill
+		local experience = Experience_ComputeExperience(self, self:GetPointValue()*100)
+		local assistExperience = Experience_ComputeExperience(self, self:GetPointValue()*10)
+		
+		pointOwner:AddExperience(experience)
+		Experience_GrantNearbyExperience(pointOwner, experience)
+		
+		// Give experience for any assists.
+		// At the moment the record persists after you die. Not sure whether to keep this.
+		for damager, damageInflicted in ipairs(self.damageList) do
+			damager:AddExperience(assistExperience * damageInflicted / self.totalDamage)
+		end
         
     end        
 
@@ -464,6 +479,10 @@ function Player:CopyPlayerDataFrom(player)
     self.scoreboardChanged = player.scoreboardChanged
     self.requestsScores = player.requestsScores
     self.sendTechTreeBase = player.sendTechTreeBase
+	
+	// Combat mode stuff
+	self.experience = player.experience
+	self.techTree = player.techTree
     
     // Don't lose purchased upgrades when becoming commander
     self.upgrade1 = player.upgrade1
@@ -768,7 +787,7 @@ function Player:GetExperience()
 end
 
 function Player:AddExperience(points)
-    if(points ~= nil and points ~= 0) then
+    if(points ~= nil and points ~= 0 and self.experience < kMaxExperience) then
 		local oldExperience = self.experience
 		local nextRank = Experience_GetNextRankExp(Experience_GetRank(self.experience))
         self.experience = Clamp(self.experience + points, 0, kMaxExperience)

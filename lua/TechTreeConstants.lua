@@ -134,6 +134,12 @@ kTechId = enum({
     
     // Commander abilities
     'Grow', 'MetabolizeTech', 'Metabolize',
+	
+	// Combat mode abilities
+	// Aliens
+	'FadeTech', 'LerkTech', 'OnosTech', 'Whip1Tech', 'Whip2Tech', 'Crag1Tech', 'Crag2Tech',
+	// Marines
+	'MedPackTech', 'ScanTech',
 
     // Maximum index
     'Max'

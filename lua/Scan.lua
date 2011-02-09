@@ -17,6 +17,7 @@ Scan.kMapName = "scan"
 Scan.kScanEffect = PrecacheAsset("cinematics/marine/observatory/scan.cinematic")
 
 Scan.kScanDistance = kScanRadius
+Scan.kScanInterval = 10
 
 function Scan:OnInit()
 

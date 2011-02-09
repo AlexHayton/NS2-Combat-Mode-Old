@@ -21,30 +21,44 @@ function AlienTeamCombat:InitTechTree()
 	self.techTree:AddBuildNode(kTechId.Hive,                      kTechId.None,                kTechId.None)
 	self.techTree:AddBuyNode(kTechId.Skulk,                     kTechId.None,                kTechId.None)
     self.techTree:AddBuyNode(kTechId.Gorge,                     kTechId.None,                kTechId.None)
-	self.techTree:AddBuildNode(kTechId.InfantryPortal,            kTechId.None,                kTechId.None)
-	self.techTree:AddBuildNode(kTechId.Armory,                    kTechId.None,                kTechId.None)  
-	self.techTree:AddResearchNode(kTechId.RifleUpgradeTech,       kTechId.Armory,              kTechId.None)
-    self.techTree:AddBuyNode(kTechId.RifleUpgrade, kTechId.RifleUpgradeTech, kTechId.None, kTechId.Rifle)
-	self.techTree:AddBuyNode(kTechId.Axe,                         kTechId.None,                kTechId.None)
-    self.techTree:AddBuyNode(kTechId.Pistol,                      kTechId.None,                kTechId.None)
-    self.techTree:AddBuyNode(kTechId.Rifle,                       kTechId.None,                kTechId.None)
+	
+	// Add special alien menus
+    self.techTree:AddMenu(kTechId.MarkersMenu)
+    self.techTree:AddMenu(kTechId.UpgradesMenu)
+    self.techTree:AddMenu(kTechId.ShadePhantasmMenu)
     
-    self.techTree:AddMenu(kTechId.ArmoryUpgradesMenu)
-    self.techTree:AddMenu(kTechId.ArmoryEquipmentMenu)
+    // Add markers (orders)
+    self.techTree:AddOrder(kTechId.ThreatMarker)
+    self.techTree:AddOrder(kTechId.LargeThreatMarker)
+    self.techTree:AddOrder(kTechId.NeedHealingMarker)
+    self.techTree:AddOrder(kTechId.WeakMarker)
+    self.techTree:AddOrder(kTechId.ExpandingMarker)
 	
 	// Tier 1
     self.techTree:AddResearchNode(kTechId.Melee1Tech,              kTechId.None,                kTechId.None)
     self.techTree:AddResearchNode(kTechId.AlienArmor1Tech,         kTechId.None,                kTechId.None)
-	self.techTree:AddBuyNode(kTechId.Lerk,                      kTechId.AlienArmor1Tech,              kTechId.None)
+	self.techTree:AddResearchNode(kTechId.Whip1Tech, kTechId.None, kTechId.None)
+	self.techTree:AddResearchNode(kTechId.Crag1Tech, kTechId.None, kTechId.None)
+    self.techTree:AddBuyNode(kTechId.Leap, kTechId.Whip1Tech, kTechId.None, kTechId.Skulk)
+    self.techTree:AddBuyNode(kTechId.BloodThirst, kTechId.Crag1Tech, kTechId.None, kTechId.Skulk)
+	self.techTree:AddResearchNode(kTechId.LerkTech,         kTechId.Melee1Tech,                kTechId.None)
+	self.techTree:AddBuyNode(kTechId.Lerk,                      kTechId.LerkTech,              kTechId.None)
 	
 	// Tier 2
 	self.techTree:AddResearchNode(kTechId.Melee2Tech,             kTechId.Melee1Tech,                kTechId.None)
     self.techTree:AddResearchNode(kTechId.AlienArmor2Tech,        kTechId.AlienArmor1Tech,          kTechId.None)
-    self.techTree:AddBuyNode(kTechId.Fade,                      kTechId.AlienArmor2Tech,          kTechId.Lerk)
+	self.techTree:AddResearchNode(kTechId.Whip2Tech, kTechId.Whip1Tech, kTechId.None)
+	self.techTree:AddResearchNode(kTechId.Crag2Tech, kTechId.Crag1Tech, kTechId.None)
+	self.techTree:AddResearchNode(kTechId.FadeTech,        kTechId.LerkTech,          kTechId.None)
+    self.techTree:AddBuyNode(kTechId.Fade,                      kTechId.FadeTech,          kTechId.None)
+	self.techTree:AddBuyNode(kTechId.HydraAbility, kTechId.Whip1Tech, kTechId.None, kTechId.Gorge)
+    self.techTree:AddBuildNode(kTechId.Hydra,                     kTechId.None,           kTechId.None)
 	
 	// Tier 3
     self.techTree:AddResearchNode(kTechId.Melee3Tech,             kTechId.Melee2Tech,                kTechId.None)
     self.techTree:AddResearchNode(kTechId.AlienArmor3Tech,        kTechId.AlienArmor2Tech,          kTechId.None)
+	self.techTree:AddResearchNode(kTechId.OnosTech,        kTechId.FadeTech,          kTechId.None)
+	self.techTree:AddBuyNode(kTechId.Onos,                      kTechId.OnosTech,          kTechId.None)
 	
 	self.techTree:SetComplete()
 	

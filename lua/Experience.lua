@@ -5,21 +5,25 @@
 //
 // Manages the experience ranks and generic functions for dealing with experience.
 //
-
-// Local globals
-kRankExp = { 10.0, 20.0, 40.0, 80.0, 150.0, 300.0, kMaxExperience}
-kMarineRanks = { "Private", "Private First Class", "Sergeant", "Lieutenant", "Commander", "General", "Master General", "Commander-in-Chief" }
-kAlienRanks = { "Worm", "Slug", "Parasite", "Crawler", "Hunter", "Beast", "Overlord", "Deity" }
-kExperienceRadius = 10
-kDamageModifiers = {	PowerPoint=kStructuralDamageScalar, 
-									InfantryPortal=kStructuralDamageScalar, 
-									CommandStation=kStructuralDamageScalar }
+Script.Load("lua/Globals.lua")
+Script.Load("lua/BalanceHealth.lua")
 
 // Proper globals
-kMaxRank = table.maxn(kRankExp) - 1
-kMaxExperience = 2000.0
 kExperienceDamageModifier = 0.1
 kExperienceAssistModifier = 0.5
+
+// 'Local' globals
+kMaxExperience = 10000.0
+kRankExp = { 50.0, 150.0, 500.0, 1000.0, 1750.0, 3000.0, 5000.0, kMaxExperience, kMaxExperience + 1}
+kMarineRanks = { "Private", "Private First Class", "Sergeant", "Lieutenant", "Commander", "General", "Master General", "Commander-in-Chief", "Superman" }
+kAlienRanks = { "Worm", "Slug", "Parasite", "Crawler", "Hunter", "Prowler", "Beast", "Overlord", "Deity" }
+kExperienceRadius = 10
+kDamageModifiers = {	PowerPoint=1/kStructuralDamageScalar, 
+									InfantryPortal=1/kStructuralDamageScalar, 
+									CommandStation=1/kStructuralDamageScalar }
+
+// One more global									
+kMaxRank = table.maxn(kRankExp)
 
 function Experience_ComputeExperience(hitentity, damage)
     // Special rules for powerpoints etc.

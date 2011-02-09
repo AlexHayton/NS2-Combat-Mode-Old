@@ -199,7 +199,8 @@ local networkVars =
     baseRoll                = "float",
     
     // Experience system
-    experience              = string.format("integer (0 to %d)", kMaxExperience),
+    //experience              = string.format("integer (0 to %d)", kMaxExperience),
+	experience              = "float",
 	// Number of upgrades chosen
 	upgradesTaken              = string.format("integer (0 to %d)", kMaxRank),
     
@@ -2653,19 +2654,6 @@ function Player:GetHasTechUpgrades()
 		return false
 	end
 end
-
-/*function Player:GetTechUpgrades()
-	return {}
-	
-	local availableTech = {}
-	table.insert(availableTech, kTechId.Armor1)
-	table.insert(availableTech, kTechId.Weapons1)
-	table.insert(availableTech, kTechId.ShotgunTech)
-	table.insert(availableTech, kTechId.Shotgun)
-	table.insert(availableTech, kTechId.Fade)
-	return availableTech
-	
-end*/
 
 function Player:GetSayings()
     return {}

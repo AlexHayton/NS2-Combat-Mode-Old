@@ -268,7 +268,7 @@ function TechTree:GetAvailableUpgrades()
 	
 	for index, techNode in pairs(self.nodeList) do
 	
-		if (techNode:GetCanResearch()) then
+		if (techNode.techType == kTechType.Research and techNode:GetCanResearch() and techNode.available) then
 			table.insert(availableUpgrades, techNode:GetTechId())
 		end
 	

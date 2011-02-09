@@ -44,9 +44,9 @@ GUIExperience.kMinimisedAlpha = 0.6
 
 GUIExperience.kBarFadeInRate = 0.2
 GUIExperience.kBarFadeOutDelay = 1000
-GUIExperience.kBarFadeOutRate = 1
-GUIExperience.kBackgroundBarRate = 90
-GUIExperience.kTextIncreaseRate = 10
+GUIExperience.kBarFadeOutRate = 0.2
+GUIExperience.kBackgroundBarRate = 80
+GUIExperience.kTextIncreaseRate = 30
 
 
 function GUIExperience:Initialize()
@@ -115,18 +115,18 @@ end
 
 function GUIExperience:UpdateExperienceBar(deltaTime)
     local expBarPercentage = PlayerUI_GetExperienceProgression()
-	local calculatedBarWidth = GUIExperience.kExperienceBackgroundWidth * expBarPercentage
+	local calculatedBarWidth = GUIExperience.kExperienceBarWidth * expBarPercentage
 	local currentBarWidth = self.experienceBar:GetSize().x
 	local targetBarWidth = calculatedBarWidth
 	
 	// Method to allow proper tweening visualisation when you go up a rank.
 	// Currently detecting this by examining old vs new size.
-	if (calculatedBarWidth < currentBarWidth) then
+	if (math.floor(calculatedBarWidth) < math.floor(currentBarWidth)) then
 		self.rankIncreased = true
 	end
 	
 	if (self.rankIncreased) then
-		targetBarSize = GUIExperience.kExperienceBackgroundWidth
+		targetBarWidth = GUIExperience.kExperienceBarWidth
 		// Once we reach the end, reset the bar back to the beginning.
 		if (currentBarWidth >= targetBarWidth) then
 			self.rankIncreased = false
@@ -134,7 +134,15 @@ function GUIExperience:UpdateExperienceBar(deltaTime)
 			targetBarWidth = calculatedBarWidth
 		end
 	end
-    self.experienceBar:SetSize(Vector(Slerp(currentBarWidth, targetBarWidth, deltaTime*GUIExperience.kBackgroundBarRate), GUIExperience.kExperienceBackgroundHeight, 0))
+	
+	if (PlayerUI_GetPlayerExperience() == kMaxExperience) then
+		currentBarWidth = GUIExperience.kExperienceBarWidth
+		targetBarWidth = GUIExperience.kExperienceBarWidth
+		calculatedBarWidth = GUIExperience.kExperienceBarWidth
+		self.rankIncreased = false
+	end
+	
+	self.experienceBar:SetSize(Vector(Slerp(currentBarWidth, targetBarWidth, deltaTime*GUIExperience.kBackgroundBarRate), self.experienceBar:GetSize().y, 0))
 	
 	// Detect and register if the bar is moving
 	if (math.abs(currentBarWidth - calculatedBarWidth) > 5) then
@@ -155,10 +163,10 @@ function GUIExperience:UpdateFading(deltaTime)
 		
 	if (self.barMoving) then
 		targetBarHeight = GUIExperience.kExperienceBarHeight
-		targetBackgroundHeight = GUIExperience.kExperienceBackgroundMinimisedHeight
+		targetBackgroundHeight = GUIExperience.kExperienceBackgroundHeight
 		targetAlpha = GUIExperience.kNormalAlpha
 	else
-		targetBarHeight = GUIExperience.kExperienceBarHeight
+		targetBarHeight = GUIExperience.kExperienceBarMinimisedHeight
 		targetBackgroundHeight = GUIExperience.kExperienceBackgroundMinimisedHeight
 		targetAlpha = GUIExperience.kMinimisedAlpha
 	end
@@ -171,7 +179,11 @@ end
 function GUIExperience:UpdateText(deltaTime)
 	// Tween the experience text too!
 	self.currentExperience = Slerp(self.currentExperience, PlayerUI_GetPlayerExperience(), deltaTime*GUIExperience.kTextIncreaseRate)
-	self.experienceText:SetText(tostring(math.ceil(self.currentExperience)) .. " / " .. Experience_GetNextRankExp(PlayerUI_GetPlayerRank()) .. " (" .. PlayerUI_GetPlayerRankName() .. ")")
+	if (PlayerUI_GetPlayerExperience() == kMaxExperience) then
+		self.experienceText:SetText(tostring(math.ceil(self.currentExperience)) .. " (" .. PlayerUI_GetPlayerRankName() .. ")")
+	else
+		self.experienceText:SetText(tostring(math.ceil(self.currentExperience)) .. " / " .. Experience_GetNextRankExp(PlayerUI_GetPlayerRank()) .. " (" .. PlayerUI_GetPlayerRankName() .. ")")
+	end
 end
 
 function GUIExperience:Uninitialize()

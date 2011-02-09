@@ -75,7 +75,13 @@ local networkVars =
     
     timeOfLastCatPack               = "float",    
     flashlightOn                    = "boolean",
-    
+	
+	// Scanner logic
+	timeOfLastScan                        = "float",
+	
+	// Medpack + Ammo Pack logic
+    timeOfLastMedPack                  = 'float',
+	timeOfLastAmmoPack                  = 'float',
     // Updated every frame depending if we have a jetpack child object
     hasJetpack                      = "boolean",
     
@@ -134,6 +140,7 @@ function Marine:OnInit()
     
     self.squad = 0
     self.timeOfLastCatPack = -1
+	self.timeOfLastScan = -1
     self.hasJetpack = false
     self.timeStartedJetpack = 0
     self.jetpacking = false
@@ -273,6 +280,52 @@ function Marine:UpdateJetpack(input)
 
 end
 
+function Marine:UpdateScanner(input)
+	
+	// Only run this on the server.
+	if (Server) then
+		// Update the scan pulse if the player has a scanner. (Check by seeing if it's possible to research it)
+		if (not self.techTree:GetTechNode(kTechId.ScanTech):GetCanResearch()) then
+		
+			// Copy NS1 behaviour - Scan only once every now and then
+			if (self.timeOfLastScan + Scan.kScanInterval <= Shared.GetTime()) then
+				local position = self:GetOrigin()
+				CreateEntity(Scan.kMapName, position, self:GetTeamNumber())
+				Shared.PlayWorldSound(nil, Observatory.kScanSound, nil, position)
+				self.timeOfLastScan = Shared.GetTime()
+			end
+
+		end
+	end
+end
+
+function Marine:UpdateMedPacks(input)
+	
+	// Only run this on the server.
+	if (Server) then
+		// Update the scan pulse if the player has a scanner. (Check by seeing if it's possible to research it)
+		if (not self.techTree:GetTechNode(kTechId.MedPackTech):GetCanResearch()) then
+		
+			local position = self:GetOrigin()
+			local weapon = self:GetActiveWeapon()
+			local packDropped = false
+		
+			// Copy NS1 behaviour
+			if (self:GetHealthScalar() < 1 and self.timeOfLastMedPack + MedPack.kDropInterval <= Shared.GetTime()) then
+				CreateEntity(MedPack.kMapName, position, self:GetTeamNumber())
+				self.timeOfLastMedPack = Shared.GetTime()
+			end
+
+			if(weapon ~= nil and weapon:isa("ClipWeapon") and (weapon:GetAmmo() < weapon:GetMaxAmmo()) ) then
+				if (self.timeOfLastAmmoPack + MedPack.kDropInterval <= Shared.GetTime()) then
+					CreateEntity(AmmoPack.kMapName, position, self:GetTeamNumber())
+					self.timeOfLastAmmoPack = Shared.GetTime()
+				end
+			end
+		end
+	end
+end
+
 function Marine:ComputeForwardVelocity(input)
 
     local forwardVelocity = Player.ComputeForwardVelocity(self, input)
@@ -308,6 +361,8 @@ function Marine:HandleButtons(input)
     end
     
     self:UpdateJetpack(input)
+	self:UpdateScanner(input)
+	self:UpdateMedPacks(input)
     
 end
 

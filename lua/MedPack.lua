@@ -20,5 +20,6 @@ MedPack.kModelName = PrecacheAsset("models/marine/medpack/medpack.model")
 MedPack.kHealthSound = PrecacheAsset("sound/ns2.fev/marine/common/health")
 
 MedPack.kHealth = 50
+MedPack.kDropInterval = 10
 
 Shared.LinkClassToMap("MedPack", MedPack.kMapName)
