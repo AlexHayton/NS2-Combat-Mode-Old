@@ -470,17 +470,12 @@ end
 function GetTechSupported(callingEntity, techId, silenceError)
 
     if callingEntity ~= nil then
-    
-        local team = GetGamerules():GetTeam(callingEntity:GetTeamNumber())
-        
-        if team ~= nil and team:isa("PlayingTeam") then
        
-            local techTree = team:GetTechTree()
+		// In combat mode, tech tree resides on the player not the team
+        local techTree = callingEntity:GetTechTree()
             
-            if techTree ~= nil then
-                return techTree:GetTechSupported(techId, silenceError)
-            end
-            
+        if techTree ~= nil then
+          return techTree:GetTechSupported(techId, silenceError)
         end
         
     end

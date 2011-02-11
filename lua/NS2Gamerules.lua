@@ -823,9 +823,12 @@ function NS2Gamerules:EndGame(winningTeam)
         self.team1:ClearRespawnQueue()
         self.team2:ClearRespawnQueue()
         
+		// Remove game length tracking so that we don't break UWE's stats
+		/*
         local gameLengthString = string.format("%.2f", Shared.GetTime() - self.gameStartTime)
         local urlString = "http://unknownworldsstats.appspot.com/statendgame?version=" .. ToString(Shared.GetBuildNumber()) .. "&winner=" .. ToString(winningTeam:GetTeamType()) .. "&length=" .. gameLengthString .. "&map=" .. Shared.GetMapName()
         Shared.GetWebpage(urlString, function (data) end)
+		*/
         
     end
 
