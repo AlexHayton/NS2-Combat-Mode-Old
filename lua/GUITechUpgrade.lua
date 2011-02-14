@@ -30,13 +30,15 @@ GUITechUpgrade.kTextBackgroundHeightBuffer = 2
 GUITechUpgrade.kTextBackgroundItemBuffer = 2
 GUITechUpgrade.kTextBackgroundColor = Color(0.4, 0.4, 0.4, 1)
 
+GUITechUpgrade.kTextNotificationFontName = "MicrogrammaDBolExt"
+GUITechUpgrade.kTextNotificationFontSize = 18
 GUITechUpgrade.kTextNotificationMaxAlpha = 1.0
-GUITechUpgrade.kTextNotificationMinAlpha = 0.7
-GUITechUpgrade.kTextNotificationPulseRate = 0.1
+GUITechUpgrade.kTextNotificationMinAlpha = 0.5
+GUITechUpgrade.kTextNotificationPulseRate = 0.05
 GUITechUpgrade.kTextNotificationOffset = Vector(20, 170, 0)
 GUITechUpgrade.kTextNotificationMarineColor = Color(0.0, 0.6, 0.9, 1)
 GUITechUpgrade.kTextNotificationAlienColor = Color(0.8, 0.4, 0.4, 1)
-GUITechUpgrade.kTextNotificationMessage = "Upgrades available..."
+GUITechUpgrade.kTextNotificationMessage = "Upgrades available"
 
 function GUITechUpgrade:Initialize()
     
@@ -50,7 +52,8 @@ function GUITechUpgrade:Initialize()
 	
 	// Create the notification when a new upgrade is available
 	self.textNotification = GUI.CreateTextItem()
-	self.textNotification:SetFontSize(GUITechUpgrade.kTextFontSize)
+	self.textNotification:SetFontName(GUITechUpgrade.kTextNotificationFontName)
+	self.textNotification:SetFontSize(GUITechUpgrade.kTextNotificationFontSize)
 	self.textNotification:SetAnchor(GUIItem.Left, GUIItem.Top)
 	self.textNotification:SetPosition(GUITechUpgrade.kTextNotificationOffset)
 	self.textNotification:SetTextAlignmentX(GUITextItem.Align_Min)
@@ -116,6 +119,9 @@ function GUITechUpgrade:UpdateNotification(deltaTime, menuVisible, upgradeList)
 		if (not menuVisible) then
 			// Show the notification
 			notificationVisible = true
+			
+			// Show the number of upgrades available
+			self.textNotification:SetText(GUITechUpgrade.kTextNotificationMessage .. " (" .. tostring(PlayerUI_GetNumUpgradesAvailable()) .. ")")
 		
 			// Oscillate the notification alpha
 			if (self.notificationAlpha >= GUITechUpgrade.kTextNotificationMaxAlpha) then

@@ -40,11 +40,11 @@ GUIExperience.kAlienTextColor = Color(0.8, 0.4, 0.4, 1)
 GUIExperience.kExperienceTextFontSize = 15
 GUIExperience.kExperienceTextOffset = Vector(0, -10, 0)
 GUIExperience.kNormalAlpha = 1.0
-GUIExperience.kMinimisedAlpha = 0.6
+GUIExperience.kMinimisedAlpha = 0.5
 
 GUIExperience.kBarFadeInRate = 0.2
 GUIExperience.kBarFadeOutDelay = 1000
-GUIExperience.kBarFadeOutRate = 0.2
+GUIExperience.kBarFadeOutRate = 0.05
 GUIExperience.kBackgroundBarRate = 80
 GUIExperience.kTextIncreaseRate = 30
 
@@ -53,7 +53,10 @@ function GUIExperience:Initialize()
 	self:CreateExperienceBar()
 	self.rankIncreased = false
 	self.currentExperience = 0
+	self.showExperience = false
+	self.experienceAlpha = 1.0
 	self.barMoving = false
+	self.playerTeam = "None"
 end
 
 function GUIExperience:CreateExperienceBar()
@@ -89,28 +92,44 @@ end
 
 function GUIExperience:Update(deltaTime)
 	// Alter the display based on team, status.
-	if (PlayerUI_GetTeamType() == "Marines") then
-		self.experienceBarBackground:SetIsVisible(true)
-		self.experienceBar:SetIsVisible(true)
-		self.experienceText:SetIsVisible(true)
-		self.experienceBar:SetColor(GUIExperience.kMarineGUIColor)
-		self.experienceText:SetColor(GUIExperience.kMarineTextColor)
-	elseif (PlayerUI_GetTeamType() == "Aliens") then
-		self.experienceBarBackground:SetIsVisible(true)
-		self.experienceBar:SetIsVisible(true)
-		self.experienceText:SetIsVisible(true)
-		self.experienceBar:SetColor(GUIExperience.kAlienGUIColor)	
-		self.experienceText:SetColor(GUIExperience.kAlienTextColor)
-	else
-		self.experienceBarBackground:SetIsVisible(false)
-		self.experienceBar:SetIsVisible(false)
-		self.experienceText:SetIsVisible(false)
+	local newTeam = false
+	if (self.playerTeam ~= PlayerUI_GetTeamType()) then
+		self.playerTeam = PlayerUI_GetTeamType()
+		newTeam = true
+	end
+	
+	// We have switched teams.
+	if (newTeam) then
+		if (self.playerTeam == "Marines") then
+			self.experienceBarBackground:SetIsVisible(true)
+			self.experienceBar:SetIsVisible(true)
+			self.experienceText:SetIsVisible(true)
+			self.experienceBar:SetColor(GUIExperience.kMarineGUIColor)
+			self.experienceText:SetColor(GUIExperience.kMarineTextColor)
+			self.experienceAlpha = 1.0
+			self.showExperience = true
+		elseif (self.playerTeam == "Aliens") then
+			self.experienceBarBackground:SetIsVisible(true)
+			self.experienceBar:SetIsVisible(true)
+			self.experienceText:SetIsVisible(true)
+			self.experienceBar:SetColor(GUIExperience.kAlienGUIColor)	
+			self.experienceText:SetColor(GUIExperience.kAlienTextColor)
+			self.experienceAlpha = 1.0
+			self.showExperience = true
+		else
+			self.experienceBarBackground:SetIsVisible(false)
+			self.experienceBar:SetIsVisible(false)
+			self.experienceText:SetIsVisible(false)
+			self.showExperience = false
+		end
 	end
 		
 	// Recalculate, tween and fade
-	self:UpdateExperienceBar(deltaTime)
-	self:UpdateFading(deltaTime)
-	self:UpdateText(deltaTime)
+	if (self.showExperience) then
+		self:UpdateExperienceBar(deltaTime)
+		self:UpdateFading(deltaTime)
+		self:UpdateText(deltaTime)
+	end
 end
 
 function GUIExperience:UpdateExperienceBar(deltaTime)
@@ -155,8 +174,8 @@ end
 function GUIExperience:UpdateFading(deltaTime)
 	local currentBarHeight = self.experienceBar:GetSize().y
 	local currentBackgroundHeight = self.experienceBarBackground:GetSize().y
-	local currentAlpha = self.experienceBar:GetColor().a
 	local currentBarColor = self.experienceBar:GetColor()
+	local currentTextColor = self.experienceText:GetColor()
 	local targetBarHeight = currentBarHeight
 	local targetBackgroundHeight = currentBackgroundHeight
 	local targetBarColor = currentBarColor
@@ -171,9 +190,12 @@ function GUIExperience:UpdateFading(deltaTime)
 		targetAlpha = GUIExperience.kMinimisedAlpha
 	end
 	
+	self.experienceAlpha = Slerp(self.experienceAlpha, targetAlpha, deltaTime*GUIExperience.kBarFadeOutRate)
+	
 	self.experienceBarBackground:SetSize(Vector(GUIExperience.kExperienceBackgroundWidth, Slerp(currentBackgroundHeight, targetBackgroundHeight, deltaTime*GUIExperience.kBackgroundBarRate), 0))
 	self.experienceBar:SetSize(Vector(self.experienceBar:GetSize().x, Slerp(currentBarHeight, targetBarHeight, deltaTime*GUIExperience.kBackgroundBarRate), 0))
-	self.experienceBar:SetColor(Color(currentBarColor.r, currentBarColor.g, currentBarColor.b, Slerp(currentAlpha, targetAlpha, deltaTime*GUIExperience.kBarFadeOutRate)))
+	self.experienceBar:SetColor(Color(currentBarColor.r, currentBarColor.g, currentBarColor.b, self.experienceAlpha))
+	self.experienceText:SetColor(Color(currentTextColor.r, currentTextColor.g, currentTextColor.b, self.experienceAlpha))
 end
 
 function GUIExperience:UpdateText(deltaTime)

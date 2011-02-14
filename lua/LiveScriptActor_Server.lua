@@ -6,6 +6,8 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+Script.Load("lua/CombatBalance.lua")
+
 function LiveScriptActor:OnCreate()    
 
     ScriptActor.OnCreate(self)
@@ -147,13 +149,13 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
 		if (attacker ~= nil) then
 			local isAxeHit = false
 			// Check if this is an axe/welder hit
-			if (attacker:isa("Marine") and attacker:GetActiveWeapon():isa("Axe")) then
+			if (attacker:isa("Marine") and attacker:GetActiveWeapon():isa("Axe") and attacker:GetTeamNumber() == self:GetTeamNumber()) then
 				isAxeHit = true
 			end
 			
 			// Deal with axe/welder healing
 			if (isAxeHit and self:isa("Structure")) then
-				self:AddHealth(damage)
+				self:AddHealth(damage*kHealingScalar)
 				isHealing = true
 			end
 		end
@@ -179,7 +181,7 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
 			// Experience Calculations:
 			// Grant experience for damaging structures and also make a note of the total damage done 
 			// by each player for when we die
-			if(pointOwner ~= nil and pointOwner:isa("Player") and pointOwner:GetTeamNumber() ~= self:GetTeamNumber()) then
+			if (pointOwner ~= nil and pointOwner:isa("Player") and pointOwner:GetTeamNumber() ~= self:GetTeamNumber()) then
 			
 				local damageTaken = armorUsed + healthUsed
 		

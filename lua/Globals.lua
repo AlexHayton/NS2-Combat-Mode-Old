@@ -181,7 +181,7 @@ kHiveSightDamageTime = 8
 // Hive sight constants
 kBlipType = enum( {'Undefined', 'Friendly', 'FriendlyUnderAttack', 'Sighted', 'TechPointStructure'} )
 
-kFeedbackURL = "http://www.unknownworlds.com/game_scripts/ns2/feedback.php"
+kFeedbackURL = "http://www.unknownworlds.com/ns2/forums/index.php?showtopic=111818"
 
 // Use for marine HUD, alien HUD, Commander UI. These are created and destroyed with
 // the player.

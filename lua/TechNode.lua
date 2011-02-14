@@ -307,6 +307,25 @@ if Server then
 
 end
 
+function TechNode:CopyDataFrom(techNode)
+
+	self.techId             = techNode.techId
+	self.techType           = techNode.techType
+	self.prereq1            = techNode.prereq1
+	self.prereq2            = techNode.prereq2
+	self.addOnTechId        = techNode.addOnTechId
+	self.cost               = techNode.cost
+	self.available          = techNode.available
+	self.time               = techNode.time
+	self.researchProgress   = techNode.researchProgress
+	self.researched         = techNode.researched
+	self.researching        = techNode.researching
+	self.hasTech            = techNode.hasTech
+	self.requiresTarget     = techNode.requiresTarget
+	self.energyBuild        = techNode.energyBuild
+        
+end
+
 // TODO: Make this reliable
 Shared.RegisterNetworkMessage( "TechNodeBase", TechNode.kTechNodeVars )
 

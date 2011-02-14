@@ -1486,6 +1486,13 @@ function PlayerUI_GetTechUpgrades()
     
 end
 
+function PlayerUI_GetNumUpgradesAvailable()
+
+	local player = Client.GetLocalPlayer()
+	return player:GetRank() - player:GetUpgradesTaken()
+
+end
+
 // Returns 0 unless a saying was just chosen. Returns 1 - number of sayings when one is chosen.
 function PlayerUI_SayingChosen()
     local player = Client.GetLocalPlayer()

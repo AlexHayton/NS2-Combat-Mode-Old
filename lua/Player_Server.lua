@@ -113,8 +113,10 @@ function Player:InitTechTree()
 	self.techTree = nil
     
     local team = self:GetTeam()
+	// Do a deep copy so that we have our own version of the tree.
     if team ~= nil and team:isa("PlayingTeam") then
-        self.techTree = team:GetTechTree()
+        self.techTree = TechTree()
+		self.techTree:CopyDataFrom(team:GetTechTree())
 		self.techTree:ComputeAvailability()
 		sendTechTreeBase = true
     end
@@ -196,8 +198,9 @@ function Player:OnTeamChange(newTeamNumber)
 
         // Send scoreboard changes to everyone    
         self:SetScoreboardChanged(true)
-		self:InitTechTree()
-		self.upgradesTaken = 0
+		
+		// Clear skills
+		self:ClearSkills()
         
         // Clear all hotkey groups on team change since old
         // hotkey groups will be invalid.

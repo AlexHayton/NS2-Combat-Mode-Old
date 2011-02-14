@@ -1,0 +1,1 @@
+kHealingScalar = 4.0

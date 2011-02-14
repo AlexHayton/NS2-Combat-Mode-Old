@@ -2626,6 +2626,10 @@ function Player:GetNextRankExp()
 	return Experience_GetNextRankExp(Experience_GetRank(self.experience))
 end
 
+function Player:GetUpgradesTaken()
+	return self.upgradesTaken
+end
+
 function Player:GetScoreboardChanged()
     return self.scoreboardChanged
 end
@@ -2648,7 +2652,7 @@ function Player:GetHasSayings()
 end
 
 function Player:GetHasTechUpgrades()
-	if (table.maxn(self:GetTechUpgrades()) > 0 and self.upgradesTaken < self:GetRank()) then
+	if (table.maxn(self:GetTechUpgrades()) > 0 and self:GetUpgradesTaken() < self:GetRank()) then
 		return true
 	else
 		return false
