@@ -19,3 +19,10 @@ Function .onInit
 
   Delete $TEMP\spltmp.bmp
 FunctionEnd
+
+Page Welcome
+Page License
+Page Components
+Page Directory
+UninstPage uninstConfirm
+UninstPage Directory
