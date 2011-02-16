@@ -92,7 +92,7 @@ Function .onInit
   InitPluginsDir
   #File /oname=$PLUGINSDIR\splash.bmp "splash.bmp"
 
-  File /oname=$PLUGINSDIR\splash.bmp "${NSISDIR}\Contrib\Graphics\Wizard\llama.bmp"
+  File /oname=$PLUGINSDIR\splash.bmp "splash.bmp"
   advsplash::show 1000 600 400 0x04025C $PLUGINSDIR\splash
   Pop $0 
 
