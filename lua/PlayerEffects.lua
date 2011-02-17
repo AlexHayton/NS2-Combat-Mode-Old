@@ -63,7 +63,14 @@ kPlayerEffectData =
             {sound = "sound/ns2.fev/materials/%s/fall"},
         },
     },
-    
+	
+	levelUp =
+	{
+		levelUpEffects =
+		{
+			{cinematic = "cinematics/level_up.cinematic"},
+		},
+	},
 }
 
 GetEffectManager():AddEffectData("PlayerEffectData", kPlayerEffectData)

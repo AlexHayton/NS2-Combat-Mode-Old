@@ -798,6 +798,7 @@ function Player:AddExperience(points)
 		if (oldExperience + points >= nextRank) then
 			self:AddTooltip(string.format("Congratulations! You have reached rank %s (%s)", tostring(self:GetRank()), Experience_GetRankName(self:GetTeamNumber(), self:GetRank())))
 			self:SetScoreboardChanged(true)  
+			self:TriggerEffects("levelUp")
 		end
     end
 end
