@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Team.lua
 //
@@ -35,7 +35,7 @@ end
  * by Player:OnTeamChange().
  */
 function Team:AddPlayer(player)
-
+    
     if(player ~= nil and player:isa("Player")) then
     
         local id = player:GetId()
@@ -53,18 +53,6 @@ function Team:AddPlayer(player)
 end
 
 function Team:OnEntityChange(oldId, newId)
-
-    for index, id in ipairs(self.playerIds) do
-    
-        if id == oldId then
-        
-            self.playerIds[id] = newId
-            break
-            
-        end
-        
-    end
-    
 end
 
 function Team:GetPlayer(playerIndex)
@@ -84,11 +72,13 @@ end
  */
 function Team:RemovePlayer(player)
 
+
     if(not table.removevalue( self.playerIds, player:GetId() )) then
         Print("Team:RemovePlayer(%s): Player id %d not in playerId list.", player:GetClassName(), player:GetId())
     end
     
     self:RemovePlayerFromRespawnQueue(player)    
+
     
 end
 
@@ -198,15 +188,17 @@ end
 /** 
  * Play sound for every player on the team.
  */
-function Team:PlayPrivateTeamSound(soundName, origin, commandersOnly)
+function Team:PlayPrivateTeamSound(soundName, origin, commandersOnly, excludePlayer)
 
     local function PlayPrivateSound(player)
     
         if not commandersOnly or player:isa("Commander") then
-            if not origin then
-                Server.PlayPrivateSound(player, soundName, player, 1.0, Vector(0, 0, 0))
-            else
-                Server.PlayPrivateSound(player, soundName, nil, 1.0, origin)
+            if excludePlayer ~= player then
+                if not origin then
+                    Server.PlayPrivateSound(player, soundName, player, 1.0, Vector(0, 0, 0))
+                else
+                    Server.PlayPrivateSound(player, soundName, nil, 1.0, origin)
+                end
             end
         end
         
@@ -281,7 +273,9 @@ end
 // Respawn all players that have been dead since at least the specified time (or pass nil to respawn all)
 function Team:RespawnAllPlayers(spawnTime)
 
-    for i, playerId in ipairs(self.playerIds) do
+    local playerIds = table.duplicate(self.playerIds)
+    
+    for i, playerId in ipairs(playerIds) do
     
         local player = Shared.GetEntity(playerId)
         if(spawnTime == nil or (spawnTime > player:GetSpawnQueueEntryTime())) then
@@ -300,7 +294,9 @@ end
 
 function Team:ReplaceRespawnAllPlayers()
 
-    for i, playerIndex in ipairs(self.playerIds) do
+    local playerIds = table.duplicate(self.playerIds)
+
+    for i, playerIndex in ipairs(playerIds) do
     
         local player = Shared.GetEntity(playerIndex)
         self:ReplaceRespawnPlayer(player, nil, nil)
@@ -388,7 +384,7 @@ function Team:GetHasTeamWon()
 end
 
 function Team:RespawnPlayer(player, origin, angles)
-    
+
     if(self:GetIsPlayerOnTeam(player)) then
     
         if(origin == nil or angles == nil) then

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Client.lua
 //
@@ -90,7 +90,7 @@ function ExitPressed()
 
     if not Client.GetIsRunningPrediction() then
         // Close buy menu if open, otherwise show in-game menu
-        if not Client.GetLocalPlayer():CloseMenu() then
+        if not Client.GetLocalPlayer():CloseMenu(kClassFlashIndex) then
             ShowInGameMenu()
         end
     end    

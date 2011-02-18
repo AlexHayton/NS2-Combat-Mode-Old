@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Alien_Client.lua
 //
@@ -15,6 +15,8 @@ Alien.kHUDFlash = "ui/alien_hud.swf"
 Alien.kBuyHUDFlash = "ui/alien_buy.swf"
 Alien.kBuyHUDTexture = "ui/alien_buildmenu.dds"
 
+Alien.kOpenSound = PrecacheAsset("sound/ns2.fev/alien/common/select")
+
 // Returns all the info about all hive sight blips so it can be rendered by the UI.
 // Returns single-dimensional array of fields in the format screenX, screenY, drawRadius, blipType
 function PlayerUI_GetBlipInfo()
@@ -26,6 +28,7 @@ function PlayerUI_GetBlipInfo()
     
     if player then
     
+        local eyePos = player:GetEyePos()
         for index, blip in ipairs(GetEntitiesIsa("Blip")) do
         
             local blipType = blip.blipType
@@ -40,20 +43,20 @@ function PlayerUI_GetBlipInfo()
             
             // Get direction to blip. If off-screen, don't render. Bad values are generated if 
             // Client.WorldToScreen is called on a point behind the camera.
-            local normToEntityVec = GetNormalizedVector(blipOrigin - player:GetEyePos())
+            local normToEntityVec = GetNormalizedVector(blipOrigin - eyePos)
             local normViewVec = player:GetViewAngles():GetCoords().zAxis
            
             local dotProduct = normToEntityVec:DotProduct(normViewVec)
             if(dotProduct > 0) then
             
                 // Get distance to blip and determine radius
-                local distance = (player:GetEyePos() - blipOrigin):GetLength()
+                local distance = (eyePos - blipOrigin):GetLength()
                 local drawRadius = 35/distance
                 
                 // Compute screen xy to draw blip
                 local screenPos = Client.WorldToScreen(blipOrigin)
 
-                local trace = Shared.TraceRay(player:GetEyePos(), blipOrigin, PhysicsMask.Bullets, EntityFilterTwo(player, entity))                               
+                local trace = Shared.TraceRay(eyePos, blipOrigin, PhysicsMask.Bullets, EntityFilterTwo(player, entity))                               
                 local obstructed = ((trace.fraction ~= 1) and ((trace.entity == nil) or trace.entity:isa("Door"))) 
                 
                 // Add to array
@@ -245,7 +248,7 @@ function GetAbility(abilityIndex)
 end
 
 function Alien:OnInitLocalClient()
-
+    
     Player.OnInitLocalClient(self)
     
     if(self:GetTeamNumber() ~= kTeamReadyRoom) then
@@ -258,10 +261,10 @@ function Alien:OnInitLocalClient()
         //Client.BindFlashTexture("alien_upgradeicons", Alien.kUpgradeIconsTexture)
         
         if self.alienHUD == nil then
-            self.alienHUD = GetGUIManager():CreateGUIScriptSingle("GUIAlienHUD")
+            self.alienHUD = GetGUIManager():CreateGUIScript("GUIAlienHUD")
         end
         if self.hiveBlips == nil then
-            self.hiveBlips = GetGUIManager():CreateGUIScriptSingle("GUIHiveBlips")
+            self.hiveBlips = GetGUIManager():CreateGUIScript("GUIHiveBlips")
         end
                
     end
@@ -271,19 +274,51 @@ end
 function Alien:OnDestroyClient()
     
     if self.alienHUD then
+        GetGUIManager():DestroyGUIScript(self.alienHUD)
         self.alienHUD = nil
-        GetGUIManager():DestroyGUIScriptSingle("GUIAlienHUD")
     end
     if self.hiveBlips then
+        GetGUIManager():DestroyGUIScript(self.hiveBlips)
         self.hiveBlips = nil
-        GetGUIManager():DestroyGUIScriptSingle("GUIHiveBlips")
     end
 
 end
 
+function Alien:UpdateClientEffects(deltaTime, isLocal)
+    
+    Player.UpdateClientEffects(self, deltaTime, isLocal)
+    
+    // If we are dead, close the evolve menu.
+    if isLocal and GetFlashPlayerDisplaying(kClassFlashIndex) then
+    
+        if not self:GetIsAlive() then
+            self:CloseMenu(kClassFlashIndex)
+        end
+        
+    end
+    
+    if isLocal then
+        
+        local darkVisionFadeAmount = 1
+        local darkVisionFadeTime = 0.2
+        
+        if not self.darkVisionOn then
+            darkVisionFadeAmount = math.max( 1 - (Client.GetTime() - self.darkVisionEndTime) / darkVisionFadeTime, 0 ) 
+        end
+        
+        self.screenEffects.darkVision:SetActive(self.darkVisionOn or darkVisionFadeAmount > 0)   
+        
+        self.screenEffects.darkVision:SetParameter("startTime", self.darkVisionTime)
+        self.screenEffects.darkVision:SetParameter("time", Client.GetTime())
+        self.screenEffects.darkVision:SetParameter("amount", darkVisionFadeAmount)
+        
+    end
+    
+end
+
 function Alien:CloseMenu(flashIndex)
 
-    if Player.CloseMenu(self, flashIndex) then
+    if self.showingBuyMenu and Player.CloseMenu(self, flashIndex) then
     
         self.showingBuyMenu = false
         return true
@@ -302,9 +337,18 @@ function Alien:Buy()
     
         if not self.showingBuyMenu then
         
-            GetFlashPlayer(kClassFlashIndex):Load(Alien.kBuyHUDFlash)
-            GetFlashPlayer(kClassFlashIndex):SetBackgroundOpacity(0)
-            self.showingBuyMenu = true
+            // Can only bring up on infestation
+            //if self:GetGameEffectMask(kGameEffect.OnInfestation) then
+        
+                GetFlashPlayer(kClassFlashIndex):Load(Alien.kBuyHUDFlash)
+                GetFlashPlayer(kClassFlashIndex):SetBackgroundOpacity(0)
+                self.showingBuyMenu = true
+                
+                Shared.PlaySound(self, Alien.kOpenSound)
+            
+            //else
+            //    self:AddTooltipOncePer("You must be on infestation to evolve.", 3)
+            //end            
             
         else
         

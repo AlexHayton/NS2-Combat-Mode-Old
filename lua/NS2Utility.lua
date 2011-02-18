@@ -1,4 +1,4 @@
-//======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+//======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\NS2Utility.lua
 //
@@ -18,6 +18,7 @@ function GetIsBuildLegal(techId, position, snapRadius, player, silent)
     local legalBuild = true
     local legalPosition = position
     local attachEntity = nil
+    local reason = ""
     
     local attachClass = LookupTechData(techId, kStructureAttachClass)
     local buildNearClass = LookupTechData(techId, kStructureBuildNearClass)
@@ -83,19 +84,40 @@ function GetIsBuildLegal(techId, position, snapRadius, player, silent)
             
             for index, entity in ipairs(entities) do
                 
-                local dist = (entity:GetOrigin() - legalPosition):GetLength()
+                if not entity:isa("Infestation") then
                 
-                // Make sure we're not building too close to an entity with a different attach class
-                // Prevents Commander from building non-RTs on resource nozzles, or non-Hives on tech points, etc.    
-                if techNode:GetIsBuild() and (dist < kBlockAttachStructuresRadius) then
-                
-                    // It's OK if we're attaching to type of entity
-                    if attachClass ~= entity:GetClassName() and entity:GetIsVisible() then
+                    local dist = (entity:GetOrigin() - legalPosition):GetLength()
                     
-                        if GetIsAttachment(entity:GetClassName()) or entity:isa("Structure") then
+                    // Make sure we're not building too close to an entity with a different attach class
+                    // Prevents Commander from building non-RTs on resource nozzles, or non-Hives on tech points, etc.    
+                    if techNode:GetIsBuild() and (dist < kBlockAttachStructuresRadius) then
+                    
+                        // It's OK if we're attaching to type of entity
+                        if attachClass ~= entity:GetClassName() and entity:GetIsVisible() then
                         
-                            legalBuild = false
+                            if GetIsAttachment(entity:GetClassName()) or entity:isa("Structure") then
                             
+                                legalBuild = false
+                                
+                                break
+                                
+                            end
+                            
+                        end
+                        
+                    end
+                    
+                    // Count number of friendly non-player units nearby and don't allow too many units in one area (prevents MAC/Drifter/Sentry spam/abuse)
+                    if not entity:isa("Player") and (entity:GetTeamNumber() == player:GetTeamNumber()) and entity:GetIsVisible() then
+                    
+                        numFriendlyEntitiesInRadius = numFriendlyEntitiesInRadius + 1
+
+                        if numFriendlyEntitiesInRadius >= (kMaxEntitiesInRadius - 1) then
+                        
+                            if not silent then
+                                Print("GetIsBuildLegal() - Too many entities in area.")
+                            end
+                            legalBuild = false
                             break
                             
                         end
@@ -104,24 +126,26 @@ function GetIsBuildLegal(techId, position, snapRadius, player, silent)
                     
                 end
                 
-                // Count number of friendly non-player units nearby and don't allow too many units in one area (prevents MAC/Drifter/Sentry spam/abuse)
-                if not entity:isa("Player") and (entity:GetTeamNumber() == player:GetTeamNumber()) and entity:GetIsVisible() then
-                
-                    numFriendlyEntitiesInRadius = numFriendlyEntitiesInRadius + 1
+            end
+            
+        end
+        
+        // Check infestation requirements
+        if LookupTechData(techId, kTechDataRequiresInfestation) then
+        
+            if not GetIsPointOnInfestation(legalPosition) then
+                reason = string.format("Requires infestation but no infestation at point %s", ToString(legalPosition))
+                legalBuild = false
+            end
+            
+            //Print("Point %s on infestation: %s", ToString(legalPosition), ToString(legalBuild))
 
-                    if numFriendlyEntitiesInRadius >= (kMaxEntitiesInRadius - 1) then
-                    
-                        if not silent then
-                            Print("GetIsBuildLegal() - Too many entities in area.")
-                        end
-                        
-                        legalBuild = false
-                        break
-                        
-                    end
-                    
-                end
-                
+        // Don't allow marine structures on infestation
+        elseif LookupTechData(techId, kTechDataNotOnInfestation) then
+        
+            if GetIsPointOnInfestation(legalPosition) then
+                reason = string.format("Requires NO infestation but infestation at point %s", ToString(legalPosition))
+                legalBuild = false
             end
             
         end
@@ -212,6 +236,8 @@ function CreateEntityForCommander(techId, position, commander)
     if newEnt then
         newEnt:SetOwner(commander)
     end
+    
+    UpdateInfestationMask( {newEnt} )
     
     return newEnt
     
@@ -1085,10 +1111,6 @@ function TriggerHitEffects(doer, target, origin, surface)
 
     local tableParams = {}
 
-    if doer and doer.GetClassName then
-        tableParams[kEffectFilterDoerName] = doer:GetClassName()
-    end
-
     if target and target.GetClassName then
         tableParams[kEffectFilterClassName] = target:GetClassName()
     end        
@@ -1101,7 +1123,54 @@ function TriggerHitEffects(doer, target, origin, surface)
         tableParams[kEffectHostCoords] = Coords.GetIdentity()
     end
     
+    if doer then
+        tableParams[kEffectFilterDoerName] = doer:GetClassName()
+    end
+
     GetEffectManager():TriggerEffects("hit_effect", tableParams, target)
     
 end
 
+function GetIsPointOnInfestation(point)
+
+    // Use all infestation entities, regardless of team number
+    local infestations = {}
+    
+    if Server then
+        infestations = GetGamerules():GetEntities("Infestation")
+    else
+        infestations = GetEntitiesIsa("Infestation")
+    end
+
+    local onInfestation = false
+    
+    // See if entity is on infestation
+    for infestationIndex, infestation in ipairs(infestations) do
+    
+        if infestation:GetIsPointOnInfestation(point) then
+        
+            onInfestation = true
+            break
+            
+        end
+        
+    end
+    
+    return onInfestation
+
+end
+
+function CreateStructureInfestation(origin, teamNumber, infestationRadius, percent)
+
+    local infestation = CreateEntity(Infestation.kMapName, origin, teamNumber)
+    
+    infestation:SetMaxRadius(infestationRadius)
+    // TODO: Set coords if on the wall
+    
+    if percent then
+        infestation:SetRadiusPercent(percent)
+    end
+    
+    return infestation
+
+end

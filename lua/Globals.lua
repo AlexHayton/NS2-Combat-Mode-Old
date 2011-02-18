@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Globals.lua
 //
@@ -58,6 +58,8 @@ kMaxKills = 254
 kMaxDeaths = 254
 kMaxPing = 999
 
+kMaxHotkeyGroups = 5
+
 // Surface list. Add more materials here to precache ricochets, bashes, footsteps, etc
 // Used with PrecacheMultipleAssets
 kSurfaceList = {"door", "electronic", "metal", "organic", "rock", "thin_metal" }
@@ -98,7 +100,8 @@ kSkulkBiteSpeedScalar = 1.25
 // Falling - Ignores armor for humans, no damage for some creatures or exoskeleton
 // Door - Like Normal but also does damage to Doors. Nothing else damages Doors.
 // Flame - Like normal but catches target on fire and plays special flinch animation
-kDamageType = enum( {'Normal', 'Light', 'Heavy', 'Puncture', 'Structural', 'Gas', 'Biological', 'StructuresOnly', 'Falling', 'Door', 'Flame'} )
+// Infestation - Take damage due to no infestation
+kDamageType = enum( {'Normal', 'Light', 'Heavy', 'Puncture', 'Structural', 'Gas', 'Biological', 'StructuresOnly', 'Falling', 'Door', 'Flame', 'Infestation'} )
 
 // Describe damage types for tooltips
 kDamageTypeDesc = {
@@ -115,7 +118,7 @@ kDamageTypeDesc = {
 }
 
 // Death message indices 
-kDeathMessageIcon = enum( {'None', 'Rifle', 'RifleButt', 'Pistol', 'Axe', 'Shotgun', 'Flamethrower', 'ARC', 'Grenade', 'Sentry', 'MAC', 'Bite', 'HydraSpike', 'Spit', 'Spikes', 'SpikesAlt', 'SporeCloud', 'SwipeBlink', 'Drifter', 'Whip'} )
+kDeathMessageIcon = enum( {'None', 'Rifle', 'RifleButt', 'Pistol', 'Axe', 'Shotgun', 'Flamethrower', 'ARC', 'Grenade', 'Sentry', 'MAC', 'Bite', 'HydraSpike', 'Spit', 'Spikes', 'SpikesAlt', 'SporeCloud', 'SwipeBlink', 'Drifter', 'Whip', 'Spray'} )
 
 kMinimapBlipType = enum( { 'TechPoint', 'ResourcePoint', 'Structure', 'Player', 'Door', 'PowerPoint'} )
 
@@ -128,9 +131,9 @@ kMinimapBlipTeam = enum( {'Friendly', 'Enemy', 'Neutral'} )
 // How long commander alerts should last (from NS1)
 kAlertExpireTime = 20
 
-// Bit mask table for non-stackable game effects.
+// Bit mask table for non-stackable game effects. OnInfestation is set if we're on ANY infestation (regardless of team).
 // Always keep "Max" as last element.
-kGameEffect = CreateBitMask( {"InUmbra", "Fury", "Cloaked", "Parasite", "NearDeath", "Disorient", "OnFire", "Max"} )
+kGameEffect = CreateBitMask( {"InUmbra", "Fury", "Cloaked", "Parasite", "NearDeath", "Disorient", "OnFire", "OnInfestation", "Max"} )
 kGameEffectMax = bit.rshift(kGameEffect.Max, 1)
 
 // Stackable game effects (more than one can be active, server-side only)

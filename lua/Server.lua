@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Server.lua
 //
@@ -22,10 +22,13 @@ Script.Load("lua/Bot.lua")
 Script.Load("lua/ConsoleCommands_Server.lua")
 Script.Load("lua/NetworkMessages_Server.lua")
 
+Script.Load("lua/dkjson.lua")
+
 Server.readyRoomSpawnList = {}
 Server.playerSpawnList = {}
 Server.eggSpawnList = {}
 Server.locationList = {}
+Server.playerBanList = {}
 
 // map name, group name and values keys for all map entities loaded to
 // be created on game reset
@@ -87,9 +90,9 @@ function OnMapLoadEntity(mapName, groupName, values)
         coords.zAxis = coords.zAxis * values.scale.z
 
         // Create the physical representation of the prop.
-        local physicsModel = Shared.CreatePhysicsModel(values.model, false, coords, CoordsArray(), nil) 
+        local physicsModel = Shared.CreatePhysicsModel(values.model, false, coords, CoordsArray(), nil)
         physicsModel:SetPhysicsType(CollisionObject.Static)
-        
+
         // Handle commander mode properties
         local renderModelCommAlpha = GetAndCheckValue(values.commAlpha, 0, 1, "commAlpha", 1, true)
 
@@ -280,13 +283,34 @@ function OnMapPostLoad()
 
 end
 
+-- Begin server webAPI by Marc (marc@unitedworlds.co.uk)
+-- TODO:	add to ServerDisconnect a reason message after main menu is recoded in luaGUI
+--			add server local or remote storage of pernament banlist support
 
---SERVER WEB API
---Data process functions
+function OnConnectCheckBan(player)
+	local steamid = tonumber(player:GetUserId())
+	Shared.Message(string.format('Client Authed. Steam ID: %s',steamid))
+	for i,row in pairs(Server.playerBanList) do
+		Shared.Message(string.format('%s : %s : %s',row.name,steamid,row.duration))
+		if(steamid == tonumber(row.steamid)) then
+			if row.duration == 0 then
+				Server.DisconnectClient(player)
+				Shared.Message(string.format('Kicked %s because they are pernamently banned form the server.',row.name))
+			else
+				if math.floor(Shared.GetTime()) > ( tonumber(row.timeOfBan) + (tonumber(row.duration) * 60)) then
+					Shared.Message(string.format('Temporary ban expired: Unbanning %s',row.name))
+					table.remove(Server.playerBanList,i)
+				else
+					Server.DisconnectClient(player)
+					Shared.Message(string.format('Kicked %s because they have a temporary ban form the server.',row.name))
+				end
+			end
+			break
+		end
+	end
+end
 
-	--Server Status functions
-function webServerUpTime(returnType)
-
+function webServerUpTime(datatype)
 	local unit = {
 	   year		= 29030400,
 	   month	= 2419200,
@@ -295,35 +319,32 @@ function webServerUpTime(returnType)
 	   hour		= 3600,
 	   minute	= 60
 	}
-
 	local totalSeconds = math.floor(Shared.GetTime()) or 0
-
-	if(returnType == 'json') then
+	if(datatype == 'json') then
 		return totalSeconds
 	else
-		local days = math.floor(totalSeconds / unit['day']) or 0
-		local hours = math.floor(totalSeconds / unit['hour']) or 0
-		local mins = math.floor(totalSeconds / unit['minute']) or 0
-		local seconds = ((totalSeconds / 60) * 60) - (60 * mins)
+		local days = math.floor(totalSeconds / unit.day) or 0
+		local hours = math.floor((totalSeconds / unit.hour) - (24 * days)) or 0
+		local mins = math.floor((totalSeconds / unit.minute) - (60 * (hours + (24 * days)))) or 0
+		local seconds = ((totalSeconds / 60) * 60) - (60 * (mins + (60 * hours)))
 		return days .. ' day(s), ' .. hours .. ' hour(s), ' .. mins .. ' minute(s), ' .. seconds .. ' second(s) '
 	end
 end
 
-	--Get Player stats
-function webIsCommander(player, returnType)
-	local data = nil
+function webIsCommander(player, datatype)
+	local data = ''
 	if (player:GetIsCommander()) then
-		if (returnType == 'json') then data = 1 else data = '(Commanding)' end
+		if (datatype == 'json') then data = 1 else data = '(Commanding)' end
 	else
-		if (returnType == 'json') then data = 0 else data = '' end
+		if (datatype == 'json') then data = 0 else data = '' end
 	end
 	return data
 end
 
-function webGetTeam(player, returnType)
+function webGetTeam(player, datatype)
 	local team = { 'Joining Server','Ready Room','Marine','Alien','Spectator' }
 	local teamid = tonumber(player:GetTeamNumber()) or -1
-	if (returnType == 'json') then
+	if (datatype == 'json') then
 		return teamid
 	else
 		teamid = teamid + 2
@@ -332,8 +353,6 @@ function webGetTeam(player, returnType)
 end
 
 function webFindPlayer(steamid)
-	local list = nil
-	local victim = nil
 	for list, victim in ipairs(GetGamerules():GetAllPlayers()) do
 		if Server.GetOwner(victim):GetUserId() == tonumber(steamid) then
 			return victim
@@ -342,16 +361,16 @@ function webFindPlayer(steamid)
 	return false
 end
 
-function webKickPlayer(steamid, playerRecords)
+function webKickPlayer(steamid, reason)
 	if not steamid == nil or 0 then
-		local kickthis = webFindPlayer(steamid, playerRecords) or false
+		local kickthis = webFindPlayer(steamid) or false
 		if kickthis ~= false then
 			local kickent = Server.GetOwner(kickthis)
 			local kickname = ''
 			if kickent:GetIsVirtual() == false then
 				kickname = kickthis:GetName()
 				Server.DisconnectClient(kickent)
-				Shared.Message(string.format("Server: %s was kicked from the server", kickname))
+				Shared.Message(string.format('Server: %s was kicked from the server', kickname))
 			else
 				OnConsoleRemoveBots()
 				kickname = 'bot'
@@ -362,138 +381,160 @@ function webKickPlayer(steamid, playerRecords)
 	return 'Cant kick player'
 end
 
+function webBanPlayer(steamid,duration)
+	if not steamid == nil or 0 then
+		local banthis = webFindPlayer(steamid) or false
+		if banthis ~= false then
+			local banent = Server.GetOwner(banthis)
+			local banname = ''
+			if banent:GetIsVirtual() == false then
+				banname = banthis:GetName()
+				duration = tonumber(duration) or 0
+				local playerData = {
+					name = banname,
+					steamid = steamid,
+					duration = duration,
+					timeOfBan = math.floor(tonumber(Shared.GetTime()))
+				}
+				local doBan = true
+				for _, v in pairs(Server.playerBanList) do
+					if v.steamid == steamid then
+						doBan = false
+						break
+					end
+				end
+				if doBan == true then
+					table.insert(Server.playerBanList,playerData)
+					return banname .. ' banned from server'
+				end
+				return 'Player already banned'
+			end
+		end
+	end
+	return 'Cant ban player'
+end
+
+function webUnbanPlayer(steamid)
+	if not steamid == nil or 0 then
+		for i,player in pairs(Server.playerBanList) do
+			if tonumber(player.steamid) == tonumber(steamid) then
+				table.remove(Server.playerBanList,i)
+				Shared.Message(string.format('%s with Steam ID: %s has been unbanned from server',player.name,steamid))
+				return 'Unbanned ' .. player.name
+			end
+		end
+	end
+	return 'Cant unban player'
+end
+
 function ProcessConsoleCommand(command)
     Shared.ConsoleCommand(command)
     return command
 end
 
-	--Returns web api with type requested (json string or HTML Page (Default))
-function getWebApi(returnType, command, kickedId)
-
-	--Force Json string by default
-	--returnType = 'json'
-
-	local listdlc = {
+-- Returns web api with type requested (json string or HTML Page (Default))
+function getWebApi(datatype, command, kickedId)
+	local dlcList = {
 		specialEdition = kSpecialEditionProductId or false
 	}
-
 	local playerRecords = GetGamerules():GetAllPlayers()
 	local entity = nil
-
 	local stats = {
-				cheats = tostring(Shared.GetCheatsEnabled()),
-				devmode = tostring(Shared.GetDevMode()),
-				map = tostring(Shared.GetMapName()),
-				uptime = webServerUpTime(returnType),
-				players = table.maxn(playerRecords),
-				playersMarine = GetGamerules():GetTeam1():GetNumPlayers(),
-				playersAlien = GetGamerules():GetTeam2():GetNumPlayers(),
-				marineCarbon = nil,
-				alienCarbon = nil
+		cheats = tostring(Shared.GetCheatsEnabled()),
+		devmode = tostring(Shared.GetDevMode()),
+		map = tostring(Shared.GetMapName()),
+		uptime = webServerUpTime(datatype),
+		players = table.maxn(playerRecords),
+		playersMarine = GetGamerules():GetTeam1():GetNumPlayers(),
+		playersAlien = GetGamerules():GetTeam2():GetNumPlayers(),
+		marineCarbon = nil,
+		alienCarbon = nil
 	}
-
 	local result = ''
-
-	if (returnType == 'json') then
-
-		if not command then
-			command = false
+	if datatype == 'json' then
+		if not command then command = false end
+		local playerData = {}
+		local playerDlc = {}
+		local playerList = {}
+		for index,player in ipairs(playerRecords) do
+			entity = Server.GetOwner(player)
+			for dlcKey,dlcValue in pairs(dlcList) do
+				playerDlc[dlcKey] = tostring(Server.GetIsDlcAuthorized(entity, dlcValue))
+			end
+			playerData = {
+				name	= player:GetName(),
+				steamid	= entity:GetUserId(),
+				isbot	= tostring(entity:GetIsVirtual()),
+				team	= webGetTeam(player, datatype),
+				iscomm	= webIsCommander(player, datatype),
+				score	= player:GetScore(),
+				kills	= player:GetKills(),
+				deaths	= player:GetDeaths(),
+				plasma	= player:GetPlasma(),
+				ping	= entity:GetPing(),
+				dlc		= playerDlc
+			}
+			table.insert(playerList,playerData)
 		end
-
-		result = result ..'{'
-							.. '"server":'
-							.. '{'
-								.. '"webdomain":"[[webdomain]]"'
-								.. ',"webport":"[[webport]]"'
-								.. ',"command":"' .. tostring(command) .. '"'
-								.. ',"cheats":"' .. stats['cheats'] .. '"'
-								.. ',"devmode":"' .. stats['devmode'] .. '"'
-								.. ',"map":"' .. stats['map'] .. '"'
-								.. ',"players":"' .. stats['players'] .. '"'
-								.. ',"marines":"' .. stats['playersMarine'] .. '"'
-								.. ',"aliens":"' .. stats['playersAlien'] .. '"'
-								.. ',"uptime":"' .. stats['uptime'] .. '"'
-							.. '}'
-							.. ',"players":{'
-
-							for index,player in ipairs(playerRecords) do
-
-								entity = Server.GetOwner(player)
-
-								result = result .. '"' .. index .. '":'
-								.. '{'
-									.. '"name":"' .. player:GetName() .. '",'
-									.. '"steamid":"' .. entity:GetUserId() .. '",'
-									.. '"team":"' .. webGetTeam(player, returnType) .. '",'
-									.. '"iscomm":"' .. webIsCommander(player, returnType) .. '",'
-									.. '"score":"' .. player:GetScore() .. '",'
-									.. '"kills":"' .. player:GetKills() .. '",'
-									.. '"deaths":"' .. player:GetDeaths() .. '",'
-									.. '"plasma":"' .. player:GetPlasma() .. '",'
-									.. '"ping":"' .. entity:GetPing() .. '",'
-									.. '"dlc":{'
-
-									for dlci,dlcc in pairs(listdlc) do
-										if dlcc then
-											result = result .. '"' .. dlci .. '":"' .. tostring(Server.GetIsDlcAuthorized(entity, dlcc)) .. '",'
-										end
-									end
-
-					result = result .. '}'
-								.. '},'
-
-							end
-
-		result = result .. '}}'
-
+		local data = {
+			webdomain		= '[[webdomain]]',
+			webport			= '[[webport]]',
+			command			= tostring(command),
+			cheats			= stats['cheats'],
+			devmode			= stats['devmode'],
+			map				= stats['map'],
+			players_online	= stats['players'],
+			marines			= stats['playersMarine'],
+			aliens			= stats['playersAlien'],
+			uptime			= stats['uptime'],
+			player_list		= playerList,
+			player_banlist	= Server.playerBanList
+					}
+		result = json.encode(data)
 	else
-
 	--If no header type is specified then return the standard webform
-
 		result = result .. '<html><head>'.."\n"
-						.. '<title>Spark Web API</title>'.."\n"
-						.. '<style type="text/css">'.."\n"
-						.. '.bb {border-bottom:1px dashed #C8C8C8;background-color:#EBEBEB;}'.."\n"
-						.. 'body, td, div { font-size:11px;font-family: Arial, Helvetica; }'.."\n"
-						.. '.t {margin:auto;border:2px solid #1e1e1e;}'.."\n"
-						.. 'div {width:660;margin:auto;}'.."\n"
-						.. '</style>'.."\n"
-						.. '</head><body>'.."\n"
-						.. '<div><h1><a href="http://[[webdomain]]:[[webport]]/" target="_self">NS2 Server Manager</a></h1></div><br clear="all" />'.."\n"
-						.. '<table width="660" cellspacing="2" cellpadding="2" class="t">'.."\n"
-						.. '<tr><td colspan="2"><b>Server Uptime:</b> ' .. stats['uptime'] .. '</td></tr>'.."\n"
-						.. '<tr><td class="bb" width="100"><b>Currently Playing:</td><td class="bb">' .. stats['map'] .. '</td></tr>'.."\n"
-						.. '<tr><td class="bb"><b>Players Online:</b></td><td class="bb"><b>' .. stats['players'] .. '</b> &nbsp; &nbsp; &nbsp; Marine: <b>' .. stats['playersMarine'] .. '</b> | Alien: <b>' .. stats['playersAlien'] .. '</b></td></tr>'.."\n"
-						.. '<tr><td class="bb"><b>Developer Mode:</b></td><td class="bb">' .. stats['devmode'] .. '</td></tr>'.."\n"
-						.. '<tr><td class="bb"><b>Cheats Enabled:</b></td><td class="bb">' .. stats['cheats'] .. '</td></tr>'.."\n"
-
-						.. '<tr><td colspan="2"><form name="send_rcon" action="http://[[webdomain]]:[[webport]]/" method="post">'
-						.. '<p>'
-						.. '<label for="command"><b>Console Command:</b> </label>'
-						.. '<input type="text" name="rcon"> '
-						.. '<input type="submit" name="command" value="Send">'
-						.. ' <input type="submit" name="addbot" value="Add Bot" /> '
-						.. ' <input type="submit" name="removebot" value="Remove Bot" /> '
-						.. '</p>'
-						.. '</form></td></tr>'
-
+			.. '<title>Spark Web API</title>'.."\n"
+			.. '<style type="text/css">'.."\n"
+			.. '.bb {border-bottom:1px dashed #C8C8C8;background-color:#EBEBEB;}'.."\n"
+			.. 'body, td, div { font-size:11px;font-family: Arial, Helvetica; }'.."\n"
+			.. '.t {margin:auto;border:2px solid #1e1e1e;}'.."\n"
+			.. 'div {width:800;margin:auto;}'.."\n"
+			.. ' input {padding:1px;margin:1px;line-height:10px;}'.."\n"
+			.. '</style>'.."\n"
+			.. '</head><body>'.."\n"
+			.. '<div><h1><a href="http://localhost:[[webport]]/" target="_self">NS2 Server Manager</a></h1></div><br clear="all" />'.."\n"
+			.. '<table width="800" cellspacing="2" cellpadding="2" class="t">'.."\n"
+			.. '<tr><td colspan="2"><b>Server Uptime:</b> ' .. stats['uptime'] .. '</td></tr>'.."\n"
+			.. '<tr><td class="bb" width="100"><b>Currently Playing:</td><td class="bb">' .. stats['map'] .. '</td></tr>'.."\n"
+			.. '<tr><td class="bb"><b>Players Online:</b></td><td class="bb"><b>' .. stats['players'] .. '</b> &nbsp; &nbsp; &nbsp; Marine: <b>' .. stats['playersMarine'] .. '</b> | Alien: <b>' .. stats['playersAlien'] .. '</b></td></tr>'.."\n"
+			.. '<tr><td class="bb"><b>Developer Mode:</b></td><td class="bb">' .. stats['devmode'] .. '</td></tr>'.."\n"
+			.. '<tr><td class="bb"><b>Cheats Enabled:</b></td><td class="bb">' .. stats['cheats'] .. '</td></tr>'.."\n"
+			.. '<tr><td colspan="2"><form name="send_rcon" action="http://localhost:[[webport]]/" method="post">'
+			.. '<p>'
+			.. '<label for="command"><b>Console Command:</b> </label>'
+			.. '<input type="text" name="rcon" size="24"> '
+			.. '<input type="submit" name="command" value="Send">'
+			.. ' <input type="submit" name="addbot" value="Add Bot" /> '
+			.. ' <input type="submit" name="removebot" value="Remove Bot" /> '
+			.. '</p>'
+			.. '</form></td></tr>'
 		if command then
 			result = result .. '<tr><td><b>Command Sent:</b></td><td>' .. command .. '</td></tr>'.."\n"
 		end
 		result = result	.. '</table><br clear="all"/>'.."\n"
-
-						.. '<table width="660" class="t" cellspacing="4" cellpadding="2">'.."\n"
-						.. '<tr>'
-						.. '<td><b>Player Name</b></td>'
-						.. '<td><b>Team</b></td>'
-						.. '<td align="center"><b>Score</b></td>'
-						.. '<td align="center"><b>Kills</b></td>'
-						.. '<td align="center"><b>Deaths</b></td>'
-						.. '<td align="center"><b>Plasma</b></td>'
-						.. '<td><b>Steam ID</b></td>'
-						.. '<td align="center"><b>Ping</b></td>'
-						.. '<td></td>'
-						.. '</tr>'
+			.. '<table width="800" class="t" cellspacing="4" cellpadding="2">'.."\n"
+			.. '<tr>'
+			.. '<td><b>Player Name</b></td>'
+			.. '<td><b>Team</b></td>'
+			.. '<td align="center"><b>Score</b></td>'
+			.. '<td align="center"><b>Kills</b></td>'
+			.. '<td align="center"><b>Deaths</b></td>'
+			.. '<td align="center"><b>Plasma</b></td>'
+			.. '<td><b>Steam ID</b></td>'
+			.. '<td align="center"><b>Ping</b></td>'
+			.. '<td></td>'
+			.. '</tr>'
 
 		local kickbutton = ''
 		local kickbtext = ''
@@ -516,18 +557,37 @@ function getWebApi(returnType, command, kickedId)
 			end
 
 			result = result .. '<tr>'
-							.. '<td valign="middle" class="bb"><b>' .. player:GetName() .. '</b> ' .. webIsCommander(player, returnType) .. '</td>'
-							.. '<td valign="middle" class="bb">' .. webGetTeam(player, returnType) .. '</td>'
+							.. '<td valign="middle" class="bb"><b>' .. player:GetName() .. '</b> ' .. webIsCommander(player, datatype) .. '</td>'
+							.. '<td valign="middle" class="bb">' .. webGetTeam(player, datatype) .. '</td>'
 							.. '<td valign="middle" align="center" class="bb">' .. player:GetScore() .. '</td>'
 							.. '<td valign="middle" align="center" class="bb">' .. player:GetKills() .. '</td>'
 							.. '<td valign="middle" align="center" class="bb">' .. player:GetDeaths() .. '</td>'
 							.. '<td valign="middle" align="center" class="bb">' .. player:GetPlasma() .. '</td>'
 							.. '<td valign="middle" class="bb">' .. steamid .. '</td>'
 							.. '<td valign="middle" align="center" class="bb">' .. entity:GetPing() .. '</td>'
-							.. '<td valign="middle"><form name="' .. steamid .. '" action="http://[[webdomain]]:[[webport]]/" method="post" style="display:inline;"><input type="hidden" name="kickid" value="' .. tonumber(steamid) .. '" /><input type="submit" name="kick" value="' .. kickbtext .. '" style="padding:1px;margin:1px;line-height:10px;" ' .. kickbutton .. ' /></form></td>'
+							.. '<td valign="middle"><form name="' .. steamid .. '_playerlist" action="http://localhost:[[webport]]/" method="post" style="display:inline;"><input type="hidden" name="steamid" value="' .. steamid .. '" /><input type="submit" name="kick" value="' .. kickbtext .. '" ' .. kickbutton .. ' /> <input type="submit" name="ban" value="Ban" ' .. kickbutton .. ' /><input type="submit" name="kickban" value="Kick &amp; Ban" ' .. kickbutton .. ' /> <b>Duration:</b> <select name="ban_duration" ' .. kickbutton .. '><option value="-1" disabled="disabled">Forever (TODO)</option><option value="0" selected>This server session</option><option value="30">30 Minuets</option><option value="120">2 Hours</option><option value="480">8 Hours</option><option value="960">16 hours</option><option value="1440">1 Day</option><option value="2880">2 Days</option><option value="5760">4 Days</option></select></form></td>'
 							.. '</tr>'.."\n"
 		end
-
+		result = result	.. '</table><br clear="all"/>'.."\n"
+			.. '<table width="800" class="t" cellspacing="4" cellpadding="2">'.."\n"
+			.. '<tr>'
+			.. '<td><b>Player Name</b></td>'
+			.. '<td><b>Steam ID</td>'
+			.. '<td><b>Ban Duration</b></td>'
+			.. '<td></td>'
+			.. '</tr>'
+		for i,banned in pairs(Server.playerBanList) do
+			banduration = 'Server Session'
+			if banned.duration > 0 then
+				local banclock = math.floor((((math.floor(Shared.GetTime()) - banned.timeOfBan) * 60) / 60) / 60)
+				banduration = banclock .. ' / ' .. banned.duration .. ' Minuet(s)'
+				if banclock >= banned.duration then
+					Shared.Message(string.format('Temporary ban expired: Unbanning %s',banned.name))
+					table.remove(Server.playerBanList,i)
+				end
+			end
+			result = result .. '<tr><td valign="middle" class="bb">' .. banned.name .. '</td><td valign="middle" class="bb">' .. banned.steamid .. '</td><td valign="middle" class="bb">' .. banduration .. '</td><td valign="middle"><form name="ban_' .. steamid .. '" method="post" action="http://localhost:[[webport]]/" style="display:inline;"><input type="hidden" name="steamid" value="' .. banned.steamid .. '"><input type="submit" name="unban" value="Unban" /></form></td>'
+		end
 		result = result .. '</table>'.."\n"
 						.. '</body></html>'
 
@@ -537,41 +597,31 @@ function getWebApi(returnType, command, kickedId)
 
 end
 
-function OnWebRequest(action)
-
-	local returnType = 'html'
-	local command = nil
-	local kickedId = nil
-
-	--Get requested header
-	if action['header'] == 'json' then
-		local returnType = 'json'
+local function OnWebRequest(actions)
+	local datatype = 'html'
+	local command = false
+	local kickedId = false
+	if actions.request == 'json' then datatype = 'json' end
+	if actions.command then command = ProcessConsoleCommand(actions.rcon) end
+	if actions.addbot then command = ProcessConsoleCommand('addbot') end
+	if actions.removebot then command = ProcessConsoleCommand('removebot') end
+	if actions.unban then command = webUnbanPlayer(actions.steamid) end
+	if actions.kick then
+		command = webKickPlayer(actions.steamid)
+		kickedId = tonumber(actions.steamid) or 0
 	end
-
-	--Command switch
-	if action['command'] then
-		command = ProcessConsoleCommand(action['rcon'])
-
-	elseif action['addbot'] then
-		command = ProcessConsoleCommand('addbot')
-
-	elseif action['removebot'] then
-		command = ProcessConsoleCommand('removebot')
-
-	elseif action['kick'] then
-		command = webKickPlayer(action['kickid'])
-		kickedId = action['kickid']
-
---TODO
---	elseif action['tempban'] then
---		command = webTempBan(action['banid'], action['duration'])
-
+	if actions.ban or actions.kickban then
+		command = webBanPlayer(actions.steamid, actions.ban_duration)
+		if actions.kickban then
+			kickedId = tonumber(actions.steamid) or 0
+			webKickPlayer(kickedId)
+		end
 	end
-    return getWebApi(returnType, command, kickedId)
-
+    return getWebApi(datatype,command,kickedId)
 end
 
-Event.Hook("MapPreLoad",            OnMapPreLoad)
-Event.Hook("MapPostLoad",           OnMapPostLoad)
-Event.Hook("MapLoadEntity",         OnMapLoadEntity)
-Event.Hook("WebRequest",            OnWebRequest)
+Event.Hook("ClientConnect",		OnConnectCheckBan)
+Event.Hook("MapPreLoad",		OnMapPreLoad)
+Event.Hook("MapPostLoad",		OnMapPostLoad)
+Event.Hook("MapLoadEntity",		OnMapLoadEntity)
+Event.Hook("WebRequest",		OnWebRequest)

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\MarineTeam.lua
 //
@@ -217,6 +217,8 @@ function MarineTeam:InitTechTree()
     self.techTree:AddResearchNode(kTechId.InfantryPortalTransponderTech,    kTechId.CommandFacility,        kTechId.Observatory)
     self.techTree:AddResearchNode(kTechId.Armor2,                 kTechId.Armor1,              kTechId.CommandFacility)
     self.techTree:AddResearchNode(kTechId.Weapons2,               kTechId.Weapons1,            kTechId.CommandFacility)
+
+    self.techTree:AddBuildNode(kTechId.PowerPack,                 kTechId.CommandFacility,       kTechId.None)      
 
     self.techTree:AddBuildNode(kTechId.Observatory,               kTechId.CommandFacility,       kTechId.None)      
     self.techTree:AddTargetedActivation(kTechId.Scan,             kTechId.Observatory,                 kTechId.None)

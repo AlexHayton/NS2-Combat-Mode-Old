@@ -3,7 +3,7 @@
 // lua/Commander_IdleWorkerPanel.lua
 // 
 // Created by Henry Kropf and Charlie Cleveland
-// Copyright 2010, Unknown Worlds Entertainment
+// Copyright 2011, Unknown Worlds Entertainment
 //
 //=============================================================================
 
@@ -11,8 +11,14 @@
  * Return the number of idle workers
  */
 function CommanderUI_GetIdleWorkerCount()
-
-    return Client.GetLocalPlayer():GetNumIdleWorkers()
+    
+    local player = Client.GetLocalPlayer()
+    
+    if player.GetNumIdleWorkers ~= nil then
+        return player:GetNumIdleWorkers()
+    end
+    
+    return 0
     
 end
 

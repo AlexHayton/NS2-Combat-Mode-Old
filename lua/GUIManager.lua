@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\GUIManager.lua
 //
@@ -13,7 +13,6 @@ kGUILayerPlayerHUD = 1
 kGUILayerCommanderAlerts = 2
 kGUILayerCommanderHUD = 3
 kGUILayerMinimap = 4
-kGUILayerMinimapDynamicBlips = 5
 
 Script.Load("lua/GUIScript.lua")
 Script.Load("lua/GUIUtility.lua")

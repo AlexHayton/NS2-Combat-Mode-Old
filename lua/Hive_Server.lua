@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Hive_Server.lua
 //
@@ -30,7 +30,21 @@ function Hive:OnCreate()
     self.health = kHiveHealth
     
     self:SetModel(Hive.kModelName)
+
+    self.hiveInfestationId = Entity.invalidId
     
+end
+
+function Hive:OnDestroy()
+    
+    local infestation = Shared.GetEntity(self.hiveInfestationId)
+    if infestation and infestation:isa("Infestation") then
+        Server.DestroyEntity(infestation)
+        self.hiveInfestationId = Entity.invalidId
+    end
+    
+    CommandStructure.OnDestroy(self)
+
 end
 
 function Hive:OnKill(damage, attacker, doer, point, direction)
@@ -48,6 +62,8 @@ function Hive:OnThink()
     CommandStructure.OnThink(self)   
     
     self:UpdateEggs()
+    
+    self:UpdateInfestation()
     
     self:UpdateHealing()
     
@@ -146,6 +162,45 @@ function Hive:SpawnEggs()
     
 end
 
+function Hive:SpawnInfestation()
+
+    if self.hiveInfestationId == Entity.invalidId then
+        // Create initial clump and set to nearly grown (gives a little starting motion)
+        local attached = self:GetAttached()
+        local origin = attached:GetOrigin()
+        local infestation = CreateStructureInfestation(origin, self:GetTeamNumber(), kHiveInfestationRadius)    
+        infestation:SetGeneratorState(true)
+            
+        self.hiveInfestationId = infestation:GetId()
+        self.timeLastHadInfestation = Shared.GetTime()
+    end
+    
+end
+
+// Spawn initial eggs and infestation
+function Hive:SpawnInitial()
+    self:SpawnEggs()
+    local infestation = Shared.GetEntity(self.hiveInfestationId)
+    ASSERT(infestation ~= nil)
+    infestation:SetRadiusPercent(1)
+end
+
+function Hive:UpdateInfestation()
+
+    // If we have no infestation connected to us and we haven't tried creating one for a bit, create one
+    local hiveInfestation = Shared.GetEntity(self.hiveInfestationId)
+    if (self.hiveInfestationId == Entity.invalidId) or (hiveInfestation == nil) or (not hiveInfestation:isa("Infestation")) then
+    
+        if self.timeLastHadInfestation == nil or (Shared.GetTime() > self.timeLastHadInfestation + 5) then
+            self:SpawnInfestation(.1)
+        end
+
+    else 
+        self.timeLastHadInfestation = Shared.GetTime()
+    end    
+    
+end
+
 // Spawn a new egg around the hive if needed. Returns true if it did.
 function Hive:UpdateEggs()
 
@@ -230,7 +285,11 @@ function Hive:OnConstructionComplete()
     
     // Play special tech point animation at same time so it appears that we bash through it
     local attachedTechPoint = self:GetAttached()
-    attachedTechPoint:SetAnimation(TechPoint.kAlienAnim, true)
+    if attachedTechPoint then
+        attachedTechPoint:SetAnimation(TechPoint.kAlienAnim, true)
+    else
+        Print("Hive not attached to tech point")
+    end
     
     self:GetTeam():TriggerAlert(kTechId.AlienAlertHiveComplete, self)    
     

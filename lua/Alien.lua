@@ -54,8 +54,15 @@ local networkVars =
 }
 
 function Alien:OnCreate()
+    
     Player.OnCreate(self)
     self.energizeLevel = 0
+    
+    // Only used on the local client.
+    self.darkVisionOn   = false
+    self.darkVisionTime = 0
+    self.darkVisionEndTime = 0
+
 end
 
 // For special ability, return an array of totalPower, minimumPower, tex x offset, tex y offset, 
@@ -114,6 +121,19 @@ function Alien:HandleButtons(input)
         
     end
     self.movementModiferState = newMovementState
+
+    if Client and not Shared.GetIsRunningPrediction() then
+        if bit.band(input.commands, Move.ToggleFlashlight) ~= 0 then
+            self.darkVisionOn = not self.darkVisionOn
+            if self.darkVisionOn then
+                self.darkVisionTime = Client.GetTime()
+                self:TriggerEffects("alien_vision_on")            
+            else
+                self.darkVisionEndTime = Client.GetTime()
+                self:TriggerEffects("alien_vision_off")           
+            end
+        end
+    end
     
 end
 
@@ -219,6 +239,25 @@ end
 
 function Alien:GetAbilityList()
     return self.abilityList
+end
+
+// Returns the name of the player's lifeform
+function Alien:GetPlayerStatusDesc()
+
+    local status = ""
+    
+    if (self:GetIsAlive() == false) then
+        status = "Dead"
+    else
+        if (self:isa("Embryo")) then
+            status = "Evolving"
+        else
+            status = self:GetClassName()
+        end
+    end
+    
+    return status
+
 end
 
 Shared.LinkClassToMap( "Alien", Alien.kMapName, networkVars )

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Weapons\Alien\Ability.lua
 //
@@ -19,7 +19,7 @@ Ability.kMaxEnergy = 100
 // The order of icons in kHUDAbilitiesTexture, used by GetIconOffsetY.
 // These are just the rows, the colum is determined by primary or secondary
 // The 0th row is the unknown (?) icon
-kAbilityOffset = enum( {'Bite', 'Parasite', 'Spit', 'Hydra', 'Spikes', 'Sniper', 'Spores', 'SwipeBlink', 'StabBlink', 'Blink', 'Gore', 'BoneShield', 'Stomp', 'Charge'} )
+kAbilityOffset = enum( {'Bite', 'Parasite', 'Spit', 'Infestation', 'Spikes', 'Sniper', 'Spores', 'SwipeBlink', 'StabBlink', 'Blink', 'Hydra', 'Gore', 'BoneShield', 'Stomp', 'Charge'} )
 
 // Override these
 function Ability:GetPrimaryAttackDelay()

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Ladder.lua
 //
@@ -20,22 +20,24 @@ function Ladder:OnInit()
 end
 
 function Ladder:OnTriggerEntered(enterEnt, triggerEnt)
-
-    if(enterEnt.SetIsOnLadder) then
     
+    // Temporarily disabled until triggers are working consistently
+    /*
+    if(enterEnt.SetIsOnLadder) then
         enterEnt:SetIsOnLadder(true, self)
-        
     end
+    */
     
 end
 
 function Ladder:OnTriggerExited(exitEnt, triggerEnt)
 
+    // Temporarily disabled until triggers are working consistently
+    /*
     if(exitEnt.SetIsOnLadder) then
-    
         exitEnt:SetIsOnLadder(false, nil)
-        
     end
+    */
     
 end
 

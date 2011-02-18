@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Player_Client.lua
 //
@@ -20,6 +20,8 @@ Player.kDamageCameraShakeTime = 0.1
 // screen effect is active
 Player.kLowHealthWarning = 0.35
 Player.kLowHealthPulseSpeed = 10
+
+Player.kShowGiveDamageTime = 0.25
 
 gFlashPlayers = nil
 
@@ -364,6 +366,12 @@ function PlayerUI_GetCrosshairY()
 
 end
 
+function PlayerUI_GetCrosshairDamageIndicatorY()
+
+    return 8 * 64
+    
+end
+
 /**
  * Returns the player name under the crosshair for display (return "" to not display anything).
  */
@@ -639,11 +647,17 @@ function Player:UpdateCrossHairText()
                     else
                         secondaryText = entity:GetLocationName() .. " "
                     end
-
+                    
                 elseif not entity:GetIsBuilt() then
                     secondaryText = "Unbuilt "
                 elseif entity:GetRequiresPower() and not entity:GetIsPowered() then
                     secondaryText = "Unpowered "
+                    
+                elseif entity:isa("Whip") then
+                
+                    if not entity:GetIsRooted() then
+                        secondaryText = "Unrooted "
+                    end
                 end
                 
             end
@@ -914,6 +928,8 @@ end
 // You can only remove the top-most flash player, or else it would invalidate the other indices.
 function RemoveFlashPlayer(index)
 
+    ASSERT(index ~= nil)
+    
     if gFlashPlayers then
     
         if(index == table.maxn(gFlashPlayers)) then
@@ -1049,7 +1065,9 @@ function Player:InitScreenEffects()
     self.screenEffects = {}
     self.screenEffects.flare = Client.CreateScreenEffect("shaders/Flare.screenfx")
     self.screenEffects.lowHealth = Client.CreateScreenEffect("shaders/LowHealth.screenfx")
-
+    self.screenEffects.darkVision = Client.CreateScreenEffect("shaders/DarkVision.screenfx")
+    self.screenEffects.darkVision:SetActive(false)    
+    
 end
 
 /**
@@ -1068,6 +1086,8 @@ function Player:OnDestroy()
     end
     
     self:DestroyScreenEffects()
+    
+    self:CloseMenu(kClassFlashIndex)
     
 end
 
@@ -1173,8 +1193,8 @@ function Player:CloseMenu(flashIndex)
         flashIndex = table.maxn(gFlashPlayers)
     end
     
-    if(GetFlashPlayer(flashIndex) ~= nil and Client.GetMouseVisible()) then
-    
+    if(GetFlashPlayerDisplaying(flashIndex)) then
+        
         RemoveFlashPlayer(flashIndex)
     
         // Do not take away mouse from the player if they are a commander.
@@ -1493,6 +1513,17 @@ function PlayerUI_IsACommander()
 
 end
 
+function PlayerUI_IsAReadyRoomPlayer()
+
+    local player = Client.GetLocalPlayer()
+    if player ~= nil then
+        return player:GetTeamNumber() == kTeamReadyRoom
+    end
+    
+    return false
+    
+end
+
 function PlayerUI_GetTeamColor()
 
     local player = Client.GetLocalPlayer()
@@ -1553,9 +1584,9 @@ function PlayerUI_GetStaticMapBlips()
             table.insert(blipsData, 0)
             table.insert(blipsData, blip:GetType())
             local blipTeam = kMinimapBlipTeam.Neutral
-            if blip:GetTeam() == player:GetTeamNumber() then
+            if blip:GetTeamNumber() == player:GetTeamNumber() then
                 blipTeam = kMinimapBlipTeam.Friendly
-            elseif blip:GetTeam() == GetEnemyTeamNumber(player:GetTeamNumber()) then
+            elseif blip:GetTeamNumber() == GetEnemyTeamNumber(player:GetTeamNumber()) then
                 blipTeam = kMinimapBlipTeam.Enemy
             end
             table.insert(blipsData, blipTeam)
@@ -1618,11 +1649,30 @@ function PlayerUI_GetDamageIndicators()
     
 end
 
-function Player:AddDamageIndicator(worldX, worldZ)
+// Displays an image around the crosshair when the local player has given damage to something else.
+// Returns true if the indicator should be displayed and the time that has passed as a percentage.
+function PlayerUI_GetShowGiveDamageIndicator()
+
+    local player = Client.GetLocalPlayer()
+    if player and player.giveDamageTime then
+        local timePassed = Shared.GetTime() - player.giveDamageTime
+        return timePassed <= Player.kShowGiveDamageTime, math.min(timePassed / Player.kShowGiveDamageTime, 1)
+    end
+    return false, 0
+
+end
+
+function Player:AddTakeDamageIndicator(worldX, worldZ)
 
     // Insert triple indicating when damage was taken and from where it came 
     local triple = {worldX, worldZ, Shared.GetTime()}
     table.insert(self.damageIndicators, triple)
+    
+end
+
+function Player:AddGiveDamageIndicator(damageAmount)
+
+    self.giveDamageTime = Shared.GetTime()
     
 end
 
@@ -1730,7 +1780,7 @@ function Player:OnUpdate(deltaTime)
             
         end
         
-        GetEffectManager():TriggerQueuedEffects()
+        GetEffectManager():OnUpdate(deltaTime)
     
         self:UpdateClientEffects(deltaTime, isLocal)
         

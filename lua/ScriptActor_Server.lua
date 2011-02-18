@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\ScriptActor_Server.lua
 //
@@ -225,7 +225,7 @@ function ScriptActor:FindTarget(attackDistance)
 end
 
 // Called when tech tree activation performed on entity. Return true if legal and action handled.
-function ScriptActor:PerformActivation(techId, position, commander)
+function ScriptActor:PerformActivation(techId, position, normal, commander)
     return false
 end
 

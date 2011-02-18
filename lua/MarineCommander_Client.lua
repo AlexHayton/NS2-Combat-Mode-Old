@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\MarineCommander_Client.lua
 //
@@ -26,18 +26,6 @@ function MarineCommander:OnDestroyClient()
     if(self.DestroySquadSelectionScreenEffects ~= nil) then
         self:DestroySquadSelectionScreenEffects()
     end
-    
-end
-
-function MarineCommander:SetupHud()
-
-    Commander.SetupHud(self)
-    
-    // Working on replacing all these commander GUIs.
-    //GetFlashPlayer(kClassFlashIndex):Load(MarineCommander.kMenuFlash)
-    //GetFlashPlayer(kClassFlashIndex):SetBackgroundOpacity(0)
-
-    //Client.BindFlashTexture("marine_buildmenu", MarineCommander.kBuildMenuTexture)
     
 end
 

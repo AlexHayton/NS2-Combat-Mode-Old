@@ -3,7 +3,7 @@
 // lua/Commander_SquadsPanel.lua
 // 
 // Created by Henry Kropf and Charlie Cleveland
-// Copyright 2010, Unknown Worlds Entertainment
+// Copyright 2011, Unknown Worlds Entertainment
 //
 //=============================================================================
 

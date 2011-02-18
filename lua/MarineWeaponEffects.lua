@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\MarineWeaponEffects.lua
 //
@@ -12,19 +12,17 @@ kMarineWeaponEffects =
     {
         // For hit effects, classname is the target
         generalHitEffects =
-        {      
-            {sound = "", classname = "Structure", done = true},
-            {sound = "", classname = "Alien", done = true},
-            {sound = "", classname = "Marine", done = true},
-           //rifle, sentry, shotgun, pistol hit
+        {
             {player_cinematic = "cinematics/materials/%s/ricochet.cinematic", doer = "ClipWeapon"},
-            {sound = "sound/ns2.fev/materials/%s/ricochet", doer = "ClipWeapon", done = true},
-           //axe hit
             {player_cinematic = "cinematics/materials/%s/scrape.cinematic", doer = "Axe"},
-            {sound = "sound/ns2.fev/materials/%s/metal_scrape", doer = "Axe", surface = "metal", done = true},
            //rifle alt is below
            //grenade is below
            //add flamethrower searing hit effect/sound
+        },
+        generalHitSounds = 
+        {
+            {sound = "sound/ns2.fev/materials/%s/ricochet", doer = "ClipWeapon", done = true},
+            {sound = "sound/ns2.fev/materials/%s/metal_scrape", doer = "Axe", surface = "metal", done = true},
         },
     },
     
@@ -41,7 +39,8 @@ kMarineWeaponEffects =
     {
         marineWeaponDrawSounds =
         {
-            {sound = "sound/ns2.fev/marine/rifle/draw", classname = "Rifle", done = true},  // Includes grenade launcher because it "is" a rifle
+            {sound = "sound/ns2.fev/marine/rifle/deploy_grenade", classname = "GrenadeLauncher", done = true},
+            {sound = "sound/ns2.fev/marine/rifle/draw", classname = "Rifle", done = true},
             {sound = "sound/ns2.fev/marine/pistol/draw", classname = "Pistol", done = true},
             {sound = "sound/ns2.fev/marine/axe/draw", classname = "Axe", done = true},
             {sound = "sound/ns2.fev/marine/flamethrower/draw", classname = "Flamethrower", done = true},
@@ -51,6 +50,7 @@ kMarineWeaponEffects =
         marineWeaponDrawAnimations =
         {
             {viewmodel_animation = "draw_grenade", classname = "GrenadeLauncher", done = true},
+            {viewmodel_animation = "draw", classname = "Rifle", done = true},
             {viewmodel_animation = {{1, "draw"}, {1, "draw2"}}, classname = "Shotgun", done = true},
             {viewmodel_animation = "draw", classname = "ClipWeapon", done = true},
             {viewmodel_animation = "draw", classname = "Axe", done = true},
@@ -100,9 +100,20 @@ kMarineWeaponEffects =
     {
         emptyEffects = 
         {
-            {sound = "sound/ns2.fev/marine/shotgun/fire_empty", classname = "Shotgun", done = true},
-            {sound = "sound/ns2.fev/marine/common/empty", done = true},
+            {viewmodel_animation = "attack_empty", classname = "Shotgun", force = true},
+            {viewmodel_animation = "attack_empty", classname = "Rifle"},
+            {viewmodel_animation = "attack_empty", classname = "Flamethrower", force = true},
+            {viewmodel_animation = "attack_grenade_empty", classname = "GrenadeLauncher", force = true},
         },
+        emptySounds =
+        {
+            {sound = "sound/ns2.fev/marine/shotgun/fire_empty", classname = "Shotgun", done = true},
+            {sound = "sound/ns2.fev/marine/common/empty", classname = "Rifle", done = true},
+            {sound = "sound/ns2.fev/marine/common/empty", classname = "Flamethrower", done = true},
+            {sound = "sound/ns2.fev/marine/common/empty", classname = "GrenadeLauncher", done = true},
+            {sound = "sound/ns2.fev/marine/common/empty", classname = "Pistol", done = true},  
+        },
+        
     },
     
     // The grenade launcher uses this for primary fire also
@@ -139,9 +150,7 @@ kMarineWeaponEffects =
             
             {sound = "sound/ns2.fev/marine/rifle/fire_single_3", variant = 3},
             {looping_sound = "sound/ns2.fev/marine/rifle/fire_loop_3", variant = 3},
-            
             {viewmodel_animation = "attack"},
-            
             {overlay_animation = "rifle_fire", force = true},
             
         }
@@ -152,6 +161,8 @@ kMarineWeaponEffects =
         rifleAttackEndEffects =
         {
             {overlay_animation = ""},
+            // Temporarily removed until added back into the build
+            //{sound = "sound/ns2.fev/marine/rifle/end"},
             {stop_sound = "sound/ns2.fev/marine/rifle/fire_14_sec_loop", variant = 1, done = true},
             {stop_sound = "sound/ns2.fev/marine/rifle/fire_loop_2", variant = 2, done = true},
             {stop_sound = "sound/ns2.fev/marine/rifle/fire_loop_3", variant = 3, done = true},            
@@ -237,11 +248,11 @@ kMarineWeaponEffects =
 
         },
 
-        shotgunAttackEmptyEffects = 
-        {
-            {sound = "sound/ns2.fev/marine/shotgun/fire_last", empty = true},
-            {viewmodel_animation = "attack_last", empty = true, force = true},
-        },
+        //shotgunAttackEmptyEffects = 
+        //{
+            //{sound = "sound/ns2.fev/marine/shotgun/fire_last", empty = true},
+            //{viewmodel_animation = "attack_last", empty = true, force = true},
+        //},
     },   
     
     // Special shotgun reload effects
@@ -251,7 +262,7 @@ kMarineWeaponEffects =
         {
             {viewmodel_animation = "reload_start", force = true},
             {sound = "sound/ns2.fev/marine/shotgun/start_reload"},
-            {overlay_animation = "shotgun_reload_start"},
+            {overlay_animation = "shotgun_reload_start", force = true},
         },
     },    
 
@@ -261,7 +272,7 @@ kMarineWeaponEffects =
         {
             {viewmodel_animation = "reload_insert", force = true},
             {sound = "sound/ns2.fev/marine/shotgun/load_shell"},
-            {overlay_animation = "shotgun_reload_insert"},
+            {overlay_animation = "shotgun_reload_insert", force = true},
         },
     },    
 
@@ -271,7 +282,7 @@ kMarineWeaponEffects =
         {
             {viewmodel_animation = {{1, "reload_end"}, {1, "reload_end2"}}, force = true},
             {sound = "sound/ns2.fev/marine/shotgun/end_reload"},
-            {overlay_animation = "shotgun_reload_end"},
+            {overlay_animation = "shotgun_reload_end", force = true},
         },
     },    
     
@@ -280,16 +291,14 @@ kMarineWeaponEffects =
         glAttackEffects =
         {
             {viewmodel_animation = "attack_grenade", empty = false, force = true},
-            {sound = "sound/ns2.fev/marine/rifle/fire_grenade"},
-            {overlay_animation = "grenadelauncher_attack_grenade", done = true},
+            {overlay_animation = "grenadelauncher_attack_grenade", force = true},
+            {sound = "sound/ns2.fev/marine/rifle/fire_grenade", done = true},
             
             // First-person and weapon shell casings
             //{viewmodel_cinematic = "cinematics/marine/gl/shell.cinematic", attach_point = "fxnode_riflecasing"},            
             //{weapon_cinematic = "cinematics/marine/gl/shell.cinematic", attach_point = "fxnode_riflecasing", done = true},
             {viewmodel_animation = "attack_grenade_empty", empty = true, force = true},
-            {sound = "sound/ns2.fev/marine/common/empty", empty = true, done = true},
-            
-            
+            {sound = "sound/ns2.fev/marine/common/empty", empty = true, done = true},    
         },
     },
     
@@ -332,8 +341,8 @@ kMarineWeaponEffects =
         glReloadEffects = 
         {
             {viewmodel_animation = "reload_grenade", force = true},
+            {overlay_animation = "grenadelauncher_reload_grenade", force = true},
             {sound = "sound/ns2.fev/marine/rifle/reload_grenade"},
-            {overlay_animation = "grenadelauncher_reload"},
         },    
     },
     

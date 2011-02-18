@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Player_Server.lua
 //
@@ -46,6 +46,7 @@ end
  * Called when the player entity is destroyed.
  */
 function Player:OnDestroy()
+
 
     LiveScriptActor.OnDestroy(self)
     
@@ -138,9 +139,7 @@ function Player:OnTeamChange(newTeamNumber)
         // Add to new team
         local newTeam = GetGamerules():GetTeam(newTeamNumber)
         if(newTeam ~= nil) then
-        
             newTeam:AddPlayer(self)
-            
         end
 
         // Send scoreboard changes to everyone    
@@ -181,6 +180,10 @@ function Player:OnTakeDamage(damage, doer, point)
 
     LiveScriptActor.OnTakeDamage(self, damage, doer, point)
     
+    if self:GetTeamType() == kAlienTeamType then
+        self:GetTeam():TriggerAlert(kTechId.AlienAlertLifeformUnderAttack, self)
+    end
+    
     // Play damage indicator for player
     if point ~= nil then
         local damageOrigin = doer:GetOrigin()
@@ -188,7 +191,7 @@ function Player:OnTakeDamage(damage, doer, point)
         if doerParent then
             damageOrigin = doerParent:GetOrigin()
         end
-        Server.SendNetworkMessage(self, "DamageIndicator", BuildDamageIndicatorMessage(damageOrigin, damage), true)
+        Server.SendNetworkMessage(self, "TakeDamageIndicator", BuildTakeDamageIndicatorMessage(damageOrigin, damage), true)
     end
     
 end
@@ -296,7 +299,7 @@ function Player:OnUpdate(deltaTime)
             local spectator = self:Replace(self:GetDeathMapName())
             
             // Queue up the spectator for respawn.
-            self:GetTeam():PutPlayerInRespawnQueue(spectator, Shared.GetTime())             
+            spectator:GetTeam():PutPlayerInRespawnQueue(spectator, Shared.GetTime())             
             
         end
 
@@ -485,6 +488,12 @@ function Player:Replace(mapName, newTeamNumber, preserveChildren)
     // This will remove player from old team
     // This called EntityChange as well.
     DestroyEntity(self)
+     
+    local team = self:GetTeam()
+    if(team ~= nil) then
+        team:RemovePlayer(self)
+        self.teamNumber = -1
+    end
     
     player:SetControllingPlayer(owner)
     
@@ -546,8 +555,7 @@ function Player:GiveItem(itemMapName)
         if newItem then
 
             // If we already have an item which would occupy the same HUD slot, drop it
-
-            if (self.Drop and self.GetWeaponInHUDSlot) then
+            if (self.Drop and self.GetWeaponInHUDSlot and newItem.GetHUDSlot) then
 
                 local hudSlot = newItem:GetHUDSlot()
                 local weapon  = self:GetWeaponInHUDSlot(hudSlot)

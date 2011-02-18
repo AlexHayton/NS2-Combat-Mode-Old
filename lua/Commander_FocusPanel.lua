@@ -3,7 +3,7 @@
 // lua/Commander_FocusPanel.lua
 // 
 // Created by Henry Kropf and Charlie Cleveland
-// Copyright 2010, Unknown Worlds Entertainment
+// Copyright 2011, Unknown Worlds Entertainment
 //
 //=============================================================================
 Script.Load("lua/AlienUpgrades_Client.lua")

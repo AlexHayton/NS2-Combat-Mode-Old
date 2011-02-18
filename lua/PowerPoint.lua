@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\PowerPoint.lua
 //
@@ -46,7 +46,7 @@ PowerPoint.kDamagedPercentage = .4
 
 PowerPoint.kPowerOnTime = .5
 PowerPoint.kPowerDownTime = 1
-PowerPoint.kOffTime = 5
+PowerPoint.kOffTime = 10
 PowerPoint.kPowerRecoveryTime = 5
 PowerPoint.kPowerDownMaxIntensity = .7
 PowerPoint.kLowPowerCycleTime = 1

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\MAC.lua
 //
@@ -65,6 +65,10 @@ function MAC:OnCreate()
     self:CreateController(PhysicsGroup.CommanderUnitGroup, MAC.kCapsuleHeight, MAC.kCapsuleRadius)
     
     self:SetUpdates(true)
+    
+    if Server then
+        self:TriggerEffects("spawn")
+    end
     
 end
 
@@ -429,7 +433,7 @@ function MAC:ProcessBuildConstruct()
                 
                 if(team:GetCarbon() >= cost) then
               
-                    local success, createdStructureId = commander:AttemptToBuild(techId, currentOrder:GetLocation(), math.random() * 2 * math.pi, nil, nil, self)
+                    local success, createdStructureId = commander:AttemptToBuild(techId, currentOrder:GetLocation(), Vector(0, 1, 0), currentOrder:GetOrientation(), nil, nil, self)
                     
                     // Now construct it
                     if(success) then
@@ -535,12 +539,6 @@ function MAC:OnThink()
 
         end
         
-    else
-    
-        if(not self:FindSomethingToDo()) then
-            self:OnIdle()
-        end
-        
     end
     
     if not setNextThink then
@@ -565,7 +563,7 @@ function MAC:FindSomethingToDo()
         
         for index, structure in ipairs(ents) do
         
-            if(not structure:GetIsBuilt()) then
+            if(not structure:GetIsBuilt()) and structure:GetIsVisible() then
             
                 local order = CreateOrder(kTechId.Construct, structure:GetId(), structure:GetOrigin(), nil)
                 

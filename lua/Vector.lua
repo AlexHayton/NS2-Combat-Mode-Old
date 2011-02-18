@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Vector.lua
 //
@@ -34,6 +34,24 @@ function Vector:GetLengthXZ()
     
     return math.sqrt( x*x + z*z )
     
+end
+
+function Vector:GetDistanceTo(dest)
+
+    local x = self.x - dest.x
+    local y = self.y - dest.y
+    local z = self.z - dest.z
+ 
+    local length = math.sqrt( x*x + y*y + z*z )
+
+    if(length < Vector.kEpsilon) then
+
+        length = 0
+
+    end
+
+    return length
+
 end
 
 function Vector:GetUnit()

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======        
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======        
 //        
 // lua\BalanceHealth.lua        
 //        
@@ -34,13 +34,14 @@ kStructuralDamageScalar = 2
 kExosuitAbsorption = 0.95        
 kBalanceAutoHealPerSecond = 5        
 kBalanceAutoHealMaxPercentPerSecond = 0.5        
+kBalanceInfestationHurtPercentPerSecond = 2
         
 kStartHealthScalar = 0.3        
 kCarapaceHealthPerArmor = 3        
         
-kAlienArmor1 = 1.1
-kAlienArmor2 = 1.2
-kAlienArmor3 = 1.3
+kAlienArmor1 = 1.1        
+kAlienArmor2 = 1.2        
+kAlienArmor3 = 1.3        
         
         
 kArmoryHealth = 2400    kArmoryArmor = 0    kArmoryPointValue = 10
@@ -55,6 +56,7 @@ kRoboticsFactoryHealth = 4000    kRoboticsFactoryArmor = 0    kRoboticsFactoryPo
 kPrototypeLabHealth = 4000    kPrototypeLabArmor = 0    kPrototypeLabPointValue = 20
 kInfantryPortalHealth = 2500    kInfantryPortalArmor = 0    kInfantryPortalPointValue = 15
 kInfantryPortalTransponderHealth = 3000    kInfantryPortalTransponderArmor = 0    kInfantryPortalTransponderPointValue = 20
+kPowerPackHealth = 2000    kPowerPackArmor = 0    kPowerPackPointValue = 15
         
 kHiveHealth = 7000    kHiveArmor = 0    kHivePointValue = 30
 kHiveMassHealth = 8000    kHiveMassArmor = 0    kHiveMassPointValue = 40
@@ -84,8 +86,6 @@ kMatureShadeHealth = 900    kMatureShadeArmor = 0    kMatureShadePointValue = 15
 kHydraHealth = 250    kHydraArmor = 0    kHydraPointValue = 5
         
 kPowerPointHealth = 5000    kPowerPointArmor = 0    kPowerPointPointValue = 15
-        
-        
         
         
         

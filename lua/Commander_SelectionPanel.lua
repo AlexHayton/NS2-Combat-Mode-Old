@@ -3,7 +3,7 @@
 // lua/Commander_SelectionPanel.lua
 // 
 // Created by Henry Kropf and Charlie Cleveland
-// Copyright 2010, Unknown Worlds Entertainment
+// Copyright 2011, Unknown Worlds Entertainment
 //
 //=============================================================================
 
@@ -21,8 +21,13 @@ end
  */
 function CommanderUI_GetSelectedEntities()
 
-    return Client.GetLocalPlayer():GetSelection()
+    local player = Client.GetLocalPlayer()
+    if player.GetSelection then
+        return player:GetSelection()
+    end
     
+    return { }
+        
 end
 
 /**
@@ -118,17 +123,41 @@ function CommanderUI_GetSelectedLocation(entityId)
     else
         Print("CommanderUI_GetSelectedLocation(): Entity %d is nil.", entityId)
     end
-    
-    // Add in energy if any
-    if ent and ent:GetEnergy() ~= 0 and ent:GetMaxEnergy() ~= 0 then
-    
-        if not ent:isa("Structure") or ent:GetIsBuilt() then
-            locationText = string.format("%s    %d/%d energy", locationText, math.ceil(ent:GetEnergy()), math.ceil(ent:GetMaxEnergy()))
-        end
-        
-    end
         
     return locationText
+
+end
+
+function CommanderUI_GetSelectedHealth(entityId)
+
+    local ent = Shared.GetEntity(entityId)
+    if ent then
+        return string.format("%d/%d", math.floor(ent:GetHealth()), math.ceil(ent:GetMaxHealth()))
+    end
+    
+    return ""
+
+end
+
+function CommanderUI_GetSelectedArmor(entityId)
+
+    local ent = Shared.GetEntity(entityId)
+    if ent then
+        return string.format("%d/%d", math.floor(ent:GetArmor()), math.ceil(ent:GetMaxArmor()))
+    end
+    
+    return ""
+
+end
+
+function CommanderUI_GetSelectedEnergy(entityId)
+
+    local ent = Shared.GetEntity(entityId)
+    if ent then
+        return string.format("%d/%d", math.floor(ent:GetEnergy()), math.ceil(ent:GetMaxEnergy()))
+    end
+    
+    return ""
 
 end
 

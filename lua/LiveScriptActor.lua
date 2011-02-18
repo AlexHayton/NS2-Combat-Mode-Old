@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\LiveScriptActor.lua
 //
@@ -164,8 +164,9 @@ function LiveScriptActor:CreateController(physicsGroup, capsuleHeight, capsuleRa
 
     if self.controller == nil then
     
-        self.controller = Shared.CreatePhysicsController(self)
+        self.controller = Shared.CreateCollisionObject(self)
         self.controller:SetGroup( physicsGroup )
+        self.controller:SetTriggeringEnabled( true )
         
         self.controller:SetupCapsule( capsuleRadius, capsuleHeight, self.controller:GetCoords() )
         

@@ -727,9 +727,6 @@
     <filename>AlienWeaponEffects.lua</filename>
   </file>
   <file>
-    <filename>AlienStructureEffects.lua</filename>
-  </file>
-  <file>
     <filename>MarineStructureEffects.lua</filename>
   </file>
   <file>
@@ -788,5 +785,50 @@
   </file>
   <file>
     <filename>GUISquad.lua</filename>
+  </file>
+  <file>
+    <filename>GUIGrenadeDisplay.lua</filename>
+  </file>
+  <file>
+    <filename>GUICommanderLogout.lua</filename>
+  </file>
+  <file>
+    <filename>GUICommanderButtonsAliens.lua</filename>
+  </file>
+  <file>
+    <filename>GUICommanderButtonsMarines.lua</filename>
+  </file>
+  <file>
+    <filename>MapBlip.lua</filename>
+  </file>
+  <file>
+    <filename>PowerPack.lua</filename>
+  </file>
+  <file>
+    <filename>PowerPack_Server.lua</filename>
+  </file>
+  <file>
+    <filename>GUIHotkeyIcons.lua</filename>
+  </file>
+  <file>
+    <filename>GUIScanlines.lua</filename>
+  </file>
+  <file>
+    <filename>GUIMapAnnotations.lua</filename>
+  </file>
+  <file>
+    <filename>AlienStructureEffects.lua</filename>
+  </file>
+  <file>
+    <filename>Infestation.lua</filename>
+  </file>
+  <file>
+    <filename>InfestationManager.lua</filename>
+  </file>
+  <file>
+    <filename>Infestation_Server.lua</filename>
+  </file>
+  <file>
+    <filename>Weapons\Alien\InfestationAbility.lua</filename>
   </file>
 </project>

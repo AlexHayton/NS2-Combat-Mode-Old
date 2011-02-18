@@ -5,7 +5,7 @@
 // AI "bot" functions for goal setting and moving (used by Bot.lua).
 //
 // Created by Charlie Cleveland (charlie@unknownworlds.com)
-// Copyright (c) 2010, Unknown Worlds Entertainment, Inc.
+// Copyright (c) 2011, Unknown Worlds Entertainment, Inc.
 //
 //=============================================================================
 

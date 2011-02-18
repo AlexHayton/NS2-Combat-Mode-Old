@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\MarineStructureEffects.lua
 //
@@ -154,6 +154,104 @@ kMarineStructureEffects =
             {parented_cinematic = "cinematics/marine/mac/siren.cinematic", attach_point = "fxnode_light"},
         },
     },
+    
+    // ARC effects
+    
+    // Called when ARC is created out of robotics factory
+    arc_built =
+    {
+        arcDeployEffects =
+        {
+            {animation = "deploy", blend_time = .3},
+        },
+    },    
+    
+    arc_undeployedstationary =
+    {
+        arcUndeployedStationaryEffects =
+        {        
+        },
+    },
+    
+    // Switching into siege mode
+    arc_deploying =
+    {
+        arcDeployEffects =
+        {
+            {sound = "sound/ns2.fev/marine/structure/arc/deploy"},
+            {animation = "deploy", blend_time = .3},
+        },
+    },    
+    
+    // Switching back to movement mode
+    arc_undeploying =
+    {
+        arcUndeployEffects =
+        {
+            {stop_sound = "sound/ns2.fev/marine/structures/arc/fire"},
+            {sound = "sound/ns2.fev/marine/structures/arc/undeploy"},
+            {animation = "undeploy", blend_time = .3},
+        },
+    },  
+    
+    // Repeatedly triggered while moving
+    arc_moving =
+    {
+        arcMoveEffects =
+        {
+            {animation = "move", blend_time = .3},
+        },
+    },
+    
+    arc_targeting =
+    {
+        arcTargetEffects = 
+        {
+            {animation = "shoot"},
+            {cinematic = "cinematics/marine/arc/fire.cinematic", attach_point = "fxnode_arcmuzzle"},
+        },
+    },
+    
+    arc_firing =
+    {
+        arcFireEffects =
+        {
+            // "trail" like a tracer
+            {sound = "sound/ns2.fev/marine/structures/arc/fire"},
+            {cinematic = "cinematics/marine/arc/fire_shell.cinematic", attach_point = "fxnode_arcmuzzle"},
+        },
+    },
+    
+    arc_deployed =
+    {
+    },
+    
+    // Center of ARC blast
+    arc_hit_primary =
+    {
+        arcHitPrimaryEffects = 
+        {
+            {sound = "sound/ns2.fev/marine/structures/arc/hit"},
+            {cinematic = "cinematics/marine/arc/explosion.cinematic"},
+        },
+    },
+    
+    // Played for secondary targets within blast radius
+    arc_hit_secondary =
+    {
+        arcHitSecondaryEffects = 
+        {
+            {cinematic = "cinematics/marine/arc/explosion.cinematic"},
+        },
+    },
+    
+    // ARC TODO:
+    //ARC.kFlybySound = PrecacheAsset("sound/ns2.fev/marine/structures/arc/flyby")
+    //ARC.kScanSound = PrecacheAsset("sound/ns2.fev/marine/structures/arc/scan")
+    //ARC.kScanEffect = PrecacheAsset("cinematics/marine/arc/scan.cinematic")
+    //ARC.kFireEffect = PrecacheAsset("cinematics/marine/arc/fire.cinematic")
+    //ARC.kFireShellEffect = PrecacheAsset("cinematics/marine/arc/fire_shell.cinematic")
+    //ARC.kDamagedEffect = PrecacheAsset("cinematics/marine/arc/damaged.cinematic")
     
     extractor_collect =
     {

@@ -58,6 +58,9 @@ Marine.kAnimSprint = "sprint"
 Marine.kSprintTime = .5                     // Time it takes to get to top speed
 Marine.kUnsprintTime = .25                   // Time it takes to come to rest
 
+Marine.kWalkMaxSpeed = 5                // Four miles an hour = 6,437 meters/hour = 1.8 meters/second (increase for FPS tastes)
+Marine.kRunMaxSpeed = 6.0               // 10 miles an hour = 16,093 meters/hour = 4.4 meters/second (increase for FPS tastes)
+
 // Allow JPers to go faster in the air, but still capped
 Marine.kAirSpeedMultiplier = 3
 
@@ -294,6 +297,11 @@ function Marine:HandleButtons(input)
     if(not self.sprinting) then
     
         Player.HandleButtons(self, input)
+    
+    else
+    
+        // Allow show map even when sprinting.
+        self:UpdateShowMap(input)
         
     end
     
@@ -500,7 +508,7 @@ end
 
 function Marine:GetMaxSpeed()
 
-    local maxSpeed = ConditionalValue(self.sprinting, Player.kStartRunMaxSpeed + (Player.kRunMaxSpeed - Player.kStartRunMaxSpeed)*self.sprintingScalar, Player.kWalkMaxSpeed)
+    local maxSpeed = ConditionalValue(self.sprinting, Marine.kWalkMaxSpeed + (Marine.kRunMaxSpeed - Marine.kWalkMaxSpeed)*self.sprintingScalar, Marine.kWalkMaxSpeed)
 
     // Take into account crouching
     maxSpeed = ( 1 - self:GetCrouchAmount() * Player.kCrouchSpeedScalar ) * maxSpeed
@@ -510,7 +518,7 @@ function Marine:GetMaxSpeed()
 end
 
 function Marine:GetFootstepSpeedScalar()
-    return Clamp(self:GetVelocity():GetLength() / (Player.kRunMaxSpeed * self:GetCatalystMoveSpeedModifier()), 0, 1)
+    return Clamp(self:GetVelocity():GetLength() / (Marine.kRunMaxSpeed * self:GetCatalystMoveSpeedModifier()), 0, 1)
 end
 
 function Marine:GetAcceleration()
@@ -784,6 +792,31 @@ function Marine:SetWaypoint(waypoint)
         
     end
     
+end
+
+// Returns the name of the primary weapon
+function Marine:GetPlayerStatusDesc()
+
+    local status = ""
+    
+    if (self:GetIsAlive() == false) then
+        return "Dead"
+    end
+    
+    local weapon = self:GetWeaponInHUDSlot(1)
+    if (weapon) then
+        if (weapon:isa("GrenadeLauncher")) then
+            return "Grenade Launcher"
+        elseif (weapon:isa("Rifle")) then
+            return "Rifle"
+        elseif (weapon:isa("Shotgun")) then
+            return "Shotgun"
+        elseif (weapon:isa("Flamethrower")) then
+            return "Flamethrower"
+        end
+    end
+    
+    return status
 end
 
 Shared.LinkClassToMap( "Marine", Marine.kMapName, networkVars )

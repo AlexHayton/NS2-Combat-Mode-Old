@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Weapons\Weapon.lua
 //
@@ -133,12 +133,19 @@ function Weapon:OnDraw(player, previousWeaponMapName)
     
     player:SetViewModel(self:GetViewModelName(), self)
 
+    local viewModel = player:GetViewModelEntity()
+    ASSERT(viewModel)
+    local prevSequence = viewModel.animationSequence
+
     // Speed parameter stacks for animations (ie, playback speed is one specified below * any speed parameter specified in script)
     local speedScalar = ConditionalValue(player:isa("Marine"), kMarineDrawSpeedScalar, 1)
     self:TriggerEffects("draw", {speed = speedScalar})
     
-    local animLength = player:GetViewAnimationLength()
-    player:SetActivityEnd(animLength)   
+    // Only set activity length to draw animation if set in trigger effects
+    local drawTime = 0
+    if prevSequence ~= viewModel.animationSequence then
+        player:SetActivityEnd(player:GetViewAnimationLength())   
+    end
     
 end
 
@@ -149,7 +156,7 @@ function Weapon:AttackMeleeCapsule(player, damage, range)
     local endPoint   = startPoint + player:GetViewAngles():GetCoords().zAxis * range
 
     // Trace using a box so that unlike bullet attacks we don't require precise targeting
-    local extents = Vector(0.25, 0.25, 0.25)
+    local extents = Vector(0.4, 0.4, 0.4)
     
     local filter = EntityFilterTwo(player, self)
     local trace  = Shared.TraceBox(extents, startPoint, endPoint, PhysicsMask.Melee, filter)

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\LiveScriptActor_Server.lua
 //
@@ -124,6 +124,9 @@ end
 // Server version of TakeDamage()
 function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
 
+    // Use AddHealth to give health
+    ASSERT( damage >= 0 )
+
     if (self:GetIsAlive() and GetGamerules():CanEntityDoDamageTo(attacker, self)) then
 
         // Get damage type from source    
@@ -150,6 +153,16 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
         if damage > 0 then
         
             self:OnTakeDamage(damage, doer, point)
+            
+            // Notify the doer they are giving out damage.
+            local doerPlayer = doer
+            if doer and doer:GetParent() and doer:GetParent():isa("Player") then
+                doerPlayer = doer:GetParent()
+            end
+            if doerPlayer and doerPlayer:isa("Player") then
+                // Not sent reliably as this notification is just an added bonus.
+                Server.SendNetworkMessage(doerPlayer, "GiveDamageIndicator", BuildGiveDamageIndicatorMessage(damage), false)
+            end
                 
             if (oldHealth > 0 and self.health == 0) then
             
@@ -173,6 +186,9 @@ end
 // Return the amount of health we added 
 function LiveScriptActor:AddHealth(health, playSound)
 
+    // TakeDamage should be used for negative values.
+    ASSERT( health >= 0 )
+
     local total = 0
     
     if self:GetIsAlive() and ((self.health < self:GetMaxHealth()) or (self.armor < self:GetMaxArmor())) then
@@ -180,7 +196,7 @@ function LiveScriptActor:AddHealth(health, playSound)
         // Add health first, then armor if we're full
         local healthAdded = math.min(health, self:GetMaxHealth() - self.health)
         self.health = math.min(math.max(0, self.health + healthAdded), self:GetMaxHealth())
-        
+
         local healthToAddToArmor = health - healthAdded
         if(healthToAddToArmor > 0) then        
             self.armor = math.min(math.max(0, self.armor + healthToAddToArmor), self:GetMaxArmor())   
@@ -257,6 +273,13 @@ function LiveScriptActor:SetFuryLevel(level)
     self.furyLevel = level
 end
 
+function LiveScriptActor:Reset()
+
+    ScriptActor.Reset(self)
+    self:ResetUpgrades()
+    
+end
+
 function LiveScriptActor:OnKill(damage, attacker, doer, point, direction)
 
     // Give points to killer
@@ -276,9 +299,18 @@ function LiveScriptActor:OnKill(damage, attacker, doer, point, direction)
         self.deathImpulse = self:GetDamageImpulse(damage, doer, point)
         self.deathPoint = Vector(point)
     end
-    
+
+    self:ResetUpgrades()
+
     ScriptActor.OnKill(self, damage, attacker, doer, point, direction)
 
+end
+
+function LiveScriptActor:ResetUpgrades()
+    self.upgrade1 = kTechId.None
+    self.upgrade2 = kTechId.None
+    self.upgrade3 = kTechId.None
+    self.upgrade4 = kTechId.None
 end
 
 function LiveScriptActor:SetRagdoll(deathTime)
@@ -407,12 +439,28 @@ function LiveScriptActor:GiveOrder(orderType, targetId, targetOrigin, orientatio
 
 end
 
+function LiveScriptActor:OnDestroyCurrentOrder(currentOrder)
+end
+
 function LiveScriptActor:DestroyOrders()
+    
+    // Allow ents to hook destruction of current order
+    local first = true
     
     // Delete all order entities
     for index, orderEntId in ipairs(self.orders) do
+    
         local orderEnt = Shared.GetEntity(orderEntId)
+        
+        if first then
+        
+            self:OnDestroyCurrentOrder(orderEnt)
+            first = false
+            
+        end
+        
         DestroyEntity(orderEnt)            
+        
     end
     
     table.clear(self.orders)
@@ -460,7 +508,7 @@ function LiveScriptActor:GetCurrentOrder()
 
     local currentOrder = nil
     
-    if(table.maxn(self.orders) > 0) then
+    if(self.orders and table.maxn(self.orders) > 0) then
         local orderId = self.orders[1] 
         currentOrder = Shared.GetEntity(orderId)
     end
@@ -484,6 +532,21 @@ function LiveScriptActor:ProcessRallyOrder(originatingEntity)
         end
         
     end
+    
+end
+
+function LiveScriptActor:ClearCurrentOrder()
+
+    local currentOrder = self:GetCurrentOrder()
+    if currentOrder then
+    
+        DestroyEntity(currentOrder)
+        
+        table.remove(self.orders, 1)
+        
+    end
+    
+    self:OrderChanged()
     
 end
 
@@ -903,7 +966,7 @@ function LiveScriptActor:MeleeAttack(target, time)
         
         target:TakeDamage(self:GetMeleeAttackDamage(), attacker, self, trace.endPoint, direction)
 
-        // Play hit effects
+        // Play hit effects - doer, target, origin, surface
         TriggerHitEffects(self, target, trace.endPoint, trace.surface)
             
         self.timeOfLastAttack = Shared.GetTime()

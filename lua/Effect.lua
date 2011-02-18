@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Effect.lua
 //
@@ -8,6 +8,7 @@
 class 'Effect'
 
 Effect.mapName = "effect"
+Effect.kUpdateInterval = .5
 
 function Effect:SetOrigin(newOrigin)
 
@@ -28,6 +29,7 @@ function Effect:OnLoad()
     self.playing = false
     self.triggered = false
     self.startedOn = false
+    self.timeOfLastUpdate = nil
     
 end
 
@@ -51,29 +53,47 @@ if (Client) then
 
     // Check if effect should be turned on or of
     function Effect:OnUpdate(deltaTime)
-    
-        local player = Client.GetLocalPlayer()
-        local origin = player:GetOrigin()
         
-        if(Client and self:GetStartsOn() and not self.startedOn) then    
+        local time = Shared.GetTime()
         
-            self:StartPlaying()
-            self.startedOn = true
-            
-        else
-
-            local distance = (origin - self:GetOrigin()):GetLength()
-            
-            if(distance < self:GetRadius()) then
+        // Don't update every tick to reduce garbage
+        if not self.timeOfLastUpdate or (time > (self.timeOfLastUpdate + Effect.kUpdateInterval)) then
+        
+            if self:GetStartsOn() and not self.startedOn then    
             
                 self:StartPlaying()
-                self.triggered = true
+                self.startedOn = true
                 
-            elseif(self:GetOffOnExit() and self.triggered) then
-            
-                self:StopPlaying()
+            else
+                    
+                if self:GetOffOnExit() and self.triggered then
+                
+                    local player = Client.GetLocalPlayer()
+                    local origin = player:GetOrigin()
+                    
+                    if self:GetOrigin():GetDistanceTo(origin) > self:GetRadius() then
+
+                        self:StopPlaying()
+                        self.triggered = false
+                        
+                    end
+                    
+                elseif not self.playing then
+                
+                    local player = Client.GetLocalPlayer()
+                    local origin = player:GetOrigin()
+                    
+                    if self:GetOrigin():GetDistanceTo(origin) < self:GetRadius() then
+                    
+                        self:StartPlaying()
+                        self.triggered = true
+                    end
+                    
+                end
                 
             end
+            
+            self.timeOfLastUpdate = time
             
         end
         

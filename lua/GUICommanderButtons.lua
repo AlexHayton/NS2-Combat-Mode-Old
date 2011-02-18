@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\GUICommanderButtons.lua
 //
@@ -13,8 +13,6 @@ Script.Load("lua/GUICommanderTooltip.lua")
 
 class 'GUICommanderButtons' (GUIScript)
 
-GUICommanderButtons.kTempScaleFactor = 0.75
-
 GUICommanderButtons.kButtonStatusDisabled = { Id = 0, Color = Color(0, 0, 0, 0), Visible = false }
 GUICommanderButtons.kButtonStatusEnabled = { Id = 1, Color = Color(1, 1, 1, 1), Visible = true }
 GUICommanderButtons.kButtonStatusRed = { Id = 2, Color = Color(1, 0, 0, 1), Visible = true }
@@ -27,8 +25,8 @@ GUICommanderButtons.kButtonStatusData[GUICommanderButtons.kButtonStatusOff.Id] =
 
 GUICommanderButtons.kBackgroundTexturePartWidth = 60
 GUICommanderButtons.kBackgroundTexturePartHeight = 46
-GUICommanderButtons.kBackgroundWidth = 464 * GUICommanderButtons.kTempScaleFactor
-GUICommanderButtons.kBackgroundHeight = 334 * GUICommanderButtons.kTempScaleFactor
+GUICommanderButtons.kBackgroundWidth = 464 * kCommanderGUIsGlobalScale
+GUICommanderButtons.kBackgroundHeight = 334 * kCommanderGUIsGlobalScale
 GUICommanderButtons.kBackgroundTextureCoords = { X1 = 0, Y1 = 0, X2 = 464, Y2 = 334 }
 // The background is offset from the edge of the screen.
 GUICommanderButtons.kBackgroundOffset = 10
@@ -36,8 +34,8 @@ GUICommanderButtons.kBackgroundOffset = 10
 // Used just for testing.
 GUICommanderButtons.kExtraYOffset = 0
 
-GUICommanderButtons.kButtonWidth = (CommanderUI_MenuButtonWidth() + 10) * GUICommanderButtons.kTempScaleFactor
-GUICommanderButtons.kButtonHeight = (CommanderUI_MenuButtonHeight() + 10) * GUICommanderButtons.kTempScaleFactor
+GUICommanderButtons.kButtonWidth = (CommanderUI_MenuButtonWidth() + 10) * kCommanderGUIsGlobalScale
+GUICommanderButtons.kButtonHeight = (CommanderUI_MenuButtonHeight() + 10) * kCommanderGUIsGlobalScale
 GUICommanderButtons.kButtonXOffset = 50
 GUICommanderButtons.kButtonYOffset = 30
 
@@ -740,6 +738,12 @@ function GUICommanderButtons:ButtonPressed(index, mouseX, mouseY)
         end
     end
     
+
+end
+
+function GUICommanderButtons:GetBackground()
+
+    return self.background
 
 end
 

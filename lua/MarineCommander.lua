@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\MarineCommander.lua
 //
@@ -96,7 +96,7 @@ function MarineCommander:GetSelectionRowsTechButtons(techId)
                         
     elseif(techId == kTechId.AdvancedMenu) then 
     
-        techButtons = { kTechId.Observatory, kTechId.RoboticsFactory, kTechId.PrototypeLab, kTechId.None,
+        techButtons = { kTechId.PowerPack, kTechId.Observatory, kTechId.RoboticsFactory, kTechId.PrototypeLab,
                         kTechId.None, kTechId.None, kTechId.None, kTechId.RootMenu}
         
     elseif(techId == kTechId.AssistMenu) then 
@@ -244,6 +244,10 @@ end
 
 function MarineCommander:GetChatSound()
     return MarineCommander.kChatSound
+end
+
+function MarineCommander:GetPlayerStatusDesc()
+    return "Commander"
 end
 
 Shared.LinkClassToMap( "MarineCommander", MarineCommander.kMapName, networkVars )

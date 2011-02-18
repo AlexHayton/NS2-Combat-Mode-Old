@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Marine_Client.lua
 //
@@ -17,11 +17,7 @@ function Marine:OnInitLocalClient()
     Player.OnInitLocalClient(self)
     
     if(self:GetTeamNumber() ~= kTeamReadyRoom) then
-    
-        // Add marine-specific HUD
-        //GetFlashPlayer(kClassFlashIndex):Load(Marine.k2DHUDFlash)
-        //GetFlashPlayer(kClassFlashIndex):SetBackgroundOpacity(0)
-       
+
         // For armory menu
         Client.BindFlashTexture("marine_buymenu", Marine.kBuyMenuTexture)
         Client.BindFlashTexture("marine_buymenu_upgrades", Marine.kBuyMenuUpgradesTexture)
@@ -82,10 +78,10 @@ function Marine:UpdateClientEffects(deltaTime, isLocal)
         
     end
     
-    // If we're too far from an armory, close the menu
-    if Client.GetMouseVisible() and isLocal and GetFlashPlayerDisplaying(kClassFlashIndex) then
+    // If we're too far from an armory or dead, close the menu
+    if isLocal and GetFlashPlayerDisplaying(kClassFlashIndex) then
     
-        if not GetArmory(self) then
+        if not GetArmory(self) or not self:GetIsAlive() then
             self:CloseMenu(kClassFlashIndex)
         end
         
@@ -95,20 +91,20 @@ end
 
 function Marine:CloseMenu(flashIndex)
 
-    if Client.GetLocalPlayer() == self and Client.GetMouseVisible() then
+    if self.showingBuyMenu then
         
-        RemoveFlashPlayer(flashIndex)
+        if Player.CloseMenu(self, flashIndex) then
         
-        Shared.StopSound(self, Armory.kResupplySound)
-
-        Client.SetMouseVisible(false)
-        Client.SetMouseClipped(false)
-        Client.SetMouseCaptured(true)
-        
-        // Quick work-around to not fire weapon when closing menu
-        self.timeClosedMenu = Shared.GetTime()
-        
-        return true
+            Shared.StopSound(self, Armory.kResupplySound)
+            
+            // Quick work-around to not fire weapon when closing menu
+            self.timeClosedMenu = Shared.GetTime()
+            
+            self.showingBuyMenu = false
+            
+            return true
+            
+        end
             
     end
    

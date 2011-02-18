@@ -3,7 +3,7 @@
 // lua/MainMenu.lua
 // 
 // Created by Max McGuire (max@unknownworlds.com)
-// Copyright 2010, Unknown Worlds Entertainment
+// Copyright 2011, Unknown Worlds Entertainment
 //
 // This script is loaded when the game first starts. It handles creation of
 // the main menu.

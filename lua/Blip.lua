@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua/Blip.lua
 //
@@ -6,7 +6,7 @@
 // them to update smoothly and quickly. Propagated to clients in regular way.
 //
 // Created by Charlie Cleveland (charlie@unknownworlds.com)
-// Copyright (c) 2008-2010, Unknown Worlds Entertainment, Inc.
+// Copyright (c) 2008-2011, Unknown Worlds Entertainment, Inc.
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 

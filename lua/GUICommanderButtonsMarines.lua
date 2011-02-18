@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\GUICommanderButtonsMarines.lua
 //
@@ -21,19 +21,19 @@ GUICommanderButtonsMarines.kNumberMarineTopTabs = GUICommanderButtonsMarines.kNu
 // With the normal buttons below.
 GUICommanderButtonsMarines.kNumberMarineButtons = GUICommanderButtonsMarines.kNumberMarineButtonRows * GUICommanderButtonsMarines.kNumberMarineButtonColumns
 
-GUICommanderButtonsMarines.kButtonYOffset = 20 * GUICommanderButtons.kTempScaleFactor
+GUICommanderButtonsMarines.kButtonYOffset = 20 * kCommanderGUIsGlobalScale
 
-GUICommanderButtonsMarines.kMarineTabXOffset = 37 * GUICommanderButtons.kTempScaleFactor
-GUICommanderButtonsMarines.kMarineTabYOffset = 30 * GUICommanderButtons.kTempScaleFactor
+GUICommanderButtonsMarines.kMarineTabXOffset = 37 * kCommanderGUIsGlobalScale
+GUICommanderButtonsMarines.kMarineTabYOffset = 30 * kCommanderGUIsGlobalScale
 
-GUICommanderButtonsMarines.kMarineTabWidth = 99 * GUICommanderButtons.kTempScaleFactor
+GUICommanderButtonsMarines.kMarineTabWidth = 99 * kCommanderGUIsGlobalScale
 // Determines how much space is between each tab.
-GUICommanderButtonsMarines.kMarineTabSpacing = 4 * GUICommanderButtons.kTempScaleFactor
-GUICommanderButtonsMarines.kMarineTabTopHeight = 40 * GUICommanderButtons.kTempScaleFactor
-GUICommanderButtonsMarines.kMarineTabBottomHeight = 8 * GUICommanderButtons.kTempScaleFactor
-GUICommanderButtonsMarines.kMarineTabBottomOffset = 0 * GUICommanderButtons.kTempScaleFactor
-GUICommanderButtonsMarines.kMarineTabConnectorWidth = 109 * GUICommanderButtons.kTempScaleFactor
-GUICommanderButtonsMarines.kMarineTabConnectorHeight = 15 * GUICommanderButtons.kTempScaleFactor
+GUICommanderButtonsMarines.kMarineTabSpacing = 4 * kCommanderGUIsGlobalScale
+GUICommanderButtonsMarines.kMarineTabTopHeight = 40 * kCommanderGUIsGlobalScale
+GUICommanderButtonsMarines.kMarineTabBottomHeight = 8 * kCommanderGUIsGlobalScale
+GUICommanderButtonsMarines.kMarineTabBottomOffset = 0 * kCommanderGUIsGlobalScale
+GUICommanderButtonsMarines.kMarineTabConnectorWidth = 109 * kCommanderGUIsGlobalScale
+GUICommanderButtonsMarines.kMarineTabConnectorHeight = 15 * kCommanderGUIsGlobalScale
 
 function GUICommanderButtonsMarines:GetBackgroundTextureName()
 

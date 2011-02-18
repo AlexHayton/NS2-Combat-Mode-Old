@@ -1,25 +1,21 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Weapons\Alien\HydraAbility.lua
 //
 //    Created by:   Charlie Cleveland (charlie@unknownworlds.com)
+//
+// Gorge builds hydra.
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Weapons/Alien/Ability.lua")
 
 class 'HydraAbility' (Ability)
 
-HydraAbility.kMapName = "chamber"
-
-HydraAbility.kCreateStartSound = PrecacheAsset("sound/ns2.fev/alien/gorge/create_structure_start")
+HydraAbility.kMapName = "hydra_ability"
 
 HydraAbility.kCircleModelName = PrecacheAsset("models/misc/circle/circle_alien.model")
 
-HydraAbility.kCreateEffect = PrecacheAsset("cinematics/alien/gorge/create.cinematic")
-HydraAbility.kCreateViewEffect = PrecacheAsset("cinematics/alien/gorge/create_view.cinematic")
-
 // Gorge create hydra
-HydraAbility.kAnimHydraAttack = "chamber_attack"
 HydraAbility.kPlacementDistance = 1.1
 
 local networkVars = 
@@ -40,14 +36,12 @@ end
 function HydraAbility:OnDraw(player, prevWeapon)
 
     Ability.OnDraw(self, player, prevWeapon)
-    
-    // Show ghost when switch to this weapon
     self.showGhost = true
     
 end
 
 function HydraAbility:GetEnergyCost(player)
-    return 0
+    return 40
 end
 
 function HydraAbility:GetPrimaryAttackDelay()
@@ -58,52 +52,17 @@ function HydraAbility:GetIconOffsetY(secondary)
     return kAbilityOffset.Hydra
 end
 
-// Drop hydra
+// Create hydra
 function HydraAbility:PerformPrimaryAttack(player)
 
-    if not self.showGhost then
-
-        // Show ghost if not doing so
-        self.showGhost = true
-        
-        player:SetActivityEnd(.1)
-        
-    else
-
-        local coords, valid = self:GetPositionForHydra(player)
-        
-        if valid then
-        
-            // If we have enough plasma
-            local cost = LookupTechData(kTechId.Hydra, kTechDataCostKey)
-            if player:GetPlasma() >= cost then
-        
-                Shared.PlaySound(player, HydraAbility.kCreateStartSound)
-                
-                player:SetViewAnimation(HydraAbility.kAnimHydraAttack, nil, nil, 1/player:AdjustFuryFireDelay(1))
-                player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
-                               
-                if Client then
-                    self:CreateWeaponEffect(player, "", "HydraSpray", HydraAbility.kCreateViewEffect)
-                else
-                    player:CreateAttachedEffect(HydraAbility.kCreateEffect, "Head")
-                end
-                
-                // Create structure on animation complete
-                player:SetAnimAndMode(Gorge.kCreateStructure, kPlayerMode.GorgeStructure)
-                
-                // Don't show ghost any longer until we attack again
-                self.showGhost = false
-                
-            else
-                Shared.PlayPrivateSound(player, player:GetNotEnoughResourcesSound(), player, 1.0, Vector(0, 0, 0))
-            end
+    // Make ghost disappear
+    if self.showGhost then
+    
+        player:TriggerEffects("start_create_hydra")
+    
+        player:SetAnimAndMode(Gorge.kCreateStructure, kPlayerMode.GorgeStructure)
             
-        else
-        
-            Shared.PlayPrivateSound(player, Player.kInvalidSound, player, 1.0, Vector(0, 0, 0))
-        
-        end    
+        player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))    
         
     end
     
@@ -130,9 +89,11 @@ function HydraAbility:CreateHydra(player)
                 angles:BuildFromCoords(coords)
                 hydra:SetAngles(angles)
                 
-                hydra:TriggerEffects("hydra_spawn")
+                player:TriggerEffects("create_hydra")
                 
                 player:AddPlasma( -cost )
+                
+                player:SetActivityEnd(.5)
                 
             else
             
@@ -147,7 +108,7 @@ function HydraAbility:CreateHydra(player)
 end
 
 function HydraAbility:GetHUDSlot()
-    return 2
+    return 3
 end
 
 // Given a gorge player's position and view angles, return a position and orientation
@@ -179,32 +140,25 @@ function HydraAbility:GetPositionForHydra(player)
     
         if trace.entity == nil then
             validPosition = true
-        elseif not trace.entity:isa("LiveScriptActor") and not trace.entity:isa("Hydra") then
+        elseif trace.entity:isa("Infestation") or (not trace.entity:isa("LiveScriptActor") and not trace.entity:isa("Hydra")) then
             validPosition = true
         end
         
         VectorCopy(trace.endPoint, displayOrigin)
-
         
     end
     
-    // Don't allow placing hydras above or below us and don't draw either
-    local hydraFacing = Vector()
-    VectorCopy(player:GetViewAngles():GetCoords().zAxis, hydraFacing)
-    
-    if math.abs(player:GetViewAngles():GetCoords().zAxis:DotProduct(trace.normal)) > .8 then
-        hydraFacing = Vector(1, 0, 0)    
+    // Hydras can only be built on infestation
+    if not GetIsPointOnInfestation(displayOrigin) then
+        validPosition = false
     end
     
+    // Don't allow placing hydras above or below us and don't draw either
+    local hydraFacing = player:GetViewAngles():GetCoords().zAxis
     local coords = BuildCoords(trace.normal, hydraFacing, displayOrigin)    
     
     return coords, validPosition
 
-end
-
-function HydraAbility:OnSecondaryAttack(player)
-    // Make ghost disappear
-    self.showGhost = false
 end
 
 if Client then
@@ -218,11 +172,15 @@ function HydraAbility:OnUpdate(deltaTime)
         
         if player == Client.GetLocalPlayer() and player:GetActiveWeapon() == self then
         
+            // Show ghost if we're able to create a hydra
+            self.showGhost = player:GetCanNewActivityStart()
+            
             // Create ghost
             if not self.ghostHydra and self.showGhost then
             
                 self.ghostHydra = Client.CreateRenderModel(RenderScene.Zone_Default)
                 self.ghostHydra:SetModel( Shared.GetModelIndex(Hydra.kModelName) )
+                self.ghostHydra:SetCastsShadows(false)
                 
                 // Create build circle to show hydra range
                 self.circle = Client.CreateRenderModel(RenderScene.Zone_Default)
@@ -232,7 +190,7 @@ function HydraAbility:OnUpdate(deltaTime)
             
             // Destroy ghost
             if self.ghostHydra and not self.showGhost then
-                self:DestroyGhost()
+                self:DestroyHydraGhost()
             end
             
             // Update ghost position 
@@ -240,7 +198,9 @@ function HydraAbility:OnUpdate(deltaTime)
             
                 local coords, valid = self:GetPositionForHydra(player)
                 
-                self.ghostHydra:SetCoords(coords)
+                if valid then
+                    self.ghostHydra:SetCoords(coords)
+                end
                 self.ghostHydra:SetIsVisible(valid)
                 
                 // Check plasma
@@ -269,7 +229,7 @@ function HydraAbility:OnUpdate(deltaTime)
     
 end
 
-function HydraAbility:DestroyGhost()
+function HydraAbility:DestroyHydraGhost()
 
     if Client then
     
@@ -292,13 +252,13 @@ function HydraAbility:DestroyGhost()
 end
 
 function HydraAbility:OnDestroy()
-    self:DestroyGhost()
+    self:DestroyHydraGhost()
     Ability.OnDestroy(self)
 end
 
 function HydraAbility:OnHolster(player)
     Ability.OnHolster(self, player)
-    self:DestroyGhost()
+    self:DestroyHydraGhost()
 end
 
 end

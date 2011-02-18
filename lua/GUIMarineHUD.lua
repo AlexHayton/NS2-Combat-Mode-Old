@@ -1,5 +1,5 @@
 
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\GUIMarineHUD.lua
 //
@@ -40,12 +40,12 @@ GUIMarineHUD.kHealthTextOffset = Vector(52, 16, 0)
 
 GUIMarineHUD.kHealthBarWidth = 200
 GUIMarineHUD.kHealthBarHeight = 25
-GUIMarineHUD.kHealthBarColor = Color(0.0, 0.6, 0.9, .4)
-GUIMarineHUD.kHealthBarLowColor = Color(0.9, 0, 0, 1)
+GUIMarineHUD.kHealthBarColor = Color(0x01 / 0xFF, 0x8F / 0xFF, 0xFF / 0xFF, 0.5)
+GUIMarineHUD.kHealthBarLowColor = Color(0.9, 0, 0, 0.5)
 GUIMarineHUD.kHealthBarOffset = Vector(0, 4, 0)
 // NOTE: This is a VERY specific color. If this is changed the whole game will break! (According to Matt)
-GUIMarineHUD.kHealthBackgroundBarColor = Color(0.0, 0.24313725490196078431372549019608, 0.48235294117647058823529411764706, .4)
-GUIMarineHUD.kHealthBackgroundBarLowColor = Color(0.4, 0, 0, 1)
+GUIMarineHUD.kHealthBackgroundBarColor = Color(0.0, 0.24313725490196078431372549019608, 0.48235294117647058823529411764706, 0.5)
+GUIMarineHUD.kHealthBackgroundBarLowColor = Color(0.4, 0, 0, 0.5)
 GUIMarineHUD.kHealthBarTextureX1 = 0
 GUIMarineHUD.kHealthBarTextureY1 = 53
 GUIMarineHUD.kHealthBarTextureX2 = 200
@@ -58,7 +58,7 @@ GUIMarineHUD.kArmorTextOffset = Vector(52, 40, 0)
 GUIMarineHUD.kArmorBarWidth = GUIMarineHUD.kHealthBarWidth
 GUIMarineHUD.kArmorBarHeight = 15
 GUIMarineHUD.kArmorBarOffset = Vector(0, GUIMarineHUD.kHealthBarOffset.y + GUIMarineHUD.kHealthBarHeight + 4, 0)
-GUIMarineHUD.kArmorBarColor = Color(0.0, 0.7, 0.7, 1)
+GUIMarineHUD.kArmorBarColor = Color(0x09 / 0xFF, 0xE6 / 0xFF, 0xFF / 0xFF, 0.5)
 GUIMarineHUD.kArmorBackgroundBarColor = GUIMarineHUD.kHealthBackgroundBarColor
 GUIMarineHUD.kArmorBarTextureX1 = 0
 GUIMarineHUD.kArmorBarTextureY1 = 81

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Embryo.lua
 //
@@ -94,7 +94,7 @@ function Embryo:OverrideInput(input)
     input.move.z = 0
 
     // Only allow some actions like going to menu, chatting and Scoreboard (not jump, use, etc.)
-    input.commands = bit.band(input.commands, Move.Exit) + bit.band(input.commands, Move.TeamChat) + bit.band(input.commands, Move.TextChat) + bit.band(input.commands, Move.Scoreboard)
+    input.commands = bit.band(input.commands, Move.Exit) + bit.band(input.commands, Move.TeamChat) + bit.band(input.commands, Move.TextChat) + bit.band(input.commands, Move.Scoreboard) + bit.band(input.commands, Move.ShowMap)
 
 end
 
@@ -117,27 +117,42 @@ if Server then
 
         Alien.OnThink(self)
         
-        // Take into account metabolize effects
-        local amount = GetAlienEvolveResearchTime(Embryo.kThinkTime, self)
-        self.evolveTime = self.evolveTime + amount
-
-        self.evolvePercentage = Clamp((self.evolveTime / self.gestationTime) * 100, 0, 100)
+        // Cannot spawn unless alive.
+        if self:GetIsAlive() then
         
-        if self.evolveTime >= self.gestationTime then
-        
-            // Replace player with new player
-            self:Replace(self.gestationClass)
-            
-            self:TriggerEffects("player_end_gestate")
-            
-            self:TriggerEffects("egg_death")
-            
+            // Take into account metabolize effects
+            local amount = GetAlienEvolveResearchTime(Embryo.kThinkTime, self)
+            self.evolveTime = self.evolveTime + amount
 
+            self.evolvePercentage = Clamp((self.evolveTime / self.gestationTime) * 100, 0, 100)
+            
+            if self.evolveTime >= self.gestationTime then
+            
+                // Replace player with new player
+                self:Replace(self.gestationClass)
+                
+                self:TriggerEffects("player_end_gestate")
+                
+                self:TriggerEffects("egg_death")
+                
+
+            end
+            
+            self.lastThinkTime = Shared.GetTime()
+            
         end
         
-        self.lastThinkTime = Shared.GetTime()
-        
         self:SetNextThink(Embryo.kThinkTime)
+        
+    end
+    
+    function Embryo:OnKill(damage, attacker, doer, point, direction)
+
+        Alien.OnKill(self, damage, attacker, doer, point, direction)
+        
+        self:TriggerEffects("egg_death")
+        
+        self:SetModel("")
         
     end
     

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Weapons\Alien\Spikes.lua
 //
@@ -113,7 +113,14 @@ function Spikes:FireSpikeProjectile(player)
     if(Server) then
 
         local viewCoords = player:GetViewAngles():GetCoords()
-        local startPoint = player:GetViewOffset() + player:GetOrigin() + viewCoords.zAxis * 2
+        
+        local startPoint = player:GetEyePos() + viewCoords.zAxis * 1 - viewCoords.yAxis * .25
+        local trace = Shared.TraceRay(player:GetEyePos(), startPoint, PhysicsMask.Bullets, EntityFilterOne(player))
+        if trace.fraction ~= 1 then
+            // The eye position just barely sticks out past some walls so we
+            // need to move the emit point back a tiny bit to compensate.
+            VectorCopy(player:GetEyePos() - (viewCoords.zAxis * 0.2), startPoint)
+        end
         
         local spike = CreateEntity(Spike.kMapName, startPoint, player:GetTeamNumber())
         

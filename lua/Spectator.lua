@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Spectator.lua
 //
@@ -267,8 +267,8 @@ function Spectator:OnProcessMove(input)
     
     end
     
-    // Handle scoreboard
-    self.showScoreboard = (bit.band(input.commands, Move.Scoreboard) ~= 0)
+    self:UpdateScoreboard(input)
+    self:UpdateShowMap(input)
     
     self:UpdateCamera(input.time)
     

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\NetworkMessages_Server.lua
 //
@@ -40,6 +40,17 @@ function OnCommandCommControlClickSelect(client, message)
         
     end
 
+end
+
+function OnCommandParseSelectHotkeyGroup(client, message)
+
+    local player = client:GetControllingPlayer()
+    if(player:GetIsCommander()) then
+    
+        player:SelectHotkeyGroup(ParseSelectHotkeyGroupMessage(message))
+        
+    end
+    
 end
 
 function OnCommandCommAction(client, message)
@@ -88,6 +99,7 @@ end
 Server.HookNetworkMessage("MarqueeSelect",              OnCommandCommMarqueeSelect)
 Server.HookNetworkMessage("ClickSelect",                OnCommandCommClickSelect)
 Server.HookNetworkMessage("ControlClickSelect",         OnCommandCommControlClickSelect)
+Server.HookNetworkMessage("SelectHotkeyGroup",          OnCommandParseSelectHotkeyGroup)
 Server.HookNetworkMessage("CommAction",                 OnCommandCommAction)
 Server.HookNetworkMessage("CommTargetedAction",         OnCommandCommTargetedAction)
 Server.HookNetworkMessage("CommTargetedActionWorld",    OnCommandCommTargetedActionWorld)

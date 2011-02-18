@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\NS2Gamerules.lua
 //
@@ -32,6 +32,8 @@ NS2Gamerules.kAlienStartSound    = PrecacheAsset("sound/ns2.fev/alien/voiceovers
 NS2Gamerules.kVictorySound       = PrecacheAsset("sound/ns2.fev/common/victory")
 NS2Gamerules.kDefeatSound        = PrecacheAsset("sound/ns2.fev/common/loss")
 NS2Gamerules.kCountdownSound     = PrecacheAsset("sound/ns2.fev/common/countdown")
+
+NS2Gamerules.kInfestationEffectsUpdateRate = .3
 
 function NS2Gamerules:BuildTeam(teamType)
 
@@ -635,7 +637,7 @@ function NS2Gamerules:GetMinimapBlipTypeAndTeam(entity)
 
     local success = false
     local blipType = 0
-    local blipTeam = 0
+    local blipTeam = -1
     
     // Don't display blips for ResourceTowers or CommandStructures as
     // they will have a blip under them for the Resource/Tech Point already or
@@ -724,6 +726,20 @@ function NS2Gamerules:UpdateScriptActorList()
     self.scriptActorList = GetEntitiesIsa("ScriptActor", nil, true)
 end
 
+function NS2Gamerules:UpdateInfestationEffects()
+
+    local time = Shared.GetTime()
+    
+    if self.timeLastInfestationEffectsUpdate == nil or (time > self.timeLastInfestationEffectsUpdate + NS2Gamerules.kInfestationEffectsUpdateRate) then
+    
+        UpdateInfestationMask( self:GetEntities("LiveScriptActor") )
+        
+        self.timeLastInfestationEffectsUpdate = time
+        
+    end
+    
+end
+
 function NS2Gamerules:UpdateToReadyRoom()
 
     local state = self:GetGameState()
@@ -748,7 +764,7 @@ end
 
 function NS2Gamerules:OnUpdate(timePassed)
 
-    GetEffectManager():TriggerQueuedEffects()
+    GetEffectManager():OnUpdate(timePassed)
 
     if Server then
 
@@ -783,6 +799,7 @@ function NS2Gamerules:OnUpdate(timePassed)
             self:UpdateMinimapBlips()
             self:UpdatePlayerList()
             self:UpdateScriptActorList()
+            self:UpdateInfestationEffects()
             
         end
     
@@ -1101,8 +1118,14 @@ function NS2Gamerules:GetIsRelevant(player, entity, noRecurse)
     elseif entity:isa("MapBlip") then
     
         if (entity:GetOwnerEntityId() ~= player:GetId()) then
-            relevant = entity:GetTeam() ~= GetEnemyTeamNumber(player:GetTeamNumber())
+            // Not relevant if on the other team.
+            relevant = entity:GetTeamNumber() ~= GetEnemyTeamNumber(player:GetTeamNumber())
+            // Unless sighted.
             relevant = relevant or entity:GetIsSighted()
+            // Do not show entities that are in the ready room.
+            relevant = relevant and entity:GetTeamNumber() ~= kTeamReadyRoom
+            // Do not show any blips to players in the ready room.
+            relevant = relevant and player:GetTeamNumber() ~= kTeamReadyRoom
         end
 
     // Send orders given to players to those players
@@ -1257,7 +1280,6 @@ end
 function NS2Gamerules:RespawnPlayer(player)
 
     local team = player:GetTeam()
-    team:AddPlayer(player)
     team:RespawnPlayer(player, nil, nil)
     
 end

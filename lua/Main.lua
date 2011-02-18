@@ -1,13 +1,12 @@
-//=============================================================================
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua/Main.lua
 // 
 // Created by Max McGuire (max@unknownworlds.com)
-// Copyright 2010, Unknown Worlds Entertainment
 //
 // This script is loaded when the game first starts. It handles creation of
 // the main menu.
-//=============================================================================
+// ========= For more information, visit us at http://www.unknownworlds.com =====================
 
 Script.Load("lua/Globals.lua")
 Script.Load("lua/MainMenu.lua")

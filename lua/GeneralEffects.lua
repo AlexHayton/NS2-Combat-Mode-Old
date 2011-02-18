@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\GeneralEffects.lua
 //
@@ -16,6 +16,7 @@ kGeneralEffectData =
         },
     },
 
+    // Called for structures, infestation, MACs and Drifters
     spawn =
     {
         generalSpawnEffects =
@@ -27,12 +28,15 @@ kGeneralEffectData =
             {sound = "sound/ns2.fev/alien/onos/spawn", classname = "Onos", done = true},
             {sound = "sound/ns2.fev/common/connect", classname = "Player", done = true},            
 
+            // Causing problems right now - playing too much
+            //{sound = "sound/ns2.fev/alien/commander/DI_drop_3D", classname = "Infestation"},
+            {sound = "sound/ns2.fev/alien/infestation/build", classname = "Infestation", done = true},
+
             {sound = "sound/ns2.fev/marine/structures/mac/hover", classname = "MAC", done = true},            
             {sound = "sound/ns2.fev/alien/drifter/spawn", classname = "Drifter", done = true},
             
             {sound = "sound/ns2.fev/alien/structures/spawn_small", isalien = true, done = true},
-            {sound = "sound/ns2.fev/marine/structures/generic_spawn", isalien = false, done = true},
-            
+            {sound = "sound/ns2.fev/marine/structures/generic_spawn", isalien = false, done = true},            
         },
         
         spawnAnimations =
@@ -106,13 +110,12 @@ kGeneralEffectData =
             {cinematic = "cinematics/alien/gorge/spit_impact.cinematic", doer = "Spit", done = true},
         //spikes hit structure
             {cinematic = "cinematics/alien/lerk/spike_impact.cinematic", doer = "Spike", classname = "Structure"},
-            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "Spike", classname = "Structure", done = true},
+            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "Spike", classname = "Structure"},
             {cinematic = "cinematics/alien/lerk/snipe_impact.cinematic", doer = "Spikes", classname = "Structure"},
-            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "Spikes", classname = "Structure", done = true},
+            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "Spikes", classname = "Structure"},
             {cinematic = "cinematics/alien/hydra/spike_impact.cinematic", doer = "HydraSpike", classname = "Structure"},
-            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "HydraSpike", classname = "Structure", done = true},
-        
-        //generic buildings        
+            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "HydraSpike", classname = "Structure"},
+         //generic buildings        
             {cinematic = "cinematics/alien/structures/hit_big.cinematic", classname = "Structure", isalien = true, flinch_severe = true},
             {sound = "sound/ns2.fev/materials/organic/bash",  classname = "Structure", isalien = true, flinch_severe = true, done = true},
             {cinematic = "cinematics/alien/structures/hit.cinematic", classname = "Structure", isalien = true},
@@ -143,6 +146,7 @@ kGeneralEffectData =
         //snipe hit marine
             {cinematic = "cinematics/marine/spike_hit.cinematic", doer = "Spikes", classname = "Marine"},
             {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "Spikes", classname = "Marine", done = true},
+            {sound = "sound/ns2.fev/marine/common/spore_wound", doer = "SporeCloud", classname = "Marine", done = true},
         //hdyra hit marine
             {cinematic = "cinematics/marine/spike_hit.cinematic", doer = "HydraSpike", classname = "Marine"},
             {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "HydraSpike", classname = "Marine", done = true},
@@ -177,6 +181,7 @@ kGeneralEffectData =
             {sound = "sound/ns2.fev/alien/onos/wound", classname = "Onos", stop = true},           
             {sound = "sound/ns2.fev/alien/structures/harvester_wound", classname = "Harvester", stop = true},                       
             {sound = "sound/ns2.fev/alien/structures/hive_wound", classname = "Hive", stop = true},
+            {sound = "sound/ns2.fev/marine/common/spore_wound", classname = "Marine", doer = "SporeCloud", stop = true},
             {sound = "sound/ns2.fev/marine/common/wound_serious", classname = "Marine", flinch_severe = true, stop = true},
             {sound = "sound/ns2.fev/marine/common/wound", classname = "Marine", stop = true},
                        
@@ -253,6 +258,8 @@ kGeneralEffectData =
             {stop_sound = "sound/ns2.fev/marine/structures/mac/hover", classname = "MAC"},
             {stop_sound = "sound/ns2.fev/marine/structures/mac/thrusters", classname = "MAC"},
             
+            {stop_sound = "sound/ns2.fev/alien/infestation/build", classname = "Infestation", done = true},
+            
             {sound = "sound/ns2.fev/marine/structures/mac/death", classname = "MAC", done = true},
             {sound = "sound/ns2.fev/alien/drifter/death", classname = "Drifter", done = true},
             {sound = "sound/ns2.fev/alien/skulk/death", classname = "Skulk", done = true},
@@ -262,6 +269,11 @@ kGeneralEffectData =
             {sound = "sound/ns2.fev/alien/onos/death", classname = "Onos", done = true},
             {sound = "sound/ns2.fev/marine/common/death", classname = "Marine", done = true},
             {sound = "sound/ns2.fev/marine/structures/extractor_death", classname = "Extractor", done = true},
+            
+            // Note: PowerPoints are in game script
+            
+            {sound = "sound/ns2.fev/marine/power_node/destroyed_powerdown", classname = "PowerPack"},
+            {sound = "sound/ns2.fev/marine/power_node/destroyed", classname = "PowerPack", done = true},
         },
         
         deathAnimations =
@@ -339,6 +351,15 @@ kGeneralEffectData =
             {sound = "sound/ns2.fev/alien/common/regeneration"},
         },
     },
+    
+    infestation_grown =
+    {
+        infestationEffects = 
+        {
+            {stop_sound = "sound/ns2.fev/alien/infestation/build", classname = "Infestation", done = true},
+        },
+    },
+            
 }
 
 GetEffectManager():AddEffectData("GeneralEffectData", kGeneralEffectData)

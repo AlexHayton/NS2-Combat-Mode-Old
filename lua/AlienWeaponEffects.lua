@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\AlienWeaponEffects.lua
 //
@@ -15,33 +15,28 @@ kAlienWeaponEffects =
         // For hit effects, classname is the target
         generalHitEffects =
         {
-            {sound = "", classname = "Structure", done = true},
-            {sound = "", classname = "Alien", done = true},
-            {sound = "", classname = "Marine", done = true},
-           //bite hit
-            {sound = "sound/ns2.fev/alien/skulk/bite_hit_%s", doer = "BiteLeap"},
+            //{viewmodel_cinematic = "cinematics/locateorigin.cinematic", classname = "Marine", doer = "BiteLeap", attach_point = "Root", done = true},
             {player_cinematic = "cinematics/materials/%s/bash.cinematic", doer = "BiteLeap", done = true}, 
-           //spit hit
-            {sound = "sound/ns2.fev/alien/gorge/spit_hit", doer = "Spit"},
+            {player_cinematic = "cinematics/alien/skulk/parasite_hit.cinematic", doer = "Parasite", done = true},
             {player_cinematic = "cinematics/alien/gorge/spit_impact.cinematic", doer = "Spit", done = true},        
-           //spike hit
-            {player_cinematic = "cinematics/alien/lerk/spike_impact.cinematic", doer = "Spike"},
-            {sound = "sound/ns2.fev/materials/%s/spike_ricochet", doer = "Spike", done = true},
-           //snipe hit
-            {player_cinematic = "cinematics/alien/lerk/snipe_impact.cinematic", doer = "Spikes"},
-            {sound = "sound/ns2.fev/materials/%s/spike_ricochet", doer = "Spikes", done = true},
-           //hydra spikes hit
-            {player_cinematic = "cinematics/alien/hydra/spike_impact.cinematic", doer = "HydraSpike"},
-            {sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "HydraSpike", done = true},
-           //swipe hit
-            {player_cinematic = "cinematics/materials/%s/scrape.cinematic", doer = "SwipeBlink"},
-            {sound = "sound/ns2.fev/materials/metal/bone_scrape", doer = "SwipeBlink", surface = "metal", done = true},
-            {sound = "sound/ns2.fev/materials/%s/scrape", doer = "SwipeBlink", done = true},
-           //stab hit
-            {player_cinematic = "cinematics/materials/%s/scrape.cinematic", doer = "StabBlink"},
-            {sound = "sound/ns2.fev/materials/%s/scrape", doer = "StabBlink", done = true},
-          //add onos gore
+            {player_cinematic = "cinematics/alien/lerk/spike_impact.cinematic", doer = "Spike", done = true},
+            {player_cinematic = "cinematics/alien/lerk/snipe_impact.cinematic", doer = "Spikes", done = true},
+            {player_cinematic = "cinematics/alien/hydra/spike_impact.cinematic", doer = "HydraSpike", done = true},
+            {player_cinematic = "cinematics/materials/%s/scrape.cinematic", doer = "SwipeBlink", done = true},
+            {player_cinematic = "cinematics/materials/%s/scrape.cinematic", doer = "StabBlink", done = true},
+
         },
+        generalHitSounds = 
+        {
+            {sound = "sound/ns2.fev/alien/skulk/bite_hit_%s", doer = "BiteLeap", done = true},
+            {sound = "sound/ns2.fev/alien/skulk/parasite_hit", doer = "Parasite", done = true},
+            {sound = "sound/ns2.fev/alien/gorge/spit_hit", doer = "Spit", done = true},
+            {sound = "sound/ns2.fev/materials/%s/spike_ricochet", doer = "Spike", done = true},
+            {sound = "sound/ns2.fev/materials/%s/spike_ricochet", doer = "Spikes", done = true},
+            {sound = "sound/ns2.fev/materials/%s/spikes_ricochet", doer = "HydraSpike", done = true},
+            {sound = "sound/ns2.fev/materials/%s/scrape", doer = "SwipeBlink", done = true},
+            {sound = "sound/ns2.fev/materials/%s/scrape", doer = "StabBlink", done = true},
+        }
     },
 
     // Play ricochet sound for player locally for feedback (triggered if target > 5 meters away, play additional 30% volume sound)
@@ -81,7 +76,7 @@ kAlienWeaponEffects =
             
         },
         
-        alienViewModelCinematics =
+        alienViewModelIdleCinematics =
         {
             //{viewmodel_cinematic = "cinematics/alien/lerk/spore_view_idle.cinematic", classname = "Spores", attach_point = "fxnode_hole_left"},
             //{viewmodel_cinematic = "cinematics/alien/lerk/spore_view_idle.cinematic", classname = "Spores", attach_point = "fxnode_hole_right"},
@@ -109,9 +104,9 @@ kAlienWeaponEffects =
     {
         biteAttackEffects = 
         {
-            {sound = "sound/ns2.fev/alien/skulk/bite"},
+            {sound = "sound/ns2.fev/alien/skulk/bite", attach_point = "Bip01_Head"},
             {viewmodel_animation = "bite_attack"},
-            {overlay_animation = "bite"},
+            {overlay_animation = "bite", force = true},
         },
     },
     
@@ -123,6 +118,7 @@ kAlienWeaponEffects =
             // TODO: Take volume or hasLeap
             {sound = "sound/ns2.fev/alien/skulk/bite_alt"},
             {viewmodel_animation = "bite_leap"},
+            {animation = "leap"},
         },
     },   
 
@@ -130,8 +126,11 @@ kAlienWeaponEffects =
     {
         parasiteAttackEffects = 
         {
+            //{viewmodel_animation = "parasite_attack", force = true},
             {sound = "sound/ns2.fev/alien/skulk/parasite"},
-        },
+            {player_cinematic = "cinematics/aliens/skulk/parasite_fire.cinematic", attach_point = "Bip01_Head"},
+            {viewmodel_cinematic = "cinematics/alien/skulk/parasite_view.cinematic", done = true},
+         },
     },   
     
     // When a target is parasited - played on target
@@ -140,7 +139,7 @@ kAlienWeaponEffects =
         parasiteHitEffects = 
         {
             {sound = "sound/ns2.fev/alien/skulk/parasite_hit"},
-            
+            {player_cinematic = "cinematics/alien/skulk/parasite_hit.cinematic"},
         },
     },
     
@@ -150,7 +149,8 @@ kAlienWeaponEffects =
         {
             {sound = "sound/ns2.fev/alien/gorge/spit"},
             {viewmodel_animation = "spit_attack", blend_time = .2, force = true},
-            {overlay_animation = "spit"}
+            //{cinematic = "cinematics/alien/gorge/spit_fire.cinematic"},
+            {overlay_animation = "spit", force = true},
         },
     },
 
@@ -158,7 +158,8 @@ kAlienWeaponEffects =
     sprayed =
     {
         sprayedEffects =
-        {
+        {   
+            {player_cinematic = "cinematics/alien/heal.cinematic"},
             {sound = "sound/ns2.fev/alien/common/regeneration"},
         },
     },
@@ -169,11 +170,10 @@ kAlienWeaponEffects =
         {
             // Use player_cinematic because at world position, not attach_point
             {player_cinematic = "cinematics/alien/gorge/healthspray.cinematic"},
-            {viewmodel_cinematic = "cinematics/alien/gorge/healthspray_view.cinematic"},
-            
+            {viewmodel_cinematic = "cinematics/alien/gorge/healthspray_view.cinematic", attach_point = "gorge_view_root"},
             {sound = "sound/ns2.fev/alien/gorge/heal_spray"},            
             {viewmodel_animation = "spray_attack"},         
-            {overlay_animation = "healthspray"}        
+            {overlay_animation = "healthspray", force = true},        
         },
     },
     
@@ -186,8 +186,54 @@ kAlienWeaponEffects =
         },
     },
     
-    hydra_spawn =
+    // Called for player immediately when creating infestation as gorge
+    start_create_infestation =
     {
+        gorgeCreateInfestationEffects =
+        {
+            {player_cinematic = "cinematics/alien/gorge/infestationspray.cinematic"},
+            //{viewmodel_cinematic = "cinematics/alien/gorge/healthspray_view.cinematic"},
+            {viewmodel_animation = "spray_attack"},         
+            {overlay_animation = "healthspray"}        
+        },
+    },
+    
+    // Called for player after short delay when creating infestation as gorge
+    create_infestation =
+    {
+        gorgeCreateInfestationEffects =
+        {
+            {sound = "sound/ns2.fev/alien/structures/spawn_small"},
+        },
+    },
+    
+    // For Commander
+    create_infestation_local = 
+    {
+        createInfestationLocalEffects =
+        {
+            {sound = "sound/ns2.fev/alien/commander/DI_drop_2D"},
+        },
+    },
+    
+    // Gorge starts creating hydra. A short time later, it will actually spawn and trigger "create_hydra" below.
+    start_create_hydra =
+    {
+        startHydraCreate = 
+        {
+            {sound = "sound/ns2.fev/alien/gorge/create_structure_start"},
+            {viewmodel_animation = "chamber_attack"},
+            {player_cinematic = "cinematics/alien/gorge/create.cinematic", attach_point = "Head"},
+            {viewmodel_cinematic = "cinematics/alien/gorge/create_view.cinematic"},
+        },
+    },
+    
+    // Gorge creating hydra
+    create_hydra =
+    {
+        hydraEffects =
+        {   
+        },
     },
 
     spikes_attack =
@@ -286,6 +332,8 @@ kAlienWeaponEffects =
         
             // Animated ghost that plays blinkin or blinkout is handled as a special case
             {viewmodel_cinematic = "cinematics/alien/fade/blink_view.cinematic", attach_point = ""},
+            {viewmodel_animation = "swipe_blink", classname = "SwipeBlink"},
+            {viewmodel_animation = "stab_blink", classname = "StabBlink"},
             {cinematic = "cinematics/alien/fade/blink_out.cinematic"},
             
             // Play sound with randomized positional offset (in sound) at place we're leaving
@@ -314,6 +362,23 @@ kAlienWeaponEffects =
         },
 
     }, 
+    
+    // Alien vision mode effects
+    alien_vision_on = 
+    {
+        visionModeOnEffects = 
+        {
+            {sound = "sound/ns2.fev/alien/common/vision_on"},
+        },
+    },
+    
+    alien_vision_off = 
+    {
+        visionModeOnEffects = 
+        {
+            {sound = "sound/ns2.fev/alien/common/vision_off"},
+        },
+    },
 }
 
 // "false" means play all effects in each block

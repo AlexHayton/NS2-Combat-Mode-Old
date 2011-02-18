@@ -3,7 +3,7 @@
 // lua/Scoreboard.lua
 // 
 // Created by Henry Kropf and Charlie Cleveland
-// Copyright 2010, Unknown Worlds Entertainment
+// Copyright 2011, Unknown Worlds Entertainment
 //
 //=============================================================================
 local playerData = {}
@@ -17,6 +17,8 @@ kScoreboardDataIndexDeaths = 6
 kScoreboardDataIndexIsCommander = 7
 kScoreboardDataIndexPlasma = 8
 kScoreboardDataIndexPing = 9
+kScoreboardDataIndexStatus = 10
+kScoreboardDataIndexIsSpectator = 11
 
 function Scoreboard_Clear()
 
@@ -38,6 +40,8 @@ function Scoreboard_OnResetGame()
         playerRecord[kScoreboardDataIndexDeaths] = 0
         playerRecord[kScoreboardDataIndexIsCommander] = false
         playerRecord[kScoreboardDataIndexPlasma] = 0
+        playerRecord[kScoreboardDataIndexStatus] = ""
+        playerRecord[kScoreboardDataIndexIsSpectator] = false
         
     end 
 
@@ -64,7 +68,7 @@ function Scoreboard_OnClientDisconnect(clientIndex)
     
 end
 
-function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, kills, deaths, plasma, isCommander)
+function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, kills, deaths, plasma, isCommander, status, isSpectator)
     
     // Lookup record for player and update it
     for i = 1, table.maxn(playerData) do
@@ -81,6 +85,8 @@ function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, ki
             playerRecord[kScoreboardDataIndexDeaths] = deaths
             playerRecord[kScoreboardDataIndexIsCommander] = isCommander
             playerRecord[kScoreboardDataIndexPlasma] = plasma
+            playerRecord[kScoreboardDataIndexStatus] = status
+            playerRecord[kScoreboardDataIndexIsSpectator] = isSpectator
             
             return
             
@@ -99,6 +105,8 @@ function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, ki
     playerRecord[kScoreboardDataIndexIsCommander] = isCommander
     playerRecord[kScoreboardDataIndexPlasma] = 0
     playerRecord[kScoreboardDataIndexPing] = 0
+    playerRecord[kScoreboardDataIndexStatus] = status
+    playerRecord[kScoreboardDataIndexIsSpectator] = isSpectator
     
     table.insert(playerData, playerRecord )
     
@@ -167,7 +175,7 @@ end
  */
 function ScoreboardUI_GetVisible()
     local player = Client.GetLocalPlayer()
-    return player and player.showScoreboard
+    return (player ~= nil) and player.showScoreboard
 end
 
 /**
@@ -191,6 +199,8 @@ function GetScoreData(teamNumberTable)
             table.insert(scoreData, playerRecord[kScoreboardDataIndexIsCommander])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexPlasma])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexPing])
+            table.insert(scoreData, playerRecord[kScoreboardDataIndexStatus])
+            table.insert(scoreData, playerRecord[kScoreboardDataIndexIsSpectator])
             
         end
         

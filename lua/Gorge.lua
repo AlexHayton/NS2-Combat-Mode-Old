@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Gorge.lua
 //
@@ -9,6 +9,7 @@
 Script.Load("lua/Utility.lua")
 Script.Load("lua/Alien.lua")
 Script.Load("lua/Weapons/Alien/SpitSpray.lua")
+Script.Load("lua/Weapons/Alien/InfestationAbility.lua")
 Script.Load("lua/Weapons/Alien/HydraAbility.lua")
 Script.Load("lua/Weapons/Alien/HarvesterAbility.lua")
 Script.Load("lua/Weapons/Alien/Absorb.lua")
@@ -225,7 +226,6 @@ function Gorge:SetAnimAndMode(animName, mode)
     end
     
     if mode == kPlayerMode.GorgeStructure then
-        self.modeTime = Shared.GetTime() + kBuildHydraDelay
         local velocity = self:GetVelocity()
         velocity:Scale(.1)
         self:SetVelocity(velocity)
@@ -461,9 +461,9 @@ function Gorge:ProcessEndMode()
         
             ability:CreateHydra(self)
 
-        elseif ability and ability:isa("HarvesterAbility") then
+        elseif ability and ability:isa("InfestationAbility") then
         
-            ability:CreateHarvester(self)
+            ability:CreateInfestation(self)
             
         end
         
@@ -517,7 +517,9 @@ function Gorge:UpdateHelp()
         return true
     elseif self:AddTooltipOnce("Press left-click to spit and right-click to heal players or structures.") then
         return true
-    elseif activeWeaponName ~= "HydraAbility" and self:AddTooltipOnce("Switch to weapon #2 to build hydras that attack enemies.") then
+    elseif activeWeaponName ~= "InfestationAbility" and self:AddTooltipOnce("Switch to weapon #2 to spread infestation.") then
+        return true       
+    elseif activeWeaponName ~= "HydraAbility" and self:AddTooltipOnce("Switch to weapon #3 to build hydras that attack enemies.") then
         return true       
     elseif activeWeaponName == "HydraAbility" and self:AddTooltipOnce("Building a Hydra costs you plasma, but you can build as many as you like.") then
         return true       

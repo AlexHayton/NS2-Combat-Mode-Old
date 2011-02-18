@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Weapons\Flamethrower.lua
 //
@@ -110,10 +110,10 @@ function Flamethrower:FirePrimary(player, bullets, range, penetration)
             // Look for enemies in cone in front of us    
             if dotProduct > .8 then
         
-                // Do damage to them and catch them on fire
-                ent:TakeDamage(Flamethrower.kDamage, player, self, ent:GetModelOrigin(), toEnemy)
-                
                 if GetGamerules():CanEntityDoDamageTo(player, ent) then
+
+                    // Do damage to them and catch them on fire
+                    ent:TakeDamage(Flamethrower.kDamage, player, self, ent:GetModelOrigin(), toEnemy)
                 
                     ent:SetOnFire(player, self)
                     

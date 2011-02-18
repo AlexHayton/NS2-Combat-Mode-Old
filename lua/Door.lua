@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Door.lua
 //
@@ -97,7 +97,7 @@ function Door:OnInit()
 end
 
 // Only hackable by marine commander
-function Door:PerformActivation(techId, position, commander)
+function Door:PerformActivation(techId, position, normal, commander)
 
     local success = nil
     local state = self:GetState()

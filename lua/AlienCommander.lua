@@ -14,9 +14,11 @@ AlienCommander.kMapName = "alien_commander"
 AlienCommander.kOrderClickedEffect = PrecacheAsset("cinematics/alien/order.cinematic")
 AlienCommander.kSelectSound = PrecacheAsset("sound/ns2.fev/alien/commander/select")
 AlienCommander.kChatSound = PrecacheAsset("sound/ns2.fev/alien/common/chat")
-AlienCommander.kUpgradeCompleteSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/upgrade_complete")
-AlienCommander.kResearchCompleteSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/research_complete")
-AlienCommander.kStructureUnderAttackSound = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/base_under_attack")
+AlienCommander.kUpgradeCompleteSoundName = PrecacheAsset("sound/ns2.fev/alien/voiceovers/upgrade_complete")
+AlienCommander.kResearchCompleteSoundName = PrecacheAsset("sound/ns2.fev/alien/voiceovers/research_complete")
+AlienCommander.kStructureUnderAttackSound = PrecacheAsset("sound/ns2.fev/alien/voiceovers/structure_under_attack")
+AlienCommander.kHarvesterUnderAttackSound = PrecacheAsset("sound/ns2.fev/alien/voiceovers/harvester_under_attack")
+AlienCommander.kLifeformUnderAttackSound = PrecacheAsset("sound/ns2.fev/alien/voiceovers/lifeform_under_attack")
 
 function AlienCommander:GetTeamType()
     return kAlienTeamType
@@ -68,6 +70,10 @@ end
 
 function AlienCommander:GetChatSound()
     return AlienCommander.kChatSound
+end
+
+function AlienCommander:GetPlayerStatusDesc()
+    return "Commander"
 end
 
 Shared.LinkClassToMap( "AlienCommander", AlienCommander.kMapName, {} )

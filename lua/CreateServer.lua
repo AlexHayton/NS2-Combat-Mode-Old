@@ -3,7 +3,7 @@
 // lua/CreateServer.lua
 // 
 // Created by Henry Kropf
-// Copyright 2010, Unknown Worlds Entertainment
+// Copyright 2011, Unknown Worlds Entertainment
 //
 //=============================================================================
 
