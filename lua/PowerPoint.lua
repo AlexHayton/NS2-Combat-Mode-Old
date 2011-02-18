@@ -101,7 +101,7 @@ function PowerPoint:OnReset()
 end
 
 function PowerPoint:GetCanTakeDamage()
-    return self.powered
+	return true
 end
 
 function PowerPoint:GetIsBuilt()

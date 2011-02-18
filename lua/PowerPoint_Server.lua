@@ -122,11 +122,25 @@ function PowerPoint:OnWeld(entity, elapsedTime)
         
     end
     
-    if not self.powered and self:GetHealthScalar() == 1 then
+    if not self.powered and self:GetHealthScalar() > 0 then
     
         self.powered = true
+		
+		local lightMode = kLightMode.Normal
+		
+		if self:GetHealthScalar() < PowerPoint.kDamagedPercentage then
+			lightMode = kLightMode.LowPower
+			
+			if not self.playingLoopedDamaged then
+            
+                self:PlaySound(PowerPoint.kDamagedSound)
+                
+                self.playingLoopedDamaged = true
+                
+            end
+		end
         
-        self:SetLightMode(kLightMode.Normal)
+        self:SetLightMode(lightMode)
         
         self:SetModel(PowerPoint.kOnModelName)
         
@@ -138,6 +152,14 @@ function PowerPoint:OnWeld(entity, elapsedTime)
     
     return welded
     
+end
+
+function PowerPoint:AddHealth(health)
+	// Simulate a MAC healing the structure
+	// In combat mode this can never happen so it should work ok!
+	self:OnWeld(self, self, 1.0)
+	// Delegate down the line too
+	Structure.AddHealth(self, health)
 end
 
 function PowerPoint:StopDamagedSound()

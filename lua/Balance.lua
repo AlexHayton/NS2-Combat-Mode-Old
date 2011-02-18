@@ -154,7 +154,7 @@ kAlienArmor3ResearchCost = 35
 
 kPlayingTeamInitialCarbon = 50
 
-kPlayerInitialPlasma = 10
+kPlayerInitialPlasma = 999
 
 kResourceTowerResourceInterval = 12
 
