@@ -1,11 +1,14 @@
-//======= Copyright © 2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+//======= Copyright © 2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\GUIUtility.lua
 //
 //    Created by:   Brian Cronin (brianc@unknownworlds.com)
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
-  
+
+// Temporary to scale the commander UIs.
+kCommanderGUIsGlobalScale = 0.75
+
 // Returns true if the passed in point is contained within the passed in GUIItem.
 // Also returns the point inside the passed in GUIItem where that point is located.
 // Returns false if the point is not contained in the passed in GUIItem.
@@ -28,8 +31,14 @@ function GUIItemContainsPoint(guiItem, pointX, pointY)
 
 end
 
+// The following functions are global versions of the GUIItem member functions.
+// They are useful for animation operations.
 function GUISetColor(item, color)
     item:SetColor(color)   
+end
+
+function GUISetSize(item, size)
+    item:SetSize(size)
 end
 
 // Pass in a GUIItem and a table with named X1, Y1, X2, Y2 elements.

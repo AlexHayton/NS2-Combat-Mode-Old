@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Commander_Buttons.lua
 //
@@ -321,6 +321,8 @@ function Commander:InitTechTreeMaterialOffsets()
     self.kMarineTechIdToMaterialOffset[kTechId.WeaponsModule] = 8
     self.kMarineTechIdToMaterialOffset[kTechId.PrototypeLab] = 9
     self.kMarineTechIdToMaterialOffset[kTechId.PowerPoint] = 10    
+    // TODO: Change this
+    self.kMarineTechIdToMaterialOffset[kTechId.PowerPack] = 10
     
     // Second row - Non-player orders
     self.kMarineTechIdToMaterialOffset[kTechId.Recycle] = 12
@@ -449,7 +451,8 @@ function Commander:InitTechTreeMaterialOffsets()
     self.kAlienTechIdToMaterialOffset[kTechId.SquadMenu] = 10
     self.kAlienTechIdToMaterialOffset[kTechId.MarkersMenu] = 11
     self.kAlienTechIdToMaterialOffset[kTechId.UpgradesMenu] = 12
-    self.kAlienTechIdToMaterialOffset[kTechId.Grow] = 13
+    self.kAlienTechIdToMaterialOffset[kTechId.Grow] = 23
+    self.kAlienTechIdToMaterialOffset[kTechId.Infestation] = 23
     self.kAlienTechIdToMaterialOffset[kTechId.MetabolizeTech] = 14
     self.kAlienTechIdToMaterialOffset[kTechId.Metabolize] = 15
        
@@ -529,6 +532,10 @@ function Commander:InitTechTreeMaterialOffsets()
     self.kAlienTechIdToMaterialOffset[kTechId.PiercingTech] = 76
     
     self.kAlienTechIdToMaterialOffset[kTechId.AlienArmor3Tech] = 77
+    
+    // Whip movement
+    self.kAlienTechIdToMaterialOffset[kTechId.WhipUnroot] = 78
+    self.kAlienTechIdToMaterialOffset[kTechId.WhipRoot] = 79
     
     // Upgrades #1
     self.kAlienTechIdToMaterialOffset[kTechId.AdrenalineTech] = 80

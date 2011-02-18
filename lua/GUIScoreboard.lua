@@ -1,5 +1,5 @@
 
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\GUIScoreboard.lua
 //
@@ -24,7 +24,7 @@ GUIScoreboard.kInsanePingColor = Color(1, 0, 0, 1)
 // Team constants.
 GUIScoreboard.kTeamNameFontSize = 26
 GUIScoreboard.kTeamInfoFontSize = 16
-GUIScoreboard.kTeamItemWidth = 550
+GUIScoreboard.kTeamItemWidth = 700
 GUIScoreboard.kTeamItemHeight = GUIScoreboard.kTeamNameFontSize + GUIScoreboard.kTeamInfoFontSize + 8
 GUIScoreboard.kTeamSpacing = 32
 GUIScoreboard.kTeamScoreColumnStartX = 250
@@ -88,6 +88,12 @@ function GUIScoreboard:Uninitialize()
     
 end
 
+function GUIScoreboard:CreateHeader()
+    
+    
+    
+end
+
 function GUIScoreboard:CreateTeamBackground(color)
 
     // Create background.
@@ -121,6 +127,20 @@ function GUIScoreboard:CreateTeamBackground(color)
     teamItem:AddChild(teamInfoItem)
     
     local currentColumnX = GUIScoreboard.kTeamScoreColumnStartX
+    
+    // Status text item.
+    local statusItem = GUI.CreateTextItem()
+    statusItem:SetFontName(GUIScoreboard.kFontName)
+    statusItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
+    statusItem:SetAnchor(GUIItem.Left, GUIItem.Top)
+    statusItem:SetTextAlignmentX(GUITextItem.Align_Min)
+    statusItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    statusItem:SetPosition(Vector(currentColumnX, 5, 0))
+    statusItem:SetColor(color)
+    statusItem:SetText("")
+    teamItem:AddChild(statusItem)
+    
+    currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX * 3
     
     // Score text item.
     local scoreItem = GUI.CreateTextItem()
@@ -177,7 +197,7 @@ function GUIScoreboard:CreateTeamBackground(color)
     teamItem:AddChild(deathsItem)
     
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
-    
+   
     // Resources text item.
     local resItem = GUI.CreateTextItem()
     resItem:SetFontName(GUIScoreboard.kFontName)
@@ -189,8 +209,11 @@ function GUIScoreboard:CreateTeamBackground(color)
     resItem:SetColor(color)
     resItem:SetText("Plasma")
     teamItem:AddChild(resItem)
-    
-    currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
+	
+	// Combat mode: plasma is kind of irrelevant!
+    resItem:SetIsVisible(false)
+	
+    //currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
     // Ping text item.
     local pingItem = GUI.CreateTextItem()
@@ -211,6 +234,8 @@ end
 function GUIScoreboard:Update(deltaTime)
 
     local teamsVisible = ScoreboardUI_GetVisible()
+    
+    ASSERT(teamsVisible ~= nil)
     
     //First, update teams.
     for index, team in ipairs(self.teams) do
@@ -270,7 +295,7 @@ function GUIScoreboard:UpdateTeam(updateTeam)
     end
 
     // How many items per player.
-    local numElementsPerPlayerRecord = 8
+    local numElementsPerPlayerRecord = 10
     local numPlayers = table.count(teamScores) / numElementsPerPlayerRecord
     
     // Update the team name text.
@@ -296,14 +321,25 @@ function GUIScoreboard:UpdateTeam(updateTeam)
         local score = tostring(teamScores[currentPlayerIndex + 1])
         local kills = tostring(teamScores[currentPlayerIndex + 2])
         local deaths = tostring(teamScores[currentPlayerIndex + 3])
-        local isCommander = teamScores[currentPlayerIndex + 4]
 		// Uncomment this to enable display of rank name. It doesn't look quite right because the column width is too small!
         //local rankStr= ConditionalValue(tostring(Experience_GetRankName(updateTeam["TeamNumber"], teamScores[currentPlayerIndex + 7])), "-")
-		local rankStr= ConditionalValue(isLocalTeam, tostring(teamScores[currentPlayerIndex + 7]), "-")
+		local rankStr= ConditionalValue(isLocalTeam, tostring(teamScores[currentPlayerIndex + 9]), "-")
         local plasmaStr = ConditionalValue(isLocalTeam, tostring(teamScores[currentPlayerIndex + 5]), "-")
         local ping = teamScores[currentPlayerIndex + 6]
         local pingStr = tostring(ping)
         local currentPosition = Vector(player["Background"]:GetPosition())
+        local playerStatus = teamScores[currentPlayerIndex + 7]
+        local isSpectator = teamScores[currentPlayerIndex + 8]
+        
+        if (isSpectator == true and (updateTeam["TeamNumber"] == kAlienTeamType or updateTeam["TeamNumber"] == kMarineTeamType)) then
+            playerStatus = "Dead"
+        end
+        
+        local status = ConditionalValue(isLocalTeam, playerStatus, "-")
+        if (playerStatus == "Dead") then
+            status = playerStatus
+        end
+        
         currentPosition.y = currentY
         player["Background"]:SetPosition(currentPosition)
         player["Background"]:SetColor(teamColor)
@@ -319,15 +355,12 @@ function GUIScoreboard:UpdateTeam(updateTeam)
                 self.playerHighlightItem:SetColor(localPlayerHighlightColor)
             end
         end
-
-        if isCommander == true then
-            playerName = playerName .. " (Commander)"
-        end
         
         player["Name"]:SetText(playerName)
         player["Score"]:SetText(score)
         player["Kills"]:SetText(kills)
         player["Deaths"]:SetText(deaths)
+        player["Status"]:SetText(status)
         player["Plasma"]:SetText(plasmaStr)
         player["Ping"]:SetText(pingStr)
         player["Rank"]:SetText(rankStr)
@@ -395,6 +428,19 @@ function GUIScoreboard:CreatePlayerItem()
     
     local currentColumnX = GUIScoreboard.kTeamScoreColumnStartX
     
+    // Status text item.
+    local statusItem = GUI.CreateTextItem()
+    statusItem:SetFontName(GUIScoreboard.kFontName)
+    statusItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
+    statusItem:SetAnchor(GUIItem.Left, GUIItem.Top)
+    statusItem:SetTextAlignmentX(GUITextItem.Align_Min)
+    statusItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    statusItem:SetPosition(Vector(currentColumnX, 5, 0))
+    statusItem:SetColor(Color(1, 1, 1, 1))
+    playerItem:AddChild(statusItem)
+    
+    currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX * 3
+    
     // Score text item.
     local scoreItem = GUI.CreateTextItem()
     scoreItem:SetFontName(GUIScoreboard.kFontName)
@@ -457,8 +503,11 @@ function GUIScoreboard:CreatePlayerItem()
     resItem:SetPosition(Vector(currentColumnX, 5, 0))
     resItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(resItem)
-    
-    currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
+	
+	// Combat mode: plasma is kind of irrelevant!
+    resItem:SetIsVisible(false)
+	
+    //currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
     // Ping text item.
     local pingItem = GUI.CreateTextItem()
@@ -471,6 +520,6 @@ function GUIScoreboard:CreatePlayerItem()
     pingItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(pingItem)
     
-    return { Background = playerItem, Name = playerNameItem, Score = scoreItem, Kills = killsItem, Deaths = deathsItem, Plasma = resItem, Ping = pingItem, Rank = rankItem }
+    return { Background = playerItem, Name = playerNameItem, Status = statusItem, Score = scoreItem, Kills = killsItem, Deaths = deathsItem, Plasma = resItem, Ping = pingItem, Rank = rankItem }
     
 end

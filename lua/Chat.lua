@@ -3,7 +3,7 @@
 // lua/Chat.lua
 // 
 // Created by Max McGuire (max@unknownworlds.com)
-// Copyright 2010, Unknown Worlds Entertainment
+// Copyright 2011, Unknown Worlds Entertainment
 //
 //=============================================================================
 

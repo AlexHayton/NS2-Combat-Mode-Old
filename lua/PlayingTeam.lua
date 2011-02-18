@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\PlayingTeam.lua
 //
@@ -211,6 +211,9 @@ function PlayingTeam:TriggerAlert(techId, entity)
                     timeElapsed = Shared.GetTime() - self.timeOfLastPlayedTeamAlert
                 end
                 
+                // Ignore source players for some alerts
+                local ignoreSourcePlayer = ConditionalValue(LookupTechData(techId, kTechDataAlertOthersOnly, false), nil, entity)
+                
                 // If time elapsed > kBaseAlertInterval and not a repeat, play it OR
                 // If time elapsed > kRepeatAlertInterval then play it no matter what
                 if ((timeElapsed >= PlayingTeam.kBaseAlertInterval) and not isRepeat) or (timeElapsed >= PlayingTeam.kRepeatAlertInterval) then
@@ -218,7 +221,7 @@ function PlayingTeam:TriggerAlert(techId, entity)
                     // Play for commanders only or for the whole team
                     local commandersOnly = not LookupTechData(techId, kTechDataAlertTeam, false)
                     
-                    self:PlayPrivateTeamSound(soundName, location, commandersOnly)
+                    self:PlayPrivateTeamSound(soundName, location, commandersOnly, ignoreSourcePlayer)
                     
                     self.lastPlayedTeamAlertName = soundName
                     self.timeOfLastPlayedTeamAlert = Shared.GetTime()

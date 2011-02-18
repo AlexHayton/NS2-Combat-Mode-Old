@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Weapons\Projectile_Server.lua
 //
@@ -24,12 +24,15 @@ function Projectile:CreatePhysics()
 
     if (self.physicsBody == nil) then
         self.physicsBody = Shared.CreatePhysicsSphereBody(true, self.radius, self.mass, self:GetCoords() )
+        self.physicsBody:SetGravityEnabled(self.gravityEnabled)
         self.physicsBody:SetGroup( PhysicsGroup.ProjectileGroup )
         self.physicsBody:SetEntity( self )
         // Projectiles need to have continuous collision detection so they
         // don't tunnel through walls and other objects.
         self.physicsBody:SetCCDEnabled(true)
         self.physicsBody:SetPhysicsType( CollisionObject.Dynamic )
+        self.physicsBody:SetLinearDamping(self.linearDamping)
+        self.physicsBody:SetRestitution(self.restitution)
     end
     
 end
@@ -130,3 +133,7 @@ end
 // Register for callbacks when projectiles collide with the world
 Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, 0 )
 Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, PhysicsGroup.PlayerControllersGroup)
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, PhysicsGroup.CommanderPropsGroup )
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, PhysicsGroup.AttachClassGroup )
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, PhysicsGroup.CommanderUnitGroup )
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, PhysicsGroup.CollisionGeometryGroup )

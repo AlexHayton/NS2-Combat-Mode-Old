@@ -1,11 +1,11 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Weapons\Alien\SpitSpray.lua
 //
 //    Created by:   Charlie Cleveland (charlie@unknownworlds.com) and
 //                  Max McGuire (max@unknownworlds.com)
 //
-// Spit attack on primary, health spray on secondary.
+// Spit attack on primary, healing spray on secondary.
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Weapons/Alien/Ability.lua")
@@ -110,6 +110,8 @@ end
 // a percentage of their health
 function SpitSpray:HealEntities(player)
     
+    local success = false
+    
     local ents = GetEntitiesIsaInRadius("LiveScriptActor", -1, self:GetHealOrigin(player), SpitSpray.kHealRadius, false, true)
     
     for index, targetEntity in ipairs(ents) do
@@ -118,34 +120,37 @@ function SpitSpray:HealEntities(player)
             
             local isHurtPlayer = (GetEnemyTeamNumber(player:GetTeamNumber()) == targetEntity:GetTeamNumber())
             local isHealTarget = (player:GetTeamNumber() == targetEntity:GetTeamNumber())
-            // GetHealthScalar() factors in health and armor.
-            if targetEntity:GetHealthScalar() < 1 then
-                
-                // TODO: Traceline to target to make sure we don't go through objects (or check line of sight because of area effect?)
-                if isHealTarget then
-                    
-                    // Heal entities by base amount plus a scaleable amount so it is helpful vs. weak targets yet doesn't take forever to heal hives (NS1)
-                    local health = SpitSpray.kBaseHealAmount + math.max(SpitSpray.kMinHeal, targetEntity:GetMaxHealth() * SpitSpray.kHealthPercent)
-                    targetEntity:AddHealth( health )
-                    
-                    // Put out entities on fire sometimes
-                    if math.random() < kSprayDouseOnFireChance then
-                        targetEntity:SetGameEffectMask(kGameEffect.OnFire, false)
-                    end
-                    
-                elseif isHurtPlayer then
-                
-                    targetEntity:AddHealth( -SpitSpray.kHealingSprayDamage )
-                    
-                end 
-               
-                targetEntity:TriggerEffects("sprayed")
             
-            end
+            // TODO: Traceline to target to make sure we don't go through objects (or check line of sight because of area effect?)
+            // GetHealthScalar() factors in health and armor.
+            if isHealTarget and targetEntity:GetHealthScalar() < 1 then
+
+                // Heal entities by base amount plus a scaleable amount so it is helpful vs. weak targets yet doesn't take forever to heal hives (NS1)
+                local health = SpitSpray.kBaseHealAmount + math.max(SpitSpray.kMinHeal, targetEntity:GetMaxHealth() * SpitSpray.kHealthPercent)
+                targetEntity:AddHealth( health )
+                
+                // Put out entities on fire sometimes
+                if math.random() < kSprayDouseOnFireChance then
+                    targetEntity:SetGameEffectMask(kGameEffect.OnFire, false)
+                end
+                
+                targetEntity:TriggerEffects("sprayed")
+                
+                success = true
+                
+            elseif isHurtPlayer then
+            
+                targetEntity:TakeDamage( SpitSpray.kHealingSprayDamage, player, self, self:GetOrigin(), nil)
+                targetEntity:TriggerEffects("sprayed")
+                success = true
+                
+            end 
        
         end
         
     end
+    
+    return success
         
 end
 
@@ -172,7 +177,9 @@ function SpitSpray:PerformSecondaryAttack(player)
     player:SetActivityEnd( player:AdjustFuryFireDelay(self:GetSecondaryAttackDelay() ))
     
     if Server then           
+    
         self:HealEntities( player )
+        
     end        
     
     return true

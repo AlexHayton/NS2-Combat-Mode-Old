@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Observatory.lua
 //
@@ -132,27 +132,27 @@ function Observatory:OnUpdate(deltaTime)
     
 end
 
-function Observatory:PerformActivation(techId, position, commander)
+function Observatory:PerformActivation(techId, position, normal, commander)
 
     local success = false
     
-	if self:GetIsBuilt() then
-	
-		if techId == kTechId.Scan then
-		
-			self:TriggerScan(position)
-			success = true
-
-		elseif techId == kTechId.DistressBeacon then
-		
-			success = self:TriggerDistressBeacon()
-			
-		else        
-			success = LiveScriptActor.PerformActivation(self, techId, position, commander)
-		end
+    if self:GetIsBuilt() then
     
-	end
-	
+        if techId == kTechId.Scan then
+        
+            self:TriggerScan(position)
+            success = true
+
+        elseif techId == kTechId.DistressBeacon then
+        
+            success = self:TriggerDistressBeacon()
+            
+        else        
+            success = LiveScriptActor.PerformActivation(self, techId, position, normal, commander)
+        end
+    
+    end
+    
     return success
     
 end

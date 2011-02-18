@@ -1,5 +1,5 @@
 
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\GUICommanderTooltip.lua
 //
@@ -32,8 +32,6 @@ GUICommanderTooltip.kBackgroundBottomHeight = GUICommanderTooltip.kBackgroundBot
 GUICommanderTooltip.kBackgroundExtraXOffset = 8
 GUICommanderTooltip.kBackgroundExtraYOffset = 20
 
-GUICommanderTooltip.kResourceIconTexture = "ui/resources.dds"
-
 GUICommanderTooltip.kTextFontSize = 16
 GUICommanderTooltip.kTextXOffset = 30
 GUICommanderTooltip.kTextYOffset = GUICommanderTooltip.kTextFontSize + 10
@@ -46,6 +44,14 @@ GUICommanderTooltip.kResourceIconTextureWidth = 32
 GUICommanderTooltip.kResourceIconTextureHeight = 32
 GUICommanderTooltip.kResourceIconXOffset = -30
 GUICommanderTooltip.kResourceIconYOffset = 20
+
+GUICommanderTooltip.kResourceIconTextureCoordinates = { }
+// Team coordinates.
+table.insert(GUICommanderTooltip.kResourceIconTextureCoordinates, { X1 = 844, Y1 = 412, X2 = 882, Y2 = 450 })
+// Personal coordinates.
+table.insert(GUICommanderTooltip.kResourceIconTextureCoordinates, { X1 = 774, Y1 = 417, X2 = 804, Y2 = 446 })
+// Energy coordinates.
+table.insert(GUICommanderTooltip.kResourceIconTextureCoordinates, { X1 = 828, Y1 = 546, X2 = 859, Y2 = 577 })
 
 GUICommanderTooltip.kResourceColors = { Color(0, 1, 0, 1), Color(0.2, 0.4, 1, 1), Color(1, 0, 1, 1) }
 
@@ -113,7 +119,7 @@ function GUICommanderTooltip:Initialize(settingsTable)
     self.resourceIcon:SetSize(Vector(GUICommanderTooltip.kResourceIconSize, GUICommanderTooltip.kResourceIconSize, 0))
     self.resourceIcon:SetAnchor(GUIItem.Right, GUIItem.Top)
     self.resourceIcon:SetPosition(Vector(-GUICommanderTooltip.kResourceIconSize + GUICommanderTooltip.kResourceIconXOffset, GUICommanderTooltip.kResourceIconYOffset, 0))
-    self.resourceIcon:SetTexture(GUICommanderTooltip.kResourceIconTexture)
+    self.resourceIcon:SetTexture(self.textureName)
     self.resourceIcon:SetIsVisible(false)
     self.background:AddChild(self.resourceIcon)
     
@@ -228,11 +234,9 @@ function GUICommanderTooltip:UpdateData(text, hotkey, costNumber, requires, enab
     self.hotkey:SetText("( " .. hotkey .. " )")
     if costNumber > 0 then
         self.resourceIcon:SetIsVisible(true)
-        self.resourceIcon:SetTexturePixelCoordinates(0, typeNumber * GUICommanderTooltip.kResourceIconTextureHeight,
-                                                     GUICommanderTooltip.kResourceIconTextureWidth,
-                                                     (typeNumber + 1) * GUICommanderTooltip.kResourceIconTextureHeight)
+        GUISetTextureCoordinatesTable(self.resourceIcon, GUICommanderTooltip.kResourceIconTextureCoordinates[typeNumber + 1])
         self.cost:SetText(ToString(costNumber))
-        self.cost:SetColor(GUICommanderTooltip.kResourceColors[typeNumber + 1])
+        //self.cost:SetColor(GUICommanderTooltip.kResourceColors[typeNumber + 1])
     else
         self.resourceIcon:SetIsVisible(false)
     end

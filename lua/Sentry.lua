@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Sentry.lua
 //
@@ -40,7 +40,7 @@ PrecacheMultipleAssets(Sentry.kRicochetEffect, kSurfaceList)
 
 // Balance
 Sentry.kPingInterval = 4
-Sentry.kFov = 90
+Sentry.kFov = 160
 Sentry.kBaseROF = kSentryAttackBaseROF
 Sentry.kRandROF = kSentryAttackRandROF
 Sentry.kSpread = Vector( 0.02618, 0.02618, 0.02618 )

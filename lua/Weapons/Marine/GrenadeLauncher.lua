@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Weapons\GrenadeLauncher.lua
 //
@@ -25,6 +25,7 @@ local networkVars =
     {
         auxAmmo = string.format("integer (0 to %d)", GrenadeLauncher.kLauncherStartingAmmo),
         auxClip = string.format("integer (0 to %d)", GrenadeLauncher.kAuxClipSize),
+        justShotGrenade = "boolean",
     }
  
 // Use rifle attack effect block for primary fire
@@ -110,11 +111,13 @@ function GrenadeLauncher:OnSecondaryAttack(player)
             // can attribute a kill to us
             grenade:SetOwner(player)
             
-            ClipWeapon.OnSecondaryAttack(self, player)
-            
         end
         
+        // We need to do this on the Client and Server for proper prediction.
+        ClipWeapon.OnSecondaryAttack(self, player)
+
         self.auxClip = self.auxClip - 1
+        self.justShotGrenade = true
         
     elseif (not self:ReloadGrenade(player)) then
 
@@ -136,6 +139,7 @@ function GrenadeLauncher:OnInit()
     
     self.auxAmmo = GrenadeLauncher.kLauncherStartingAmmo
     self.auxClip = 0
+    self.justShotGrenade = false
     
 end
 
@@ -144,18 +148,24 @@ function GrenadeLauncher:ReloadGrenade(player)
     local success = false
     
     // Automatically reload if we're out of ammo - don't have to hit a key
-    if (self.auxClip < GrenadeLauncher.kAuxClipSize) and (self.auxAmmo > 0) and player:GetCanNewActivityStart() then
-
-        self:TriggerEffects("grenadelauncher_reload")
+    if player:GetCanNewActivityStart() then
+    
+        self.justShotGrenade = false
         
-        // Play the reload sequence and don't let it be interrupted until it finishes playing.
-        player:SetActivityEnd(.7)
-        
-        self.auxClip = self.auxClip + 1
-        
-        self.auxAmmo = self.auxAmmo - 1
-        
-        success = true
+        if (self.auxClip < GrenadeLauncher.kAuxClipSize) and (self.auxAmmo > 0) then
+            
+            self:TriggerEffects("grenadelauncher_reload")
+            
+            // Play the reload sequence and don't let it be interrupted until it finishes playing.
+            player:SetActivityEnd(player:GetViewAnimationLength())
+            
+            self.auxClip = self.auxClip + 1
+            
+            self.auxAmmo = self.auxAmmo - 1
+            
+            success = true
+            
+        end
         
     end
     
@@ -173,10 +183,16 @@ end
 
 function GrenadeLauncher:UpdateViewModelPoseParameters(viewModel, input)
     
-    //Rifle.UpdateViewModelPoseParameters(self, viewModel, input)
+    // Needs to be called before we set the grenade parameters.
+    Rifle.UpdateViewModelPoseParameters(self, viewModel, input)
     
     viewModel:SetPoseParam("hide_gl", 0)
-    viewModel:SetPoseParam("gl_empty", ConditionalValue(self.auxClip == 0, 1, 0))    
+    local glEmpty = ConditionalValue(self.auxClip == 0, 1, 0)
+    // Do not show as empty until the shooting animation is done.
+    if self.justShotGrenade then
+        glEmpty = 0
+    end
+    viewModel:SetPoseParam("gl_empty", glEmpty)
     
 end
 

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\TechTree_Server.lua
 //
@@ -318,7 +318,10 @@ function TechTree:UpdateTeamStructureData()
         if(self:GetTechSpecial(techId)) then
         
             hasTech = self:GetSpecialTechSupported(techId, structures)
-            
+
+        // If it's research, see if it's researched
+        
+        // else            
         else
     
             // Also look for tech that replaces this tech but counts towards it (upgraded Armories, Infantry Portals, etc.)        
@@ -456,6 +459,7 @@ function TechTree:ComputeAvailability()
     
 end
 
+// TODO: Call this when structure is powered down or up
 function TechTree:SetTechNodeChanged(node)
 
     if table.insertunique(self.techNodesChanged, node) then

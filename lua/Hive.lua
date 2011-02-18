@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Hive.lua
 //
@@ -65,7 +65,7 @@ function Hive:GetTechButtons(techId)
     
     if(techId == kTechId.RootMenu) then 
     
-        techButtons = { kTechId.Drifter, kTechId.MarkersMenu, kTechId.UpgradesMenu, kTechId.SetRally, kTechId.Metabolize }
+        techButtons = { kTechId.Grow, kTechId.Drifter, kTechId.MarkersMenu, kTechId.UpgradesMenu, kTechId.SetRally, kTechId.Metabolize }
         
         // Allow hive to be upgraded but you'll never upgrade to Level1 so don't show it
         local upgradeIndex = table.maxn(techButtons) + 1
@@ -101,17 +101,26 @@ function Hive:TriggerMetabolize(position)
     
 end
 
-function Hive:PerformActivation(techId, position, commander)
+function Hive:PerformActivation(techId, position, normal, commander)
 
     local success = false
     
-    if techId == kTechId.Metabolize then
+    if techId == kTechId.Grow then
+    
+        // Create infestation for team
+        local infestation = CreateEntity(Infestation.kMapName, position, commander:GetTeamNumber())
+        
+        commander:TriggerEffects("create_infestation_local")
+
+        success = true
+        
+    elseif techId == kTechId.Metabolize then
     
         self:TriggerMetabolize(position)
         success = true
 
     else        
-        success = CommandStructure.PerformActivation(self, techId, position, commander)
+        success = CommandStructure.PerformActivation(self, techId, position, normal, commander)
     end
     
     return success

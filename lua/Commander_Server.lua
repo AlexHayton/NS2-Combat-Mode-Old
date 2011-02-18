@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Commander_Server.lua
 //
@@ -9,10 +9,6 @@
 function Commander:CopyPlayerDataFrom(player)
 
     Player.CopyPlayerDataFrom(self, player)
-
-    self.gameStarted = player.gameStarted
-    self.countingDown = player.countingDown
-    self.frozen = player.frozen
     self.alive = player.alive
     
     self.health = player.health
@@ -107,7 +103,7 @@ end
 
 // Returns true or false, as well as the entity id of the new structure (or -1 if false)
 // pickVec optional (for AI units). In those cases, builderEntity will be the entity doing the building.
-function Commander:AttemptToBuild(techId, origin, orientation, pickVec, buildTech, builderEntity)
+function Commander:AttemptToBuild(techId, origin, normal, orientation, pickVec, buildTech, builderEntity)
 
     local legalBuildPosition = false
     local position = nil
@@ -133,9 +129,16 @@ function Commander:AttemptToBuild(techId, origin, orientation, pickVec, buildTec
         
         if newEnt ~= nil then
         
+            // Use attach entity orientation 
+            if attachEntity then
+                orientation = attachEntity:GetAngles().yaw
+            end
+            
             // If orientation yaw specified, set it
             if orientation then
-                newEnt:SetAngles(Angles(0, orientation, 0))
+                local angles = Angles(0, orientation, 0)
+                local coords = BuildCoordsFromDirection(angles:GetCoords().zAxis, newEnt:GetOrigin())
+                newEnt:SetCoords(coords)                
             end
             
             local isAlien = false
@@ -169,7 +172,7 @@ end
 
 // Return whether action should continue to be processed for the next selected unit. Position will be nil
 // for non-targeted actions and will be the world position target for the action for targeted actions.
-function Commander:ProcessTechTreeActionForEntity(techNode, position, pickVec, orientation, entity, force)
+function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pickVec, orientation, entity, force)
 
     local success = false
     local keepProcessing = true
@@ -187,7 +190,7 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, pickVec, o
     local team = self:GetTeam()
     
     // Let entities override actions themselves (eg, so buildbots can execute a move-build order instead of building structure immediately)
-    success, keepProcessing = entity:OverrideTechTreeAction(techNode, position, nil, self)
+    success, keepProcessing = entity:OverrideTechTreeAction(techNode, position, orientation, self)
     if(success) then
         return success, keepProcessing
     end        
@@ -211,7 +214,7 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, pickVec, o
                                 
             elseif(techNode:GetIsBuild()) then
             
-                success = self:AttemptToBuild(techId, position, orientation, pickVec, false)
+                success = self:AttemptToBuild(techId, position, normal, orientation, pickVec, false)
                 if success then 
                     keepProcessing = false
                 end
@@ -248,7 +251,7 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, pickVec, o
                 
             elseif(techNode:GetIsBuy()) then
             
-                success = self:AttemptToBuild(techId, position, orientation, pickVec, false)
+                success = self:AttemptToBuild(techId, position, normal, orientation, pickVec, false)
                 
             end
             
@@ -269,7 +272,7 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, pickVec, o
         // Deduct energy cost if any 
         if(cost == 0 or cost <= entity:GetEnergy()) then
                     
-            success = entity:PerformActivation(techId, position, self)
+            success = entity:PerformActivation(techId, position, normal, self)
             
             if success then
             
@@ -397,6 +400,7 @@ function Commander:ProcessTechTreeAction(techId, pickVec, orientation, worldCoor
 
         // Trace along pick vector to find world position of action
         local targetPosition = Vector(0, 0, 0)
+        local targetNormal = Vector(0, 1, 0)
         local trace = nil
         if pickVec ~= nil then
         
@@ -404,6 +408,7 @@ function Commander:ProcessTechTreeAction(techId, pickVec, orientation, worldCoor
             
             if(trace ~= nil) then
                 VectorCopy(trace.endPoint, targetPosition)
+                VectorCopy(trace.normal, targetNormal)
             end
                 
         end
@@ -425,7 +430,7 @@ function Commander:ProcessTechTreeAction(techId, pickVec, orientation, worldCoor
             
                 local actionSuccess = false
                 local keepProcessing = false
-                actionSuccess, keepProcessing = self:ProcessTechTreeActionForEntity(techNode, targetPosition, pickVec, orientation, selectedEntity)
+                actionSuccess, keepProcessing = self:ProcessTechTreeActionForEntity(techNode, targetPosition, targetNormal, pickVec, orientation, selectedEntity)
                 
                 // Successful if just one of our entities handled action
                 if(actionSuccess) then

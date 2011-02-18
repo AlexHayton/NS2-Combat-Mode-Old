@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Table.lua
 //
@@ -45,6 +45,14 @@ function elementEqualsElement(i, j)
         
     end
     
+end
+
+function table.duplicate(t)
+  local t2 = {}
+  for k,v in pairs(t) do
+    t2[k] = v
+  end
+  return t2
 end
 
 function table.copy(srcTable, destTable, noClear)

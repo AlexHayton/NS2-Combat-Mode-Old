@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Commander_Client.lua
 //
@@ -312,6 +312,10 @@ function Commander:OnDestroy()
         
         Client.DestroyRenderModel(self.unitUnderCursorRenderModel)
         
+        Client.DestroyRenderModel(self.sentryOrientationRenderModel)
+        
+        Client.DestroyRenderModel(self.sentryRangeRenderModel)
+        
         self.hudSetup = false
         
     end
@@ -330,6 +334,18 @@ function Commander:DestroySelectionCircles()
     end
     
     self.selectionCircles = {}
+    
+    // Delete old circles, if any
+    if self.sentryArcs ~= nil then
+    
+        for index, sentryPair in ipairs(self.sentryArcs) do
+            Client.DestroyRenderModel(sentryPair[2])
+            Client.DestroyRenderModel(sentryPair[3])
+        end
+        
+    end
+    
+    self.sentryArcs = {}
 
 end
 
@@ -753,6 +769,8 @@ function Commander:OnInitLocalClient()
 
     self.selectionCircles = {}
     
+    self.sentryArcs = {}
+    
     self.ghostGuides = {}
     
     self.alertBlips = {}
@@ -902,15 +920,25 @@ function Commander:SetupHud()
     
     self.entityIdUnderCursor = Entity.invalidId
     
+    // Create sentry orientation indicator
+    self.sentryOrientationRenderModel = Client.CreateRenderModel(RenderScene.Zone_Default)
+    self.sentryOrientationRenderModel:SetModel(Commander.kSentryOrientationModelName)
+    self.sentryOrientationRenderModel:SetIsVisible(false)
+
+    self.sentryRangeRenderModel = Client.CreateRenderModel(RenderScene.Zone_Default)
+    self.sentryRangeRenderModel:SetModel(Commander.kSentryRangeModelName)
+    self.sentryRangeRenderModel:SetIsVisible(false)
+    
     local alertsScript = GetGUIManager():CreateGUIScriptSingle("GUICommanderAlerts")
     // Every Player already has a GUIMinimap.
     local minimapScript = GetGUIManager():GetGUIScriptSingle("GUIMinimap")
     minimapScript:SetBackgroundMode(GUIMinimap.kModeMini)
-    // Only the marines have a selection panel right now.
+
     local selectionPanelScript = GetGUIManager():CreateGUIScriptSingle("GUISelectionPanel")
     
     local buttonsScriptName = ConditionalValue(self:GetTeamType() == kAlienTeamType, "GUICommanderButtonsAliens", "GUICommanderButtonsMarines")
     self.buttonsScript = GetGUIManager():CreateGUIScript(buttonsScriptName)
+    self.buttonsScript:GetBackground():AddChild(selectionPanelScript:GetBackground())
     minimapScript:SetButtonsScript(self.buttonsScript)
     
     local hotkeyIconScript = GetGUIManager():CreateGUIScriptSingle("GUIHotkeyIcons")
@@ -1003,6 +1031,13 @@ function Commander:SendControlClickSelectCommand(pickVec, screenStartVec, screen
 
 end
 
+function Commander:SendSelectHotkeyGroupMessage(groupNumber)
+
+    local message = BuildSelectHotkeyGroupMessage(groupNumber)
+    Client.SendNetworkMessage("SelectHotkeyGroup", message, true)
+
+end
+
 function Commander:SendAction(techId)
 
     local message = BuildCommActionMessage(techId)
@@ -1010,9 +1045,10 @@ function Commander:SendAction(techId)
     
 end
 
-function Commander:SendTargetedAction(techId, normalizedPickRay)
+function Commander:SendTargetedAction(techId, normalizedPickRay, orientation)
 
-    local message = BuildCommTargetedActionMessage(techId, normalizedPickRay.x, normalizedPickRay.y, normalizedPickRay.z, 0)
+    local orientation = ConditionalValue(orientation, orientation, math.random() * 2 * math.pi)
+    local message = BuildCommTargetedActionMessage(techId, normalizedPickRay.x, normalizedPickRay.y, normalizedPickRay.z, orientation)
     Client.SendNetworkMessage("CommTargetedAction", message, true)    
     
 end
@@ -1024,9 +1060,9 @@ function Commander:SendTargetedOrientedAction(techId, normalizedPickRay, orienta
     
 end
 
-function Commander:SendTargetedActionWorld(techId, worldCoords)
+function Commander:SendTargetedActionWorld(techId, worldCoords, orientation)
 
-    local message = BuildCommTargetedActionMessage(techId, worldCoords.x, worldCoords.y, worldCoords.z, 0)
+    local message = BuildCommTargetedActionMessage(techId, worldCoords.x, worldCoords.y, worldCoords.z, ConditionalValue(orientation, orientation, 0))
     Client.SendNetworkMessage("CommTargetedActionWorld", message, true)
     
 end
@@ -1039,12 +1075,27 @@ function Commander:UpdateOrientationAngle(x, y)
         local normalizedPickRay = CreatePickRay (self, x, y)
         local trace = GetCommanderPickTarget(self, normalizedPickRay, false, true)
         
-        local normToMouse = GetNormalizedVector(trace.endPoint - self.specifyingOrientationPosition)
-
-        self.orientationAngle = GetYawFromVector(normToMouse)
+        local vecDiff = trace.endPoint - self.specifyingOrientationPosition
+        vecDiff.y = 0
+        
+        if vecDiff:GetLength() > 1 then
+        
+            local normToMouse = GetNormalizedVector(vecDiff)
+            
+            self.sentryOrientationRenderModel:SetCoords(BuildCoordsFromDirection(-normToMouse, self.specifyingOrientationPosition, Commander.kSentryArcScale))
+            self.sentryOrientationRenderModel:SetIsVisible(true)
+            
+            self.sentryRangeRenderModel:SetCoords(BuildCoordsFromDirection(-normToMouse, self.specifyingOrientationPosition, Vector(1, 1, Sentry.kRange)))
+            self.sentryRangeRenderModel:SetIsVisible(true)
+            
+            self.orientationAngle = GetYawFromVector(normToMouse)
+            
+        end
         
     else
         self.orientationAngle = 0
+        self.sentryOrientationRenderModel:SetIsVisible(false)
+        self.sentryRangeRenderModel:SetIsVisible(false)
     end
     
 end
@@ -1140,12 +1191,25 @@ function Commander:UpdateSelectionCircles()
                 
                 local renderModelCircle = Client.CreateRenderModel(RenderScene.Zone_Default)
                 renderModelCircle:SetModel(Commander.kSelectionCircleModelName)
-                
-                local model = Shared.GetModel(Shared.GetModelIndex(Commander.kSelectionCircleModelName))
-                
+                                
                 // Insert pair into selectionCircles: {entityId, render model}
                 table.insert(self.selectionCircles, {entityEntry[1], renderModelCircle})
+               
+                // Now create sentry arcs for any selected sentries
+                local entity = Shared.GetEntity(entityEntry[1])
+                if entity and entity:isa("Sentry") then
                 
+                    local sentryArcCircle = Client.CreateRenderModel(RenderScene.Zone_Default)
+                    sentryArcCircle:SetModel(Commander.kSentryOrientationModelName)
+
+                    local sentryRange = Client.CreateRenderModel(RenderScene.Zone_Default)
+                    sentryRange:SetModel(Commander.kSentryRangeModelName)
+                
+                    // Insert pair into sentryArcs: {entityId, sentry arc render model, sentry range render model}
+                    table.insert(self.sentryArcs, {entityEntry[1], sentryArcCircle, sentryRange})
+                    
+                end
+ 
             end
             
             self.createSelectionCircles = nil
@@ -1172,6 +1236,24 @@ function Commander:UpdateSelectionCircles()
                 end
                 renderModelCircle:SetMaterialParameter("buildPercentage", buildPercentage * 100)
                 
+            end
+            
+        end
+        
+        // Set size and orientation of visible sentry arcs
+        for index, sentryPair in ipairs(self.sentryArcs) do
+        
+            local sentry = Shared.GetEntity(sentryPair[1])
+            if sentry ~= nil then
+            
+                // Draw sentry arc at scale 1 around sentry to show cone
+                local sentryArcCircle = sentryPair[2]                
+                sentryArcCircle:SetCoords(BuildCoordsFromDirection(-sentry:GetCoords().zAxis, sentry:GetOrigin() + Vector(0, .05, 0), Commander.kSentryArcScale))
+
+                // Draw line model scaled up so we can see sentry range
+                local sentryLine = sentryPair[3]                
+                sentryLine:SetCoords(BuildCoordsFromDirection(-sentry:GetCoords().zAxis, sentry:GetOrigin() + Vector(0, .05, 0), Vector(1, 1, Sentry.kRange)))
+  
             end
             
         end
@@ -1354,9 +1436,20 @@ function Commander:ClientOnMouseRelease(mouseButton, x, y)
                         if((self.currentTechId == kTechId.CommandStation) or (self.currentTechId == kTechId.Hive)) then
                             orientationAngle = 0
                         end
+                                
+                        if self.currentTechId == kTechId.Sentry then
+            
+                            // Send world coords of sentry placement instead of normalized pick ray.
+                            // Because the player may have moved since dropping the sentry and orienting it.
+                            self:SendTargetedActionWorld(self.currentTechId, self.specifyingOrientationPosition, orientationAngle)
+                            
+                        else                        
                         
-                        local pickVec = ConditionalValue(self.specifyingOrientation, self.specifyingOrientationPickVec, normalizedPickRay)
-                        self:SendTargetedOrientedAction(self.currentTechId, pickVec, orientationAngle)
+                            local pickVec = ConditionalValue(self.specifyingOrientation, self.specifyingOrientationPickVec, normalizedPickRay)
+                            self:SendTargetedOrientedAction(self.currentTechId, pickVec, orientationAngle)
+                            
+                        end
+ 
                         self:SetCurrentTech(kTechId.None)
                         
                         displayConfirmationEffect = true
@@ -1426,7 +1519,7 @@ function Commander:SelectMarquee(selectStartX, selectStartY, selectEndX, selectE
 end
 
 function Commander:SetCurrentTech(techId)
-
+    
     // Change menu if it is a menu
     local techNode = GetTechNode(techId)
     
@@ -1437,7 +1530,7 @@ function Commander:SetCurrentTech(techId)
     end
     
     if techNode and not techNode:GetRequiresTarget() and not techNode:GetIsBuy() then
-    
+        
         // Send action up to server. Necessary for even menu changes as 
         // server validates all actions.
         self:SendAction(techId)

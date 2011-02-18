@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Gorge_Server.lua
 //
@@ -12,6 +12,7 @@ function Gorge:InitWeapons()
     Alien.InitWeapons(self)
 
     self:GiveItem(SpitSpray.kMapName)
+    self:GiveItem(InfestationAbility.kMapName)
     self:GiveItem(HydraAbility.kMapName)
     
     self:SetActiveWeapon(SpitSpray.kMapName)

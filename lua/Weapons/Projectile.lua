@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Weapons\Projectile.lua
 //
@@ -30,6 +30,10 @@ function Projectile:OnCreate()
     
     self.radius = 0.1
     self.mass   = 1.0
+    self.linearDamping = 0
+    self.restitution = 0.5
+    
+    self.gravityEnabled = true
 
     if (Client) then
         self.oldModelIndex = 0

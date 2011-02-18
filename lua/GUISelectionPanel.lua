@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\GUISelectionPanel.lua
 //
@@ -12,39 +12,56 @@ Script.Load("lua/GUIIncrementBar.lua")
 
 class 'GUISelectionPanel' (GUIScript)
 
-GUISelectionPanel.kFontName = "Arial"
-GUISelectionPanel.kFontColor = Color(1, 1, 1)
+GUISelectionPanel.kFontName = "MicrogrammaDMedExt"
+GUISelectionPanel.kFontColor = Color(0.8, 0.8, 1)
+GUISelectionPanel.kStatusFontColor = Color(0.9, 1, 0)
 
-GUISelectionPanel.kSelectionTextureMarines = "ui/marine_commander.dds"
-GUISelectionPanel.kSelectionTextureAliens = "ui/alien_commander.dds"
+GUISelectionPanel.kSelectionTextureMarines = "ui/marine_commander_background.dds"
+GUISelectionPanel.kSelectionTextureAliens = "ui/alien_commander_background.dds"
+
+GUISelectionPanel.kSelectionTextureCoordinates = { X1 = 464, Y1 = 338, X2 = 741, Y2 = 578 }
+GUISelectionPanel.kHealthIconCoordinates = { X1 = 764, Y1 = 546, X2 = 795, Y2 = 577 }
+GUISelectionPanel.kArmorIconCoordinates = { X1 = 796, Y1 = 546, X2 = 827, Y2 = 577 }
+GUISelectionPanel.kEnergyIconCoordinates = { X1 = 828, Y1 = 546, X2 = 859, Y2 = 577 }
 
 // The panel will scale with the screen resolution. It is based on
 // this screen width.
-GUISelectionPanel.kPanelReferenceScreenWidth = 1280
-GUISelectionPanel.kPanelWidth = 550
-GUISelectionPanel.kPanelHeight = 150
-GUISelectionPanel.kPanelEndCapWidth = 38
+GUISelectionPanel.kPanelWidth = 277 * kCommanderGUIsGlobalScale
+GUISelectionPanel.kPanelHeight = 240 * kCommanderGUIsGlobalScale
 
-GUISelectionPanel.kYOffset = -150 - 10
-
-GUISelectionPanel.kSelectedIconXOffset = 20
-GUISelectionPanel.kSelectedIconYOffset = 20
-GUISelectionPanel.kSelectedIconSize = 60
+GUISelectionPanel.kSelectedIconXOffset = 25 * kCommanderGUIsGlobalScale
+GUISelectionPanel.kSelectedIconYOffset = 45 * kCommanderGUIsGlobalScale
+GUISelectionPanel.kSelectedIconSize = 80 * kCommanderGUIsGlobalScale
+GUISelectionPanel.kMultiSelectedIconSize = GUISelectionPanel.kSelectedIconSize * 0.75
 GUISelectionPanel.kSelectedIconTextureWidth = 80
 GUISelectionPanel.kSelectedIconTextureHeight = 80
 
-GUISelectionPanel.kSelectedNameFontSize = 22
-GUISelectionPanel.kSelectedNameXOffset = 8
+GUISelectionPanel.kSelectedNameFontSize = 16 * kCommanderGUIsGlobalScale
+GUISelectionPanel.kSelectedNameYOffset = 25
 
-GUISelectionPanel.kSelectedLocationTextFontSize = 18
+GUISelectionPanel.kSelectedLocationTextFontSize = 16 * kCommanderGUIsGlobalScale
+GUISelectionPanel.kSelectionLocationNameYOffset = -30
 
-GUISelectionPanel.kSelectedSquadTextFontSize = 18
+GUISelectionPanel.kSelectionStatusTextYOffset = -44
 
-GUISelectionPanel.kSelectedHealthTextFontSize = 22
+GUISelectionPanel.kSelectionStatusBarYOffset = -20
 
-GUISelectionPanel.kSelectedCustomTextFontSize = 20
+GUISelectionPanel.kSelectedSquadTextFontSize = 16 * kCommanderGUIsGlobalScale
+
+GUISelectionPanel.kResourceIconSize = 25 * kCommanderGUIsGlobalScale
+GUISelectionPanel.kResourceIconXOffset = 2
+GUISelectionPanel.kResourceIconYOffset = 2
+
+GUISelectionPanel.kResourceTextXOffset = 2
+
+GUISelectionPanel.kSelectedHealthTextFontSize = 15 * kCommanderGUIsGlobalScale
+
+GUISelectionPanel.kSelectedCustomTextFontSize = 16 * kCommanderGUIsGlobalScale
 GUISelectionPanel.kSelectedCustomTextXOffset = -20
 GUISelectionPanel.kSelectedCustomTextYOffset = 20
+
+GUISelectionPanel.kStatusBarWidth = 200 * kCommanderGUIsGlobalScale
+GUISelectionPanel.kStatusBarHeight = 6 * kCommanderGUIsGlobalScale
 
 function GUISelectionPanel:Initialize()
 
@@ -53,28 +70,47 @@ function GUISelectionPanel:Initialize()
         self.textureName = GUISelectionPanel.kSelectionTextureAliens
     end
     self.background = GUI.CreateGraphicsItem()
-    self.background:SetAnchor(GUIItem.Middle, GUIItem.Bottom)
+    self.background:SetAnchor(GUIItem.Left, GUIItem.Bottom)
     self.background:SetTexture(self.textureName)
-    self.background:SetTexturePixelCoordinates(50, 0, 50 + 182, 165)
+    self.background:SetSize(Vector(GUISelectionPanel.kPanelWidth, GUISelectionPanel.kPanelHeight, 0))
+    self.background:SetPosition(Vector(-GUISelectionPanel.kPanelWidth, -GUISelectionPanel.kPanelHeight, 0))
+    GUISetTextureCoordinatesTable(self.background, GUISelectionPanel.kSelectionTextureCoordinates)
     
-    self.backgroundRightEndCap = GUI.CreateGraphicsItem()
-    self.backgroundRightEndCap:SetAnchor(GUIItem.Right, GUIItem.Top)
-    self.backgroundRightEndCap:SetSize(Vector(GUISelectionPanel.kPanelEndCapWidth, GUISelectionPanel.kPanelHeight, 0))
-    self.backgroundRightEndCap:SetPosition(Vector(-GUISelectionPanel.kPanelEndCapWidth, 0, 0))
-    self.backgroundRightEndCap:SetTexture(self.textureName)
-    self.backgroundRightEndCap:SetTexturePixelCoordinates(240, 0, 240 + 36, 165)
-    self.background:AddChild(self.backgroundRightEndCap)
-    
-    self.backgroundLeftEndCap = GUI.CreateGraphicsItem()
-    self.backgroundLeftEndCap:SetAnchor(GUIItem.Left, GUIItem.Top)
-    self.backgroundLeftEndCap:SetSize(Vector(GUISelectionPanel.kPanelEndCapWidth, GUISelectionPanel.kPanelHeight, 0))
-    self.backgroundLeftEndCap:SetPosition(Vector(-GUISelectionPanel.kPanelEndCapWidth, 0, 0))
-    self.backgroundLeftEndCap:SetTexture(self.textureName)
-    self.backgroundLeftEndCap:SetTexturePixelCoordinates(0, 0, 36, 165)
-    self.background:AddChild(self.backgroundLeftEndCap)
+    self:InitializeScanlines()
     
     self:InitializeSingleSelectionItems()
     self:InitializeMultiSelectionItems()
+    
+    self.highlightedMultiItem = 1
+    self:InitializeHighlighter()
+
+end
+
+function GUISelectionPanel:InitializeScanlines()
+
+    local settingsTable = { }
+    settingsTable.Width = GUISelectionPanel.kPanelWidth
+    settingsTable.Height = GUISelectionPanel.kPanelHeight
+    // The amount of extra scanline space that should be above the panel.
+    settingsTable.ExtraHeight = 20
+    self.scanlines = GUIScanlines()
+    self.scanlines:Initialize(settingsTable)
+    self.scanlines:GetBackground():SetInheritsParentAlpha(true)
+    self.background:AddChild(self.scanlines:GetBackground())
+    
+end
+
+function GUISelectionPanel:InitializeHighlighter()
+
+    self.highlightItem = GUI.CreateGraphicsItem()
+    self.highlightItem:SetAnchor(GUIItem.Left, GUIItem.Top)
+    self.highlightItem:SetSize(Vector(GUISelectionPanel.kMultiSelectedIconSize, GUISelectionPanel.kMultiSelectedIconSize, 0))
+    self.highlightItem:SetTexture("ui/" .. CommanderUI_MenuImage() .. ".dds")
+    local textureWidth, textureHeight = CommanderUI_MenuImageSize()
+    local buttonWidth = CommanderUI_MenuButtonWidth()
+    local buttonHeight = CommanderUI_MenuButtonHeight()
+    self.highlightItem:SetTexturePixelCoordinates(textureWidth - buttonWidth, textureHeight - buttonHeight, textureWidth, textureHeight)
+    self.highlightItem:SetIsVisible(false)
 
 end
 
@@ -89,29 +125,43 @@ function GUISelectionPanel:InitializeSingleSelectionItems()
     self.selectedIcon:SetTexture("ui/" .. CommanderUI_MenuImage() .. ".dds")
     self.selectedIcon:SetIsVisible(false)
     table.insert(self.singleSelectionItems, self.selectedIcon)
-    self.backgroundLeftEndCap:AddChild(self.selectedIcon)
+    self.background:AddChild(self.selectedIcon)
     
     self.selectedName = GUI.CreateTextItem()
     self.selectedName:SetFontSize(GUISelectionPanel.kSelectedNameFontSize)
     self.selectedName:SetFontName(GUISelectionPanel.kFontName)
-    self.selectedName:SetAnchor(GUIItem.Right, GUIItem.Top)
-    self.selectedName:SetPosition(Vector(GUISelectionPanel.kSelectedNameXOffset, 0, 0))
-    self.selectedName:SetTextAlignmentX(GUITextItem.Align_Min)
-    self.selectedName:SetTextAlignmentY(GUITextItem.Align_Min)
+    self.selectedName:SetFontIsBold(true)
+    self.selectedName:SetAnchor(GUIItem.Middle, GUIItem.Top)
+    self.selectedName:SetPosition(Vector(0, GUISelectionPanel.kSelectedNameYOffset, 0))
+    self.selectedName:SetTextAlignmentX(GUITextItem.Align_Center)
+    self.selectedName:SetTextAlignmentY(GUITextItem.Align_Center)
     self.selectedName:SetColor(GUISelectionPanel.kFontColor)
     table.insert(self.singleSelectionItems, self.selectedName)
-    self.selectedIcon:AddChild(self.selectedName)
+    self.background:AddChild(self.selectedName)
     
     self.selectedLocationName = GUI.CreateTextItem()
     self.selectedLocationName:SetFontSize(GUISelectionPanel.kSelectedLocationTextFontSize)
+    self.selectedLocationName:SetFontIsBold(true)
     self.selectedLocationName:SetFontName(GUISelectionPanel.kFontName)
-    self.selectedLocationName:SetAnchor(GUIItem.Left, GUIItem.Top)
-    self.selectedLocationName:SetPosition(Vector(0, GUISelectionPanel.kSelectedNameFontSize, 0))
-    self.selectedLocationName:SetTextAlignmentX(GUITextItem.Align_Min)
-    self.selectedLocationName:SetTextAlignmentY(GUITextItem.Align_Min)
+    self.selectedLocationName:SetAnchor(GUIItem.Middle, GUIItem.Bottom)
+    self.selectedLocationName:SetPosition(Vector(0, GUISelectionPanel.kSelectionLocationNameYOffset, 0))
+    self.selectedLocationName:SetTextAlignmentX(GUITextItem.Align_Center)
+    self.selectedLocationName:SetTextAlignmentY(GUITextItem.Align_Center)
     self.selectedLocationName:SetColor(GUISelectionPanel.kFontColor)
     table.insert(self.singleSelectionItems, self.selectedLocationName)
-    self.selectedName:AddChild(self.selectedLocationName)
+    self.background:AddChild(self.selectedLocationName)
+    
+    self.statusText = GUI.CreateTextItem()
+    self.statusText:SetFontSize(GUISelectionPanel.kSelectedLocationTextFontSize)
+    self.statusText:SetFontIsBold(true)
+    self.statusText:SetFontName(GUISelectionPanel.kFontName)
+    self.statusText:SetAnchor(GUIItem.Middle, GUIItem.Bottom)
+    self.statusText:SetPosition(Vector(0, GUISelectionPanel.kSelectionStatusTextYOffset, 0))
+    self.statusText:SetTextAlignmentX(GUITextItem.Align_Center)
+    self.statusText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.statusText:SetColor(GUISelectionPanel.kStatusFontColor)
+    table.insert(self.singleSelectionItems, self.statusText)
+    self.background:AddChild(self.statusText)
     
     self.selectedSquadName = GUI.CreateTextItem()
     self.selectedSquadName:SetFontSize(GUISelectionPanel.kSelectedSquadTextFontSize)
@@ -122,56 +172,72 @@ function GUISelectionPanel:InitializeSingleSelectionItems()
     self.selectedSquadName:SetTextAlignmentY(GUITextItem.Align_Min)
     self.selectedSquadName:SetColor(GUISelectionPanel.kFontColor)
     table.insert(self.singleSelectionItems, self.selectedSquadName)
-    self.selectedLocationName:AddChild(self.selectedSquadName)
+    self.background:AddChild(self.selectedSquadName)
+    
+    self.healthIcon = GUI.CreateGraphicsItem()
+    self.healthIcon:SetAnchor(GUIItem.Right, GUIItem.Top)
+    self.healthIcon:SetSize(Vector(GUISelectionPanel.kResourceIconSize, GUISelectionPanel.kResourceIconSize, 0))
+    self.healthIcon:SetPosition(Vector(GUISelectionPanel.kResourceIconXOffset, GUISelectionPanel.kResourceIconYOffset, 0))
+    self.healthIcon:SetTexture(self.textureName)
+    GUISetTextureCoordinatesTable(self.healthIcon, GUISelectionPanel.kHealthIconCoordinates)
+    self.selectedIcon:AddChild(self.healthIcon)
     
     self.healthText = GUI.CreateTextItem()
     self.healthText:SetFontSize(GUISelectionPanel.kSelectedHealthTextFontSize)
     self.healthText:SetFontName(GUISelectionPanel.kFontName)
-    self.healthText:SetAnchor(GUIItem.Center, GUIItem.Middle)
-    self.healthText:SetPosition(Vector(0, 0, 0))
-    self.healthText:SetTextAlignmentX(GUITextItem.Align_Center)
+    self.healthText:SetAnchor(GUIItem.Right, GUIItem.Center)
+    self.healthText:SetPosition(Vector(GUISelectionPanel.kResourceTextXOffset, 0, 0))
+    self.healthText:SetTextAlignmentX(GUITextItem.Align_Min)
     self.healthText:SetTextAlignmentY(GUITextItem.Align_Center)
     self.healthText:SetColor(GUISelectionPanel.kFontColor)
     table.insert(self.singleSelectionItems, self.healthText)
-    self.background:AddChild(self.healthText)
+    self.healthIcon:AddChild(self.healthText)
     
-    local incrementBarSettings = { }
-    incrementBarSettings.NumberOfIncrements = 20
-    incrementBarSettings.IncrementWidth = 7
-    incrementBarSettings.IncrementHeight = 12
-    incrementBarSettings.IncrementSpacing = 2
-    incrementBarSettings.TextureName = self.textureName
-    incrementBarSettings.TextureCoordinates = { X = 0, Y = 244, Width = 7, Height = 12 }
-    incrementBarSettings.IncrementColor = PlayerUI_GetTeamColor()
-    incrementBarSettings.LowPercentage = 0.25
-    incrementBarSettings.LowPercentageIncrementColor = Color(1, 0, 0, 1)
-    self.healthBar = GUIIncrementBar()
-    self.healthBar:Initialize(incrementBarSettings)
-    self.healthBar:GetBackground():SetAnchor(GUIItem.Center, GUIItem.Middle)
-    self.healthBar:GetBackground():SetPosition(Vector(-self.healthBar:GetWidth() / 2, GUISelectionPanel.kSelectedHealthTextFontSize / 2, 0))
-    table.insert(self.singleSelectionItems, self.healthBar)
-    self.background:AddChild(self.healthBar:GetBackground())
+    self.armorIcon = GUI.CreateGraphicsItem()
+    self.armorIcon:SetAnchor(GUIItem.Right, GUIItem.Top)
+    self.armorIcon:SetSize(Vector(GUISelectionPanel.kResourceIconSize, GUISelectionPanel.kResourceIconSize, 0))
+    self.armorIcon:SetPosition(Vector(GUISelectionPanel.kResourceIconXOffset, GUISelectionPanel.kResourceIconSize + GUISelectionPanel.kResourceIconYOffset, 0))
+    self.armorIcon:SetTexture(self.textureName)
+    GUISetTextureCoordinatesTable(self.armorIcon, GUISelectionPanel.kArmorIconCoordinates)
+    self.selectedIcon:AddChild(self.armorIcon)
     
-    local statusYOffset = GUISelectionPanel.kSelectedHealthTextFontSize + self.healthBar:GetHeight()
-    self.statusText = GUI.CreateTextItem()
-    self.statusText:SetFontSize(GUISelectionPanel.kSelectedHealthTextFontSize)
-    self.statusText:SetFontName(GUISelectionPanel.kFontName)
-    self.statusText:SetAnchor(GUIItem.Center, GUIItem.Middle)
-    self.statusText:SetPosition(Vector(0, statusYOffset, 0))
-    self.statusText:SetTextAlignmentX(GUITextItem.Align_Center)
-    self.statusText:SetTextAlignmentY(GUITextItem.Align_Center)
-    self.statusText:SetColor(GUISelectionPanel.kFontColor)
-    table.insert(self.singleSelectionItems, self.statusText)
-    self.background:AddChild(self.statusText)
+    self.armorText = GUI.CreateTextItem()
+    self.armorText:SetFontSize(GUISelectionPanel.kSelectedHealthTextFontSize)
+    self.armorText:SetFontName(GUISelectionPanel.kFontName)
+    self.armorText:SetAnchor(GUIItem.Right, GUIItem.Center)
+    self.armorText:SetPosition(Vector(GUISelectionPanel.kResourceTextXOffset, 0, 0))
+    self.armorText:SetTextAlignmentX(GUITextItem.Align_Min)
+    self.armorText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.armorText:SetColor(GUISelectionPanel.kFontColor)
+    table.insert(self.singleSelectionItems, self.armorText)
+    self.armorIcon:AddChild(self.armorText)
     
-    self.statusBar = GUIIncrementBar()
-    // Don't use the lower percentage color for the status bar.
-    incrementBarSettings.LowPercentage = 0
-    self.statusBar:Initialize(incrementBarSettings)
-    self.statusBar:GetBackground():SetAnchor(GUIItem.Center, GUIItem.Middle)
-    self.statusBar:GetBackground():SetPosition(Vector(-self.statusBar:GetWidth() / 2, statusYOffset + GUISelectionPanel.kSelectedHealthTextFontSize / 2, 0))
+    self.energyIcon = GUI.CreateGraphicsItem()
+    self.energyIcon:SetAnchor(GUIItem.Right, GUIItem.Top)
+    self.energyIcon:SetSize(Vector(GUISelectionPanel.kResourceIconSize, GUISelectionPanel.kResourceIconSize, 0))
+    self.energyIcon:SetPosition(Vector(GUISelectionPanel.kResourceIconXOffset, GUISelectionPanel.kResourceIconSize * 2 + GUISelectionPanel.kResourceIconYOffset, 0))
+    self.energyIcon:SetTexture(self.textureName)
+    GUISetTextureCoordinatesTable(self.energyIcon, GUISelectionPanel.kEnergyIconCoordinates)
+    self.selectedIcon:AddChild(self.energyIcon)
+    
+    self.energyText = GUI.CreateTextItem()
+    self.energyText:SetFontSize(GUISelectionPanel.kSelectedHealthTextFontSize)
+    self.energyText:SetFontName(GUISelectionPanel.kFontName)
+    self.energyText:SetAnchor(GUIItem.Right, GUIItem.Center)
+    self.energyText:SetPosition(Vector(GUISelectionPanel.kResourceTextXOffset, 0, 0))
+    self.energyText:SetTextAlignmentX(GUITextItem.Align_Min)
+    self.energyText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.energyText:SetColor(GUISelectionPanel.kFontColor)
+    table.insert(self.singleSelectionItems, self.energyText)
+    self.energyIcon:AddChild(self.energyText)
+    
+    self.statusBar = GUI.CreateGraphicsItem()
+    self.statusBar:SetAnchor(GUIItem.Center, GUIItem.Bottom)
+    self.statusBar:SetPosition(Vector(-GUISelectionPanel.kStatusBarWidth / 2, GUISelectionPanel.kSelectionStatusBarYOffset, 0))
+    self.statusBar:SetSize(Vector(GUISelectionPanel.kStatusBarWidth, GUISelectionPanel.kStatusBarHeight, 0))
+    self.statusBar:SetColor(PlayerUI_GetTeamColor())
     table.insert(self.singleSelectionItems, self.statusBar)
-    self.background:AddChild(self.statusBar:GetBackground())
+    self.background:AddChild(self.statusBar)
     
     self.customText = GUI.CreateTextItem()
     self.customText:SetFontSize(GUISelectionPanel.kSelectedCustomTextFontSize)
@@ -194,6 +260,11 @@ end
 
 function GUISelectionPanel:Uninitialize()
 
+    if self.scanlines then
+        self.scanlines:Uninitialize()
+        self.scanlines = nil
+    end
+    
     // Everything is attached to the background so destroying it will
     // destroy everything else.
     GUI.DestroyItem(self.background)
@@ -206,13 +277,12 @@ function GUISelectionPanel:Uninitialize()
 end
 
 function GUISelectionPanel:Update(deltaTime)
-
-    // Update the size of the whole panel based on the screen resolution.
-    local panelWidth = (Client.GetScreenWidth() / GUISelectionPanel.kPanelReferenceScreenWidth) * GUISelectionPanel.kPanelWidth
-    self.background:SetSize(Vector(panelWidth, GUISelectionPanel.kPanelHeight, 0))
-    self.background:SetPosition(Vector(-panelWidth / 2, GUISelectionPanel.kYOffset, 0))
     
     self:UpdateSelected()
+    
+    if self.scanlines then
+        self.scanlines:Update(deltaTime)
+    end
     
 end
 
@@ -225,6 +295,10 @@ function GUISelectionPanel:UpdateSelected()
         if numberSelectedEntities == 1 then
             self:UpdateSingleSelection(selectedEntities[1])
         else
+            if self.highlightedMultiItem > table.count(selectedEntities) then
+                self.highlightedMultiItem = 1
+            end
+            self:UpdateSingleSelection(selectedEntities[self.highlightedMultiItem])
             self:UpdateMultiSelection(selectedEntities)
         end
     end
@@ -236,6 +310,7 @@ function GUISelectionPanel:UpdateSingleSelection(entityId)
     // Make all multiselection icons invisible.
     function SetItemInvisible(item) item:SetIsVisible(false) end
     table.foreachfunctor(self.multiSelectionIcons, SetItemInvisible)
+    self.highlightItem:SetIsVisible(false)
     
     self.selectedIcon:SetIsVisible(true)
     self:SetIconTextureCoordinates(self.selectedIcon, entityId)
@@ -245,28 +320,37 @@ function GUISelectionPanel:UpdateSingleSelection(entityId)
     
     local selectedDescription = CommanderUI_GetSelectedDescriptor(entityId)
     self.selectedName:SetIsVisible(true)
-    self.selectedName:SetText(selectedDescription)
+    self.selectedName:SetText(string.upper(selectedDescription))
     local selectedLocationText = CommanderUI_GetSelectedLocation(entityId)
     self.selectedLocationName:SetIsVisible(true)
-    self.selectedLocationName:SetText(selectedLocationText)
+    self.selectedLocationName:SetText(string.upper(selectedLocationText))
     
     local selectedBargraphs = CommanderUI_GetSelectedBargraphs(entityId)
-    local healthText = selectedBargraphs[1]
+    local healthText = CommanderUI_GetSelectedHealth(entityId)
     self.healthText:SetText(healthText)
     self.healthText:SetIsVisible(true)
+    
+    local armorText = CommanderUI_GetSelectedArmor(entityId)
+    self.armorText:SetText(armorText)
+    self.armorText:SetIsVisible(true)
+    
     local healthPercentage = selectedBargraphs[2]
-    self.healthBar:SetPercentage(healthPercentage)
-    self.healthBar:SetIsVisible(true)
     self.statusText:SetIsVisible(false)
     self.statusBar:SetIsVisible(false)
     if table.count(selectedBargraphs) > 2 and selectedBargraphs[4] then
         local statusText = selectedBargraphs[3]
         self.statusText:SetIsVisible(true)
-        self.statusText:SetText(statusText)
+        local pulseColor = Color(GUISelectionPanel.kStatusFontColor)
+        pulseColor.a = 0.5 + (((math.sin(Shared.GetTime() * 10) + 1) / 2) * 0.5)
+        self.statusText:SetColor(pulseColor)
+        self.statusText:SetText(string.upper(statusText))
         local statusPercentage = selectedBargraphs[4]
         self.statusBar:SetIsVisible(true)
-        self.statusBar:SetPercentage(statusPercentage)
+        self.statusBar:SetSize(Vector(GUISelectionPanel.kStatusBarWidth * statusPercentage, GUISelectionPanel.kStatusBarHeight, 0))
     end
+    
+    self.energyText:SetIsVisible(true)
+    self.energyText:SetText(CommanderUI_GetSelectedEnergy(entityId))
     
     local selectedSquadName = CommanderUI_GetSelectedSquad(entityId)
     self.selectedSquadName:SetIsVisible(false)
@@ -289,12 +373,11 @@ end
 
 function GUISelectionPanel:UpdateMultiSelection(selectedEntityIds)
 
-    // Make sure all the single selection items are invisible.
     function SetItemInvisible(item) item:SetIsVisible(false) end
-    table.foreachfunctor(self.singleSelectionItems, SetItemInvisible)
-    
     // Make all previous selection icons invisible.
     table.foreachfunctor(self.multiSelectionIcons, SetItemInvisible)
+    
+    self.highlightItem:SetIsVisible(false)
     
     local currentIconIndex = 1
     for i, selectedEntityId in ipairs(selectedEntityIds) do
@@ -306,6 +389,18 @@ function GUISelectionPanel:UpdateMultiSelection(selectedEntityIds)
         end
         selectedIcon:SetIsVisible(true)
         self:SetIconTextureCoordinates(selectedIcon, selectedEntityId)
+        
+        local xOffset = -(GUISelectionPanel.kMultiSelectedIconSize * currentIconIndex)
+        selectedIcon:SetPosition(Vector(xOffset, -GUISelectionPanel.kMultiSelectedIconSize, 0))
+        
+        if currentIconIndex == self.highlightedMultiItem then
+            if self.highlightItem:GetParent() then
+                self.highlightItem:GetParent():RemoveChild(self.highlightItem)
+            end
+            selectedIcon:AddChild(self.highlightItem)
+            self.highlightItem:SetIsVisible(true)
+        end
+        
         currentIconIndex = currentIconIndex + 1
     end
 
@@ -314,14 +409,28 @@ end
 function GUISelectionPanel:CreateMultiSelectionIcon()
 
     local createdIcon = GUI.CreateGraphicsItem()
-    createdIcon:SetAnchor(GUIItem.Left, GUIItem.Top)
-    createdIcon:SetSize(Vector(GUISelectionPanel.kSelectedIconSize, GUISelectionPanel.kSelectedIconSize, 0))
-    local xOffset = GUISelectionPanel.kSelectedIconXOffset + (GUISelectionPanel.kSelectedIconSize * table.count(self.multiSelectionIcons))
-    createdIcon:SetPosition(Vector(xOffset, GUISelectionPanel.kSelectedIconYOffset, 0))
+    createdIcon:SetAnchor(GUIItem.Left, GUIItem.Bottom)
+    createdIcon:SetSize(Vector(GUISelectionPanel.kMultiSelectedIconSize, GUISelectionPanel.kMultiSelectedIconSize, 0))
     createdIcon:SetTexture("ui/" .. CommanderUI_MenuImage() .. ".dds")
-    self.backgroundLeftEndCap:AddChild(createdIcon)
+    self.background:AddChild(createdIcon)
     table.insert(self.multiSelectionIcons, createdIcon)
     return createdIcon
+
+end
+
+function GUISelectionPanel:SendKeyEvent(key, down)
+
+    if key == InputKey.LeftShift then
+        if self.tabPressed ~= down then
+            self.tabPressed = down
+            if down then
+                self.highlightedMultiItem = self.highlightedMultiItem + 1
+                return true
+            end
+        end
+    end
+    
+    return false
 
 end
 
@@ -337,6 +446,12 @@ function GUISelectionPanel:SetIconTextureCoordinates(selectedIcon, entityId)
         selectedIcon:SetIsVisible(false)
     end
     
+end
+
+function GUISelectionPanel:GetBackground()
+
+    return self.background
+
 end
 
 function GUISelectionPanel:ContainsPoint(pointX, pointY)

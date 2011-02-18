@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\EffectManager.lua
 //
@@ -157,6 +157,10 @@ function EffectManager:AddEffectData(identifier, data)
         
         if not self.loopingSounds then
             self.loopingSounds = {}
+        end
+        
+        if not self.decalList then
+            self.decalList = {}
         end
         
         // Replace it if we've already added it (hotloading)
@@ -707,12 +711,12 @@ function EffectManager:InternalTriggerAnimation(effectTable, triggeringParams, t
         
             if blendTime == 0 then
             
-                triggeringEntity:SetAnimation(animationName, force)
+                triggeringEntity:SetAnimation(animationName, force, speed)
                 success = true
                 
             elseif triggeringEntity.SetAnimationWithBlending then
             
-                triggeringEntity:SetAnimationWithBlending(animationName, blendTime, force)
+                triggeringEntity:SetAnimationWithBlending(animationName, blendTime, force, speed)
                 success = true
                 
             else
@@ -763,6 +767,43 @@ function EffectManager:InternalTriggerAnimation(effectTable, triggeringParams, t
 
 end
 
+function EffectManager:InternalTriggerDecal(effectTable, triggeringParams, triggeringEntity)
+
+    local success = false
+    
+    if effectTable[kDecalType] and Client then
+    
+        // Create new decal
+        local decal = Client.CreateRenderDecal()
+
+        // Read specified material
+        local materialName = self:ChooseAssetName(effectTable, triggeringParams[kEffectSurface], triggeringEntity)        
+        decal:SetMaterial(materialName)
+        
+        // Set coords to triggering host coords
+        local coords = triggeringParams[kEffectHostCoords]    
+        self.decal:SetCoords( coords )
+        
+        // Set uniform scale from parameter
+        local scale = ConditionalValue(type(effectTable[kEffectParamScale]) == "number", effectTable[kEffectParamScale], 1)
+        self.decal:SetExtents( Vector(scale, scale, scale) )
+        
+        // Set lifetime (default is 5) and store as pair in list
+        local lifetime = ConditionalValue(type(effectTable[kEffectParamLifetime]) == "number", effectTable[kEffectParamLifetime], 5)
+        table.insert(self.decalList, {decal, lifetime})
+        
+        Print("Inserting decal %s, %.2f", materialName, lifetime)
+        
+        self:DisplayDebug(kRagdollType, effectTable, triggeringParams, triggeringEntity)
+        
+        success = true
+        
+    end
+    
+    return success
+    
+end
+
 function EffectManager:InternalTriggerRagdoll(effectTable, triggeringParams, triggeringEntity)
 
     local success = false
@@ -802,6 +843,10 @@ function EffectManager:InternalTriggerEffect(effectTable, triggeringParams, trig
     
         success = self:InternalTriggerAnimation(effectTable, triggeringParams, triggeringEntity)
 
+    elseif effectTable[kDecalType] then
+    
+        success = self:InternalTriggerDecal(effectTable, triggeringParams, triggeringEntity)
+
     elseif effectTable[kRagdollType] then
     
         success = self:InternalTriggerRagdoll(effectTable, triggeringParams, triggeringEntity)
@@ -816,3 +861,40 @@ function EffectManager:InternalTriggerEffect(effectTable, triggeringParams, trig
     
 end
 
+function EffectManager:UpdateDecals(deltaTime)
+
+    if self.decalList and Client then
+    
+        // Reduce lifetime of decals
+        for index, decalPair in ipairs(self.decalList) do
+            decalPair[2] = decalPair[2] - deltaTime
+        end
+        
+        // Destroy expired decals and remove from list
+        function removeExpiredDecal(decalPair)
+        
+            if decalPair[2] < 0 then
+            
+                Print("Decal expired")
+                Client.DestroyRenderDecal( decalPair[1] )
+                return true
+                
+            end
+            
+            return false
+            
+        end
+        
+        table.removeConditional(self.decalList, removeExpiredDecal)
+        
+    end
+    
+end
+
+function EffectManager:OnUpdate(deltaTime)
+
+    self:TriggerQueuedEffects()
+    
+    self:UpdateDecals(deltaTime)
+    
+end

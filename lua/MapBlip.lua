@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua/MapMapBlip.lua
 //
@@ -7,7 +7,6 @@
 // regular way.
 //
 // Created by Brian Cronin (brianc@unknownworlds.com)
-// Copyright (c) 2011, Unknown Worlds Entertainment, Inc.
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
@@ -18,7 +17,7 @@ MapBlip.kMapName = "MapBlip"
 MapBlip.networkVars =
 {
     mapBlipType = "enum kMinimapBlipType",
-    mapBlipTeam = "integer (" .. ToString(kTeamReadyRoom) .. " to " .. ToString(kSpectatorIndex) .. ")"
+    mapBlipTeam = "integer (" .. ToString(kTeamInvalid) .. " to " .. ToString(kSpectatorIndex) .. ")"
 }
 
 function MapBlip:OnCreate()
@@ -41,7 +40,7 @@ function MapBlip:GetType()
 
 end
 
-function MapBlip:GetTeam()
+function MapBlip:GetTeamNumber()
 
     return self.mapBlipTeam
 

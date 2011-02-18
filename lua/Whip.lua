@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Whip.lua
 //
@@ -24,15 +24,22 @@ Whip.kTargetCheckTime = .3
 Whip.kRange = 6
 Whip.kAreaEffectRadius = 3
 Whip.kDamage = 50
+Whip.kMoveSpeed = .75
 
 // Fury
 Whip.kFuryRadius = 6
 Whip.kFuryDuration = 6
 Whip.kFuryDamageBoost = .1          // 10% extra damage
 
+// Movement state - for uprooting and moving!
+Whip.kMode = enum( {'Rooted', 'Unrooting', 'UnrootedStationary', 'Rooting', 'StartMoving', 'Moving', 'EndMoving'} )
+
 local networkVars =
 {
-    attackYaw = "integer (0 to 360)"
+    attackYaw = "integer (0 to 360)",
+    
+    mode = "enum Whip.kMode",
+    desiredMode = "enum Whip.kMode",
 }
 
 if Server then
@@ -40,16 +47,33 @@ if Server then
 end
 
 function Whip:OnCreate()
+
     Structure.OnCreate(self)
+    
     self.attackYaw = 0
+    
+    self.mode = Whip.kMode.Rooted
+    self.desiredMode = Whip.kMode.Rooted
+    self.modeAnimation = ""
+    
 end
 
+function Whip:OnInit()
+    Structure.OnInit(self)
+    self:SetUpdates(true)
+end
+
+// Used for targeting
 function Whip:GetFov()
     return Whip.kFov
 end
 
 function Whip:GetIsAlienStructure()
     return true
+end
+
+function Whip:GetDeathIconIndex()
+    return kDeathMessageIcon.Whip
 end
 
 function Whip:GetTechButtons(techId)
@@ -68,6 +92,13 @@ function Whip:GetTechButtons(techId)
         else
             techButtons[upgradeIndex] = kTechId.WhipBombard
         end
+        
+        local rootActionIndex = table.maxn(techButtons) + 1
+        if self.mode == Whip.kMode.Rooted then
+            techButtons[rootActionIndex] = kTechId.WhipUnroot
+        elseif self.mode == Whip.kMode.UnrootedStationary or self.mode == Whip.kMode.StartMoving or self.mode == Whip.kMode.Moving or self.mode == Whip.kMode.EndMoving then
+            techButtons[rootActionIndex] = kTechId.WhipRoot
+        end
        
     elseif(techId == kTechId.UpgradesMenu) then 
         techButtons = {kTechId.LeapTech, kTechId.BloodThirstTech, kTechId.PiercingTech, kTechId.Melee1Tech, kTechId.Melee2Tech, kTechId.Melee3Tech, kTechId.None}
@@ -78,8 +109,16 @@ function Whip:GetTechButtons(techId)
     
 end
 
-function Whip:GetDeathIconIndex()
-    return kDeathMessageIcon.Whip
+function Whip:GetActivationTechAllowed(techId)
+
+    if techId == kTechId.WhipRoot then
+        return self:GetGameEffectMask(kGameEffect.OnInfestation)
+    elseif techId == kTechId.UpgradeWhip then
+        return not self:isa("MatureWhip") and self.mode == Whip.kMode.Rooted
+    end
+
+    return true
+    
 end
 
 function Whip:UpdatePoseParameters(deltaTime)
@@ -92,6 +131,10 @@ end
 
 function Whip:GetCanDoDamage()
     return true
+end
+
+function Whip:GetIsRooted()
+    return self.mode == Whip.kMode.Rooted
 end
 
 Shared.LinkClassToMap("Whip", Whip.kMapName, networkVars)

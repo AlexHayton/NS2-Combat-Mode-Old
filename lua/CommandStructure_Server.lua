@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\CommandStructure_Server.lua
 //
@@ -130,6 +130,9 @@ function CommandStructure:LoginPlayer(player)
     if (commanderPlayer:GetViewModelEntity()) then
         commanderPlayer:GetViewModelEntity():SetModel("")
     end
+    
+    // Clear game effects on player
+    commanderPlayer:ClearGameEffects()    
     
     // Make this structure the first hotgroup if we don't have any yet
     if(commanderPlayer:GetNumHotkeyGroups() == 0) then

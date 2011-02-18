@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Weapons\Rifle.lua
 //
@@ -132,13 +132,16 @@ function Rifle:OnHolster(player)
 end
 
 function Rifle:OnPrimaryAttack(player)
+	
+    if self.reloadTime == 0 then
 
-    if not player:GetPrimaryAttackLastFrame() then
-        self.timeStartedAttack = Shared.GetTime()
+        if not player:GetPrimaryAttackLastFrame() then
+            self.timeStartedAttack = Shared.GetTime()
+        end
+    
+        ClipWeapon.OnPrimaryAttack(self, player)
+     
     end
-    
-    ClipWeapon.OnPrimaryAttack(self, player)
-    
 end
 
 function Rifle:OnPrimaryAttackEnd(player)

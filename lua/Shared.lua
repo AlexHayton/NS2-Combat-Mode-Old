@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Shared.lua
 //
@@ -55,6 +55,7 @@ Script.Load("lua/Weapons/ViewModel.lua")
 Script.Load("lua/MAC.lua")
 Script.Load("lua/Extractor.lua")
 Script.Load("lua/Armory.lua")
+Script.Load("lua/PowerPack.lua")
 Script.Load("lua/Observatory.lua")
 Script.Load("lua/Scan.lua")
 Script.Load("lua/RoboticsFactory.lua")
@@ -74,6 +75,7 @@ Script.Load("lua/Particles.lua")
 
 // Alien structures
 Script.Load("lua/Harvester.lua")
+Script.Load("lua/Infestation.lua")
 Script.Load("lua/Hive.lua")
 Script.Load("lua/Crag.lua")
 Script.Load("lua/Whip.lua")
@@ -172,29 +174,33 @@ Event.Hook("PhysicsCollision", OnPhysicsCollision)
 /**
  * Called when one physics body enters into a trigger body.
  */
-function OnPhysicsTrigger(enterObject, triggerBody, enter)
+function OnPhysicsTrigger(enterObject, triggerObject, enter)
 
-    local enterEntity = enterObject:GetEntity()
-    local triggerEntity = triggerBody:GetEntity()
+    local enterEntity   = enterObject:GetEntity()
+    local triggerEntity = triggerObject:GetEntity()
     
-    if(enter) then
+    if enterEntity ~= nil and triggerEntity ~= nil then
     
-        if (enterEntity ~= nil and enterEntity.OnTriggerEntered ~= nil) then
-            enterEntity:OnTriggerEntered(enterEntity, triggerEntity)
-        end
+        if (enter) then
         
-        if (triggerEntity ~= nil and triggerEntity.OnTriggerEntered ~= nil) then
-            triggerEntity:OnTriggerEntered(enterEntity, triggerEntity)
-        end
+            if (enterEntity.OnTriggerEntered ~= nil) then
+                enterEntity:OnTriggerEntered(enterEntity, triggerEntity)
+            end
+            
+            if (triggerEntity.OnTriggerEntered ~= nil) then
+                triggerEntity:OnTriggerEntered(enterEntity, triggerEntity)
+            end
+            
+        else
         
-    else
-    
-        if (enterEntity ~= nil and enterEntity.OnTriggerExited ~= nil) then
-            enterEntity:OnTriggerExited(enterEntity, triggerEntity)
-        end
-        
-        if (triggerEntity ~= nil and triggerEntity.OnTriggerExited ~= nil) then
-            triggerEntity:OnTriggerExited(enterEntity, triggerEntity)
+            if (enterEntity.OnTriggerExited ~= nil) then
+                enterEntity:OnTriggerExited(enterEntity, triggerEntity)
+            end
+            
+            if (triggerEntity.OnTriggerExited ~= nil) then
+                triggerEntity:OnTriggerExited(enterEntity, triggerEntity)
+            end
+            
         end
         
     end

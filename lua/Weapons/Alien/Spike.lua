@@ -3,7 +3,7 @@
 // lua\Weapons\Alien\Spike.lua
 //
 // Created by Charlie Cleveland (charlie@unknownworlds.com)
-// Copyright (c) 2010, Unknown Worlds Entertainment, Inc.
+// Copyright (c) 2011, Unknown Worlds Entertainment, Inc.
 //
 //=============================================================================
 Script.Load("lua/Weapons/Projectile.lua")
@@ -20,6 +20,9 @@ Spike.kMinDamage             = kSpikeMinDamage
 // Seconds
 Spike.kDamageFalloffInterval = 1
 
+// The max amount of time a Spike can last for
+Spike.kLifetime = 5
+
 function Spike:OnCreate()
 
     Projectile.OnCreate(self)
@@ -27,6 +30,10 @@ function Spike:OnCreate()
     
     // Remember when we're created so we can fall off damage
     self.createTime = Shared.GetTime()
+    
+    if Server then
+        self:AddTimedCallback(Spike.TimeUp, Spike.kLifetime)
+    end
         
 end
 
@@ -74,6 +81,14 @@ if (Server) then
                 
         end    
         
+    end
+    
+    function Spike:TimeUp(currentRate)
+    
+        DestroyEntity(self)
+        // Cancel the callback.
+        return false
+    
     end
     
 end

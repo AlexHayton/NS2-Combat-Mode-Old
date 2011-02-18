@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Player.lua
 //
@@ -78,8 +78,6 @@ Player.kMinimumPlayerVelocity = .05    // Minimum player velocity for network pe
 
 // Player speeds
 Player.kWalkMaxSpeed = 5                // Four miles an hour = 6,437 meters/hour = 1.8 meters/second (increase for FPS tastes)
-Player.kStartRunMaxSpeed = Player.kWalkMaxSpeed
-Player.kRunMaxSpeed = 6.25              // 10 miles an hour = 16,093 meters/hour = 4.4 meters/second (increase for FPS tastes)
 Player.kMaxWalkableNormal =  math.cos( math.rad(45) )
 
 Player.kAcceleration = 50
@@ -94,7 +92,8 @@ Player.kTauntMovementScalar = .05           // Players can only move a little wh
 
 Player.kDamageIndicatorDrawTime = 1
 
-Player.kMaxHotkeyGroups = 5
+// kMaxHotkeyGroups is defined at a global level so that NetworkMessages.lua can access the constant.
+Player.kMaxHotkeyGroups = kMaxHotkeyGroups
 
 Player.kUnstickDistance = .1
 Player.kUnstickOffsets = { 
@@ -104,6 +103,8 @@ Player.kUnstickOffsets = {
     Vector(0, 0, Player.kUnstickDistance), 
     Vector(0, 0, -Player.kUnstickDistance)
 }
+
+Player.stepTotalTime    = 0.1   // Total amount of time to interpolate up a step
 
 // When changing these, make sure to update Player:CopyPlayerDataFrom. Any data which 
 // needs to survive between player class changes needs to go in here.
@@ -217,6 +218,10 @@ local networkVars =
     waypointType            = "enum kTechId",
     
     fallReadyForPlay        = "integer (0 to 3)",
+    
+    // Used to smooth out the eye movement when going up steps.
+    stepStartTime           = "float",
+    stepAmount              = "float",
 
 }
 
@@ -237,7 +242,7 @@ function Player:OnCreate()
     self.viewPitch      = 0
     self.viewRoll       = 0
     self.maxExtents     = Vector( LookupTechData(self:GetTechId(), kTechDataMaxExtents, Vector(Player.kXZExtents, Player.kYExtents, Player.kXZExtents)) )
-    self.viewOffset     = Vector()
+    self.viewOffset     = Vector( 0, 0, 0 )
 
     self.desiredCameraDistance = 0
     self.thirdPerson = false
@@ -316,6 +321,9 @@ function Player:OnCreate()
     self.flareScalar = 1
     self.plasma = 0
     
+    self.stepStartTime = 0
+    self.stepAmount    = 0
+    
     // Experience
     self.experience = 0
 	self.upgradesTaken = 0
@@ -382,7 +390,7 @@ end
 function Player:OnEntityChange(oldEntityId, newEntityId)
 
     if Server then
-    
+
         // Loop through hotgroups and update accordingly
         for i = 1, Player.kMaxHotkeyGroups do
         
@@ -408,10 +416,20 @@ function Player:OnEntityChange(oldEntityId, newEntityId)
                 
             end
             
-       end
-   
-   end
-   
+        end
+
+    end
+
+    if Client then
+
+        if self:GetId() == oldEntityId then
+            // If this player is changing is any way, just assume the
+            // buy/evolve menu needs to close.
+            self:CloseMenu(kClassFlashIndex)
+        end
+
+    end
+
 end
 
 function Player:GetStatusDescription()
@@ -512,6 +530,12 @@ function Player:OverrideInput(input)
         local removePrimaryAttackMask = bit.bxor(0xFFFFFFFF, Move.PrimaryAttack)
         input.commands = bit.band(input.commands, removePrimaryAttackMask)
         
+    end
+    
+    if self.frozen then
+        // Don't allow secondary attack while frozen to prevent skulks from jumping around.
+        local removeSecondaryAttackMask = bit.bxor(0xFFFFFFFF, Move.SecondaryAttack)
+        input.commands = bit.band(input.commands, removeSecondaryAttackMask)
     end
     
 	self:OverrideTechMenu(input)
@@ -694,8 +718,17 @@ end
 
 // Also specifies listener position
 function Player:GetViewOffset()
+    
+    local deltaTime = Shared.GetTime() - self.stepStartTime
+    
+    if deltaTime < Player.stepTotalTime then
+        return self.viewOffset + Vector( 0, -self.stepAmount * (1 - deltaTime / Player.stepTotalTime), 0 )
+    end
+    
     return self.viewOffset
+    
 end
+
 
 // Stores the player's current view offset. Calculated from GetMaxViewOffset() and crouch state.
 function Player:SetViewOffsetHeight(newViewOffsetHeight)
@@ -927,6 +960,7 @@ function Player:GetActiveWeapon()
     
     if(self.activeWeaponIndex ~= 0) then
     
+        self:ComputeHUDOrderedWeaponList()
         local weapons = self:GetHUDOrderedWeaponList()
         
         if self.activeWeaponIndex <= table.count(weapons) then
@@ -1454,8 +1488,9 @@ function Player:OnProcessMove(input)
         
     elseif not self:GetIsAlive() and Client and (Client.GetLocalPlayer() == self) then
     
-        // Allow the use of scoreboard even when not alive
-        self:UpdateScoreboard(input) 
+        // Allow the use of scoreboard and map even when not alive.
+        self:UpdateScoreboard(input)
+        self:UpdateShowMap(input)
         
     end
     
@@ -1528,13 +1563,27 @@ function Player:GetMovePhysicsMask()
 end
 
 /**
+ * Moves the player downwards (by at most a meter).
+ */
+function Player:DropToFloor()
+
+    if self.controller then
+        self:UpdateControllerFromEntity()
+        self.controller:Move( Vector(0, -1, 0), self:GetMovePhysicsMask())    
+        self:UpdateOriginFromController()
+    end
+
+end
+
+/**
  * Moves by the player by the specified offset, colliding and sliding with the world.
  */
 function Player:PerformMovement(offset, maxTraces, velocity)
 
     PROFILE("Player:PerformMovement")
 
-    local hitEntities = nil
+    local hitEntities   = nil
+    local completedMove = true
     
     if self.controller then
     
@@ -1545,9 +1594,9 @@ function Player:PerformMovement(offset, maxTraces, velocity)
         while (offset:GetLengthSquared() > 0.0 and tracesPerformed < maxTraces) do
 
             local trace = self.controller:Move(offset, self:GetMovePhysicsMask())
-
+            
             if (trace.fraction < 1) then
-        
+                
                 // Remove the amount of the offset we've already moved.
                 offset = offset * (1 - trace.fraction)
 
@@ -1567,23 +1616,20 @@ function Player:PerformMovement(offset, maxTraces, velocity)
                 
                 // Defer the processing of the callbacks until after we've finished moving,
                 // since the callbacks may modify our self an interfere with our loop
-                if trace.entity ~= nil and trace.entity:isa("ScriptActor") then
+                if trace.entity ~= nil and trace.entity.OnCapsuleTraceHit ~= nil then
                     if (hitEntities == nil) then
                         hitEntities = { trace.entity }
                     else
                         table.insert(hitEntities, trace.entity)
                     end    
                 end
-                
-                completedSweep = false
-                capsuleSweepHit = true
-        
+
+                completedMove = false
+
             else
                 offset = Vector(0, 0, 0)
             end
 
-            self.controller:SetPosition(trace.endPoint)
-            
             tracesPerformed = tracesPerformed + 1
 
         end
@@ -1600,7 +1646,7 @@ function Player:PerformMovement(offset, maxTraces, velocity)
         end
     end
     
-    return self:GetOrigin()
+    return completedMove
     
 end
 
@@ -1628,10 +1674,16 @@ function Player:UpdatePosition(velocity, time)
 
     PROFILE("Player:UpdatePosition")
 
-    // First move the character upwards to allow them to go up stairs and over small obstacles. 
-    local offset = nil
+    // We need to make a copy so that we aren't holding onto a reference
+    // which is updated when the origin changes.
+    local start         = Vector(self:GetOrigin())
+    local startVelocity = Vector(velocity)
+
+    local maxSlideMoves = 4
+
+    local offset     = nil
     local stepHeight = self:GetStepHeight()
-    local onGround = self:GetIsOnGround()    
+    local onGround   = self:GetIsOnGround()    
 
     // Handle when we're interpenetrating an object usually due to animation. Ie we're under a hive that's breathing into us
     // or when we're standing on top of animated structures like Hives, Extractors, etc.
@@ -1640,18 +1692,54 @@ function Player:UpdatePosition(velocity, time)
         self:Unstick()
     end
     
-    if onGround then
-        offset = self:PerformMovement(Vector(0, stepHeight, 0), 1) - self:GetOrigin()
+    local completedMove = self:PerformMovement( velocity * time, maxSlideMoves, velocity )
+    
+    if not completedMove and onGround then
+        
+        // Go back to the beginning and now try a step move.
+        self:SetOrigin(start)
+    
+        // First move the character upwards to allow them to go up stairs and over small obstacles. 
+        self:PerformMovement( Vector(0, stepHeight, 0), 1 )
+        offset = self:GetOrigin() - start
+        
+        // Now try moving the controller the desired distance.
+        VectorCopy( startVelocity, velocity )
+        self:PerformMovement( startVelocity * time, maxSlideMoves, velocity )
+        
+    else
+        offset = Vector(0, 0, 0)
     end
     
-    // First try moving capsule desired distance. We're done if we moved all the way without hitting anything.
-    self:PerformMovement(velocity * time, 10, ConditionalValue(onGround, nil, velocity))
-    
-    // Finally, move the player back down to compensate for moving them up. We add in an additional step 
-    // height for moving down steps/ramps.
     if onGround then
-        offset.y = offset.y + stepHeight
-        self:PerformMovement( -offset, 1, nil, true )
+    
+        // Finally, move the player back down to compensate for moving them up.
+        // We add in an additional step  height for moving down steps/ramps.
+        offset.y = -(offset.y + stepHeight)
+        self:PerformMovement( offset, 1, nil )
+        
+        // Check to see if we moved up a step and need to smooth out
+        // the movement.
+        
+        local yDelta = self:GetOrigin().y - start.y
+        
+        if (yDelta ~= 0) then
+
+            // If we're already interpolating up a step, we need to take that into account
+            // so that we continue that interpolation, plus our new step interpolation
+        
+            local deltaTime      = Shared.GetTime() - self.stepStartTime
+            local prevStepAmount = 0
+            
+            if deltaTime < Player.stepTotalTime then
+                prevStepAmount = self.stepAmount * (1 - deltaTime / Player.stepTotalTime)
+            end        
+        
+            self.stepStartTime = Shared.GetTime()
+            self.stepAmount    = yDelta + prevStepAmount
+            
+        end    
+        
     end
 
 end
@@ -1899,22 +1987,27 @@ function Player:UpdateControllerFromEntity()
     if (self.controller ~= nil) then
         
         local extents = self:GetExtentsFromCrouch(self:GetCrouchAmount())
+        local controllerHeight, controllerRadius = self:GetTraceCapsule()
         
-        local capsuleHeight, capsuleRadius = self:GetTraceCapsule()
+        if controllerHeight ~= self.controllerHeight or controllerRadius ~= self.controllerRadius then
         
-        if capsuleHeight ~= 0 or capsuleRadius ~= 0 then
-
-            self.controller:SetupCapsule( capsuleRadius * Player.kSkinCompensation,
-                capsuleHeight * Player.kSkinCompensation, self.controller:GetCoords() )
-            
+            self.controllerHeight = controllerHeight
+            self.controllerRadius = controllerRadius
+        
+            // A flat bottomed cylinder works well for movement since we don't
+            // slide down as we walk up stairs or over other lips. The curved
+            // edges of the cylinder allows players to slide off when we hit them,
+            self.controller:SetupCylinder( controllerRadius * Player.kSkinCompensation,
+                (controllerHeight + controllerRadius * 2) * Player.kSkinCompensation, self.controller:GetCoords() )
+                
         end
         
         // The origin of the controller is at its center and the origin of the
         // player is at their feet, so offset it.
-        local offsetOrigin = self:GetOrigin()
-        local newControllerOriginY = offsetOrigin.y + extents.y
+        local origin = Vector(self:GetOrigin())
+        origin.y = origin.y + extents.y
 
-        self.controller:SetPosition(Vector(offsetOrigin.x, newControllerOriginY, offsetOrigin.z))
+        self.controller:SetPosition(origin)
         
     end
     
@@ -2031,6 +2124,12 @@ end
 
 function Player:UpdateScoreboard(input)
     self.showScoreboard = (bit.band(input.commands, Move.Scoreboard) ~= 0)
+end
+
+function Player:UpdateShowMap(input)
+    if Client then
+        self:ShowMap(bit.band(input.commands, Move.ShowMap) ~= 0)
+    end
 end
 
 function Player:UpdateMoveAnimation()
@@ -2167,13 +2266,6 @@ function Player:HandleJump(input, velocity)
         self.onGroundNeedsUpdate = true
                
     end
-    
-    // Jumping while on a ladder cancels being on the ladder
-    if self:GetIsOnLadder() then
-    
-        self:SetIsOnLadder(false)
-        
-    end
 
 end
 
@@ -2194,13 +2286,22 @@ function Player:OnTag(tagName)
 end
 
 function Player:GetMaterialBelowPlayer()
+
     local fixedOrigin = Vector(self:GetOrigin())
+    
     // Start the trace a bit above the very bottom of the origin because
     // of cases where a large velocity has pushed the origin below the
     // surface the player is on
     fixedOrigin.y = fixedOrigin.y + self:GetExtents().y / 2
     local trace = Shared.TraceRay(fixedOrigin, fixedOrigin + Vector(0, -(2.5*self:GetExtents().y + .1), 0), PhysicsMask.AllButPCs, EntityFilterOne(self))
-    return trace.surface
+    
+    // Have squishy footsteps on infestation 
+    local material = trace.surface
+    if self:GetGameEffectMask(kGameEffect.OnInfestation) then
+        material = "organic"
+    end
+    
+    return material
 end
 
 function Player:GetFootstepSpeedScalar()
@@ -2265,12 +2366,6 @@ function Player:ModifyVelocity(input, velocity)
     
         self:HandleJump(input, velocity)
         self.jumpHandled = true
-    
-    elseif self:GetIsOnLadder() then
-    
-        // No other velocity when on a ladder
-        velocity.x = 0
-        velocity.z = 0
     
     elseif self:GetIsOnGround() then
     
@@ -2361,9 +2456,7 @@ function Player:HandleButtons(input)
         self:SetCrouchState(newCrouchState)
     end
     
-    if Client then
-        self:ShowMap(bit.band(input.commands, Move.ShowMap) ~= 0)
-    end
+    self:UpdateShowMap(input)
         
 end
 
@@ -2821,9 +2914,14 @@ function Player:Knockback(velocity)
     
 end
 
+
+// Overwrite to get player status description
+function Player:GetPlayerStatusDesc()
+    return ""
+end
+
 function Player:GetCanDoDamage()
     return true
 end
-
 
 Shared.LinkClassToMap("Player", Player.kMapName, networkVars )

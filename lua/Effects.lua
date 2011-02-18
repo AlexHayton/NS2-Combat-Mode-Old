@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Effects.lua
 //
@@ -33,6 +33,8 @@ kLoopingSoundType                   = "looping_sound"           // TODO: Change 
 kPrivateSoundType                   = "private_sound"           // TODO: Change name to one_sound? This currently plays relative to player.
 kStopSoundType                      = "stop_sound"              
 
+kDecalType                          = "decal"                   // Creates a decal at position of effect (only works when triggered from client events)
+
 kRagdollType                        = "ragdoll"                 // Turns the model into a ragdoll (there's no way to come back currently). Needs death_time specified.
 
 // Also add to EffectManager:InternalTriggerEffect()
@@ -41,6 +43,7 @@ kEffectTypes =
     kCinematicType, kWeaponCinematicType, kViewModelCinematicType, kPlayerCinematicType, kParentedCinematicType, kLoopingCinematicType, kStopCinematicType, 
     kAnimationType, kViewModelAnimationType, kOverlayAnimationType,
     kSoundType, kParentedSoundType, kLoopingSoundType, kPrivateSoundType, kStopSoundType, 
+    kDecalType,
     kRagdollType,
 }
 
@@ -58,6 +61,8 @@ kEffectParamForce                   = "force"
 kEffectParamSilent                  = "silent"
 kEffectParamVolume                  = "volume"
 kEffectParamDeathTime               = "death_time"  
+kEffectParamLifetime                = "lifetime"        // Lifetime for decals (default is 5)
+kEffectParamScale                   = "scale"           // Scale for decals (default is 5)
 kEffectSoundParameter               = "sound_param"     // Not working yet
 kEffectParamDone                    = "done"
 

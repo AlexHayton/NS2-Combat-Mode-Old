@@ -5,7 +5,7 @@
 // Populate and manage key bindings in options screen.
 //
 // Created by Henry Kropf and Charlie Cleveland
-// Copyright 2010, Unknown Worlds Entertainment
+// Copyright 2011, Unknown Worlds Entertainment
 //
 //=============================================================================
 
@@ -24,13 +24,13 @@ local defaults = {
     {"Reload", "R"},
     {"Use", "E"},
     {"Drop", "G"},
-    {"Taunt", "Z"},
+    {"Taunt", "Q"},
     {"VoiceChat", "LeftAlt"},
     {"TextChat", "Return"},
     {"TeamChat", "Y"},
-    {"ToggleSayings1", "X"},
-    {"ToggleSayings2", "C"},
-	{"ToggleTechUpgrades", "M"},
+    {"ToggleSayings1", "Z"},
+    {"ToggleSayings2", "X"},
+	{"ToggleTechUpgrades", "N"},
     {"Weapon1", "1"},
     {"Weapon2", "2"},
     {"Weapon3", "3"},
@@ -38,8 +38,8 @@ local defaults = {
     {"Weapon5", "5"},
     {"Scoreboard", "Tab"},
     {"ToggleConsole", "Grave"},
-	{"ToggleFlashlight","F"},
-	{"ShowMap","M"}
+    {"ToggleFlashlight", "F"},
+    {"ShowMap", "C"}
 }
 
 // Order, names, description of keys in menu
@@ -60,7 +60,7 @@ local globalControlBindings = {
     "Use", "input", "Use", "E",
     "Drop", "input", "Drop weapon", "G",
     "Buy", "input", "Buy/evolve menu", "B",
-    "Taunt", "input", "Taunt", "Z",
+    "Taunt", "input", "Taunt", "Q",
     "ToggleSayings1", "input", "Sayings #1", "X",
     "ToggleSayings2", "input", "Sayings #2", "C",
 	"ToggleTechUpgrades", "input", "Tech Upgrade", "N",
@@ -74,7 +74,7 @@ local globalControlBindings = {
     "Weapon5", "input", "Weapon #5", "5",
     "ToggleConsole", "input", "Toggle Console", "Grave",
     "ToggleFlashlight", "input", "Flashlight", "F",
-    "ShowMap", "input", "Show Map", "M",
+    "ShowMap", "input", "Show Map", "C",
 }
 
 local specialKeys = {

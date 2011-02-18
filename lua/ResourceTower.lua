@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\ResourceTower.lua
 //
@@ -62,11 +62,7 @@ function ResourceTower:GetDescription()
     
     // Add upgrade level
     local upgradeLevel = self:GetUpgradeLevel()
-    if upgradeLevel == 0 then
-        description = string.format("%s - Base production (+%d available)", description, ResourceTower.kMaxUpgradeLevel)
-    else
-        description = string.format("%s - Upgrade level +%d of %d", description, self:GetUpgradeLevel(), ResourceTower.kMaxUpgradeLevel)
-    end
+    description = string.format("%s - +%d of %d", description, self:GetUpgradeLevel(), ResourceTower.kMaxUpgradeLevel)
     
     return description
     

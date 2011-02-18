@@ -77,6 +77,8 @@ local kScoresMessage =
     deaths = string.format("integer (0 to %d)", kMaxDeaths),
     plasma = string.format("integer (0 to %d)", kMaxResources),
     isCommander = "boolean",
+    status = string.format("string (%d)", 32),
+    isSpectator = "boolean",
     rank = string.format("integer (0 to %d)", kMaxRank)
 }
 
@@ -92,6 +94,8 @@ function BuildScoresMessage(player)
     t.deaths = player:GetDeaths()
     t.plasma = player:GetPlasma()
     t.isCommander = player:isa("Commander")
+    t.status = player:GetPlayerStatusDesc()
+    t.isSpectator = player:isa("Spectator")
     t.rank = player:GetRank()
     
     return t
@@ -119,14 +123,14 @@ end
 Shared.RegisterNetworkMessage("SelectAndGoto", kSelectAndGotoMessage)
 
 // For taking damage
-local kDamageIndicator =
+local kTakeDamageIndicator =
 {
     worldX = "float",
     worldZ = "float",
     damage = "float"
 }
 
-function BuildDamageIndicatorMessage(sourceVec, damage)
+function BuildTakeDamageIndicatorMessage(sourceVec, damage)
     local t = {}
     t.worldX = sourceVec.x
     t.worldZ = sourceVec.z
@@ -134,11 +138,29 @@ function BuildDamageIndicatorMessage(sourceVec, damage)
     return t
 end
 
-function ParseDamageIndicatorMessage(message)
+function ParseTakeDamageIndicatorMessage(message)
     return message.worldX, message.worldZ, message.damage
 end
 
-Shared.RegisterNetworkMessage("DamageIndicator", kDamageIndicator)
+Shared.RegisterNetworkMessage("TakeDamageIndicator", kTakeDamageIndicator)
+
+// For giving damage
+local kGiveDamageIndicator =
+{
+    amount = "float"
+}
+
+function BuildGiveDamageIndicatorMessage(amount)
+    local t = {}
+    t.amount = amount
+    return t
+end
+
+function ParseGiveDamageIndicatorMessage(message)
+    return message.amount
+end
+
+Shared.RegisterNetworkMessage("GiveDamageIndicator", kGiveDamageIndicator)
 
 // Player id changed 
 local kEntityChangedMessage = 
@@ -229,6 +251,25 @@ end
 
 function ParseControlClickSelectMessage(message)
     return message.pickVec, message.screenStartVec, message.screenEndVec
+end
+
+local kSelectHotkeyGroupMessage =
+{
+    groupNumber = "integer (1 to " .. ToString(kMaxHotkeyGroups) .. ")"
+}
+
+function BuildSelectHotkeyGroupMessage(setGroupNumber)
+
+    local t = {}
+    
+    t.groupNumber = setGroupNumber
+    
+    return t
+
+end
+
+function ParseSelectHotkeyGroupMessage(message)
+    return message.groupNumber
 end
 
 // Commander actions
@@ -354,6 +395,7 @@ Shared.RegisterNetworkMessage("MinimapBlipMessage", kBlipMessage)
 Shared.RegisterNetworkMessage("MarqueeSelect", kMarqueeSelectMessage)
 Shared.RegisterNetworkMessage("ClickSelect", kClickSelectMessage)
 Shared.RegisterNetworkMessage("ControlClickSelect", kControlClickSelectMessage)
+Shared.RegisterNetworkMessage("SelectHotkeyGroup", kSelectHotkeyGroupMessage)
 
 // Commander actions
 Shared.RegisterNetworkMessage("CommAction", kCommAction)

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\TechTreeConstants.lua
 //
@@ -57,7 +57,7 @@ kTechId = enum({
     'SquadMove', 'SquadAttack', 'SquadDefend', 'SquadSeekAndDestroy', 'SquadHarass', 'SquadRegroup', 
     
     // Marine tech 
-    'CommandStation', 'CommandFacility', 'CommandCenter', 'MAC', 'Armory', 'InfantryPortal', 'Extractor', 'ExtractorUpgrade', 'SentryTech', 'Sentry', 'ARC', 'InfantryPortalTransponderTech', 'InfantryPortalTransponderUpgrade', 'InfantryPortalTransponder',
+    'CommandStation', 'CommandFacility', 'CommandCenter', 'MAC', 'Armory', 'InfantryPortal', 'Extractor', 'ExtractorUpgrade', 'PowerPack', 'SentryTech', 'Sentry', 'ARC', 'InfantryPortalTransponderTech', 'InfantryPortalTransponderUpgrade', 'InfantryPortalTransponder',
     'Scan', 'AmmoPack', 'MedPack', 'CatPack', 'CatPackTech', 'PowerPoint', 'AdvancedArmoryUpgrade', 'Observatory', 'ObservatoryEnergy', 'DistressBeacon', 'RoboticsFactory', 
     'WeaponsModule', 'PrototypeLab', 'AdvancedArmory', 'CommandFacilityUpgrade', 'CommandCenterUpgrade', 
     
@@ -110,6 +110,9 @@ kTechId = enum({
     'Shift', 'UpgradeShift', 'MatureShift', 'ShiftRecall', 'ShiftEcho', 'ShiftEnergize', 
     'Shade', 'UpgradeShade', 'MatureShade', 'ShadeDisorient', 'ShadeCloak', 'ShadePhantasmMenu', 'ShadePhantasmFade', 'ShadePhantasmOnos', 'ShadePhantasmHive',
     
+    // Whip movement
+    'WhipRoot', 'WhipUnroot',
+    
     // Alien abilities and upgrades - BabblerTech
     'BabblerTech', 'LobTech', 'EchoTech', 'PhantasmTech', 
     'LeapTech', 'BloodThirstTech', 'FeedTech', 'Melee1Tech', 'Melee2Tech', 'Melee3Tech', 'AlienArmor1Tech', 'AlienArmor2Tech', 'AlienArmor3Tech',
@@ -122,7 +125,7 @@ kTechId = enum({
     'DrifterFlareTech', 'DrifterFlare', 'DrifterParasiteTech', 'DrifterParasite', 
     
     // Alien alerts
-    'AlienAlertNeedHealing', 'AlienAlertStructureUnderAttack', 'AlienAlertHiveUnderAttack', 'AlienAlertHiveDying', 'AlienAlertHarvesterUnderAttack', 'AlienAlertGorgeBuiltHarvester',
+    'AlienAlertNeedHealing', 'AlienAlertStructureUnderAttack', 'AlienAlertHiveUnderAttack', 'AlienAlertHiveDying', 'AlienAlertHarvesterUnderAttack', 'AlienAlertLifeformUnderAttack', 'AlienAlertGorgeBuiltHarvester',
     
     'AlienAlertNotEnoughResources', 'AlienAlertResearchComplete', 'AlienAlertUpgradeComplete', 'AlienAlertHiveComplete',
     
@@ -131,6 +134,9 @@ kTechId = enum({
     
     // Special tech
     'TwoHives', 'ThreeHives',
+    
+    // Infestation
+    'Infestation',
     
     // Commander abilities
     'Grow', 'MetabolizeTech', 'Metabolize',

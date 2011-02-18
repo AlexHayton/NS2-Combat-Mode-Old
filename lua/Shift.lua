@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Shift.lua
 //
@@ -106,7 +106,7 @@ function Shift:TriggerEnergize()
     return true
 end
 
-function Shift:PerformActivation(techId, position, commander)
+function Shift:PerformActivation(techId, position, normal, commander)
 
     local success = false
     

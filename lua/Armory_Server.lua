@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Armory_Server.lua
 //
@@ -230,7 +230,7 @@ function Armory:UpdateLoggedIn()
             for playerIndex, player in ipairs(players) do
             
                 // See if player is nearby
-                if (player:GetModelOrigin() - (self:GetModelOrigin() + indexToUseOrigin[i])):GetLength() < Armory.kResupplyUseRange then
+                if player:GetIsAlive() and (player:GetModelOrigin() - (self:GetModelOrigin() + indexToUseOrigin[i])):GetLength() < Armory.kResupplyUseRange then
                 
                     newState = true
                     break

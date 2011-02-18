@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Commander.lua
 //
@@ -19,8 +19,12 @@ Commander.kSpendCarbonSoundName = PrecacheAsset("sound/ns2.fev/marine/common/com
 Commander.kSpendPlasmaSoundName = PrecacheAsset("sound/ns2.fev/marine/common/player_spend_nanites")
 
 Commander.kSelectionCircleModelName = PrecacheAsset("models/misc/marine-build/marine-build.model")
+Commander.kSentryOrientationModelName = PrecacheAsset("models/misc/sentry_arc/sentry_arc.model")
+Commander.kSentryRangeModelName = PrecacheAsset("models/misc/sentry_arc/sentry_line.model")
 Commander.kMarineCircleModelName = PrecacheAsset("models/misc/circle/circle.model")
 Commander.kAlienCircleModelName = PrecacheAsset("models/misc/circle/circle_alien.model")
+
+Commander.kSentryArcScale = 8
 
 // Extra hard-coded vertical distance that makes it so we set our scroll position,
 // we are looking at that point, instead of setting our position to that point)

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\ConsoleCommands_Client.lua
 //
@@ -35,7 +35,7 @@ function OnCommandOnClientDisconnect(clientIndexString)
 end
 
 function OnCommandScores(scoreTable)
-    Scoreboard_SetPlayerData(scoreTable.clientId, scoreTable.playerName, scoreTable.teamNumber, scoreTable.score, scoreTable.kills, scoreTable.deaths, scoreTable.plasma, scoreTable.isCommander, scoreTable.rank)
+    Scoreboard_SetPlayerData(scoreTable.clientId, scoreTable.playerName, scoreTable.teamNumber, scoreTable.score, scoreTable.kills, scoreTable.deaths, scoreTable.plasma, scoreTable.isCommander, scoreTable.status, scoreTable.isSpectator, scoreTable.rank)
 end
 
 // Notify scoreboard and anything else when a player changes into a new player
@@ -157,6 +157,17 @@ function OnCommandDebugText(debugText, worldOriginString, entIdString)
     
 end
 
+function OnCommandLocate()
+
+    local player = Client.GetLocalPlayer()
+    
+    if (player ~= nil) then
+        local origin = player:GetOrigin()
+        Shared.Message( string.format("Player is located at %f %f %f", origin.x, origin.y, origin.z) )
+    end
+
+end
+
 Event.Hook("Console_tooltip",                   OnCommandTooltip)
 Event.Hook("Console_reset",                     OnCommandRoundReset)
 Event.Hook("Console_deathmsg",                  OnCommandDeathMsg)
@@ -169,6 +180,7 @@ Event.Hook("Console_reloadsoundgeometry",       OnCommandReloadSoundGeometry)
 Event.Hook("Console_onanimdebug",               OnCommandAnimDebug)
 Event.Hook("Console_oneffectdebug",             OnCommandEffectDebug)
 Event.Hook("Console_debugtext",                 OnCommandDebugText)
+Event.Hook("Console_locate",                    OnCommandLocate)
 
 Client.HookNetworkMessage("Ping",               OnCommandPing)
 Client.HookNetworkMessage("Scores",             OnCommandScores)

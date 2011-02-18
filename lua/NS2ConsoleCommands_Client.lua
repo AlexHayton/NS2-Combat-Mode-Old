@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\ConsoleCommands_Client.lua
 //
@@ -30,11 +30,11 @@ function OnCommandSelectAndGoto(selectAndGotoMessage)
     
 end
 
-function OnCommandDamageIndicator(damageIndicatorMessage)
+function OnCommandTakeDamageIndicator(damageIndicatorMessage)
     
     local player = Client.GetLocalPlayer()
-    local worldX, worldZ, damage = ParseDamageIndicatorMessage(damageIndicatorMessage)
-    player:AddDamageIndicator(worldX, worldZ)
+    local worldX, worldZ, damage = ParseTakeDamageIndicatorMessage(damageIndicatorMessage)
+    player:AddTakeDamageIndicator(worldX, worldZ)
     
     // Shake the camera if this player supports it
     if(player.SetCameraShake ~= nil) then
@@ -43,6 +43,14 @@ function OnCommandDamageIndicator(damageIndicatorMessage)
         player:SetCameraShake(damage * Player.kDamageCameraShakeAmount, Player.kDamageCameraShakeSpeed, Player.kDamageCameraShakeTime, shakeDir)
     end
     
+end
+
+function OnCommandGiveDamageIndicator(damageIndicatorMessage)
+
+    local damageAmount = ParseGiveDamageIndicatorMessage(damageIndicatorMessage)
+    local player = Client.GetLocalPlayer()
+    player:AddGiveDamageIndicator(damageAmount)
+
 end
 
 function OnCommandHotgroup(number, hotgroupString)
@@ -72,38 +80,6 @@ function OnCommandMinimapAlert(techId, worldX, worldZ, entityId, entityTechId)
     if player:isa("Commander") then
         player:AddAlert(tonumber(techId), tonumber(worldX), tonumber(worldZ), tonumber(entityId), tonumber(entityTechId))
     end
-end
-
-function OnCommandToggleSpawnBuyMenu(client)
-
-    local player = Client.GetLocalPlayer()
-
-    if player:isa("AlienSpectator") or player:isa("Alien") then
-
-        local mouseState = true
-        
-        if(not Client.GetMouseVisible()) then
-
-            player:OpenMenu(AlienSpectator.kBuyMenuFlash)
-            
-            GetFlashPlayer(kMenuFlashIndex):Load(AlienSpectator.kBuyMenuFlash)
-            GetFlashPlayer(kMenuFlashIndex):SetBackgroundOpacity(0)
-            
-            //Client.BindFlashTexture("marine_buymenu", Armory.kBuyMenuTexture)
-            //Client.BindFlashTexture("marine_buymenu_upgrades", Armory.kBuyMenuUpgradesTexture)            
-            
-        else
-            mouseState = false
-        end
-        
-        Client.SetMouseVisible(mouseState)
-        Client.SetMouseCaptured(mouseState)
-        Client.SetMouseClipped(mouseState)
-        
-        Shared.PlaySound(Client.GetLocalPlayer(), AlienSpectator.kOpenSound)
-
-    end
-    
 end
 
 function OnCommandTraceReticle()
@@ -185,7 +161,6 @@ end
 Event.Hook("Console_debugspawn",            OnCommandDebugSpawn)
 Event.Hook("Console_hotgroup",              OnCommandHotgroup)
 Event.Hook("Console_minimapalert",          OnCommandMinimapAlert)
-Event.Hook("Console_togglespawnbuymenu",    OnCommandToggleSpawnBuyMenu)
 Event.Hook("Console_tracereticle",          OnCommandTraceReticle)
 Event.Hook("Console_viewheight",            OnCommandViewHeight)
 Event.Hook("Console_testsentry",            OnCommandTestSentry)
@@ -194,4 +169,5 @@ Event.Hook("Console_location",              OnCommandLocation)
 Event.Hook("Console_changegcsettingclient", OnCommandChangeGCSettingClient)
 
 Client.HookNetworkMessage("SelectAndGoto",      OnCommandSelectAndGoto)
-Client.HookNetworkMessage("DamageIndicator",    OnCommandDamageIndicator)
+Client.HookNetworkMessage("TakeDamageIndicator",    OnCommandTakeDamageIndicator)
+Client.HookNetworkMessage("GiveDamageIndicator",    OnCommandGiveDamageIndicator)

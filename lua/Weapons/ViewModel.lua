@@ -3,7 +3,7 @@
 // lua/Weapons/ViewModel.lua
 //
 // Created by Max McGuire (max@unknownworlds.com)
-// Copyright (c) 2010, Unknown Worlds Entertainment, Inc.
+// Copyright (c) 2011, Unknown Worlds Entertainment, Inc.
 //
 //=============================================================================
 

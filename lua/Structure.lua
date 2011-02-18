@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Structure.lua
 //
@@ -100,10 +100,6 @@ end
 
 function Structure:GetIsActive()
     return self:GetIsPowered() or not self:GetRequiresPower()
-end
-
-function Structure:GetIdleSound()
-    return nil
 end
 
 function Structure:GetResearchingId()

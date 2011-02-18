@@ -3,7 +3,7 @@
 // lua/ServerBrowser_Test.lua
 // 
 // Created by Charlie Cleveland
-// Copyright 2010, Unknown Worlds Entertainment
+// Copyright 2011, Unknown Worlds Entertainment
 //
 //=============================================================================
 

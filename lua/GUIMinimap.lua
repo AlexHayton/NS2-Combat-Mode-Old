@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\GUIMinimap.lua
 //
@@ -12,8 +12,6 @@ Script.Load("lua/GUIScanlines.lua")
 
 class 'GUIMinimap' (GUIScript)
 
-GUIMinimap.kTempScaleFactor = 0.75
-
 GUIMinimap.kModeMini = 0
 GUIMinimap.kModeBig = 1
 
@@ -24,9 +22,9 @@ GUIMinimap.kBackgroundTextureAlien = "ui/alien_commander_background.dds"
 GUIMinimap.kBackgroundTextureMarine = "ui/marine_commander_background.dds"
 GUIMinimap.kBackgroundTextureCoords = { X1 = 473, Y1 = 0, X2 = 793, Y2 = 333 }
 
-GUIMinimap.kBackgroundWidth = 320 * GUIMinimap.kTempScaleFactor
-GUIMinimap.kBackgroundHeight = 333 * GUIMinimap.kTempScaleFactor
-GUIMinimap.kBackgroundMinimapOffset = 20 * GUIMinimap.kTempScaleFactor
+GUIMinimap.kBackgroundWidth = 320 * kCommanderGUIsGlobalScale
+GUIMinimap.kBackgroundHeight = 333 * kCommanderGUIsGlobalScale
+GUIMinimap.kBackgroundMinimapOffset = 20 * kCommanderGUIsGlobalScale
 
 GUIMinimap.kMinimapSize = Vector(GUIMinimap.kBackgroundWidth - GUIMinimap.kBackgroundMinimapOffset,
                                  GUIMinimap.kBackgroundHeight - GUIMinimap.kBackgroundMinimapOffset, 0)
@@ -53,22 +51,21 @@ GUIMinimap.kUnpoweredNodeFileName = "ui/power_node_off.dds"
 GUIMinimap.kUnpoweredNodeIconWidth = 32
 GUIMinimap.kUnpoweredNodeIconHeight = 32
 
-GUIMinimap.kAttackBlipMinSize = 50
-GUIMinimap.kAttackBlipShrinkRate = Vector(1000, 1000, 0)
+GUIMinimap.kStaticBlipsLayer = 0
+GUIMinimap.kCameraIconLayer = 1
+GUIMinimap.kDynamicBlipsLayer = 2
 
-// First the dynamic blip will do some attention grabbing animation.
-GUIMinimap.kDynamicBlipAnimModeGrabAttention = 0
-// Next the dynamic blip will pulse for a while on the minimap.
-GUIMinimap.kDynamicBlipAnimModeMapPulse = 1
+GUIMinimap.kBlipTexture = "ui/blip.dds"
 
-// This is how long the dynamic blip should pulse on the minimap.
-GUIMinimap.kDynamicBlipAnimMapPulseTime = 4
-GUIMinimap.kDynamicBlipAnimMapPulseRate = 5
+GUIMinimap.kBlipTextureCoordinates = { }
+GUIMinimap.kBlipTextureCoordinates[kAlertType.Attack] = { X1 = 0, Y1 = 0, X2 = 64, Y2 = 64 }
 
-// This is the size of the attack blip border.
-GUIMinimap.kDynamicBlipAttackMaskScalar = 0.95
-GUIMinimap.kDynamicBlipAttackRotationRate = 1
-GUIMinimap.kDynamicBlipAttackColor = Color(0.8, 0, 0, 1)
+GUIMinimap.kAttackBlipMinSize = Vector(25, 25, 0)
+GUIMinimap.kAttackBlipMaxSize = Vector(100, 100, 0)
+GUIMinimap.kAttackBlipPulseSpeed = 6
+GUIMinimap.kAttackBlipTime = 5
+GUIMinimap.kAttackBlipFadeInTime = 4.5
+GUIMinimap.kAttackBlipFadeOutTime = 1
 
 GUIMinimap.kLocationFontSize = 12
 
@@ -142,6 +139,7 @@ function GUIMinimap:InitializeCameraIcon()
     self.cameraIconMask = GUI.CreateGraphicsItem()
     self.cameraIconMask:SetIsStencil(true)
     self.cameraIconMask:SetAnchor(GUIItem.Left, GUIItem.Top)
+    self.cameraIconMask:SetLayer(GUIMinimap.kCameraIconLayer)
     
     self.cameraIconMask:AddChild(self.cameraIcon)
     self.minimap:AddChild(self.cameraIconMask)
@@ -156,6 +154,7 @@ function GUIMinimap:InitializePlayerIcon()
     self.playerIcon:SetTexture(GUIMinimap.kIconFileName)
     self.playerIcon:SetTexturePixelCoordinates(0, 0, GUIMinimap.kIconWidth, GUIMinimap.kIconHeight)
     self.playerIcon:SetIsVisible(false)
+    self.playerIcon:SetLayer(GUIMinimap.kCameraIconLayer)
     self.minimap:AddChild(self.playerIcon)
 
 end
@@ -295,6 +294,10 @@ function GUIMinimap:UpdateIcon()
         local iconX = topLeftX * self:GetMinimapSize().x
         local iconY = topLeftY * self:GetMinimapSize().y
         self.cameraIconMask:SetPosition(Vector(iconX, iconY, 0))
+    elseif PlayerUI_IsAReadyRoomPlayer() then
+        // No icons for ready room players.
+        self.cameraIconMask:SetIsVisible(false)
+        self.playerIcon:SetIsVisible(false)
     else
         // Draw a player icon representing this player's position.
         self.cameraIconMask:SetIsVisible(false)
@@ -393,6 +396,7 @@ function GUIMinimap:AddStaticBlip()
 
     addedBlip = GUI.CreateGraphicsItem()
     addedBlip:SetAnchor(GUIItem.Left, GUIItem.Top)
+    addedBlip:SetLayer(GUIMinimap.kStaticBlipsLayer)
     self.minimap:AddChild(addedBlip)
     table.insert(self.staticBlips, addedBlip)
     return addedBlip
@@ -419,7 +423,7 @@ function GUIMinimap:UpdateDynamicBlips(deltaTime)
     local removeBlips = { }
     for i, blip in ipairs(self.inuseDynamicBlips) do
         if blip["Type"] == kAlertType.Attack then
-            if not self:UpdateAttackBlip(blip, deltaTime) then
+            if self:UpdateAttackBlip(blip, deltaTime) then
                 table.insert(removeBlips, blip)
             end
         end
@@ -432,58 +436,39 @@ end
 
 function GUIMinimap:UpdateAttackBlip(blip, deltaTime)
 
-    local currentSize = blip["Item"]:GetSize()
-    local currentPosition = blip["ItemMask"]:GetPosition()
+    blip["Time"] = blip["Time"] - deltaTime
     
-    if blip["AnimMode"] == GUIMinimap.kDynamicBlipAnimModeGrabAttention then
-    
-        currentSize = currentSize - GUIMinimap.kAttackBlipShrinkRate * deltaTime
-        
-        if currentSize.x < GUIMinimap.kAttackBlipMinSize then
-            currentSize.x = GUIMinimap.kAttackBlipMinSize
-            currentSize.y = GUIMinimap.kAttackBlipMinSize
-            blip["AnimMode"] = GUIMinimap.kDynamicBlipAnimModeMapPulse
-            blip["AnimTime"] = Shared.GetTime()
-        end
-        
-        local positionOnScreen = Vector((Client.GetScreenWidth() - currentSize.x) / 2, (Client.GetScreenHeight() - currentSize.y) / 2, 0)
-        local positionOnBackground = self:GetPositionOnBackground(blip["XPos"], blip["YPos"], currentSize)
-        local lerpAmount = 1 - ((currentSize.x - GUIMinimap.kAttackBlipMinSize) / (blip["StartSize"] - GUIMinimap.kAttackBlipMinSize))
-        currentPosition = positionOnScreen + ((positionOnBackground - positionOnScreen) * lerpAmount)
-        
-    elseif blip["AnimMode"] == GUIMinimap.kDynamicBlipAnimModeMapPulse then
-    
-        local timePassed = Shared.GetTime() - blip["AnimTime"]
-        local shrinkDownTime = GUIMinimap.kDynamicBlipAnimMapPulseTime - 0.2
-        if timePassed >= GUIMinimap.kDynamicBlipAnimMapPulseTime then
-            // Time to remove this blip.
-            return false
-        elseif timePassed >= shrinkDownTime then
-            // Shrink down to nothing really fast before removing.
-            local shrinkAmount = 1 - ((timePassed - shrinkDownTime) / (GUIMinimap.kDynamicBlipAnimMapPulseTime - shrinkDownTime))
-            currentSize = Vector(GUIMinimap.kAttackBlipMinSize, GUIMinimap.kAttackBlipMinSize, 0) * shrinkAmount
-        else
-            // Pulse the blip in and out for a while.
-            local pulseAmount = (0.5 + (((math.sin(Shared.GetTime() * GUIMinimap.kDynamicBlipAnimMapPulseRate) + 1) / 2) * 0.5))
-            currentSize = Vector(GUIMinimap.kAttackBlipMinSize, GUIMinimap.kAttackBlipMinSize, 0) * pulseAmount
-        end
-        currentPosition = self:GetPositionOnBackground(blip["XPos"], blip["YPos"], currentSize)
-    
+    // Fade in.
+    if blip["Time"] >= GUIMinimap.kAttackBlipFadeInTime then
+        local fadeInAmount = ((GUIMinimap.kAttackBlipTime - blip["Time"]) / (GUIMinimap.kAttackBlipTime - GUIMinimap.kAttackBlipFadeInTime))
+        blip["Item"]:SetColor(Color(1, 1, 1, fadeInAmount))
+    else
+        blip["Item"]:SetColor(Color(1, 1, 1, 1))
     end
     
-    blip["Item"]:SetSize(currentSize)
-    blip["ItemMask"]:SetSize(currentSize * GUIMinimap.kDynamicBlipAttackMaskScalar)
+    // Fade out.
+    if blip["Time"] <= GUIMinimap.kAttackBlipFadeOutTime then
+        if blip["Time"] <= 0 then
+            // Done animating.
+            return true
+        end
+        blip["Item"]:SetColor(Color(1, 1, 1, blip["Time"] / GUIMinimap.kAttackBlipFadeOutTime))
+    end
     
-    local positionAdjustment = currentSize - (currentSize * GUIMinimap.kDynamicBlipAttackMaskScalar)
-    blip["Item"]:SetPosition(-positionAdjustment / 2)
-    blip["ItemMask"]:SetPosition(currentPosition)
+    local timeLeft = GUIMinimap.kAttackBlipTime - blip["Time"]
+    local pulseAmount = (math.sin(timeLeft * GUIMinimap.kAttackBlipPulseSpeed) + 1) / 2
+    local blipSize = LerpGeneric(GUIMinimap.kAttackBlipMinSize, GUIMinimap.kAttackBlipMaxSize / 2, pulseAmount)
     
-    blip["Item"]:SetRotation(Vector(0, 0, blip["Rotation"]))
-    blip["ItemMask"]:SetRotation(Vector(0, 0, blip["Rotation"]))
-
-    blip["Rotation"] = blip["Rotation"] + GUIMinimap.kDynamicBlipAttackRotationRate * deltaTime
-    // Don't remove yet, it isn't done animating.
-    return true
+    blip["Item"]:SetSize(blipSize)
+    // Make sure it is always centered.
+    local sizeDifference = GUIMinimap.kAttackBlipMaxSize - blipSize
+    local minimapSize = self:GetMinimapSize()
+    local xOffset = (sizeDifference.x / 2) - GUIMinimap.kAttackBlipMaxSize.x / 2
+    local yOffset = (sizeDifference.y / 2) - GUIMinimap.kAttackBlipMaxSize.y / 2
+    blip["Item"]:SetPosition(Vector((blip["X"] * minimapSize.x) + xOffset, (blip["Y"] * minimapSize.y) + yOffset, 0))
+    
+    // Not done yet.
+    return false
 
 end
 
@@ -506,27 +491,19 @@ function GUIMinimap:AddDynamicBlip(xPos, yPos, blipType)
      */
     if blipType == kAlertType.Attack then
         if self.scanlines then
+            // Disrupt should probably be a global function that disrupts all scanlines at the same time.
             self.scanlines:Disrupt()
         end
         addedBlip = self:GetFreeDynamicBlip(xPos, yPos, blipType)
-        // Start a little bigger than the screen size.
-        local attackBlipSize = math.max(Client.GetScreenWidth(), Client.GetScreenHeight())
-        addedBlip["StartSize"] = attackBlipSize
-        addedBlip["Item"]:SetSize(Vector(attackBlipSize, attackBlipSize, 0))
-        addedBlip["Item"]:SetUseStencil(true)
-        addedBlip["Item"]:SetAnchor(GUIItem.Top, GUIItem.Left)
-        addedBlip["Item"]:SetColor(GUIMinimap.kDynamicBlipAttackColor)
-        // Setup the stencil to mask out the center of the attack blip.
-        local maskSize = attackBlipSize * GUIMinimap.kDynamicBlipAttackMaskScalar
-        addedBlip["ItemMask"]:SetSize(Vector(maskSize, maskSize, 0))
-        addedBlip["ItemMask"]:SetAnchor(GUIItem.Top, GUIItem.Left)
+        addedBlip["Item"]:SetSize(Vector(0, 0, 0))
+        addedBlip["Time"] = GUIMinimap.kAttackBlipTime
     end
     
 end
 
 function GUIMinimap:RemoveDynamicBlip(blip)
 
-    blip["ItemMask"]:SetIsVisible(false)
+    blip["Item"]:SetIsVisible(false)
     table.removevalue(self.inuseDynamicBlips, blip)
     table.insert(self.reuseDynamicBlips, blip)
     
@@ -545,25 +522,25 @@ function GUIMinimap:GetFreeDynamicBlip(xPos, yPos, blipType)
     
         returnBlip = { }
         returnBlip["Item"] = GUI.CreateGraphicsItem()
-        returnBlip["ItemMask"] = GUI.CreateGraphicsItem()
         // Make sure these draw a layer above the minimap so they are on top.
-        returnBlip["ItemMask"]:SetLayer(kGUILayerMinimapDynamicBlips)
-        returnBlip["ItemMask"]:SetIsStencil(true)
-        returnBlip["ItemMask"]:AddChild(returnBlip["Item"])
+        returnBlip["Item"]:SetLayer(GUIMinimap.kDynamicBlipsLayer)
+        returnBlip["Item"]:SetTexture(GUIMinimap.kBlipTexture)
+        returnBlip["Item"]:SetBlendTechnique(GUIItem.Add)
+        returnBlip["Item"]:SetAnchor(GUIItem.Top, GUIItem.Left)
+        self.minimap:AddChild(returnBlip["Item"])
         table.insert(self.inuseDynamicBlips, returnBlip)
         
     end
     
+    returnBlip["X"] = xPos
+    returnBlip["Y"] = yPos
+    
     returnBlip["Type"] = blipType
-    returnBlip["ItemMask"]:SetIsVisible(true)
-    // Assume the mask isn't going to be used by default.
-    returnBlip["Item"]:SetUseStencil(false)
-    returnBlip["XPos"] = xPos
-    returnBlip["YPos"] = yPos
-    returnBlip["Rotation"] = 0
-    returnBlip["AnimMode"] = GUIMinimap.kDynamicBlipAnimModeGrabAttention
-    returnBlip["AnimTime"] = Shared.GetTime()
-    returnBlip["StartSize"] = 0
+    returnBlip["Item"]:SetIsVisible(true)
+    returnBlip["Item"]:SetColor(Color(1, 1, 1, 1))
+    local minimapSize = self:GetMinimapSize()
+    returnBlip["Item"]:SetPosition(Vector(xPos * minimapSize.x, yPos * minimapSize.y, 0))
+    GUISetTextureCoordinatesTable(returnBlip["Item"], GUIMinimap.kBlipTextureCoordinates[blipType])
     return returnBlip
     
 end

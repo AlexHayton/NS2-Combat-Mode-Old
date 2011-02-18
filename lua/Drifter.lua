@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Drifter.lua
 //
@@ -51,6 +51,10 @@ function Drifter:OnCreate()
     
     // Create the controller for doing collision detection.
     self:CreateController(PhysicsGroup.CommanderUnitGroup, Drifter.kCapsuleHeight, Drifter.kCapsuleRadius)
+    
+    if Server then
+        self:TriggerEffects("spawn")
+    end
     
 end
 
@@ -262,10 +266,9 @@ function Drifter:OnThink()
 
                             if(team:GetCarbon() >= cost) then
                             
-                                // Check to make sure there is infestation here
                                 local success = false
                                 local createdStructureId = -1
-                                success, createdStructureId = commander:AttemptToBuild(techId, currentOrder:GetLocation(), math.random() * 2 * math.pi, nil, nil, self)
+                                success, createdStructureId = commander:AttemptToBuild(techId, currentOrder:GetLocation(), Vector(0, 1, 0), currentOrder:GetOrientation(), nil, nil, self)
                                     
                                 if(success) then
                                 
@@ -284,7 +287,7 @@ function Drifter:OnThink()
                                     self:ClearOrders()
                                     
                                 end
-                                                
+                                
                             else
                                 
                                 // Play more resources required
@@ -362,7 +365,7 @@ function Drifter:GetTechButtons(techId)
     
 end
 
-function Drifter:PerformActivation(techId, position, commander)
+function Drifter:PerformActivation(techId, position, normal, commander)
 
     if(techId == kTechId.DrifterFlare) then
     

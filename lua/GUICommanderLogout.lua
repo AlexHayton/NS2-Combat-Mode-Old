@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\GUICommanderLogout.lua
 //
@@ -11,10 +11,8 @@
 
 class 'GUICommanderLogout' (GUIScript)
 
-GUICommanderLogout.kTempScaleFactor = 0.75
-
-GUICommanderLogout.kBackgroundWidth = 146 * GUICommanderLogout.kTempScaleFactor
-GUICommanderLogout.kBackgroundHeight = 92 * GUICommanderLogout.kTempScaleFactor
+GUICommanderLogout.kBackgroundWidth = 146 * kCommanderGUIsGlobalScale
+GUICommanderLogout.kBackgroundHeight = 92 * kCommanderGUIsGlobalScale
 GUICommanderLogout.kBackgroundScaleDefault = Vector(1, 1, 1)
 GUICommanderLogout.kBackgroundScalePressed = Vector(0.9, 0.9, 0.9)
 
@@ -25,8 +23,8 @@ GUICommanderLogout.kLogoutOffset = 5
 GUICommanderLogout.kLogoutMarineTextureName = "ui/marine_commander_background.dds"
 GUICommanderLogout.kLogoutAlienTextureName = "ui/alien_commander_background.dds"
 
-GUICommanderLogout.kArrowWidth = 37 * GUICommanderLogout.kTempScaleFactor
-GUICommanderLogout.kArrowHeight = 45 * GUICommanderLogout.kTempScaleFactor
+GUICommanderLogout.kArrowWidth = 37 * kCommanderGUIsGlobalScale
+GUICommanderLogout.kArrowHeight = 45 * kCommanderGUIsGlobalScale
 
 // Texture coordinate data.
 GUICommanderLogout.kArrowBaseX = { 806, 848, 894 }
@@ -34,7 +32,7 @@ GUICommanderLogout.kArrowTextureWidth = 37
 GUICommanderLogout.kArrowBaseY = 103
 GUICommanderLogout.kArrowTextureHeight = 45
 
-GUICommanderLogout.kArrowXOffset = 20 * GUICommanderLogout.kTempScaleFactor
+GUICommanderLogout.kArrowXOffset = 20 * kCommanderGUIsGlobalScale
 GUICommanderLogout.kArrowBaseXOffset = (GUICommanderLogout.kArrowXOffset * 3) / 2
 
 GUICommanderLogout.kArrowAnimateSpeed = 0.15

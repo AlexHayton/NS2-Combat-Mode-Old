@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Structure_Server.lua
 //
@@ -358,6 +358,17 @@ function Structure:OnTeamChange(teamNumber)
 
 end
 
+function Structure:OnDestroy()
+    
+    if self.structureInfestationId then
+        Server.DestroyEntity(Shared.GetEntity(self.structureInfestationId))
+        self.structureInfestationId = nil
+    end
+    
+    LiveScriptActor.OnDestroy(self)
+
+end
+
 function Structure:OnKill(damage, killer, doer, point, direction)
     if(self:GetIsAlive()) then
     
@@ -374,7 +385,7 @@ function Structure:OnKill(damage, killer, doer, point, direction)
         
         self:ClearAttached()
         self:AbortResearch()
-		
+        
         LiveScriptActor.OnKill(self, damage, killer, doer, point, direction)
         
     end
@@ -419,7 +430,13 @@ function Structure:OnConstructionComplete()
     
     self:TriggerEffects("construction_complete")
     
-    if not self:GetRequiresPower() then
+    self:SpawnInfestation()
+    
+    if self:GetRequiresPower() then
+        self:UpdatePoweredState()
+    end
+    
+    if not self:GetRequiresPower() or self.powered then
     
         local deployAnim = self:GetDeployAnimation()
         if deployAnim ~= "" then
@@ -428,36 +445,47 @@ function Structure:OnConstructionComplete()
         
         self:TriggerEffects("deploy")
         
-    else
-        self.powerPoint = self:FindPowerPoint()
     end
     
 end
 
-function Structure:FindPowerPoint()
+// Return alive power pack that's powering us, or power point in our location. 
+function Structure:FindPowerSource()
 
-    local structurePowerPoint = nil
-    
     local powerPoints = GetGamerules():GetEntities("PowerPoint")
     
     for index, powerPoint in ipairs(powerPoints) do
     
-        if powerPoint:GetLocationName() == self:GetLocationName() then
-        
-            structurePowerPoint = powerPoint
-            
-            break
+        if powerPoint:GetLocationName() == self:GetLocationName() and powerPoint:GetIsPowered() then
+
+            return powerPoint        
             
         end
             
     end
-       
-    return structurePowerPoint
+    
+    // Look for power packs
+    local powerPacks = GetGamerules():GetEntities("PowerPack", self:GetTeamNumber(), self:GetOrigin(), PowerPack.kRange, true)
+    
+    for index, powerPack in ipairs(powerPacks) do
+    
+        if powerPack:GetIsAlive() then
+        
+            return powerPack
+            
+        end
+            
+    end
+        
+    return nil
     
 end
 
-function Structure:GetPowerPoint()
-    return self.powerPoint
+function Structure:SetLocationName(name)
+
+    LiveScriptActor.SetLocationName(self, name)
+    self:UpdatePoweredState()
+
 end
 
 function Structure:UpdatePoweredState()
@@ -465,19 +493,13 @@ function Structure:UpdatePoweredState()
     if self:GetRequiresPower() then
     
         local powered = false
+        local powerSource = self:FindPowerSource()
         
-        if self.powerPoint then
+        if powerSource then
         
-            if self.powerPoint:GetIsPowered()  then
-            
-                local powerTeamNumber = self.powerPoint:GetTeamNumber()            
-                powered = ((self:GetTeamNumber() == powerTeamNumber) or (powerTeamNumber == kTeamReadyRoom))
+            local powerTeamNumber = powerSource:GetTeamNumber()            
+            powered = ((self:GetTeamNumber() == powerTeamNumber) or (powerTeamNumber == kTeamReadyRoom))
                 
-            end
-            
-        // If no power point entity placed or no trigger found for it, let map function
-        else 
-            powered = true
         end        
         
         if self.powered ~= powered then
@@ -638,6 +660,24 @@ function Structure:SetConstructionComplete()
     
 end
 
+function Structure:SpawnInfestation(percent)
+
+    // Create small infestation for alien structures (hive overrides this)
+    if self:GetTeamType() == kAlienTeamType then
+    
+        local origin = self:GetOrigin()
+        local attached = self:GetAttached()
+        if attached then
+            origin = attached:GetOrigin()
+        end
+        
+        local infestation = CreateStructureInfestation(origin, self:GetTeamNumber(), kStructureInfestationRadius, percent)
+        self.structureInfestationId = infestation:GetId()
+        
+    end
+    
+end
+
 // How many resources does it cost?
 function Structure:GetPointCost()
 
@@ -660,9 +700,9 @@ function Structure:PerformAction(techNode, position)
         // Amount to get back at full health
         local carbonBack = LookupTechData(self:GetTechId(), kTechDataCostKey) * self:GetHealthScalar() * self:GetRecycleScalar()
         self:GetTeam():AddCarbon(carbonBack)
-		
-		self:AbortResearch()
-		
+        
+        self:AbortResearch()
+        
         self:TriggerEffects("recycle")
         
         local team = self:GetTeam()
@@ -680,21 +720,4 @@ function Structure:PerformAction(techNode, position)
         
     end
     
-end
-
-function Structure:OnAnimationComplete(animName)
-
-    LiveScriptActor.OnAnimationComplete(self, animName)
-
-    if(animName == Structure.kAnimDeploy) then
-    
-        local idleSound = self:GetIdleSound()
-        if idleSound ~= nil then
-        
-            self:PlaySound(idleSound)
-            
-        end
-        
-    end
-
 end

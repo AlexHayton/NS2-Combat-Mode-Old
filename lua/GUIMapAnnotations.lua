@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\GUIMapAnnotations.lua
 //
@@ -7,6 +7,8 @@
 // Manages text that is drawn in the world to annotate maps.
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
+
+Script.Load("lua/dkjson.lua")
 
 class 'GUIMapAnnotations' (GUIScript)
 
@@ -132,7 +134,7 @@ function OnCommandDisplayAnnotations(display)
 
     if display == "true" then
         GetGUIManager():GetGUIScriptSingle("GUIMapAnnotations"):ClearAnnotations()
-        local urlString = "http://unknownworldsstats.appspot.com/statlocationdata?version=" .. ToString(Shared.GetBuildNumber()) .. "&map=" .. Shared.GetMapName()
+        local urlString = "http://unknownworldsstats.appspot.com/statlocationdata?version=" .. ToString(Shared.GetBuildNumber()) .. "&map=" .. Shared.GetMapName() .. "&output=json"
         Shared.GetWebpage(urlString, ParseAnnotations)
         GetGUIManager():GetGUIScriptSingle("GUIMapAnnotations"):SetIsVisible(true)
     else
@@ -143,33 +145,13 @@ end
 
 function ParseAnnotations(data)
 
-    local fields = { }
-    data:gsub("([^,]+)", function(c) table.insert(fields, c) end)
-    local numberOfAnnotations = table.count(fields) / GUIMapAnnotations.kNumberOfDataFields
-    local currentAnnotation = 0
-    while currentAnnotation < numberOfAnnotations do
-    
-        local type = fields[currentAnnotation * GUIMapAnnotations.kNumberOfDataFields + 1]
-        type = ConditionalValue(type == nil, "user", type)
-        
-        local infoText = fields[currentAnnotation * GUIMapAnnotations.kNumberOfDataFields + 2]
-        infoText = ConditionalValue(infoText == nil, "nil info", infoText)
-        
-        local value = fields[currentAnnotation * GUIMapAnnotations.kNumberOfDataFields + 3]
-        value = ConditionalValue(value == nil, 0, value)
-        
-        local mapX = fields[currentAnnotation * GUIMapAnnotations.kNumberOfDataFields + 4]
-        mapX = ConditionalValue(mapX == nil, 0, mapX)
-        
-        local mapY = fields[currentAnnotation * GUIMapAnnotations.kNumberOfDataFields + 5]
-        mapY = ConditionalValue(mapY == nil, 0, mapY)
-        
-        local mapZ = fields[currentAnnotation * GUIMapAnnotations.kNumberOfDataFields + 6]
-        mapZ = ConditionalValue(mapZ == nil, 0, mapZ)
-        
-        GetGUIManager():GetGUIScriptSingle("GUIMapAnnotations"):AddAnnotation(infoText, Vector(tonumber(mapX), tonumber(mapY), tonumber(mapZ)))
-        currentAnnotation = currentAnnotation + 1
-        
+    local obj, pos, err = json.decode(data, 1, nil)
+    if err then
+        Shared.Message("Error in parsing annotations: " .. ToString(err))
+    else
+        for k, v in pairs(obj) do
+            GetGUIManager():GetGUIScriptSingle("GUIMapAnnotations"):AddAnnotation(v.info, Vector(v.mapx, v.mapy, v.mapz))
+        end
     end
 
 end

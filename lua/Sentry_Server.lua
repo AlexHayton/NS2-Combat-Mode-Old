@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Sentry_Server.lua
 //
@@ -188,7 +188,7 @@ function Sentry:OnAnimationComplete(animName)
 
     Structure.OnAnimationComplete(self, animName)
     
-    if animName == self:GetDeployAnimation() and self.mode == Sentry.kMode.PoweringUp then
+    if animName == self:GetDeployAnimation() then
     
         self:SetMode(Sentry.kMode.Scanning)
     

@@ -1,4 +1,4 @@
-//======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+//======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Utility.lua
 //
@@ -495,8 +495,6 @@ function ToString(t)
         return t
     elseif type(t) == "table" then
         return table.tostring(t)
-    elseif type(t) == "Coords" then
-        return CoordsToString(t)
     elseif type(t) == "userdata" then
         if t:isa("Vector") then
             return t:tostring()
@@ -504,6 +502,10 @@ function ToString(t)
             return string.format("trace fraction: %.2f entity: %s", t.fraction, SafeClassName(t.entity))
         elseif t:isa("Color") then            
             return string.format("color rgba: %.2f, %.2f, %.2f, %.2f", t.r, t.g, t.g, t.a)
+        elseif t:isa("Angles") then
+            return string.format("angles yaw/pitch/roll: %.2f, %.2f, %.2f", t.yaw, t.pitch, t.roll)
+        elseif t:isa("Coords") then
+            return CoordsToString(t)
         elseif t.GetClassName then
             return t:GetClassName()
         else
@@ -652,7 +654,7 @@ function DrawCoords(coords)
     DebugLine(coords.origin, coords.origin + coords.zAxis, .2, 0, 0, 1, 1)
 end
 
-function BuildCoordsFromDirection(zAxis, origin)
+function BuildCoordsFromDirection(zAxis, origin, scale)
 
     // Compute normal 
     local upVector = Vector(0, 1, 0)
@@ -667,25 +669,40 @@ function BuildCoordsFromDirection(zAxis, origin)
 
     local rightVector = zAxis:CrossProduct(upVector)
     local normal = rightVector:CrossProduct(zAxis)
+    if not scale then
+        scale = 1
+    end
     
-    return BuildCoords(normal, zAxis, origin, 1)
+    return BuildCoords(normal, zAxis, origin, scale)
     
 end
 
-function BuildCoords(normal, zAxis, origin, scale)
+function BuildCoords(yAxis, zAxis, origin, scale)
 
-    // Build coords
     local coords = Coords()
-    VectorCopy(GetNormalizedVector(zAxis), coords.zAxis)
-    VectorCopy(GetNormalizedVector(normal), coords.yAxis)
-    coords.xAxis = coords.yAxis:CrossProduct(coords.zAxis)
-    coords.zAxis = coords.xAxis:CrossProduct(coords.yAxis)
+
+    coords.yAxis = yAxis:GetUnit()
+    coords.zAxis = zAxis:GetUnit()
+    
+    // The two axes that were specified are parallel
+    if math.abs( Math.DotProduct(coords.yAxis, coords.zAxis) ) > 0.9 then
+        coords.zAxis = coords.yAxis:GetPerpendicular()
+    end
+    
+    coords.xAxis = coords.yAxis:CrossProduct(coords.zAxis):GetUnit()
+    coords.zAxis = coords.xAxis:CrossProduct(coords.yAxis):GetUnit()
     
     // Set scale
     if scale ~= nil then
-        coords.xAxis:Scale(scale)
-        coords.yAxis:Scale(scale)
-        coords.zAxis:Scale(scale)
+        if type(scale) == "userdata" and scale:isa("Vector") then
+            coords.xAxis:Scale(scale.x)
+            coords.yAxis:Scale(scale.y)
+            coords.zAxis:Scale(scale.z)            
+        else
+            coords.xAxis:Scale(scale)
+            coords.yAxis:Scale(scale)
+            coords.zAxis:Scale(scale)
+        end
     end
     
     if origin then
@@ -1195,10 +1212,6 @@ end
 
 function PrecacheAsset(effectName)
 
-    if effectName == nil then
-        local a = 0
-    end
-    
     if(type(effectName) ~= "string") then
     
         Print("PrecacheAsset(%s): effect name isn't a string (%s instead).", tostring(effectName), type(effectName))
@@ -1214,7 +1227,9 @@ function PrecacheAsset(effectName)
         Shared.PrecacheCinematic(effectName)
     elseif(StringEndsWith(effectName, ".model")) then
         Shared.PrecacheModel(effectName)
-    else
+    elseif(StringEndsWith(effectName, ".material")) then
+        // Materials don't need to be precached
+    elseif(StringStartsWith(effectName, "sound")) then
         Shared.PrecacheSound(effectName)
     end
         
@@ -1242,9 +1257,9 @@ function InitEntity(entity, className, origin, teamNumber)
         if(Server and teamNumber ~= -1) then
             entity:SetTeamNumber(teamNumber)
         end
-            
+        
+        entity:SetOrigin(origin)    
         entity:OnInit()
-        entity:SetOrigin(origin)
         
     end
     

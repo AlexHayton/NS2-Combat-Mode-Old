@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Shade.lua
 //
@@ -104,9 +104,10 @@ function Shade:GetActivationTechAllowed(techId)
     if techId == kTechId.ShadeDisorient then
         return false
     end
+    return true
 end
 
-function Shade:PerformActivation(techId, position, commander)
+function Shade:PerformActivation(techId, position, normal, commander)
 
     local success = false
     

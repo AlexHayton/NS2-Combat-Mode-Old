@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Skulk.lua
 //
@@ -41,7 +41,7 @@ Skulk.kArmor = kSkulkArmor
 Skulk.kLeapVerticalVelocity = 4
 Skulk.kLeapTime = 0.2
 Skulk.kLeapForce = 12
-Skulk.kMaxSpeed = 7 // 8.7
+Skulk.kMaxSpeed = 6.2 // 8.7
 Skulk.kMaxWalkSpeed = Skulk.kMaxSpeed / 2
 Skulk.kLeapSpeed = 25
 Skulk.kAcceleration = 65
@@ -50,6 +50,8 @@ Skulk.kMass = 45 // ~100 pounds
 Skulk.kWallWalkCheckInterval = .2
 // This is how quickly the 3rd person model will adjust to the new normal.
 Skulk.kWallWalkNormalSmoothRate = 5
+// How big the spheres are they are casted out to find walls, "feelers".
+Skulk.kWallWalkingFeelerSize = 0.1
 Skulk.kXExtents = .45
 Skulk.kYExtents = .45
 Skulk.kZExtents = .45
@@ -151,6 +153,11 @@ end
 
 function Skulk:GetIsLeaping()
     return self.leaping
+end
+
+// Skulks do not respect ladders due to their wall walking superiority.
+function Skulk:GetIsOnLadder()
+    return false
 end
 
 function Skulk:UpdateMoveAnimation()
@@ -296,10 +303,12 @@ function Skulk:PreventWallWalkIntersection(dt)
                                   -self:GetCoords().zAxis }
     
     local originChanged = 0
+    local length = self:GetExtents():GetLength()
+    local origin = self:GetOrigin()
     for index, direction in ipairs(intersectDirections) do
     
-        local extentsDirection = self:GetExtents():GetLength() * 0.75 * direction
-        local trace = Shared.TraceRay(self:GetOrigin(), self:GetOrigin() + extentsDirection, self:GetMovePhysicsMask(), EntityFilterOne(self))
+        local extentsDirection = length * 0.75 * direction
+        local trace = Shared.TraceRay(origin, origin + extentsDirection, self:GetMovePhysicsMask(), EntityFilterOne(self))
         if trace.fraction < 1 then
             self:PerformMovement((-extentsDirection * dt * 5 * (1 - trace.fraction)), 3)
         end
@@ -350,7 +359,7 @@ end
 
 function Skulk:TraceWallNormal(startPoint, endPoint, normals)
     
-    local theTrace = Shared.TraceRay(startPoint, endPoint, PhysicsMask.AllButPCs, EntityFilterOne(self))
+    local theTrace = Shared.TraceCapsule(startPoint, endPoint, Skulk.kWallWalkingFeelerSize, Skulk.kWallWalkingFeelerSize, PhysicsMask.AllButPCs, EntityFilterOne(self))
     
     // Don't allow wall-walking on entities    
     if (theTrace.fraction > 0 and theTrace.fraction < 1 and theTrace.entity == nil) then

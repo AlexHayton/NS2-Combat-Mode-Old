@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\InfantryPortal.lua
 //
@@ -55,18 +55,15 @@ end
 
 function InfantryPortal:QueueWaitingPlayer()
 
-    // Get team
-    if(self.queuedPlayerId == nil) then
+    if(self:GetIsAlive() and self.queuedPlayerId == nil) then
 
         // Remove player from team spawn queue and add here
         local team = self:GetTeam()
         local playerToSpawn = team:GetOldestQueuedPlayer()
 
         if(playerToSpawn ~= nil) then
-        
-            playerToSpawn = team:GetOldestQueuedPlayer()
             
-            team:RemovePlayerFromRespawnQueue(playerToSpawn)        
+            team:RemovePlayerFromRespawnQueue(playerToSpawn)
             
             self.queuedPlayerId = playerToSpawn:GetId()
             self.queuedPlayerStartTime = Shared.GetTime()
@@ -245,6 +242,21 @@ function InfantryPortal:SpawnPlayer()
 
 end
 
+// Takes the queued player from this IP and placed them back in the
+// respawn queue to be spawned elsewhere.
+function InfantryPortal:RequeuePlayer()
+
+    if self.queuedPlayerId then
+        local team = self:GetTeam()
+        team:PutPlayerInRespawnQueue(Shared.GetEntity(self.queuedPlayerId), Shared.GetTime())
+    end
+    
+    // Don't spawn player
+    self.queuedPlayerId = nil
+    self.queuedPlayerStartTime = nil
+
+end
+
 function InfantryPortal:OnReset()
 
     Structure.OnReset(self)
@@ -272,9 +284,8 @@ function InfantryPortal:OnKill(damage, attacker, doer, point, direction)
     
     Structure.OnKill(self, damage, attacker, doer, point, direction)
 
-    // Don't spawn player
-    self.queuedPlayerId = nil
-    self.queuedPlayerStartTime = nil
+    // Put the player back in queue if there was one hoping to spawn at this now dead IP.
+    self:RequeuePlayer()
     
 end
 
@@ -366,6 +377,8 @@ function InfantryPortal:OnPoweredChange(newPoweredState)
     if not self.powered then
     
         self:StopSpinning()
+        // Put the player back in queue if there was one hoping to spawn at this IP.
+        self:RequeuePlayer()
         
     elseif (self.queuedPlayerId ~= nil) then
     

@@ -3,7 +3,7 @@
 // lua/Commander_HotkeyPanel.lua
 // 
 // Created by Henry Kropf and Charlie Cleveland
-// Copyright 2010, Unknown Worlds Entertainment
+// Copyright 2011, Unknown Worlds Entertainment
 //
 //=============================================================================
 
@@ -56,7 +56,11 @@ end
  * Indicates hotkey that user has clicked on
  */
 function CommanderUI_SelectHotkey(idx)
+
+    // The server won't know about this selection, we need to manually tell it.
+    Client.GetLocalPlayer():SendSelectHotkeyGroupMessage(idx)
     Client.GetLocalPlayer():SelectHotkeyGroup(idx)
+    
 end
 
 /**

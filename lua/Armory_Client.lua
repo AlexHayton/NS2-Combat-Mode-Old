@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Armory_Client.lua
 //
@@ -231,6 +231,8 @@ function Armory:OnUse(player, elapsedTime, useAttachPoint, usePoint)
         
             GetFlashPlayer(kClassFlashIndex):Load(Armory.kBuyMenuFlash)
             GetFlashPlayer(kClassFlashIndex):SetBackgroundOpacity(0)
+            
+            player.showingBuyMenu = true
             
             Client.SetCursor("ui/Cursor_MenuDefault.dds")
             

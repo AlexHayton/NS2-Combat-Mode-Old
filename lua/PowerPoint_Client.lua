@@ -1,10 +1,12 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\PowerPoint_Client.lua
 //
 //    Created by:   Charlie Cleveland (charlie@unknownworlds.com)
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
+
+PowerPoint.kRedColor = Color(1, 0, 0)
 
 function PowerPoint:UpdatePoweredLights()
     
@@ -55,7 +57,7 @@ function PowerPoint:UpdatePoweredLight(renderLight)
                 local halfIntensity = (1 - PowerPoint.kAuxPowerMinIntensity)/2
                 local intensity = PowerPoint.kAuxPowerMinIntensity + halfIntensity + scalar * halfIntensity
                 renderLight:SetIntensity( renderLight.originalIntensity * intensity)
-                renderLight:SetColor( Color(1, 0, 0) )
+                renderLight:SetColor( PowerPoint.kRedColor )
             
             end
 

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Alien_Server.lua
 //
@@ -13,61 +13,71 @@ function Alien:Evolve(techId)
     local success = false
     
     // Morph into new class or buy upgrade
-    local gestationClassName = LookupTechData(techId, kTechDataGestateName)
+    local gestationMapName = LookupTechData(techId, kTechDataGestateName)
+    if gestationMapName then
     
-    // Change into new life form if different
-    if(gestationClassName ~= nil) and (self:GetClassName() ~= gestationClassName) then
+        // Change into new life form if different
+        if self:GetMapName() ~= gestationMapName then
 
-        // Check for room
-        local eggExtents = LookupTechData(kTechId.Embryo, kTechDataMaxExtents)
-        local newAlienExtents = LookupTechData(techId, kTechDataMaxExtents)
-        local physicsMask = PhysicsMask.AllButPCsAndRagdolls
-        local position = self:GetOrigin()
-        
-        if not self:GetIsOnGround() then
-        
-            Print("You must be on the ground to evolve.")
-            // Pop up tooltip
-            self:AddTooltipOncePer("You must be on the ground to evolve.", 3)
+            // Check for room
+            local eggExtents = LookupTechData(kTechId.Embryo, kTechDataMaxExtents)
+            local newAlienExtents = LookupTechData(techId, kTechDataMaxExtents)
+            local physicsMask = PhysicsMask.AllButPCsAndRagdolls
+            local position = Vector(self:GetOrigin())
             
-        elseif GetHasRoomForCapsule(eggExtents, position + Vector(0, eggExtents.y, 0), physicsMask, self) and
-               GetHasRoomForCapsule(newAlienExtents, position + Vector(0, newAlienExtents.y, 0), physicsMask, self) then
-        
-            self:RemoveChildren()
+            // Move us up a little bit to prevent problems with getting stuck
+            // or intersecting the ground.
+            position.y = position.y + 0.1
             
-            // Deduct cost here as player is immediately replaced and copied
-            self:AddPlasma(-LookupTechData(techId, kTechDataCostKey))
+            if not self:GetIsOnGround() then
             
-            local newPlayer = self:Replace(Embryo.kMapName)
-            
-            // Clear angles, in case we were wall-walking or doing some crazy alien thing
-            local angles = Angles(self:GetViewAngles())
-            angles.roll = 0.0
-            angles.pitch = 0.0
-            newPlayer:SetAngles(angles)
-            
-            // Eliminate velocity so that we don't slide or jump as an egg
-            newPlayer.velocity.x = 0
-            newPlayer.velocity.y = 0
-            newPlayer.velocity.z = 0
-                    
-            // We lose our purchased upgrades when we morph into something else
-            newPlayer.upgrade1 = kTechId.None
-            newPlayer.upgrade2 = kTechId.None
-            newPlayer.upgrade3 = kTechId.None
-            newPlayer.upgrade4 = kTechId.None
-            
-            newPlayer:SetGestationTechId(techId)
-            
-            success = true
+                Print("You must be on the ground to evolve.")
+                // Pop up tooltip
+                self:AddTooltipOncePer("You must be on the ground to evolve.", 3)
 
-        else
-        
-            // Pop up tooltip
-            Print("You need more room to evolve.")
-            self:AddTooltipOncePer("You need more room to evolve.", 3)
+            //elseif not self:GetGameEffectMask(kGameEffect.OnInfestation) then
+            //    self:AddTooltipOncePer("You must be on infestation to evolve.", 3)
+                
+            elseif GetHasRoomForCapsule(eggExtents, position + Vector(0, eggExtents.y, 0), physicsMask, self) and
+                   GetHasRoomForCapsule(newAlienExtents, position + Vector(0, newAlienExtents.y, 0), physicsMask, self) then
             
-        end        
+                self:RemoveChildren()
+                
+                // Deduct cost here as player is immediately replaced and copied
+                self:AddPlasma(-LookupTechData(techId, kTechDataCostKey))
+                
+                local newPlayer = self:Replace(Embryo.kMapName)
+                newPlayer:SetOrigin(position)
+                
+                // Clear angles, in case we were wall-walking or doing some crazy alien thing
+                local angles = Angles(self:GetViewAngles())
+                angles.roll = 0.0
+                angles.pitch = 0.0
+                newPlayer:SetAngles(angles)
+                
+                // Eliminate velocity so that we don't slide or jump as an egg
+                newPlayer.velocity.x = 0
+                newPlayer.velocity.y = 0
+                newPlayer.velocity.z = 0
+                
+                newPlayer:DropToFloor()
+                        
+                // We lose our purchased upgrades when we morph into something else
+                newPlayer:ResetUpgrades()
+                
+                newPlayer:SetGestationTechId(techId)
+                
+                success = true
+
+            else
+            
+                // Pop up tooltip
+                Print("You need more room to evolve.")
+                self:AddTooltipOncePer("You need more room to evolve.", 3)
+                
+            end        
+            
+        end
         
         handled = true
 

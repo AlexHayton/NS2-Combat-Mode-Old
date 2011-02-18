@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\BalanceMisc.lua
 //
@@ -26,9 +26,11 @@ kInfantryPortalBuildDistance = 8
 kInfantryPortalMinSpawnDistance = 4
 kWeaponStayTime = 30    // NS1
 kInfestCost = 10
-kRifleCost = 0
-kPistolCost = 0
-kAxeCost = 0
+// The base weapons need to cost a small amount otherwise they can
+// be spammed.
+kRifleCost = 10
+kPistolCost = 5
+kAxeCost = 5
 // % use per second
 kJetpackUseFuelRate = .2
 // % gain every second whether in use or not
@@ -73,3 +75,9 @@ kSprayDouseOnFireChance = .5
 
 // Players and structures get energy back at this rate when on fire 
 kOnFireEnergyRecuperationScalar = .2
+
+// Infestation
+kStructureInfestationRadius = 2
+kHiveInfestationRadius = 20
+kInfestationRadius = 6
+kGorgeInfestationLifetime = 120

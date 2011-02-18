@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\AlienTeam.lua
 //
@@ -11,6 +11,7 @@
 Script.Load("lua/TechData.lua")
 Script.Load("lua/Skulk.lua")
 Script.Load("lua/PlayingTeam.lua")
+Script.Load("lua/InfestationManager.lua")
 
 class 'AlienTeam' (PlayingTeam)
 
@@ -20,6 +21,8 @@ AlienTeam.kAutoHealRate = kBalanceAutoHealPerSecond
 // Innate alien regeneration
 AlienTeam.kAutoHealInterval = 2
 AlienTeam.kAutoHealPercent = .02
+AlienTeam.kInfestationUpdateRate = 2
+AlienTeam.kInfestationHurtInterval = 2
 
 function AlienTeam:GetTeamType()
     return kAlienTeamType
@@ -49,7 +52,7 @@ function AlienTeam:SpawnInitialStructures(teamLocation)
         if(attached ~= nil) then
 
             if attached:isa("Hive") then
-                attached:SpawnEggs()
+                attached:SpawnInitial()
             else
                 Print("AlienTeam:SpawnInitialStructures(): Hive not attached to tech point, %s instead.", attached:GetClassName())
             end
@@ -78,6 +81,8 @@ function AlienTeam:Update(timePassed)
     self:UpdateTeamAutoHeal(timePassed)
     
     self:UpdateHiveSight()
+    
+    self:UpdateInfestation()
     
 end
 
@@ -115,11 +120,15 @@ function AlienTeam:UpdateTeamAutoHeal(timePassed)
         
         for index, entity in ipairs(teamEnts) do
         
-            if entity:GetIsAlive() and (entity:isa("Alien") or entity:isa("Drifter")) then
+            if entity:GetIsAlive() then
             
-                // Entities always get at least 1 point back
-                local healthBack = math.max(entity:GetMaxHealth() * AlienTeam.kAutoHealPercent, 1)
-                entity:AddHealth(healthBack, true)
+                if entity:isa("Drifter") or (entity:isa("Alien") and entity:GetGameEffectMask(kGameEffect.OnInfestation)) then
+            
+                    // Entities always get at least 1 point back
+                    local healthBack = math.max(entity:GetMaxHealth() * AlienTeam.kAutoHealPercent, 1)
+                    entity:AddHealth(healthBack, true)
+                    
+                end
                 
             end
             
@@ -129,13 +138,36 @@ function AlienTeam:UpdateTeamAutoHeal(timePassed)
         
     end
     
-    // Auto-heal structures constantly
+    // Auto-heal structures constantly, if they're on infestation
     for index, structure in ipairs(self.structures) do
     
-        // Cap it so eggs don't count up like 1-2% per second
-        local maxHealth = structure:GetMaxHealth() * kBalanceAutoHealMaxPercentPerSecond/100 * timePassed
-        local health = math.min(AlienTeam.kAutoHealRate * timePassed, maxHealth)
-        structure:AddHealth(health, false)
+        if structure:GetGameEffectMask(kGameEffect.OnInfestation) then
+        
+            // Cap it so eggs don't count up like 1-2% per second
+            local maxHealth = structure:GetMaxHealth() * kBalanceAutoHealMaxPercentPerSecond/100 * timePassed
+            local health = math.min(AlienTeam.kAutoHealRate * timePassed, maxHealth)
+            structure:AddHealth(health, false)
+            
+        end 
+       
+    end
+    
+    // Hurt structures if they require infestation and aren't on it
+    if self.timeOfLastInfestationHurt == nil or (time > (self.timeOfLastInfestationHurt + AlienTeam.kInfestationHurtInterval)) then
+    
+        for index, structure in ipairs(self.structures) do
+        
+            if LookupTechData(structure:GetTechId(), kTechDataRequiresInfestation) and not structure:GetGameEffectMask(kGameEffect.OnInfestation) then
+            
+                // Take damage!
+                local damage = structure:GetMaxHealth() * kBalanceInfestationHurtPercentPerSecond/100 * AlienTeam.kInfestationHurtInterval               
+                structure:TakeDamage(damage, nil, nil, structure:GetOrigin(), nil)
+                
+            end
+            
+        end
+        
+        self.timeOfLastInfestationHurt = time
         
     end
     
@@ -147,7 +179,7 @@ function AlienTeam:GetBlipType(entity)
 
     local blipType = kBlipType.Undefined
     
-    if entity:isa("LiveScriptActor") and entity:GetIsVisible() and entity:GetIsAlive() then
+    if entity:isa("LiveScriptActor") and entity:GetIsVisible() and entity:GetIsAlive() and not entity:isa("Infestation") then
     
         if entity:GetTeamNumber() == self:GetTeamNumber() then
         
@@ -174,7 +206,7 @@ function AlienTeam:GetBlipType(entity)
                 
             end
             
-        elseif(entity:GetTeamNumber() == GetEnemyTeamNumber(self:GetTeamNumber()) and (entity.sighted or entity:GetGameEffectMask(kGameEffect.Parasite))) then
+        elseif(entity:GetTeamNumber() == GetEnemyTeamNumber(self:GetTeamNumber()) and (entity.sighted or entity:GetGameEffectMask(kGameEffect.Parasite) or entity:GetGameEffectMask(kGameEffect.OnInfestation))) then
             blipType = kBlipType.Sighted
         end
         
@@ -215,6 +247,19 @@ function AlienTeam:UpdateHiveSight()
         
         // Now sync the sighted entities with the blip entities, creating or deleting them
         self:DeleteOldBlips(time)
+        
+    end
+    
+end
+
+function AlienTeam:UpdateInfestation()
+
+    // Update infestation connections
+    if GetGamerules():GetGameStarted() and (self.timeLastInfestationUpdate == nil or (Shared.GetTime() > (self.timeLastInfestationUpdate + AlienTeam.kInfestationUpdateRate))) then
+    
+        UpdateInfestation(self:GetTeamNumber())
+        
+        self.timeLastInfestationUpdate = Shared.GetTime()
         
     end
     
@@ -430,6 +475,9 @@ function AlienTeam:InitTechTree()
     self.techTree:AddUpgradeNode(kTechId.UpgradeWhip,             kTechId.None,                kTechId.None)
     self.techTree:AddBuildNode(kTechId.MatureWhip,                 kTechId.None,                kTechId.None)
     self.techTree:AddActivation(kTechId.WhipAcidStrike,            kTechId.None,                kTechId.None)
+
+    self.techTree:AddActivation(kTechId.WhipUnroot)
+    self.techTree:AddActivation(kTechId.WhipRoot)
     
     // Tier 1 structure triggered abilities
     self.techTree:AddActivation(kTechId.CragHeal,                    kTechId.None,          kTechId.None)

@@ -1,4 +1,4 @@
-// ======= Copyright © 2003-2010, Unknown Worlds Entertainment, Inc. All rights reserved. =======
+// ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\Egg.lua
 //
@@ -72,8 +72,6 @@ function Egg:QueueWaitingPlayer()
         local playerToSpawn = team:GetOldestQueuedPlayer()
 
         if(playerToSpawn ~= nil) then
-        
-            playerToSpawn = team:GetOldestQueuedPlayer()
             
             team:RemovePlayerFromRespawnQueue(playerToSpawn)        
             
