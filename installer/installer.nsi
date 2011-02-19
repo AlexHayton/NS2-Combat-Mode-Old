@@ -8,9 +8,9 @@
 !define COMP_NAME "MCMLXXXIV"
 !define WEB_SITE "http://www.unknownworlds.com/forums/index.php?showtopic=111818&st=0#entry1813965"
 !define VERSION "0.0.1.0"
-!define COPYRIGHT "Copyleft"
+!define COPYRIGHT "Free-as-in-Beer"
 !define DESCRIPTION "Natural Selection 2 Combat Mode"
-!define LICENSE_TXT "..\LICENSE.txt"
+!define LICENSE_TXT "LICENSE.txt"
 !define INSTALLER_NAME "CombatMode-${VERSION}-Setup.exe"
 !define MAIN_APP_EXE "Launch Combat Mode.lnk"
 !define MAIN_APP_ICON "..\NS2.exe"
@@ -19,6 +19,7 @@
 !define REG_APP_PATH "Software\Microsoft\Windows\CurrentVersion\App Paths\${MAIN_APP_EXE}"
 !define UNINSTALL_PATH "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 !define SM_FOLDER "NS2 Combat Mode"
+!define MOD_FOLDER "Combat"
 
 ######################################################################
 
@@ -37,7 +38,7 @@ Caption "${APP_NAME}"
 OutFile "${INSTALLER_NAME}"
 BrandingText "${APP_NAME}"
 XPStyle on
-InstallDir "$PROGRAMFILES\Steam\steamapps\common\natural selection 2\Combat"
+InstallDir "$PROGRAMFILES\Steam\steamapps\common\natural selection 2\${MOD_FOLDER}"
 InstallDirRegKey "${REG_ROOT}" "${REG_APP_PATH}" ""
 
 ######################################################################
@@ -57,7 +58,7 @@ InstallDirRegKey "${REG_ROOT}" "${REG_APP_PATH}" ""
 
 !ifdef REG_START_MENU
 !define MUI_STARTMENUPAGE_NODISABLE
-!define MUI_STARTMENUPAGE_DEFAULTFOLDER "NS2 Combat Mode"
+!define MUI_STARTMENUPAGE_DEFAULTFOLDER "${SM_FOLDER}"
 !define MUI_STARTMENUPAGE_REGISTRY_ROOT "${REG_ROOT}"
 !define MUI_STARTMENUPAGE_REGISTRY_KEY "${UNINSTALL_PATH}"
 !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "${REG_START_MENU}"
@@ -67,7 +68,7 @@ InstallDirRegKey "${REG_ROOT}" "${REG_APP_PATH}" ""
 !insertmacro MUI_PAGE_INSTFILES
 
 !define MUI_FINISHPAGE_RUN
-!define MUI_FINISHPAGE_RUN_TEXT "Launch NS2 Combat Mode"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch ${SM_FOLDER}"
 !define MUI_FINISHPAGE_RUN_FUNCTION "LaunchLink"
 !insertmacro MUI_PAGE_FINISH
 
@@ -86,7 +87,7 @@ Function .onInit
   # Get the steam installation folder and default to that.
   Push $0
   ReadRegStr $0 HKLM SOFTWARE\Wow6432Node\Valve\Steam "InstallPath"
-  StrCpy $INSTDIR "$0\steamapps\common\natural selection 2\Combat"
+  StrCpy $INSTDIR "$0\steamapps\common\natural selection 2\${MOD_FOLDER}"
   Pop $0
 
   InitPluginsDir
@@ -114,7 +115,7 @@ SetOverwrite ifnewer
 SetOutPath "$INSTDIR"
 File "..\editor_setup.xml"
 File "..\game_setup.xml"
-File "..\LICENSE.txt"
+File "LICENSE.txt"
 File "..\README"
 SetOutPath "$INSTDIR\ui"
 File "..\ui\experience.dds"
@@ -175,10 +176,9 @@ WriteUninstaller "$INSTDIR\uninstall.exe"
 !ifdef REG_START_MENU
 !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 CreateDirectory "$SMPROGRAMS\${SM_FOLDER}"
-#CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "$INSTDIR\${MAIN_APP_EXE}"
-#CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "$INSTDIR\..\NS2.exe" "-game Combat"
-CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game Combat"'
-CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game Combat"'
+CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
+CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
+CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
 !ifdef WEB_SITE
 WriteIniStr "$INSTDIR\${APP_NAME} website.url" "InternetShortcut" "URL" "${WEB_SITE}"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Website.lnk" "$INSTDIR\${APP_NAME} website.url"
@@ -187,12 +187,13 @@ CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Website.lnk" "$INSTDIR\${AP
 !endif
 
 !ifndef REG_START_MENU
-CreateDirectory "$SMPROGRAMS\NS2 Combat Mode"
-CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game Combat"'
-CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game Combat"'
+CreateDirectory "$SMPROGRAMS\${SM_FOLDER}"
+CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
+CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
+CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
 !ifdef WEB_SITE
 WriteIniStr "$INSTDIR\${APP_NAME} website.url" "InternetShortcut" "URL" "${WEB_SITE}"
-CreateShortCut "$SMPROGRAMS\NS2 Combat Mode\${APP_NAME} Website.lnk" "$INSTDIR\${APP_NAME} website.url"
+CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Website.lnk" "$INSTDIR\${APP_NAME} website.url"
 !endif
 !endif
 
@@ -286,13 +287,13 @@ RmDir "$SMPROGRAMS\${SM_FOLDER}"
 !endif
 
 !ifndef REG_START_MENU
-Delete "$SMPROGRAMS\NS2 Combat Mode\${APP_NAME}.lnk"
+Delete "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk"
 !ifdef WEB_SITE
-Delete "$SMPROGRAMS\NS2 Combat Mode\${APP_NAME} Website.lnk"
+Delete "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Website.lnk"
 !endif
 Delete "$DESKTOP\${APP_NAME}.lnk"
 
-RmDir "$SMPROGRAMS\NS2 Combat Mode"
+RmDir "$SMPROGRAMS\${SM_FOLDER}"
 !endif
 
 DeleteRegKey ${REG_ROOT} "${REG_APP_PATH}"
