@@ -167,7 +167,7 @@ function GUIExperience:UpdateExperienceBar(deltaTime)
 	self.experienceBar:SetSize(Vector(Slerp(currentBarWidth, targetBarWidth, deltaTime*GUIExperience.kBackgroundBarRate), self.experienceBar:GetSize().y, 0))
 	
 	// Detect and register if the bar is moving
-	if (math.abs(currentBarWidth - calculatedBarWidth) > 5) then
+	if (math.abs(currentBarWidth - calculatedBarWidth) > 1) then
 		self.barMoving = true
 	else
 		// Delay the fade out by a while

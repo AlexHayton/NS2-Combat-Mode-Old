@@ -41,8 +41,6 @@ function AlienTeamCombat:InitTechTree()
 	self.techTree:AddResearchNode(kTechId.Crag1Tech, kTechId.None, kTechId.None)
     self.techTree:AddBuyNode(kTechId.Leap, kTechId.Whip1Tech, kTechId.None, kTechId.Skulk)
     self.techTree:AddBuyNode(kTechId.BloodThirst, kTechId.Crag1Tech, kTechId.None, kTechId.Skulk)
-	self.techTree:AddResearchNode(kTechId.LerkTech,         kTechId.Melee1Tech,                kTechId.None)
-	self.techTree:AddBuyNode(kTechId.Lerk,                      kTechId.LerkTech,              kTechId.None)
 	
 	// Tier 2
 	self.techTree:AddResearchNode(kTechId.Melee2Tech,             kTechId.Melee1Tech,                kTechId.None)
@@ -52,7 +50,9 @@ function AlienTeamCombat:InitTechTree()
 	self.techTree:AddResearchNode(kTechId.FadeTech,        kTechId.LerkTech,          kTechId.None)
     self.techTree:AddBuyNode(kTechId.Fade,                      kTechId.FadeTech,          kTechId.None)
 	self.techTree:AddBuyNode(kTechId.HydraAbility, kTechId.Whip1Tech, kTechId.None, kTechId.Gorge)
-    self.techTree:AddBuildNode(kTechId.Hydra,                     kTechId.None,           kTechId.None)
+    self.techTree:AddBuildNode(kTechId.Hydra,                     kTechId.HydraAbility,           kTechId.None)
+	self.techTree:AddResearchNode(kTechId.LerkTech,         kTechId.Melee2Tech,                kTechId.None)
+	self.techTree:AddBuyNode(kTechId.Lerk,                      kTechId.LerkTech,              kTechId.None)
 	
 	// Tier 3
     self.techTree:AddResearchNode(kTechId.Melee3Tech,             kTechId.Melee2Tech,                kTechId.None)

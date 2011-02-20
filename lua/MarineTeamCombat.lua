@@ -41,15 +41,15 @@ function MarineTeamCombat:InitTechTree()
 	// Tier 1
     self.techTree:AddResearchNode(kTechId.Armor1,                 kTechId.None,              kTechId.None)
     self.techTree:AddResearchNode(kTechId.Weapons1,             kTechId.None,               kTechId.None)
-	self.techTree:AddResearchNode(kTechId.MedPackTech,             kTechId.None,               kTechId.None)
+	self.techTree:AddResearchNode(kTechId.MedPackTech,             kTechId.Armor1,               kTechId.None)
 	self.techTree:AddEnergyBuildNode(kTechId.MedPack,                 kTechId.MedPackTech,                kTechId.None)
 	self.techTree:AddEnergyBuildNode(kTechId.AmmoPack,                 kTechId.MedPackTech,                kTechId.None)
-	self.techTree:AddResearchNode(kTechId.ShotgunTech,         kTechId.Weapons1,         kTechId.None)
-	self.techTree:AddBuyNode(kTechId.Shotgun,                        kTechId.ShotgunTech,         kTechId.None)
 	
 	// Tier 2
 	self.techTree:AddResearchNode(kTechId.Armor2,                 kTechId.Armor1,              kTechId.None)
     self.techTree:AddResearchNode(kTechId.Weapons2,               kTechId.Weapons1,            kTechId.None)
+	self.techTree:AddResearchNode(kTechId.ShotgunTech,         kTechId.Weapons2,         kTechId.None)
+	self.techTree:AddBuyNode(kTechId.Shotgun,                        kTechId.ShotgunTech,         kTechId.None)
 	self.techTree:AddResearchNode(kTechId.CatPackTech,             kTechId.MedPackTech,               kTechId.None)
 	self.techTree:AddResearchNode(kTechId.ScanTech,             kTechId.MedPackTech,                 kTechId.None)
 	self.techTree:AddResearchNode(kTechId.GrenadeLauncherTech,         kTechId.ShotgunTech,                 kTechId.None)

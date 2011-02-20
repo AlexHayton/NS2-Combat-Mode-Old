@@ -14,8 +14,8 @@ class 'GUITechUpgrade' (GUIScript)
 
 // Background constants.
 GUITechUpgrade.kBackgroundXOffset = 0
-GUITechUpgrade.kBackgroundYOffset = 200
-GUITechUpgrade.kBackgroundWidth = 200
+GUITechUpgrade.kBackgroundYOffset = 150
+GUITechUpgrade.kBackgroundWidth = 300
 GUITechUpgrade.kBackgroundColor = Color(0.1, 0.1, 0.1, 0.5)
 // How many seconds for the background to fade in.
 GUITechUpgrade.kBackgroundFadeRate = 0.25
