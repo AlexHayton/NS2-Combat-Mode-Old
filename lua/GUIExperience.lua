@@ -40,10 +40,11 @@ GUIExperience.kAlienTextColor = Color(0.8, 0.4, 0.4, 1)
 GUIExperience.kExperienceTextFontSize = 15
 GUIExperience.kExperienceTextOffset = Vector(0, -10, 0)
 GUIExperience.kNormalAlpha = 1.0
-GUIExperience.kMinimisedAlpha = 0.5
+GUIExperience.kMinimisedTextAlpha = 0.6
+GUIExperience.kMinimisedAlpha = 0.4
 
 GUIExperience.kBarFadeInRate = 0.2
-GUIExperience.kBarFadeOutDelay = 1000
+GUIExperience.kBarFadeOutDelay = 0.4
 GUIExperience.kBarFadeOutRate = 0.05
 GUIExperience.kBackgroundBarRate = 80
 GUIExperience.kTextIncreaseRate = 30
@@ -54,9 +55,11 @@ function GUIExperience:Initialize()
 	self.rankIncreased = false
 	self.currentExperience = 0
 	self.showExperience = false
-	self.experienceAlpha = 1.0
+	self.experienceAlpha = GUIExperience.kNormalAlpha
+	self.experienceTextAlpha = GUIExperience.kNormalAlpha
 	self.barMoving = false
 	self.playerTeam = "None"
+	self.fadeOutTime = Shared.GetTime()
 end
 
 function GUIExperience:CreateExperienceBar()
@@ -167,6 +170,10 @@ function GUIExperience:UpdateExperienceBar(deltaTime)
 	if (math.abs(currentBarWidth - calculatedBarWidth) > 5) then
 		self.barMoving = true
 	else
+		// Delay the fade out by a while
+		if (self.barMoving) then
+			self.fadeOutTime = Shared.GetTime() + GUIExperience.kBarFadeOutDelay
+		end
 		self.barMoving = false
 	end
 end
@@ -179,18 +186,21 @@ function GUIExperience:UpdateFading(deltaTime)
 	local targetBarHeight = currentBarHeight
 	local targetBackgroundHeight = currentBackgroundHeight
 	local targetBarColor = currentBarColor
+	local targetAlpha = GUIExperience.kNormalAlpha
+	local targetTextAlpha = GUIExperience.kNormalAlpha
 		
-	if (self.barMoving) then
+	if (self.barMoving or Shared.GetTime() < self.fadeOutTime) then
 		targetBarHeight = GUIExperience.kExperienceBarHeight
 		targetBackgroundHeight = GUIExperience.kExperienceBackgroundHeight
-		targetAlpha = GUIExperience.kNormalAlpha
 	else
 		targetBarHeight = GUIExperience.kExperienceBarMinimisedHeight
 		targetBackgroundHeight = GUIExperience.kExperienceBackgroundMinimisedHeight
 		targetAlpha = GUIExperience.kMinimisedAlpha
+		targetTextAlpha = GUIExperience.kMinimisedTextAlpha
 	end
 	
 	self.experienceAlpha = Slerp(self.experienceAlpha, targetAlpha, deltaTime*GUIExperience.kBarFadeOutRate)
+	self.experienceTextAlpha = Slerp(self.experienceTextAlpha, targetTextAlpha, deltaTime*GUIExperience.kBarFadeOutRate)
 	
 	self.experienceBarBackground:SetSize(Vector(GUIExperience.kExperienceBackgroundWidth, Slerp(currentBackgroundHeight, targetBackgroundHeight, deltaTime*GUIExperience.kBackgroundBarRate), 0))
 	self.experienceBar:SetSize(Vector(self.experienceBar:GetSize().x, Slerp(currentBarHeight, targetBarHeight, deltaTime*GUIExperience.kBackgroundBarRate), 0))

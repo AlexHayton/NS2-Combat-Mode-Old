@@ -140,9 +140,15 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
         if doer ~= nil then 
             damageType = doer:GetDamageType()
         end
+	
+	local pointOwner = attacker
+        // If the pointOwner is not a player, award it's points to it's owner.
+        if pointOwner ~= nil and not pointOwner:isa("Player") then
+            pointOwner = pointOwner:GetOwner()
+        end
 
         // Take into account upgrades on attacker (armor1, weapons1, etc.)        
-        damage = GetGamerules():GetUpgradedDamage(attacker, damage, damageType)
+        damage = GetGamerules():GetUpgradedDamage(pointOwner, damage, damageType)
 
         // highdamage cheat speeds things up for testing
         damage = damage * GetGamerules():GetDamageMultiplier()

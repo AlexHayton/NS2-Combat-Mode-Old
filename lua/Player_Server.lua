@@ -489,6 +489,9 @@ function Player:CopyPlayerDataFrom(player)
 	// Combat mode stuff
 	self.experience = player.experience
 	self.techTree = player.techTree
+	if (self:GetTeamNumber() == player:GetTeamNumber()) then
+		self.upgradesTaken = player.upgradesTaken
+	end
     
     // Don't lose purchased upgrades when becoming commander
     self.upgrade1 = player.upgrade1

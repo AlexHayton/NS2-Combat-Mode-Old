@@ -1,5 +1,5 @@
 <game>
-	<name>ns2-combat</name>
+	<name>Combat</name>
 	<description>Natural Selection 2 (Combat Mode)</description>
 	<client>lua/Client.lua</client>
 	<server>lua/Server.lua</server>
