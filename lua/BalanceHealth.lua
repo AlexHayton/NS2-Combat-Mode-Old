@@ -85,7 +85,7 @@ kMatureShadeHealth = 900    kMatureShadeArmor = 0    kMatureShadePointValue = 15
         
 kHydraHealth = 250    kHydraArmor = 0    kHydraPointValue = 5
         
-kPowerPointHealth = 6000    kPowerPointArmor = 0    kPowerPointPointValue = 15
+kPowerPointHealth = 5000    kPowerPointArmor = 0    kPowerPointPointValue = 15
         
         
         

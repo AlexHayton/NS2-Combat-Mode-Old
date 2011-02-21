@@ -18,7 +18,7 @@ kRankExp = { 50.0, 150.0, 500.0, 1000.0, 1750.0, 3000.0, 5000.0, kMaxExperience,
 kMarineRanks = { "Private", "Private First Class", "Sergeant", "Lieutenant", "Commander", "General", "Master General", "Commander-in-Chief", "Superman" }
 kAlienRanks = { "Worm", "Slug", "Parasite", "Crawler", "Hunter", "Prowler", "Beast", "Overlord", "Deity" }
 kExperienceRadius = 10
-kDamageModifiers = {	PowerPoint=1/kStructuralDamageScalar, 
+kDamageModifiers = {	PowerPoint=1/(kStructuralDamageScalar*2), 
 									InfantryPortal=1/kStructuralDamageScalar, 
 									CommandStation=1/kStructuralDamageScalar }
 
