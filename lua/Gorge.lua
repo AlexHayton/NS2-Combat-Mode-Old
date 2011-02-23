@@ -56,6 +56,7 @@ Gorge.kMaxAirSpeed = 12
 Gorge.kSlidingMoveInputScalar = 0.00015
 Gorge.kArmorModeMoveInputScalar = .015
 Gorge.kArmorModeEnergyScalar = 1.25
+Gorge.kBuildingModeMovementScalar = 0.001
 Gorge.kSlidingTurnRate = .25        // For limiting yaw rage of change when sliding. Radians/second
 Gorge.kSlideFlinchRecoveryRate = .6
 
@@ -342,7 +343,7 @@ function Gorge:UpdateMove(input)
     elseif self.mode == kPlayerMode.GorgeStructure then
     
         // Don't move much
-        input.move:Scale(0.00001)
+        input.move:Scale(Gorge.kBuildingModeMovementScalar)
         
     end
 
@@ -354,7 +355,10 @@ function Gorge:ConstrainMoveVelocity(moveVelocity)
     
     if self:GetIsSliding() then
         moveVelocity:Scale(.02)
+    elseif self.mode == kPlayerMode.GorgeStructure then
+        moveVelocity:Scale(Gorge.kBuildingModeMovementScalar)
     end
+    
 end
 
 function Gorge:GetFrictionForce(input, velocity)

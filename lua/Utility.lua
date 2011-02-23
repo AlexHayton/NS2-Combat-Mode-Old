@@ -567,6 +567,8 @@ function Copy(t)
         end
     elseif type(t) == "number" or type(t) == "boolean" then
         return t
+    elseif type(t) == "function" then
+        return t
     end
     
     Print("Copy() on type \"%s\" failed.", type(t))

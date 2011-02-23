@@ -165,19 +165,6 @@ function Alien:OnUpdate(deltaTime)
     
     Player.OnUpdate(self, deltaTime)
     
-    if not self.timeSinceLastAbilityListUpdate then
-        self.timeSinceLastAbilityListUpdate = 0
-    end
-    
-    self.timeSinceLastAbilityListUpdate = self.timeSinceLastAbilityListUpdate + deltaTime
-    
-    if self.timeSinceLastAbilityListUpdate > 2 then
-    
-        self:ComputeAbilityList()
-        self.timeSinceLastAbilityListUpdate = 0
-        
-    end
-    
     // Propagate count to client so energy is predicted
     if Server then
         self.energizeLevel = self:GetStackableGameEffectCount(kEnergizeGameEffect)
@@ -230,15 +217,6 @@ end
 
 function Alien:GetDeathMapName()
     return AlienSpectator.kMapName
-end
-
-// This is slow enough we don't want to do it too often
-function Alien:ComputeAbilityList()
-    self.abilityList = GetChildEntities(self, "Ability")
-end
-
-function Alien:GetAbilityList()
-    return self.abilityList
 end
 
 // Returns the name of the player's lifeform

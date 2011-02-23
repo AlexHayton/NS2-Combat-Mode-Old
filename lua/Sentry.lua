@@ -150,7 +150,7 @@ end
 
 function Sentry:GetIsTargetValid(target)
 
-    if(target ~= nil and target:GetIsAlive() and target ~= self and target:GetCanTakeDamage() and target:GetIsVisible()) then
+    if(target ~= nil and target:GetIsAlive() and target ~= self and target:GetCanTakeDamage() and target:GetIsVisible() and not target:isa("Infestation") ) then
     
         local distance = (target:GetModelOrigin() - self:GetModelOrigin()):GetLength()
         local canSee = self:GetCanSeeEntity(target)

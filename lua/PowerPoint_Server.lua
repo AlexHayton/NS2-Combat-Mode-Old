@@ -32,6 +32,9 @@ function PowerPoint:OnKill(damage, attacker, doer, point, direction)
         
         self:UpdatePoweredStructures()
         
+        // Remove effects such as parasite when destroyed.
+        self:ClearGameEffects()
+        
         if attacker and attacker:isa("Player") and GetEnemyTeamNumber(self:GetTeamNumber()) == attacker:GetTeamNumber() then
             attacker:AddScore(self:GetPointValue())
         end

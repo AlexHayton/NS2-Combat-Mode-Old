@@ -62,7 +62,7 @@ function HydraAbility:PerformPrimaryAttack(player)
     
         player:SetAnimAndMode(Gorge.kCreateStructure, kPlayerMode.GorgeStructure)
             
-        player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))    
+        player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
         
     end
     
@@ -97,10 +97,18 @@ function HydraAbility:CreateHydra(player)
                 
             else
             
+                player:AddTooltip("Not enough space for Hydra in that location.")
                 DestroyEntity(hydra)
                 
             end
             
+        else
+        
+            if not valid then
+                player:AddTooltip("Could not place Hydra in that location.")
+            else
+                player:AddTooltip("Not enough resources to create Hydra.")
+            end
         end
         
     end

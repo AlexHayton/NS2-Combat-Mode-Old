@@ -600,7 +600,7 @@ function EffectManager:StopLoopingSound(player, soundAssetName)
     
         for index, loopingSoundEntry in ipairs(self.loopingSounds) do
         
-            if (loopingSoundEntry[1] == player:GetId()) and (loopingSoundEntry[2] == soundAssetName) then
+            if (loopingSoundEntry[1] == player:GetId()) and ((loopingSoundEntry[2] == soundAssetName) or (soundAssetName == "")) then
             
                 Shared.StopSound(player, soundAssetName)
                 
@@ -654,16 +654,22 @@ function EffectManager:InternalTriggerSound(effectTable, triggeringParams, trigg
 
     // Looping sounds
     elseif effectTable[kLoopingSoundType] then
-    
-        if not self:GetPlayingLoopingSound(player, soundAssetName) then
+  
+        if player then
         
-            self:PlayLoopingSound(player, soundAssetName)
+            if not self:GetPlayingLoopingSound(player, soundAssetName) then
+            
+                self:PlayLoopingSound(player, soundAssetName)
 
+            end
+            
+            // Mark as succes either way because this is the common usage
+            success = true
+            
+        else
+            Print("%s sounds only work for players (%s)", kLoopingSoundType, soundAssetName)
         end
         
-        // Mark as succes either way because this is the common usage
-        success = true
-
     elseif effectTable[kPrivateSoundType] then
     
         Shared.PlayPrivateSound(player, soundAssetName, player, volume, Vector(0, 0, 0))
@@ -671,13 +677,39 @@ function EffectManager:InternalTriggerSound(effectTable, triggeringParams, trigg
         
     elseif effectTable[kStopSoundType] then
     
-        if not self:StopLoopingSound(player, soundAssetName) then
-            Shared.StopSound(player, soundAssetName)
+        // Stop sound for triggering player or entity
+        
+        if player then
+            self:StopLoopingSound(player, soundAssetName)
         end
+        
+        // Passes in "" if we are to stop all sounds
+        Shared.StopSound(player, soundAssetName, triggeringEntity)
         
         success = true
         
     end
+    
+    return success
+    
+end
+
+function EffectManager:InternalStopEffects(effectTable, triggeringParams, triggeringEntity)
+
+    local success = false
+    local player = GetPlayerFromTriggeringEntity(triggeringEntity)
+    
+    self:DisplayDebug("all", effectTable, triggeringParams, triggeringEntity)
+    
+
+    if player then
+        self:StopLoopingSound(player, "")
+    end
+    
+    // Passes in "" if we are to stop all sounds
+    Shared.StopSound(player, "", triggeringEntity)
+    
+    success = true
     
     return success
     
@@ -843,6 +875,10 @@ function EffectManager:InternalTriggerEffect(effectTable, triggeringParams, trig
     
         success = self:InternalTriggerAnimation(effectTable, triggeringParams, triggeringEntity)
 
+    elseif effectTable[kStopEffectsType] then
+    
+        success = self:InternalStopEffects(effectTable, triggeringParams, triggeringEntity)
+        
     elseif effectTable[kDecalType] then
     
         success = self:InternalTriggerDecal(effectTable, triggeringParams, triggeringEntity)
@@ -850,7 +886,7 @@ function EffectManager:InternalTriggerEffect(effectTable, triggeringParams, trig
     elseif effectTable[kRagdollType] then
     
         success = self:InternalTriggerRagdoll(effectTable, triggeringParams, triggeringEntity)
-        
+
     end
     
     if not success and self:GetDisplayDebug(effectTable, triggeringEntity) then

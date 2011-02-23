@@ -15,9 +15,13 @@ Script.Load("lua/TechData.lua")
 Script.Load("lua/Utility.lua")
 Script.Load("lua/LiveScriptActor.lua")
 Script.Load("lua/PhysicsGroups.lua")
+Script.Load("lua/WeaponOwnerMixin.lua")
 Script.Load("lua/Experience.lua")
 
 class 'Player' (LiveScriptActor)
+
+// Add the functionality from WeaponOwnerMixin to Player.
+AddMixin(Player, WeaponOwnerMixin)
 
 if (Server) then
     Script.Load("lua/Player_Server.lua")
@@ -890,7 +894,7 @@ end
 
 function Player:PrimaryAttack()
 
-    local weapon = self:GetActiveWeapon()    
+    local weapon = self:GetActiveWeapon()
     if weapon and self:GetCanNewActivityStart() then
         weapon:OnPrimaryAttack(self)
     end
@@ -951,25 +955,6 @@ function Player:SelectWeaponWithFinder(finderFunction)
     if(entity ~= nil and self:GetCanNewActivityStart()) then
         self:SetActiveWeapon(entity:GetMapName())
     end
-    
-end
-
-function Player:GetActiveWeapon()
-
-    local activeWeapon = nil
-    
-    if(self.activeWeaponIndex ~= 0) then
-    
-        self:ComputeHUDOrderedWeaponList()
-        local weapons = self:GetHUDOrderedWeaponList()
-        
-        if self.activeWeaponIndex <= table.count(weapons) then
-            activeWeapon = weapons[self.activeWeaponIndex]
-        end
-        
-    end
-    
-    return activeWeapon
     
 end
 
@@ -1416,13 +1401,15 @@ function Player:UpdateMovePhysics(input)
     // Add additional velocity according to specials
     self:ModifyVelocity(input, velocity)
     
-    // Clamp speed to max speed
-    self:ClampSpeed(input, velocity)
-    
-    self:UpdatePosition(velocity, input.time)
-    
+    // The position doesn't need to be updated if there is no velocity.
+    if(velocity:GetLengthSquared() > Vector.kEpsilon) then
+        // Clamp speed to max speed
+        self:ClampSpeed(input, velocity)
+        self:UpdatePosition(velocity, input.time)
+    end
+
     self:SetVelocity(velocity)
-                
+
 end
 
 // Allow children to update state after setting origin/velocity
@@ -1819,6 +1806,13 @@ function Player:UpdateCrouch()
 
     PROFILE("Player:UpdateCrouch")
     
+    local crouchScalar = self:GetCrouchAmount()
+    
+    // If crouch doesn't require updating, return early.
+    if((self.crouching == false and crouchScalar <= kEpsilon) or (self.crouching == true and crouchScalar >= (1-kEpsilon))) then
+        return
+    end
+    
     local lastExtents = self:GetExtents()
 
     // Increment crouch scalar if it doesn't get us stuck
@@ -1838,8 +1832,6 @@ function Player:UpdateCrouch()
     end
     
     // Update extents and possibly origin to make sure we're not stuck in the world
-    local crouchScalar = self:GetCrouchAmount()
-    
     local newExtents = self:GetExtentsFromCrouch(crouchScalar)
     
     // Update y position in case we're in something (move you up as you stand up)
@@ -2112,6 +2104,7 @@ function Player:UpdateSharedMisc(input)
     self:UpdateCamera(input.time)
     self:UpdateBreathing(input.time)
     self:UpdateMode()
+    // From WeaponOwnerMixin.
     self:UpdateWeapons(input)
     
     if Client then
@@ -2169,22 +2162,6 @@ function Player:UpdateMode()
 
     end
     
-end
-
-function Player:UpdateWeapons(input)
-
-    // Get list once a frame
-    if not Shared.GetIsRunningPrediction() then
-    
-        self:ComputeHUDOrderedWeaponList()
-
-        // Call ProcessMove on all our weapons so they can update properly
-        for index, weapon in ipairs(self.hudOrderedWeaponList) do
-            weapon:OnProcessMove(self, input)
-        end
-        
-    end
-        
 end
 
 function Player:ProcessEndMode()
@@ -2504,114 +2481,8 @@ function Player:GetNotEnoughResourcesSound()
     return Player.kNotEnoughResourcesSound    
 end
 
-// Get list of weapons in order displayed on HUD
-function Player:ComputeHUDOrderedWeaponList()
-
-    local childEntities = GetChildEntities(self, "Weapon")
-        
-    // Sort weapons
-    function sort(weapon1, weapon2)
-        return weapon2:GetHUDSlot() > weapon1:GetHUDSlot()
-    end
-    
-    table.sort(childEntities, sort)
-        
-    self.hudOrderedWeaponList = childEntities
-    
-end   
-
-function Player:GetHUDOrderedWeaponList()
-
-    if self.hudOrderedWeaponList == nil then
-        self:ComputeHUDOrderedWeaponList()
-    end
-    
-    return self.hudOrderedWeaponList
-    
-end
-
-// Returns true if we switched to weapon or if weapon is already active. Returns false if we 
-// don't have that weapon.
-function Player:SetActiveWeapon(weaponMapName)
-
-    local weaponList = self:GetHUDOrderedWeaponList()
-    
-    for index, weapon in ipairs(weaponList) do
-    
-        local mapName = weapon:GetMapName()
-
-        if (mapName == weaponMapName) then
-        
-            local newWeapon = weapon
-            local activeWeapon = self:GetActiveWeapon()
-            
-            if (activeWeapon == nil or activeWeapon:GetMapName() ~= weaponMapName) then
-            
-                local previousWeaponName = ""
-                
-                if activeWeapon then
-                
-                    activeWeapon:OnHolster(self)
-                    activeWeapon:SetIsVisible(false)
-                    previousWeaponName = activeWeapon:GetMapName()
-                    
-                end
-
-                // Set active first so proper anim plays
-                self.activeWeaponIndex = index
-                
-                newWeapon:SetIsVisible(true)
-                
-                // Always allow player to draw weapon
-                self:ClearActivity()
-                
-                newWeapon:OnDraw(self, previousWeaponName)
-
-                return true
-                
-            end
-            
-        end
-        
-    end
-    
-    local activeWeapon = self:GetActiveWeapon()
-    if activeWeapon ~= nil and activeWeapon:GetMapName() == weaponMapName then
-        return true
-    end
-    
-    Print("%s:SetActiveWeapon(%s) failed", self:GetClassName(), weaponMapName)
-    
-    return false
-
-end
-
 function Player:GetIsCommander()
     return false
-end
-
-// SwitchWeapon or choose option from sayings menu if open
-// weaponindex starts at 1
-function Player:SwitchWeapon(weaponIndex)
-
-    local success = false
-    
-    if( not self:GetIsCommander()) then
-        
-        local weaponList = self:GetHUDOrderedWeaponList()
-        
-        if(weaponIndex >= 1 and weaponIndex <= table.maxn(weaponList)) then
-        
-            success = self:SetActiveWeapon(weaponList[weaponIndex]:GetMapName())
-            
-            self.timeOfLastWeaponSwitch = Shared.GetTime()
-            
-        end
-        
-    end
-    
-    return success
-    
 end
 
 // Children should override with specific menu actions

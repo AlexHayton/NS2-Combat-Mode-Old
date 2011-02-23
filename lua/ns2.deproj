@@ -837,4 +837,13 @@
   <file>
     <filename>Weapons\Alien\InfestationAbility.lua</filename>
   </file>
+  <file>
+    <filename>TimedCallbackMixin.lua</filename>
+  </file>
+  <file>
+    <filename>WeaponOwnerMixin.lua</filename>
+  </file>
+  <file>
+    <filename>..\..\core\lua\MixinUtility.lua</filename>
+  </file>
 </project>

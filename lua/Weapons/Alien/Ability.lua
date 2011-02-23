@@ -51,24 +51,29 @@ end
 function Ability:GetInterfaceData(secondary, inactive)
 
     local parent = self:GetParent()
-    local vis = (inactive and parent:GetInactiveVisible()) or (not inactive) //(parent:GetEnergy() ~= Ability.kMaxEnergy)
-    local hudSlot = 0
-    if self.GetHUDSlot then
-        hudSlot = self:GetHUDSlot()
-    end
-    
-    // Inactive abilities return only xoff, yoff, hud slot
-    if inactive then
-        return {self:GetIconOffsetX(secondary), self:GetIconOffsetY(secondary), hudSlot}
-    else
-    
-        if secondary then
-            return {parent:GetEnergy()/Ability.kMaxEnergy, self:GetSecondaryEnergyCost()/Ability.kMaxEnergy, self:GetIconOffsetX(secondary), self:GetIconOffsetY(secondary), vis, hudSlot}
-        else
-            return {parent:GetEnergy()/Ability.kMaxEnergy, self:GetEnergyCost()/Ability.kMaxEnergy, self:GetIconOffsetX(secondary), self:GetIconOffsetY(secondary), vis, hudSlot}
+    // It is possible there will be a time when there isn't a parent due to how Entities are destroyed and unparented.
+    if parent then
+        local vis = (inactive and parent:GetInactiveVisible()) or (not inactive) //(parent:GetEnergy() ~= Ability.kMaxEnergy)
+        local hudSlot = 0
+        if self.GetHUDSlot then
+            hudSlot = self:GetHUDSlot()
         end
         
+        // Inactive abilities return only xoff, yoff, hud slot
+        if inactive then
+            return {self:GetIconOffsetX(secondary), self:GetIconOffsetY(secondary), hudSlot}
+        else
+        
+            if secondary then
+                return {parent:GetEnergy()/Ability.kMaxEnergy, self:GetSecondaryEnergyCost()/Ability.kMaxEnergy, self:GetIconOffsetX(secondary), self:GetIconOffsetY(secondary), vis, hudSlot}
+            else
+                return {parent:GetEnergy()/Ability.kMaxEnergy, self:GetEnergyCost()/Ability.kMaxEnergy, self:GetIconOffsetX(secondary), self:GetIconOffsetY(secondary), vis, hudSlot}
+            end
+            
+        end
     end
+    
+    return { }
     
 end
 

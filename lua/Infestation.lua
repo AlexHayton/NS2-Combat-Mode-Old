@@ -15,7 +15,7 @@ Infestation.kMapName = "infestation"
 
 Infestation.kEnergyCost = kGrowCost
 Infestation.kInitialHealth = 50
-Infestation.kMaxHealth = 250
+Infestation.kMaxHealth = 500
 Infestation.kGrowRate = .75
 Infestation.kVerticalSize = 1.0
 

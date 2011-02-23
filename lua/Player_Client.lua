@@ -23,7 +23,7 @@ Player.kDamageCameraShakeTime = 0.1
 Player.kLowHealthWarning = 0.35
 Player.kLowHealthPulseSpeed = 10
 
-Player.kShowGiveDamageTime = 0.25
+Player.kShowGiveDamageTime = 1
 
 gFlashPlayers = nil
 
@@ -649,23 +649,35 @@ function Player:UpdateCrossHairText()
     
         elseif entity:isa("Player") and entity:GetIsAlive() then
         
-            local playerName = Scoreboard_GetPlayerData(entity:GetClientIndex(), kScoreboardDataIndexName)
+            // If the target is an Embryo and is on the enemy team, we should mask their name
+            if entity:isa("Embryo") and entity:GetTeamNumber() == GetEnemyTeamNumber(self:GetTeamNumber()) then
+            
+                local statusText = string.format("(%.0f%%)", Clamp(math.ceil(trace.entity:GetHealthScalar() * 100), 0, 100))
+                self.crossHairText = string.format("%s %s", LookupTechData(kTechId.Egg, kTechDataDisplayName), statusText)
+                
+                updatedText = true
+                
+            else
+                
+                local playerName = Scoreboard_GetPlayerData(entity:GetClientIndex(), kScoreboardDataIndexName)
+                        
+                if playerName ~= nil then
+                
+                    self.crossHairText = playerName
+                
+                end
+            
+                if entity:GetTeamNumber() == self:GetTeamNumber() then
+                
+                    // Add health scalar
+                    self.crossHairText = string.format("%s (%d%%)", self.crossHairText, math.ceil(entity:GetHealthScalar()*100))
                     
-            if playerName ~= nil then
-            
-                self.crossHairText = playerName
-            
-            end
-            
-            if entity:GetTeamNumber() == self:GetTeamNumber() then
-            
-                // Add health scalar
-                self.crossHairText = string.format("%s (%d%%)", self.crossHairText, math.ceil(entity:GetHealthScalar()*100))
+                end
+                
+                updatedText = true
                 
             end
             
-            updatedText = true
-
         // Add quickie damage feedback and structure status
         elseif (entity:isa("Structure") or entity:isa("MAC") or entity:isa("Drifter") or entity:isa("ARC")) and entity:GetIsAlive() then
         

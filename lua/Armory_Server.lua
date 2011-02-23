@@ -220,6 +220,7 @@ end
 function Armory:UpdateLoggedIn()
 
     local players = GetGamerules():GetEntities("Player", self:GetTeamNumber(), self:GetOrigin(), 2*Armory.kResupplyUseRange)
+    local armoryCoords = self:GetAngles():GetCoords()
     
     for i = 1, 4 do 
         
@@ -227,10 +228,12 @@ function Armory:UpdateLoggedIn()
         
         if self:GetIsBuilt() and self:GetIsActive() then
         
+            local worldUseOrigin = self:GetModelOrigin() + armoryCoords:TransformVector(indexToUseOrigin[i])
+        
             for playerIndex, player in ipairs(players) do
             
                 // See if player is nearby
-                if player:GetIsAlive() and (player:GetModelOrigin() - (self:GetModelOrigin() + indexToUseOrigin[i])):GetLength() < Armory.kResupplyUseRange then
+                if player:GetIsAlive() and (player:GetModelOrigin() - worldUseOrigin):GetLength() < Armory.kResupplyUseRange then
                 
                     newState = true
                     break

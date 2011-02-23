@@ -189,14 +189,19 @@ function PlayerUI_GetInactiveAbilities()
 
     if player:isa("Alien") then    
     
-        local inactiveAbilities = player:GetAbilityList()
+        local inactiveAbilities = player:GetHUDOrderedWeaponList()
         
         // Don't show selector if we only have one ability
         if table.count(inactiveAbilities) > 1 then
         
             for index, ability in ipairs(inactiveAbilities) do
             
-                table.addtable(ability:GetInterfaceData(false, true), data)
+                if ability:isa("Ability") then
+                    local abilityData = ability:GetInterfaceData(false, true)
+                    if table.count(abilityData) > 0 then
+                        table.addtable(abilityData, data)
+                    end
+                end
                     
             end
             

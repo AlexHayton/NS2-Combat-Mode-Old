@@ -265,7 +265,7 @@ function ScriptActor:SetAttached(structure)
         
     else
     
-        self.attachedId = -1
+        self.attachedId = Entity.invalidId
         
     end
 
