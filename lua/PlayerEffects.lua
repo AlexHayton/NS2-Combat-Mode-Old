@@ -69,6 +69,8 @@ kPlayerEffectData =
 		levelUpEffects =
 		{
 			{cinematic = "cinematics/level_up.cinematic"},
+			{sound = "sound/combat.fev/combat/combat/levelup_alien", classname = "Alien", done = true},
+			{sound = "sound/combat.fev/combat/combat/levelup_marine", classname = "Marine", done = true},
 		},
 	},
 }

@@ -11,6 +11,8 @@ Script.Load("lua/BalanceHealth.lua")
 // Proper globals
 kExperienceDamageModifier = 0.1
 kExperienceAssistModifier = 0.5
+kExperienceLevelUpSoundMarine = PrecacheAsset("sound/combat.fev/combat/combat/levelup_marine")
+kExperienceLevelUpSoundAlien = PrecacheAsset("sound/combat.fev/combat/combat/levelup_alien")
 
 // 'Local' globals
 kMaxExperience = 10000.0
