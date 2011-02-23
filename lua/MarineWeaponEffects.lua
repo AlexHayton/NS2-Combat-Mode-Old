@@ -161,8 +161,7 @@ kMarineWeaponEffects =
         rifleAttackEndEffects =
         {
             {overlay_animation = ""},
-            // Temporarily removed until added back into the build
-            //{sound = "sound/ns2.fev/marine/rifle/end"},
+            {sound = "sound/ns2.fev/marine/rifle/end"},
             {stop_sound = "sound/ns2.fev/marine/rifle/fire_14_sec_loop", variant = 1, done = true},
             {stop_sound = "sound/ns2.fev/marine/rifle/fire_loop_2", variant = 2, done = true},
             {stop_sound = "sound/ns2.fev/marine/rifle/fire_loop_3", variant = 3, done = true},            

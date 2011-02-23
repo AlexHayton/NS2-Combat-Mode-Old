@@ -136,7 +136,7 @@ function Observatory:PerformActivation(techId, position, normal, commander)
 
     local success = false
     
-    if self:GetIsBuilt() then
+    if self:GetIsBuilt() and self:GetIsActive() then
     
         if techId == kTechId.Scan then
         

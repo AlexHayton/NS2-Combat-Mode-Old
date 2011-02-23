@@ -12,6 +12,7 @@
 // Utility and constants
 Script.Load("lua/Globals.lua")
 Script.Load("lua/Utility.lua")
+Script.Load("lua/MixinUtility.lua")
 Script.Load("lua/Actor.lua")
 Script.Load("lua/AnimatedModel.lua")
 Script.Load("lua/Vector.lua")

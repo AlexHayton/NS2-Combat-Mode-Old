@@ -28,10 +28,12 @@ kViewModelAnimationType             = "viewmodel_animation"     // Optional blen
 kOverlayAnimationType               = "overlay_animation"       // Optional blend time, animation speed not supported. Plays on parent if supported by default (useful for weapons).
 
 kSoundType                          = "sound"                   // Server-side world sound
-kParentedSoundType                  = "parented_sound"
+kParentedSoundType                  = "parented_sound"          // For looping entity sounds, you'll want to use parented_sound so they are stopped when entity goes away
 kLoopingSoundType                   = "looping_sound"           // TODO: Change name to one_sound? This currently plays relative to player.
 kPrivateSoundType                   = "private_sound"           // TODO: Change name to one_sound? This currently plays relative to player.
 kStopSoundType                      = "stop_sound"              
+
+kStopEffectsType                    = "stop_effects"            // Stops all looping or parented sounds and particles for this object (pass "")
 
 kDecalType                          = "decal"                   // Creates a decal at position of effect (only works when triggered from client events)
 
@@ -43,6 +45,7 @@ kEffectTypes =
     kCinematicType, kWeaponCinematicType, kViewModelCinematicType, kPlayerCinematicType, kParentedCinematicType, kLoopingCinematicType, kStopCinematicType, 
     kAnimationType, kViewModelAnimationType, kOverlayAnimationType,
     kSoundType, kParentedSoundType, kLoopingSoundType, kPrivateSoundType, kStopSoundType, 
+    kStopEffectsType,
     kDecalType,
     kRagdollType,
 }

@@ -126,10 +126,10 @@ kAlienWeaponEffects =
     {
         parasiteAttackEffects = 
         {
-            //{viewmodel_animation = "parasite_attack", force = true},
+            {viewmodel_animation = "parasite_attack", force = true},
             {sound = "sound/ns2.fev/alien/skulk/parasite"},
-            {player_cinematic = "cinematics/aliens/skulk/parasite_fire.cinematic", attach_point = "Bip01_Head"},
-            {viewmodel_cinematic = "cinematics/alien/skulk/parasite_view.cinematic", done = true},
+            {player_cinematic = "cinematics/alien/skulk/parasite_fire.cinematic"},
+            {viewmodel_cinematic = "cinematics/alien/skulk/parasite_view.cinematic", attach_point = "Tongue_01", done = true},
          },
     },   
     

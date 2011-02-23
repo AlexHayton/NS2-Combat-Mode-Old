@@ -72,9 +72,9 @@ end
  * the index of the (first) matching element is returned. If its not found
  * the function returns nil.
  */
-function table.find(table, value)
+function table.find(findTable, value)
 
-    for i,element in ipairs(table) do
+    for i,element in ipairs(findTable) do
         if elementEqualsElement(element, value) then
             return i
         end
@@ -132,13 +132,7 @@ function table.chooseWeightedIndex(t)
         end
         
     end
-    
-    if(weightedIndex <= 0 or weightedIndex > table.count(t)) then
-        Print("table.chooseWeightedIndex(%s): returning invalid index %d", table.tostring(t), weightedIndex)
-    end
-    
-    //Print("chooseWeighted(%s) => %.2f => %d", table.tostring(t), randomFloat, weightedIndex)
-        
+
     return weightedIndex
     
 end
@@ -246,7 +240,8 @@ function table.removeConditional(t, conditionalFunction)
     
         local numElements = table.maxn(t)
     
-        for i = 1, numElements do
+        local i = 1
+        while i <= numElements do
         
             local element = t[i]
             
@@ -264,6 +259,8 @@ function table.removeConditional(t, conditionalFunction)
                 
             end
             
+            i = i + 1
+            
         end
         
     end
@@ -273,6 +270,7 @@ end
 /**
  * Removes the specified value from the table (note only the first occurance is
  * removed). Returns true if element was found and removed, false otherwise.
+ * This will not work for tables created as dictionaries.
  */
 function table.removevalue(t, v)
 
@@ -352,6 +350,21 @@ function table.count(t, logError)
         Print("table.count() - Nil table passed in, returning 0.")
     end
     return 0
+end
+
+/**
+ * Counts up the number of keys. This is different from table.count
+ * because dictionaries do not have numbered keys and so won't be
+ * counted correctly. It is also slower.
+ */
+function table.countkeys(t)
+
+    local count = 0
+    for _ in pairs(t) do
+        count = count + 1
+    end
+    return count
+
 end
 
 function table.removeTable(srcTable, destTable)

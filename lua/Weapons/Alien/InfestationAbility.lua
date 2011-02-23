@@ -83,6 +83,10 @@ function InfestationAbility:CreateInfestation(player)
             
             success = true
             
+        else
+        
+            player:AddTooltip("Could not place Infestation in that location.")
+        
         end
             
     end
