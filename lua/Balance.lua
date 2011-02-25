@@ -309,7 +309,7 @@ kMelee2DamageScalar = 1.2
 kMelee3DamageScalar = 1.3
 
 // SPAWN TIMES
-kMarineRespawnTime = 10
+kMarineRespawnTime = 8
 kAlienRespawnTime = 9
 
 // BUILD/RESEARCH TIMES

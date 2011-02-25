@@ -80,4 +80,4 @@ kOnFireEnergyRecuperationScalar = .2
 kStructureInfestationRadius = 2
 kHiveInfestationRadius = 20
 kInfestationRadius = 6
-kGorgeInfestationLifetime = 120
+kGorgeInfestationLifetime = 60

@@ -812,11 +812,12 @@ function Player:AddExperience(points)
 			self:TriggerEffects("levelUp")
 			
 			// Play the relevant level up sound
-			if (self:isa("Marine")) then
+			// Disabled for now
+			/*if (self:isa("Marine")) then
 				self:PlaySound(self, kExperienceLevelUpSoundMarine)
 			else
 				self:PlaySound(self, kExperienceLevelUpSoundAlien)
-			end
+			end*/
 		end
     end
 end

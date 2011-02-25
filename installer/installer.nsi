@@ -7,7 +7,7 @@
 !define APP_NAME "NS2 Combat Mode"
 !define COMP_NAME "MCMLXXXIV"
 !define WEB_SITE "http://www.unknownworlds.com/forums/index.php?showtopic=111818&st=0#entry1813965"
-!define VERSION "0.1.0.0"
+!define VERSION "0.1.1.0"
 !define COPYRIGHT "Free-as-in-Beer"
 !define DESCRIPTION "Natural Selection 2 Combat Mode"
 !define LICENSE_TXT "LICENSE.txt"
@@ -124,6 +124,7 @@ File "..\lua\Alien_Client.lua"
 File "..\lua\Balance.lua"
 File "..\lua\BalanceHealth.lua"
 File "..\lua\BindingsDialog.lua"
+File "..\lua\CombatModeVersionCheck.lua"
 File "..\lua\CommandStructure_Server.lua"
 File "..\lua\ConsoleCommands_Client.lua"
 File "..\lua\ConsoleCommands_Server.lua"
@@ -134,6 +135,7 @@ File "..\lua\GUIMarineHUD.lua"
 File "..\lua\GUIScoreboard.lua"
 File "..\lua\LiveScriptActor_Server.lua"
 File "..\lua\Main.lua"
+File "..\lua\MainMenu.lua"
 File "..\lua\Marine.lua"
 File "..\lua\MedPack.lua"
 File "..\lua\NetworkMessages.lua"
@@ -184,6 +186,7 @@ WriteUninstaller "$INSTDIR\uninstall.exe"
 !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 CreateDirectory "$SMPROGRAMS\${SM_FOLDER}"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
+CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Dedicated Server.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start Server.exe -game ${MOD_FOLDER} -map ns2_junction_combat"'
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
 CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
 !ifdef WEB_SITE
@@ -196,6 +199,7 @@ CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Website.lnk" "$INSTDIR\${AP
 !ifndef REG_START_MENU
 CreateDirectory "$SMPROGRAMS\${SM_FOLDER}"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
+CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Dedicated Server.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start Server.exe -game ${MOD_FOLDER} -map ns2_junction_combat"'
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
 CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
 !ifdef WEB_SITE
@@ -229,6 +233,7 @@ Delete "$INSTDIR\lua\Alien_Client.lua"
 Delete "$INSTDIR\lua\Balance.lua"
 Delete "$INSTDIR\lua\BalanceHealth.lua"
 Delete "$INSTDIR\lua\BindingsDialog.lua"
+Delete "$INSTDIR\lua\CombatModeVersionCheck.lua"
 Delete "$INSTDIR\lua\CommandStructure_Server.lua"
 Delete "$INSTDIR\lua\ConsoleCommands_Client.lua"
 Delete "$INSTDIR\lua\ConsoleCommands_Server.lua"
@@ -239,6 +244,7 @@ Delete "$INSTDIR\lua\GUIMarineHUD.lua"
 Delete "$INSTDIR\lua\GUIScoreboard.lua"
 Delete "$INSTDIR\lua\LiveScriptActor_Server.lua"
 Delete "$INSTDIR\lua\Main.lua"
+Delete "$INSTDIR\lua\MainMenu.lua"
 Delete "$INSTDIR\lua\Marine.lua"
 Delete "$INSTDIR\lua\MedPack.lua"
 Delete "$INSTDIR\lua\NetworkMessages.lua"

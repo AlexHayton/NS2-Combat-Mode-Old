@@ -15,7 +15,7 @@ Script.Load("lua/MenuManager.lua")
 mods = { "ns2", "faceoff", "MvM"}
 maps = 
     { 
-		{ name = "Junction - Combat Edition", filename = "ns2_junction_combat.level" },
+		{ name = "Junction - Combat Edition", fileName = "ns2_junction_combat.level" },
         { name = "Rockdown",         fileName = "ns2_rockdown.level" },
         { name = "Junction",         fileName = "ns2_junction.level" },
         { name = "Tram",             fileName = "ns2_tram.level" }

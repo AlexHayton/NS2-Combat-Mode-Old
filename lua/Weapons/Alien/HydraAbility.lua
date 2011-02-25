@@ -92,6 +92,9 @@ function HydraAbility:CreateHydra(player)
                 player:TriggerEffects("create_hydra")
                 
                 player:AddPlasma( -cost )
+				
+				// Increase the hydra count by 1
+				player:AddHydra()
                 
                 player:SetActivityEnd(.5)
                 

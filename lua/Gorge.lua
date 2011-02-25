@@ -23,7 +23,8 @@ end
 local networkVars = {
     bellyYaw            = "float",
     slideFlinchAmount   = "float",
-    timeToEndSlide      = "float"
+    timeToEndSlide      = "float",
+	hydras              = "float"
 }
 
 Gorge.kMapName = "gorge"
@@ -59,6 +60,7 @@ Gorge.kArmorModeEnergyScalar = 1.25
 Gorge.kBuildingModeMovementScalar = 0.001
 Gorge.kSlidingTurnRate = .25        // For limiting yaw rage of change when sliding. Radians/second
 Gorge.kSlideFlinchRecoveryRate = .6
+Gorge.kHydraLimit = 5
 
 // Animations
 Gorge.kBellySlide = "slide"
@@ -81,6 +83,18 @@ function Gorge:OnInit()
     self.bellyYaw = 0
     self.slideFlinchAmount = 0
     self.timeToEndSlide = 0
+	self.hydras = 0
+	
+	if (Server) then
+		// Make sure hydra count is updated.
+		local hydras = GetEntitiesIsa("Hydra", self:GetTeamNumber())
+		
+		for index, entity in pairs(hydras) do
+			if (entity:GetOwner() == self) then
+				self:AddHydra()
+			end
+		end
+	end
 
 end
 
@@ -102,6 +116,18 @@ end
 
 function Gorge:GetJumpHeight()
     return Gorge.kJumpHeight
+end
+
+function Gorge:GetHydras()
+	return self.hydras
+end
+
+function Gorge:RemoveHydra()
+	self.hydras = self.hydras - 1
+end
+
+function Gorge:AddHydra()
+	self.hydras = self.hydras + 1
 end
 
 function Gorge:GetHasSpecialAbility()
@@ -462,8 +488,10 @@ function Gorge:ProcessEndMode()
     
         local ability = self:GetActiveWeapon()
         if ability and ability:isa("HydraAbility") then
-        
-            ability:CreateHydra(self)
+			
+			if (self:GetHydras() < Gorge.kHydraLimit) then
+				ability:CreateHydra(self)
+			end
 
         elseif ability and ability:isa("InfestationAbility") then
         

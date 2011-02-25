@@ -41,5 +41,16 @@ function Hydra:GetCanDoDamage()
     return true
 end
 
+function Hydra:OnKill(damage, killer, doer, point, direction)
+	if (Server) then
+	// Remove a hydra from the gorge who spawned us.
+	local owner = self:GetOwner()
+	if (owner ~= nil and owner:isa("Gorge")) then
+		self:GetOwner():RemoveHydra()
+	end
+	Structure:OnKill(self, damage, killer, doer, point, direction)
+	end
+end
+
 
 Shared.LinkClassToMap("Hydra", Hydra.kMapName, {})

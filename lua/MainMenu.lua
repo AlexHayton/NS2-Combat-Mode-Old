@@ -15,6 +15,7 @@ Script.Load("lua/CreateServer.lua")
 Script.Load("lua/OptionsDialog.lua")
 Script.Load("lua/BindingsDialog.lua")
 Script.Load("lua/Update.lua")
+Script.Load("lua/CombatModeVersionCheck.lua")
 
 local mainMenuMusic = "Main Menu"
 
@@ -85,6 +86,7 @@ function MainMenu_Loaded()
     
         MenuManager.SetMenuCinematic("cinematics/main_menu.cinematic")
         MenuManager.PlayMusic(mainMenuMusic)
+		CombatMode_VersionCheck()
         
     end
     
