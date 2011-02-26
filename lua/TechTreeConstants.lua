@@ -143,7 +143,7 @@ kTechId = enum({
 	
 	// Combat mode abilities
 	// Aliens
-	'FadeTech', 'LerkTech', 'OnosTech', 'Whip1Tech', 'Whip2Tech', 'Crag1Tech', 'Crag2Tech',
+	'GorgeTech', 'FadeTech', 'LerkTech', 'OnosTech', 'Whip1Tech', 'Whip2Tech', 'Crag1Tech', 'Crag2Tech',
 	// Marines
 	'MedPackTech', 'ScanTech',
 

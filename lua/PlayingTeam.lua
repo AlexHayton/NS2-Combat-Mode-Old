@@ -292,10 +292,10 @@ function PlayingTeam:GetHasTeamLost()
         // Team can't respawn or last Command Station or Hive destroyed
         local activePlayers = self:GetHasActivePlayers()
         local abilityToRespawn = self:GetHasAbilityToRespawn()
-        local numCommandStructures = self:GetNumCommandStructures()
+        //local numCommandStructures = self:GetNumCommandStructures()
         
         if  ( not activePlayers and not abilityToRespawn) or
-            ( numCommandStructures == 0 ) or
+        //    ( numCommandStructures == 0 ) or
             ( self:GetNumPlayers() == 0 ) then
             
             return true

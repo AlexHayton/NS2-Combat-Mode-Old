@@ -820,6 +820,8 @@ function Marine:UpdateHelp()
         return true
     elseif activeWeaponName == "Pistol" and self:AddTooltipOnce("Press left-click to fire your pistol, right-click to switch to a slower more accurate mode.") then
         return true
+	elseif activeWeaponName == "Axe" and self:AddTooltipOnce("You can use the axe to heal structures in combat mode!") then
+        return true
     elseif activeWeaponName == "Axe" and self:AddTooltipOnce("The axe is especially effective against structures.") then
         return true
     elseif outOfAmmo and self:AddTooltipOnce("You are out of ammo - get more at an Armory.") then

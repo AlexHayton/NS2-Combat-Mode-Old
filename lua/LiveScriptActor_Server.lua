@@ -163,8 +163,15 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
 			end
 			
 			// Deal with axe/welder healing
-			if (isAxeHit and self:isa("Structure")) then
-				self:AddHealth(damage*kHealingScalar)
+			if (isAxeHit) then
+				if (self:isa("Structure")) then
+					local damageHealed = self:AddHealth(damage*kHealingScalar)
+					if (pointOwner ~= nil and pointOwner:isa("Player")) then
+						local experience = Experience_ComputeExperience(self, damageHealed)
+						pointOwner:AddExperience(experience)
+						Experience_GrantNearbyExperience(pointOwner, experience)
+					end
+				end
 				isHealing = true
 			end
 		end
@@ -206,10 +213,12 @@ function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
 		
 				// Award Experience for damaging structures
 				if (self:isa("Structure")) then
-					local experience = Experience_ComputeExperience(self, damageTaken)
-					
-					pointOwner:AddExperience(experience)
-					Experience_GrantNearbyExperience(pointOwner, experience)
+					if (not self:isa("PowerPoint") or (self:isa("PowerPoint") and self:GetIsPowered())) then
+						local experience = Experience_ComputeExperience(self, damageTaken)
+						
+						pointOwner:AddExperience(experience)
+						Experience_GrantNearbyExperience(pointOwner, experience)
+					end
 				end
 				
 				// Record the player in the assists table

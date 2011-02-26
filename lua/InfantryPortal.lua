@@ -70,7 +70,7 @@ function InfantryPortal:QueueWaitingPlayer()
 
             self:StartSpinning()            
             
-            playerToSpawn:AddTooltipOncePer(string.format("You are now respawning at an infantry portal")) 
+            playerToSpawn:AddTooltipOncePer(string.format("You are now respawning near an infantry portal")) 
             
         end
         
@@ -221,16 +221,18 @@ function InfantryPortal:SpawnPlayer()
         // Spawn player on top of IP
         local spawnOrigin = Vector(self:GetOrigin())
         
-        local success, player = team:ReplaceRespawnPlayer(queuedPlayer, spawnOrigin, self:GetAngles())
+		// Combat Mode: Randomly spawn player around
+        local success, player = team:ReplaceRespawnPlayer(queuedPlayer, nil, nil)
         if(success) then
         
             self.queuedPlayerId = nil
             self.queuedPlayerStartTime = nil
             
             spawnOrigin.y = spawnOrigin.y + player:GetExtents().y
-            player:SetOrigin(spawnOrigin)       
+            //player:SetOrigin(spawnOrigin)       
 
             self:TriggerEffects("infantry_portal_spawn")            
+			player:TriggerEffects("infantry_portal_spawn")
             
             return true
             
@@ -372,6 +374,8 @@ end
 
 function InfantryPortal:OnPoweredChange(newPoweredState)
 
+	// Deliberately sabotage this function to keep balance in Combat Mode
+	newPoweredState = true
     Structure.OnPoweredChange(self, newPoweredState)
     
     if not self.powered then

@@ -170,6 +170,10 @@ function Player:ClearSendExperienceBase()
 	self.sendExperienceBase = false
 end
 
+function Player:ClearExperience()
+	self.experience = 0
+end
+
 function Player:OnTeamChange(newTeamNumber)
 
     LiveScriptActor.OnTeamChange(self, newTeamNumber)
@@ -492,6 +496,19 @@ function Player:CopyPlayerDataFrom(player)
 	if (self:GetTeamNumber() == player:GetTeamNumber()) then
 		self.upgradesTaken = player.upgradesTaken
 	end
+	
+	// Update the owner of any hydras etc
+	local hydras = GetEntitiesIsa("Hydra", self:GetTeamNumber())
+	
+	for index, entity in pairs(hydras) do
+		if (entity:GetOwner() == player) then
+			self:SetOwner(self)
+			// Make sure hydra count is updated.
+			if (self:isa("Gorge")) then
+				self:AddHydra()
+			end
+		end
+	end
     
     // Don't lose purchased upgrades when becoming commander
     self.upgrade1 = player.upgrade1
@@ -808,6 +825,7 @@ function Player:AddExperience(points)
 		
 		if (oldExperience + points >= nextRank) then
 			self:AddTooltip(string.format("Congratulations! You have reached rank %s (%s)", tostring(self:GetRank()), Experience_GetRankName(self:GetTeamNumber(), self:GetRank())))
+			self:AddTooltipOnce("Press the Sayings #2 button to upgrade your skills.")
 			self:SetScoreboardChanged(true)  
 			self:TriggerEffects("levelUp")
 			

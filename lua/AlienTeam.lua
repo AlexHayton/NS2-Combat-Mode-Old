@@ -122,10 +122,15 @@ function AlienTeam:UpdateTeamAutoHeal(timePassed)
         
             if entity:GetIsAlive() then
             
-                if entity:isa("Drifter") or (entity:isa("Alien") and entity:GetGameEffectMask(kGameEffect.OnInfestation)) then
+                if entity:isa("Drifter") or entity:isa("Hive") or (entity:isa("Alien") and entity:GetGameEffectMask(kGameEffect.OnInfestation)) then
             
                     // Entities always get at least 1 point back
-                    local healthBack = math.max(entity:GetMaxHealth() * AlienTeam.kAutoHealPercent, 1)
+					// Hives get half health.
+					local percent = AlienTeam.kAutoHealPercent
+					if entity:isa("Hive") then
+						percent = percent * 0.5
+					end
+                    local healthBack = math.max(entity:GetMaxHealth() * percent, 1)
                     entity:AddHealth(healthBack, true)
                     
                 end

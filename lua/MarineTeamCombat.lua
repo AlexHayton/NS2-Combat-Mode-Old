@@ -54,7 +54,7 @@ function MarineTeamCombat:InitTechTree()
 	self.techTree:AddResearchNode(kTechId.ScanTech,             kTechId.MedPackTech,                 kTechId.None)
 	self.techTree:AddResearchNode(kTechId.GrenadeLauncherTech,         kTechId.ShotgunTech,                 kTechId.None)
 	self.techTree:AddBuyNode(kTechId.GrenadeLauncher,                    kTechId.GrenadeLauncherTech,       kTechId.None)
-	self.techTree:AddResearchNode(kTechId.FlamethrowerTech,         kTechId.ShotgunTech,        			   kTechId.None)
+	self.techTree:AddResearchNode(kTechId.FlamethrowerTech,         kTechId.ShotgunTech,        			   kTechId.Weapons3)
 	self.techTree:AddBuyNode(kTechId.Flamethrower,                       kTechId.FlamethrowerTech,                kTechId.None)
 	
 	// Tier 3

@@ -162,7 +162,7 @@ function PowerPoint:AddHealth(health)
 	// In combat mode this can never happen so it should work ok!
 	self:OnWeld(self, self, 1.0)
 	// Delegate down the line too
-	Structure.AddHealth(self, health)
+	return Structure.AddHealth(self, health)
 end
 
 function PowerPoint:StopDamagedSound()
