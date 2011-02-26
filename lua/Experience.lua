@@ -16,13 +16,14 @@ kExperienceLevelUpSoundAlien = PrecacheAsset("sound/combat.fev/combat/combat/lev
 
 // 'Local' globals
 kMaxExperience = 10000.0
-kRankExp = { 50.0, 150.0, 500.0, 1000.0, 1750.0, 3000.0, 5000.0, kMaxExperience, kMaxExperience + 1}
-kMarineRanks = { "Private", "Private First Class", "Sergeant", "Lieutenant", "Commander", "General", "Master General", "Commander-in-Chief", "Superman" }
-kAlienRanks = { "Worm", "Slug", "Parasite", "Crawler", "Hunter", "Prowler", "Beast", "Overlord", "Deity" }
+kRankExp = { 50.0, 150.0, 500.0, 1000.0, 1500.0, 2500.0, 4000.0, 7500, kMaxExperience, kMaxExperience + 1}
+kMarineRanks = { "Private", "Private First Class", "Sergeant", "Lieutenant", "Commander", "General", "Master General", "Commander-in-Chief", "Superman", "Deity" }
+kAlienRanks = { "Worm", "Slug", "Parasite", "Crawler", "Hunter", "Prowler", "Runner", "Beast", "Overlord", "Deity" }
 kExperienceRadius = 10
 kDamageModifiers = {	PowerPoint=1/(kStructuralDamageScalar*2), 
 									InfantryPortal=1/kStructuralDamageScalar, 
-									CommandStation=1/kStructuralDamageScalar }
+									CommandStation=1/kStructuralDamageScalar,
+									Hive = 1/kStructuralDamageScalar}
 
 // One more global									
 kMaxRank = table.maxn(kRankExp)
@@ -74,7 +75,7 @@ function Experience_GrantNearbyExperience(pointOwner, points)
     local friendlies = GetGamerules():GetEntities("Player", pointOwner:GetTeamNumber(), pointOwner:GetOrigin(), kExperienceRadius)
     
     for index, entity in ipairs(friendlies) do
-        if not entity:isa("Commander") and not entity == pointOwner then
+        if not entity == pointOwner then
 
             // Make sure player can "see" nearby friend
             local trace = Shared.TraceRay(pointOwner:GetOrigin(), entity:GetOrigin(), PhysicsMask.Bullets)

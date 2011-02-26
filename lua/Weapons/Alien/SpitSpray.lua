@@ -128,6 +128,11 @@ function SpitSpray:HealEntities(player)
                 // Heal entities by base amount plus a scaleable amount so it is helpful vs. weak targets yet doesn't take forever to heal hives (NS1)
                 local health = SpitSpray.kBaseHealAmount + math.max(SpitSpray.kMinHeal, targetEntity:GetMaxHealth() * SpitSpray.kHealthPercent)
                 targetEntity:AddHealth( health )
+				
+				// Grant experience too
+				local experience = Experience_ComputeExperience(targetEntity, health)
+				player:AddExperience(experience)
+				Experience_GrantNearbyExperience(player, experience)
                 
                 // Put out entities on fire sometimes
                 if math.random() < kSprayDouseOnFireChance then

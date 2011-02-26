@@ -44,7 +44,7 @@ kAlienArmor2 = 1.2
 kAlienArmor3 = 1.3        
         
         
-kArmoryHealth = 10000    kArmoryArmor = 0    kArmoryPointValue = 10
+kArmoryHealth = 9000    kArmoryArmor = 0    kArmoryPointValue = 10
 kAdvancedArmoryHealth = 4000    kAdvancedArmoryArmor = 0    kAdvancedArmoryPointValue = 40
         
 kCommandStationHealth = 10000    kCommandStationArmor = 0    kCommandStationPointValue = 25
@@ -54,11 +54,11 @@ kCommandCenterHealth = 15000    kCommandCenterArmor = 0    kCommandCenterPointVa
 kObservatoryHealth = 1700    kObservatoryArmor = 0    kObservatoryPointValue = 15
 kRoboticsFactoryHealth = 4000    kRoboticsFactoryArmor = 0    kRoboticsFactoryPointValue = 20
 kPrototypeLabHealth = 4000    kPrototypeLabArmor = 0    kPrototypeLabPointValue = 20
-kInfantryPortalHealth = 10000    kInfantryPortalArmor = 0    kInfantryPortalPointValue = 15
+kInfantryPortalHealth = 13000    kInfantryPortalArmor = 0    kInfantryPortalPointValue = 15
 kInfantryPortalTransponderHealth = 3000    kInfantryPortalTransponderArmor = 0    kInfantryPortalTransponderPointValue = 20
 kPowerPackHealth = 2000    kPowerPackArmor = 0    kPowerPackPointValue = 15
         
-kHiveHealth = 7000    kHiveArmor = 0    kHivePointValue = 30
+kHiveHealth = 10000    kHiveArmor = 0    kHivePointValue = 30
 kHiveMassHealth = 8000    kHiveMassArmor = 0    kHiveMassPointValue = 40
 kHiveColonyHealth = 9000    kHiveColonyArmor = 0    kHiveColonyPointValue = 50
         

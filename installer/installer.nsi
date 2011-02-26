@@ -7,7 +7,7 @@
 !define APP_NAME "NS2 Combat Mode"
 !define COMP_NAME "MCMLXXXIV"
 !define WEB_SITE "http://www.unknownworlds.com/forums/index.php?showtopic=111818&st=0#entry1813965"
-!define VERSION "0.1.1.0"
+!define VERSION "1.6.5.0"
 !define COPYRIGHT "Free-as-in-Beer"
 !define DESCRIPTION "Natural Selection 2 Combat Mode"
 !define LICENSE_TXT "LICENSE.txt"
@@ -32,7 +32,7 @@ VIAddVersionKey "FileVersion"  "${VERSION}"
 
 ######################################################################
 
-SetCompressor ZLIB
+#SetCompressor ZLIB
 Name "${APP_NAME}"
 Caption "${APP_NAME}"
 OutFile "${INSTALLER_NAME}"
@@ -40,6 +40,7 @@ BrandingText "${APP_NAME}"
 XPStyle on
 InstallDir "$PROGRAMFILES\Steam\steamapps\common\natural selection 2\${MOD_FOLDER}"
 InstallDirRegKey "${REG_ROOT}" "${REG_APP_PATH}" ""
+Var OVERMINDDIR
 
 ######################################################################
 
@@ -53,6 +54,8 @@ InstallDirRegKey "${REG_ROOT}" "${REG_APP_PATH}" ""
 !ifdef LICENSE_TXT
 !insertmacro MUI_PAGE_LICENSE "${LICENSE_TXT}"
 !endif
+
+#!insertmacro MUI_PAGE_COMPONENTS
 
 !insertmacro MUI_PAGE_DIRECTORY
 
@@ -87,9 +90,19 @@ Function .onInit
   # Get the steam installation folder and default to that.
   Push $0
   ReadRegStr $0 HKLM SOFTWARE\Wow6432Node\Valve\Steam "InstallPath"
+  StrCmp $0 "" 0 GotInstallDir
+  ReadRegStr $0 HKLM SOFTWARE\Valve\Steam "InstallPath"
+  StrCmp $0 "" NotGotInstallDir GotInstallDir
+  GotInstallDir:
   StrCpy $INSTDIR "$0\steamapps\common\natural selection 2\${MOD_FOLDER}"
+  StrCpy $OVERMINDDIR "$0\steamapps\common\natural selection 2\NS2GmOvrmind"
+  Goto AllFinished
+  
+  NotGotInstallDir:
+  StrCpy $OVERMINDDIR "$PROGRAMFILES\Steam\steamapps\common\natural selection 2\NS2GmOvrmind"
+  AllFinished:
   Pop $0
-
+  
   InitPluginsDir
   #File /oname=$PLUGINSDIR\splash.bmp "splash.bmp"
 
@@ -109,7 +122,7 @@ FunctionEnd
 
 ######################################################################
 
-Section -MainProgram
+Section "NS2 Combat Mode" MainProgram
 ${INSTALL_TYPE}
 SetOverwrite ifnewer
 SetOutPath "$INSTDIR"
@@ -120,9 +133,11 @@ File "..\README"
 SetOutPath "$INSTDIR\ui"
 File "..\ui\experience.dds"
 SetOutPath "$INSTDIR\lua"
+File "..\lua\AlienTeam.lua"
 File "..\lua\Alien_Client.lua"
 File "..\lua\Balance.lua"
 File "..\lua\BalanceHealth.lua"
+File "..\lua\BalanceMisc.lua"
 File "..\lua\BindingsDialog.lua"
 File "..\lua\CombatModeVersionCheck.lua"
 File "..\lua\CommandStructure_Server.lua"
@@ -130,6 +145,7 @@ File "..\lua\ConsoleCommands_Client.lua"
 File "..\lua\ConsoleCommands_Server.lua"
 File "..\lua\CreateServer.lua"
 File "..\lua\Globals.lua"
+File "..\lua\Gorge.lua"
 File "..\lua\GUIFeedback.lua"
 File "..\lua\GUIMarineHUD.lua"
 File "..\lua\GUIScoreboard.lua"
@@ -141,6 +157,8 @@ File "..\lua\MedPack.lua"
 File "..\lua\NetworkMessages.lua"
 File "..\lua\NetworkMessages_Server.lua"
 File "..\lua\NS2Gamerules.lua"
+File "..\lua\NS2GmOvrmind_Client.lua"
+File "..\lua\NS2GmOvrmind_Server.lua"
 File "..\lua\Player.lua"
 File "..\lua\PlayerEffects.lua"
 File "..\lua\Player_Client.lua"
@@ -152,6 +170,7 @@ File "..\lua\Scan.lua"
 File "..\lua\Scoreboard.lua"
 File "..\lua\ScoreDisplay.lua"
 File "..\lua\Server.lua"
+File "..\lua\Structure_Server.lua"
 File "..\lua\TechData.lua"
 File "..\lua\TechNode.lua"
 File "..\lua\TechPoint_Server.lua"
@@ -164,8 +183,11 @@ File "..\lua\Experience.lua"
 File "..\lua\GUIExperience.lua"
 File "..\lua\GUITechUpgrade.lua"
 File "..\lua\MarineTeamCombat.lua"
-SetOutPath "$INSTDIR\lua\Weapons"
+SetOutPath "$INSTDIR\lua\Weapons\Marine"
 File "..\lua\Weapons\Marine\Welder.lua"
+SetOutPath "$INSTDIR\lua\Weapons\Alien"
+File "..\lua\Weapons\Alien\HydraAbility.lua"
+File "..\lua\Weapons\Alien\SpitSpray.lua"
 SetOutPath "$INSTDIR\cinematics"
 File "..\cinematics\level_up.cinematic"
 SetOutPath "$INSTDIR\maps"
@@ -174,6 +196,25 @@ SetOutPath "$INSTDIR\maps\overviews"
 File "..\maps\overviews\ns2_junction_combat.hmp"
 File "..\maps\overviews\ns2_junction_combat.tga"
 File "..\maps\overviews\ns2_junction_combat_hmp.tga"
+SectionEnd
+
+Section "NS2GmOvrMind" NS2GmOvrMind
+## NS2GmOvrMind stuff
+SetOverwrite off
+SetOutPath "$OVERMINDDIR"
+File "..\NS2GmOvrMind\Readme.url"
+File "..\NS2GmOvrMind\Game_Setup.xml"
+File "..\NS2GmOvrMind\Editor_Setup.xml"
+SetOutPath "$OVERMINDDIR\Lua"
+File "..\NS2GmOvrMind\Lua\NS2GmOvrmind.deproj"
+File "..\NS2GmOvrMind\Lua\NS2GmOvrmind.deuser"
+File "..\NS2GmOvrMind\Lua\NS2GmOvrmind_Client.lua"
+File "..\NS2GmOvrMind\Lua\NS2GmOvrmind_Server.lua"
+SetOutPath "$OVERMINDDIR\Binaries"
+File "..\NS2GmOvrMind\Binaries\NS2GmOvrmind_x86.dll"
+SetOutPath "$OVERMINDDIR\Configuration"
+File "..\NS2GmOvrMind\Configuration\NS2GmOvrmind_ServerConfiguration.lua"
+SetOverwrite on
 SectionEnd
 
 ######################################################################
@@ -185,10 +226,10 @@ WriteUninstaller "$INSTDIR\uninstall.exe"
 !ifdef REG_START_MENU
 !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 CreateDirectory "$SMPROGRAMS\${SM_FOLDER}"
-CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
-CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Dedicated Server.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start Server.exe -game ${MOD_FOLDER} -map ns2_junction_combat"'
+CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"' "$INSTDIR\..\NS2.exe"
+CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Dedicated Server.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start Server.exe -game ${MOD_FOLDER} -map ns2_junction_combat"' "$INSTDIR\..\NS2.exe"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
-CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
+CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"' 
 !ifdef WEB_SITE
 WriteIniStr "$INSTDIR\${APP_NAME} website.url" "InternetShortcut" "URL" "${WEB_SITE}"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Website.lnk" "$INSTDIR\${APP_NAME} website.url"
@@ -198,8 +239,8 @@ CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Website.lnk" "$INSTDIR\${AP
 
 !ifndef REG_START_MENU
 CreateDirectory "$SMPROGRAMS\${SM_FOLDER}"
-CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
-CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Dedicated Server.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start Server.exe -game ${MOD_FOLDER} -map ns2_junction_combat"'
+CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"' "$INSTDIR\..\NS2.exe"
+CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Dedicated Server.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start Server.exe -game ${MOD_FOLDER} -map ns2_junction_combat"' "$INSTDIR\..\NS2.exe"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
 CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
 !ifdef WEB_SITE
@@ -230,8 +271,10 @@ Delete "$INSTDIR\LICENSE.txt"
 Delete "$INSTDIR\README"
 Delete "$INSTDIR\ui\experience.dds"
 Delete "$INSTDIR\lua\Alien_Client.lua"
+Delete "$INSTDIR\lua\AlienTeam.lua"
 Delete "$INSTDIR\lua\Balance.lua"
 Delete "$INSTDIR\lua\BalanceHealth.lua"
+Delete "$INSTDIR\lua\BalanceMisc.lua"
 Delete "$INSTDIR\lua\BindingsDialog.lua"
 Delete "$INSTDIR\lua\CombatModeVersionCheck.lua"
 Delete "$INSTDIR\lua\CommandStructure_Server.lua"
@@ -239,6 +282,7 @@ Delete "$INSTDIR\lua\ConsoleCommands_Client.lua"
 Delete "$INSTDIR\lua\ConsoleCommands_Server.lua"
 Delete "$INSTDIR\lua\CreateServer.lua"
 Delete "$INSTDIR\lua\Globals.lua"
+Delete "$INSTDIR\lua\Gorge.lua"
 Delete "$INSTDIR\lua\GUIFeedback.lua"
 Delete "$INSTDIR\lua\GUIMarineHUD.lua"
 Delete "$INSTDIR\lua\GUIScoreboard.lua"
@@ -250,6 +294,8 @@ Delete "$INSTDIR\lua\MedPack.lua"
 Delete "$INSTDIR\lua\NetworkMessages.lua"
 Delete "$INSTDIR\lua\NetworkMessages_Server.lua"
 Delete "$INSTDIR\lua\NS2Gamerules.lua"
+Delete "$INSTDIR\lua\NS2GmOvrmind_Client.lua"
+Delete "$INSTDIR\lua\NS2GmOvrmind_Server.lua"
 Delete "$INSTDIR\lua\Player.lua"
 Delete "$INSTDIR\lua\PlayerEffects.lua"
 Delete "$INSTDIR\lua\Player_Client.lua"
@@ -261,6 +307,7 @@ Delete "$INSTDIR\lua\Scan.lua"
 Delete "$INSTDIR\lua\Scoreboard.lua"
 Delete "$INSTDIR\lua\ScoreDisplay.lua"
 Delete "$INSTDIR\lua\Server.lua"
+Delete "$INSTDIR\lua\Structure_Server.lua"
 Delete "$INSTDIR\lua\TechData.lua"
 Delete "$INSTDIR\lua\TechNode.lua"
 Delete "$INSTDIR\lua\TechPoint_Server.lua"
@@ -273,7 +320,9 @@ Delete "$INSTDIR\lua\Experience.lua"
 Delete "$INSTDIR\lua\GUIExperience.lua"
 Delete "$INSTDIR\lua\GUITechUpgrade.lua"
 Delete "$INSTDIR\lua\MarineTeamCombat.lua"
-Delete "$INSTDIR\lua\Weapons\Welder.lua"
+Delete "$INSTDIR\lua\Weapons\Marine\Welder.lua"
+Delete "$INSTDIR\lua\Weapons\Alien\HydraAbility.lua"
+Delete "$INSTDIR\lua\Weapons\Alien\SpitSpray.lua"
 Delete "$INSTDIR\cinematics\level_up.cinematic"
 Delete "$INSTDIR\maps\ns2_junction_combat.level"
 Delete "$INSTDIR\maps\overviews\ns2_junction_combat.hmp"
@@ -284,9 +333,13 @@ RmDir "$INSTDIR\maps\overviews"
 RmDir "$INSTDIR\maps"
 RmDir "$INSTDIR\cinematics" 
 RmDir "$INSTDIR\lua\Weapons\Marine"
+RmDir "$INSTDIR\lua\Weapons\Alien"
 RmDir "$INSTDIR\lua\Weapons"
 RmDir "$INSTDIR\lua"
 RmDir "$INSTDIR\ui"
+
+#NS2GmOvrMind stuff
+#Don't uninstall it, just in case!
  
 Delete "$INSTDIR\uninstall.exe"
 !ifdef WEB_SITE
@@ -319,6 +372,9 @@ RmDir "$SMPROGRAMS\${SM_FOLDER}"
 DeleteRegKey ${REG_ROOT} "${REG_APP_PATH}"
 DeleteRegKey ${REG_ROOT} "${UNINSTALL_PATH}"
 SectionEnd
+
+LangString DESC_MainProgram ${LANG_ENGLISH} "NS2 Combat Mode"
+LangString DESC_NS2GmOvrMind ${LANG_ENGLISH} "NS2GmOvrMind"
 
 ######################################################################
 

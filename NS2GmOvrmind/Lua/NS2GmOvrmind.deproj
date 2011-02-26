@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+  <file>
+    <filename>NS2GmOvrmind_Client.lua</filename>
+  </file>
+  <file>
+    <filename>NS2GmOvrmind_Server.lua</filename>
+  </file>
+  <file>
+    <filename>..\Configuration\NS2GmOvrmind_ServerConfiguration.lua</filename>
+  </file>
+</project>

@@ -372,6 +372,12 @@ end
 function Structure:OnKill(damage, killer, doer, point, direction)
     if(self:GetIsAlive()) then
     
+		// Remove a hydra from the gorge who spawned us.
+		local owner = self:GetOwner()
+		if (owner ~= nil and owner:isa("Gorge")) then
+			self:GetOwner():RemoveHydra()
+		end
+	
         self.buildTime = 0
         self.buildFraction = 0
         self.constructionComplete = false

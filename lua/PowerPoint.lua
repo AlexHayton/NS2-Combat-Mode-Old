@@ -170,7 +170,7 @@ function PowerPoint:ProcessEntityHelp(player)
         end
     else
         if player:isa("Marine") then
-            return player:AddTooltipOncePer("This power node is destroyed and must be repaired by the Commander before nearby structures work again.")
+            return player:AddTooltipOncePer("This power node is destroyed and must be repaired. Hit it with your axe!")
         elseif player:isa("Alien") then
             return player:AddTooltipOncePer("The marine power node has been destroyed!")
         end

@@ -60,7 +60,7 @@ Gorge.kArmorModeEnergyScalar = 1.25
 Gorge.kBuildingModeMovementScalar = 0.001
 Gorge.kSlidingTurnRate = .25        // For limiting yaw rage of change when sliding. Radians/second
 Gorge.kSlideFlinchRecoveryRate = .6
-Gorge.kHydraLimit = 5
+Gorge.kHydraLimit = 3
 
 // Animations
 Gorge.kBellySlide = "slide"
@@ -85,7 +85,7 @@ function Gorge:OnInit()
     self.timeToEndSlide = 0
 	self.hydras = 0
 	
-	if (Server) then
+	/*if (Server) then
 		// Make sure hydra count is updated.
 		local hydras = GetEntitiesIsa("Hydra", self:GetTeamNumber())
 		
@@ -94,7 +94,7 @@ function Gorge:OnInit()
 				self:AddHydra()
 			end
 		end
-	end
+	end*/
 
 end
 
@@ -553,7 +553,7 @@ function Gorge:UpdateHelp()
         return true       
     elseif activeWeaponName ~= "HydraAbility" and self:AddTooltipOnce("Switch to weapon #3 to build hydras that attack enemies.") then
         return true       
-    elseif activeWeaponName == "HydraAbility" and self:AddTooltipOnce("Building a Hydra costs you plasma, but you can build as many as you like.") then
+    elseif activeWeaponName == "HydraAbility" and self:AddTooltipOnce("You can build up to three hydras as a gorge") then
         return true       
     elseif activeWeaponName == "HydraAbility" and self:AddTooltipOnce("Hydras can even be built on walls and ceilings!") then
         return true       

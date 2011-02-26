@@ -756,6 +756,11 @@ function NS2Gamerules:UpdateToReadyRoom()
                 self:JoinTeam(player, kTeamReadyRoom)
             end
             Server.ForAllPlayers(SetReadyRoomTeam)
+			
+			local function ClearExperience(player)
+				player:ClearExperience()
+			end
+			Server.ForAllPlayers(ClearExperience)
 
             // Spawn them there and reset teams
             self:ResetGame()
