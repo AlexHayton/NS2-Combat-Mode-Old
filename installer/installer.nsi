@@ -228,7 +228,7 @@ CreateDirectory "$SMPROGRAMS\${SM_FOLDER}"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"' "$INSTDIR\..\NS2.exe"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Dedicated Server.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start Server.exe -game ${MOD_FOLDER} -map ns2_junction_combat"' "$INSTDIR\..\NS2.exe"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
-CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"' 
+CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"' "$INSTDIR\..\NS2.exe"
 !ifdef WEB_SITE
 WriteIniStr "$INSTDIR\${APP_NAME} website.url" "InternetShortcut" "URL" "${WEB_SITE}"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Website.lnk" "$INSTDIR\${APP_NAME} website.url"
@@ -241,7 +241,7 @@ CreateDirectory "$SMPROGRAMS\${SM_FOLDER}"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"' "$INSTDIR\..\NS2.exe"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Dedicated Server.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start Server.exe -game ${MOD_FOLDER} -map ns2_junction_combat"' "$INSTDIR\..\NS2.exe"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\uninstall.exe"
-CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"'
+CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "%windir%\system32\cmd.exe" '/c "cd $INSTDIR\.. && start NS2.exe -game ${MOD_FOLDER}"' "$INSTDIR\..\NS2.exe"
 !ifdef WEB_SITE
 WriteIniStr "$INSTDIR\${APP_NAME} website.url" "InternetShortcut" "URL" "${WEB_SITE}"
 CreateShortCut "$SMPROGRAMS\${SM_FOLDER}\${APP_NAME} Website.lnk" "$INSTDIR\${APP_NAME} website.url"
