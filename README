@@ -1,2 +1,21 @@
 README FILE FOR NS2 COMBAT MOD
 ==============================
+
+Features
+--------
+- Experience for both marines and aliens
+- Get experience by killing enemies or assisting other players
+- Gain ranks by killing enough enemies, and choose new skills as you level up!
+- An armoury spawns instead of the commander chair at marine start. Aliens can't "use" their hive to become commander. Also there are no res nodes in use now, as all upgrades are governed by your rank. All players have infinite plasma.
+- There is an upgrade menu (press the "sayings #2" key to get it). There's a slight pause if you buy one skill then another very quickly (tech tree is recalculating availability slowly).
+- Marines can repair structures with the axe and both teams get XP for repairs.
+- I've changed the ident at top-left so you know you're playing combat mode not vanilla!
+- Servers running this mod will show up as "Combat" in the list.
+- Modified version of Junction for combat mode (has power points and a minimap now).
+
+If you want to test it locally, the best way to look at all the skills is to do "cheats 1" in the console, then "grantexperience 2000". This'll give you enough ranks to unlock everything.
+
+To test with bots, use "om_servercommand addbots 2" to add 2 bots.
+
+I've also got a Pivotal Tracker project running now so that everyone can log and track issues:
+https://www.pivotaltracker.com/projects/211849# 
