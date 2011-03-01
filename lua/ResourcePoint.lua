@@ -21,6 +21,8 @@ local networkVars = {
     
 if Server then
     Script.Load("lua/ResourcePoint_Server.lua")
+else
+    Script.Load("lua/ResourcePoint_Client.lua")
 end
 
 function ResourcePoint:OnInit()
@@ -36,6 +38,9 @@ function ResourcePoint:OnInit()
     self:SetPhysicsType(Actor.PhysicsType.Kinematic)
     
     self.playingEffect = false
+	
+	self.ghostModel = nil
+	self.showGhostModel = true
 
 end
 
@@ -50,6 +55,13 @@ end
 if Client then
 
     function ResourcePoint:OnUpdate(deltaTime)
+	
+		// Update the ghost model
+		if (self.showGhostModel and not self.ghostModel) then
+			self:ShowGhostModel()
+		elseif (not self.showGhostModel and self.ghostModel) then
+			self:DestroyGhostModel()
+		end
     
         ScriptActor.OnUpdate(self, deltaTime)
         
