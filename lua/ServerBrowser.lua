@@ -128,15 +128,30 @@ function SortReturnServerList()
         end
     end
 
-    function sortNumber(e1, e2)    
+    function sortNumber(e1, e2)
         if(ascending) then
-            return e1[sortType] < e2[sortType]
+            return tonumber(e1[sortType]) < tonumber(e2[sortType])
         else
-            return e2[sortType] < e1[sortType]
+            return tonumber(e2[sortType]) < tonumber(e1[sortType])
         end
     end
+    
+    function sortPlayersByNumber(e1, e2)
+    
+        // String is in format 12/24 so only consider the first number.
+        local players1 = e1[sortType]:match( ("([^/]*)/"):rep(1) )
+        local players2 = e2[sortType]:match( ("([^/]*)/"):rep(1) )
+        if(ascending) then
+            return tonumber(players1) < tonumber(players2)
+        else
+            return tonumber(players2) < tonumber(players1)
+        end
+    
+    end
 
-    if(sortType == kSortTypePlayers or sortType == kSortTypePing) then
+    if(sortType == kSortTypePlayers) then
+        table.sort(serverRecords, sortPlayersByNumber)
+    elseif(sortType == kSortTypePing) then
         table.sort(serverRecords, sortNumber)
     else
         table.sort(serverRecords, sortString)

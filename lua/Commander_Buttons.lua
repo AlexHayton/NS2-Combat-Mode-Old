@@ -7,6 +7,14 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Commander_Hotkeys.lua")
 
+// Maps tech buttons to keys in "grid" system
+kGridHotkeys =
+{
+    Move.Q, Move.W, Move.E, Move.R,
+    Move.A, Move.S, Move.D, Move.F,
+    Move.Z, Move.X, Move.C, Move.V,
+}
+
 /**
  * Called by Flash when the user presses the "Logout" button.
  */

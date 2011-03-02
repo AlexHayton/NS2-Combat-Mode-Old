@@ -264,6 +264,8 @@ function ClipWeapon:OnPrimaryAttack(player)
                     
         elseif (self.ammo > 0) then
 
+            Weapon.OnPrimaryAttackEnd(self, player)
+            
             // Automatically reload if we're out of ammo
             player:Reload()
         
@@ -271,6 +273,8 @@ function ClipWeapon:OnPrimaryAttack(player)
         
             self:TriggerEffects("clipweapon_empty")
             player:SetActivityEnd(.5)
+            
+            Weapon.OnPrimaryAttackEnd(self, player)
             
         end
         

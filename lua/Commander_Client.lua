@@ -1179,7 +1179,7 @@ end
 function Commander:UpdateSelectionCircles()
 
     // Check self.selectionCircles because this function may be called before it is valid.
-    if not Client.GetIsRunningPrediction() and self.selectionCircles ~= nil then
+    if not Shared.GetIsRunningPrediction() and self.selectionCircles ~= nil then
         
         // Selection changed, so deleted old circles and create new ones
         if self.createSelectionCircles then

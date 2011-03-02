@@ -22,9 +22,9 @@ kMarineStructureEffects =
     {
         marineStructureComplete =
         {
-            {sound = "sound/ns2.fev/marine/structures/armory_idle", classname = "Armory", done = true},
+            {parented_sound = "sound/ns2.fev/marine/structures/armory_idle", classname = "Armory", done = true},
             
-            {sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor"},
+            {parented_sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor"},
             {animation = "active", classname = "Extractor", done = true},
         },
     },
@@ -47,8 +47,8 @@ kMarineStructureEffects =
             {animation = "active", classname = "Extractor", from_animation = "power_up", blend_time = .3, force = true},            
             {stop_sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor", from_animation = "deploy"},
             {stop_sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor", from_animation = "power_up"},
-            {sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor", from_animation = "deploy"},            
-            {sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor", from_animation = "power_up"},     
+            {parented_sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor", from_animation = "deploy"},            
+            {parented_sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor", from_animation = "power_up"},     
             
             {animation = "spin", classname = "InfantryPortal", from_animation = "spin_start", done = true},
         },

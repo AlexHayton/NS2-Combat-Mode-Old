@@ -151,8 +151,8 @@ function EffectManager:AddEffectData(identifier, data)
             self.effectTables = {}
         end
         
-        if not self.queuedEffects then
-            self.queuedEffects = {}
+        if not self.queuedAnimations then
+            self.queuedAnimations = {}
         end
         
         if not self.loopingSounds then
@@ -201,44 +201,36 @@ function EffectManager:SetLockedPlayer(player)
     self.lockedPlayer = player    
 end
 
-function EffectManager:TriggerQueuedEffects()
+function EffectManager:TriggerQueuedAnimations()
 
-    PROFILE("EffectManager:TriggerQueuedEffects")
+    PROFILE("EffectManager:TriggerQueuedAnimations")
     
-    if self.queuedEffects and self.effectTables then
+    if self.queuedAnimations then
     
-        for index, queuedEffect in ipairs(self.queuedEffects) do
+        for index, queuedAnimation in ipairs(self.queuedAnimations) do
 
-            for index, effectTablePair in ipairs(self.effectTables) do
-            
-                self:InternalTriggerMatchingEffects(effectTablePair[2], queuedEffect[3], queuedEffect[1], queuedEffect[2])    
-                
-            end
+            self:InternalTriggerAnimation(queuedAnimation[1], queuedAnimation[2], queuedAnimation[3])
 
         end
         
     end
     
-    if self.queuedEffects == nil or table.count(self.queuedEffects) > 0 then
-        self.queuedEffects = {}
+    if self.queuedAnimations == nil or table.count(self.queuedAnimations) > 0 then
+        self.queuedAnimations = {}
     end
     
 end
 
 function EffectManager:TriggerEffects(effectName, tableParams, triggeringEntity)
 
-    if self.lockedPlayer == nil or (triggeringEntity ~= nil and triggeringEntity:GetParent() == self.lockedPlayer) then
+    if self.effectTables then
     
-        if self.effectTables then
-            for index, effectTablePair in ipairs(self.effectTables) do
-                self:InternalTriggerMatchingEffects(effectTablePair[2], triggeringEntity, effectName, tableParams)    
-            end
+        for index, effectTablePair in ipairs(self.effectTables) do
+            self:InternalTriggerMatchingEffects(effectTablePair[2], triggeringEntity, effectName, tableParams)    
         end
-    
-    else
-        table.insert(self.queuedEffects, {effectName, tableParams, triggeringEntity})
+        
     end
-    
+
 end
 
 ///////////////////////
@@ -419,10 +411,6 @@ function EffectManager:InternalGetEffectMatches(triggeringEntity, assetEntry, ta
                 // Otherwise makes ure specified parameters match
                 if filterValue ~= triggerFilterValue then
 
-                    if triggeringEntity and self:GetDisplayDebug(assetEntry, triggeringEntity) then
-                        Print("  Effect not triggered because filter %s failed (%s ~= %s)%s (ent: %s, params: %s)", ToString(filterName), ToString(filterValue), ToString(triggerParamValue), self:GetQueuedText(), SafeClassName(triggeringEntity), ToString(tableParams)) 
-                    end
-                    
                     return false
                     
                 end
@@ -731,69 +719,80 @@ function EffectManager:InternalTriggerAnimation(effectTable, triggeringParams, t
         parent = triggeringEntity:GetParent()
     end
     
-    local animationName = self:ChooseAssetName(effectTable, triggeringParams[kEffectSurface], triggeringEntity)
-    if animationName == "" then
+    // Don't play animations or overlay animations when player is locked
+    local playAnim = (self.lockedPlayer == nil) or (triggeringEntity ~= nil and triggeringEntity:GetParent() == self.lockedPlayer)
+    if not playAnim and (effectTable[kAnimationType] or effectTable[kOverlayAnimationType]) then
     
-        // Empty animations are allowed and do nothing (ie, to not play idle)
-        success = true
+        table.insert(self.queuedAnimations, {effectTable, triggeringParams, triggeringEntity})
         
     else
-    
-        if effectTable[kAnimationType] then
         
-            if blendTime == 0 then
-            
-                triggeringEntity:SetAnimation(animationName, force, speed)
-                success = true
-                
-            elseif triggeringEntity.SetAnimationWithBlending then
-            
-                triggeringEntity:SetAnimationWithBlending(animationName, blendTime, force, speed)
-                success = true
-                
-            else
-                Print("No SetAnimationWithBlending function on %s%s", SafeClassName(triggeringEntity), self:GetQueuedText())
-            end
+        local animationName = self:ChooseAssetName(effectTable, triggeringParams[kEffectSurface], triggeringEntity)
+        if animationName == "" then
         
-        // Assumes triggering entity is player or weapon. Either way it plays the view model animation on the player.
-        elseif effectTable[kViewModelAnimationType] then
-
-            if parent and parent.SetViewAnimation then        
-                triggeringEntity = parent
-            end        
+            // Empty animations are allowed and do nothing (ie, to not play idle)
+            success = true
             
-            // Get view model entity form our parent - assumes this is being called
-            if triggeringEntity and triggeringEntity.SetViewAnimation then
-                
-                triggeringEntity:SetViewAnimation(animationName, not force, ConditionalValue(blend ~= 0, blend, nil), speed)
-                success = true
-
-            else
-                Print("EffectManager:InternalTriggerAnimation(): Tried to play view model animation \"%s\" but entity %s isn't a player or a weapon.%s", animationName, SafeClassName(triggeringEntity), self:GetQueuedText())
-            end
-
-        elseif effectTable[kOverlayAnimationType] then
+        else
         
-            if parent and parent.SetOverlayAnimation then
-                triggeringEntity = parent
-            end
+            if effectTable[kAnimationType] then
             
-            if triggeringEntity and triggeringEntity.SetOverlayAnimation then
-            
-                triggeringEntity:SetOverlayAnimation(animationName, not force)        
-                success = true
+                if blendTime == 0 then
                 
-            else
-                Print("EffectManager:InternalTriggerAnimation(): Tried to play overlay animation \"%s\" but entity %s doesn't have method.%s", assetName, SafeClassName(triggeringEntity), self:GetQueuedText())
-            end
+                    triggeringEntity:SetAnimation(animationName, force, speed)
+                    success = true
+                    
+                elseif triggeringEntity.SetAnimationWithBlending then
+                
+                    triggeringEntity:SetAnimationWithBlending(animationName, blendTime, force, speed)
+                    success = true
+                    
+                else
+                    Print("No SetAnimationWithBlending function on %s%s", SafeClassName(triggeringEntity), self:GetQueuedText())
+                end
+            
+            // Assumes triggering entity is player or weapon. Either way it plays the view model animation on the player.
+            elseif effectTable[kViewModelAnimationType] then
 
+                if parent and parent.SetViewAnimation then        
+                    triggeringEntity = parent
+                end        
+                
+                // Get view model entity form our parent - assumes this is being called
+                if triggeringEntity and triggeringEntity.SetViewAnimation then
+                    
+                    triggeringEntity:SetViewAnimation(animationName, not force, ConditionalValue(blend ~= 0, blend, nil), speed)
+                    success = true
+
+                else
+                    Print("EffectManager:InternalTriggerAnimation(): Tried to play view model animation \"%s\" but entity %s isn't a player or a weapon.%s", animationName, SafeClassName(triggeringEntity), self:GetQueuedText())
+                end
+
+            elseif effectTable[kOverlayAnimationType] then
+            
+                if parent and parent.SetOverlayAnimation then
+                    triggeringEntity = parent
+                end
+                
+                if triggeringEntity and triggeringEntity.SetOverlayAnimation then
+                
+                    triggeringEntity:SetOverlayAnimation(animationName, not force)        
+                    success = true
+                    
+                else
+                    Print("EffectManager:InternalTriggerAnimation(): Tried to play overlay animation \"%s\" but entity %s doesn't have method.%s", assetName, SafeClassName(triggeringEntity), self:GetQueuedText())
+                end
+
+            end
+            
+        end
+        
+        if success then
+            self:DisplayDebug(ToString(animationName), effectTable, triggeringParams, triggeringEntity)
         end
         
     end
     
-    if success then
-        self:DisplayDebug(ToString(animationName), effectTable, triggeringParams, triggeringEntity)
-    end
     
     return success
 
@@ -863,30 +862,40 @@ function EffectManager:InternalTriggerEffect(effectTable, triggeringParams, trig
 
     local success = false
     
-    if effectTable[kCinematicType] or effectTable[kWeaponCinematicType] or effectTable[kViewModelCinematicType] or effectTable[kPlayerCinematicType] or effectTable[kParentedCinematicType] or effectTable[kLoopingCinematicType] or effectTable[kStopCinematicType] then
-    
-        success = self:InternalTriggerCinematic(effectTable, triggeringParams, triggeringEntity)
+    // Do not trigger certain effects when running prediction.
+    if not Shared.GetIsRunningPrediction() then
+        if effectTable[kCinematicType] or effectTable[kWeaponCinematicType] or effectTable[kViewModelCinematicType] or effectTable[kPlayerCinematicType] or effectTable[kParentedCinematicType] or effectTable[kLoopingCinematicType] or effectTable[kStopCinematicType] then
         
-    elseif effectTable[kSoundType] or effectTable[kParentedSoundType] or effectTable[kLoopingSoundType] or effectTable[kPrivateSoundType] or effectTable[kStopSoundType] then
-    
-        success = self:InternalTriggerSound(effectTable, triggeringParams, triggeringEntity)
+            success = self:InternalTriggerCinematic(effectTable, triggeringParams, triggeringEntity)
+            
+        elseif effectTable[kSoundType] or effectTable[kParentedSoundType] or effectTable[kLoopingSoundType] or effectTable[kPrivateSoundType] or effectTable[kStopSoundType] then
         
-    elseif effectTable[kAnimationType] or effectTable[kViewModelAnimationType] or effectTable[kOverlayAnimationType] then
-    
-        success = self:InternalTriggerAnimation(effectTable, triggeringParams, triggeringEntity)
+            success = self:InternalTriggerSound(effectTable, triggeringParams, triggeringEntity)
 
-    elseif effectTable[kStopEffectsType] then
-    
-        success = self:InternalStopEffects(effectTable, triggeringParams, triggeringEntity)
+        elseif effectTable[kStopEffectsType] then
         
-    elseif effectTable[kDecalType] then
-    
-        success = self:InternalTriggerDecal(effectTable, triggeringParams, triggeringEntity)
+            success = self:InternalStopEffects(effectTable, triggeringParams, triggeringEntity)
+            
+        elseif effectTable[kDecalType] then
+        
+            success = self:InternalTriggerDecal(effectTable, triggeringParams, triggeringEntity)
 
-    elseif effectTable[kRagdollType] then
-    
-        success = self:InternalTriggerRagdoll(effectTable, triggeringParams, triggeringEntity)
+        elseif effectTable[kRagdollType] then
+        
+            success = self:InternalTriggerRagdoll(effectTable, triggeringParams, triggeringEntity)
 
+        end
+    end
+    
+    // Other effects are trigger even with prediction on.
+    if not success then
+    
+        if effectTable[kAnimationType] or effectTable[kViewModelAnimationType] or effectTable[kOverlayAnimationType] then
+    
+            success = self:InternalTriggerAnimation(effectTable, triggeringParams, triggeringEntity)
+            
+        end
+        
     end
     
     if not success and self:GetDisplayDebug(effectTable, triggeringEntity) then
@@ -929,7 +938,7 @@ end
 
 function EffectManager:OnUpdate(deltaTime)
 
-    self:TriggerQueuedEffects()
+    self:TriggerQueuedAnimations()
     
     self:UpdateDecals(deltaTime)
     
