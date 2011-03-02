@@ -32,7 +32,7 @@ kGeneralEffectData =
             //{sound = "sound/ns2.fev/alien/commander/DI_drop_3D", classname = "Infestation"},
             {parented_sound = "sound/ns2.fev/alien/infestation/build", classname = "Infestation", done = true},
 
-            {sound = "sound/ns2.fev/marine/structures/mac/hover", classname = "MAC", done = true},            
+            {parented_sound = "sound/ns2.fev/marine/structures/mac/hover", classname = "MAC", done = true},            
             {sound = "sound/ns2.fev/alien/drifter/spawn", classname = "Drifter", done = true},
             
             {sound = "sound/ns2.fev/alien/structures/spawn_small", isalien = true, done = true},
@@ -307,9 +307,9 @@ kGeneralEffectData =
     {
         fireStartEffects =
         {
-            {sound = "sound/ns2.fev/common/fire_large", classname = "Hive", done = true},
-            {sound = "sound/ns2.fev/common/fire_large", classname = "Onos", done = true},
-            {sound = "sound/ns2.fev/common/fire_small"},
+            {parented_sound = "sound/ns2.fev/common/fire_large", classname = "Hive", done = true},
+            {parented_sound = "sound/ns2.fev/common/fire_large", classname = "Onos", done = true},
+            {parented_sound = "sound/ns2.fev/common/fire_small"},
         },
     },
     

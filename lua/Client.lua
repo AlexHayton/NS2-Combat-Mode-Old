@@ -88,7 +88,7 @@ end
 
 function ExitPressed()
 
-    if not Client.GetIsRunningPrediction() then
+    if not Shared.GetIsRunningPrediction() then
         // Close buy menu if open, otherwise show in-game menu
         if not Client.GetLocalPlayer():CloseMenu(kClassFlashIndex) then
             ShowInGameMenu()
@@ -99,7 +99,7 @@ end
 
 function ShowInGameMenu()
     
-    if not Client.GetIsRunningPrediction() then
+    if not Shared.GetIsRunningPrediction() then
     
         Client.SetCursor("ui/Cursor_MenuDefault.dds")
         Client.SetMouseVisible(true)
@@ -329,7 +329,7 @@ end
 
 function OnUpdateClient(deltaTime)
 
-    if not Client.GetIsRunningPrediction() then
+    if not Shared.GetIsRunningPrediction() then
     
         local player = Client.GetLocalPlayer()
         if player ~= nil then
@@ -360,7 +360,7 @@ end
 // Return true if the event should be stopped here.
 function OnSendKeyEvent(key, down)
 
-    if not Client.GetIsRunningPrediction() then
+    if not Shared.GetIsRunningPrediction() then
     
         return gGUIManager:SendKeyEvent(key, down)
         
@@ -373,7 +373,7 @@ end
 // Return true if the event should be stopped here.
 function OnSendCharacterEvent(character)
 
-    if not Client.GetIsRunningPrediction() then
+    if not Shared.GetIsRunningPrediction() then
     
         return gGUIManager:SendCharacterEvent(character)
         
@@ -391,7 +391,7 @@ end
 
 function CreateTracer(startPoint, endPoint, velocity)
 
-    if not Client.GetIsRunningPrediction() then
+    if not Shared.GetIsRunningPrediction() then
 
         local tracer = BuildTracer(startPoint, endPoint, velocity)
         table.insert(Client.tracersList, tracer)

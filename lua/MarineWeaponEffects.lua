@@ -173,7 +173,14 @@ kMarineWeaponEffects =
         rifleAltAttackEffects = 
         {
             {sound = "sound/ns2.fev/marine/rifle/alt_swing"},
-            {viewmodel_animation = "attack_secondary", force = true},
+            {viewmodel_animation = {
+                                    {1, "attack_secondary"},
+                                    //{1, "attack_secondary2"}, hit needs to be faster
+                                    //{1, "attack_secondary3"}, hit needs to be faster
+                                    {1, "attack_secondary4"},
+                                    {1, "attack_secondary5"},
+                                    //{1, "attack_secondary6"}, hit needs to be faster
+                                    }, force = true},
             {overlay_animation = "rifle_alt"},
         },
     },

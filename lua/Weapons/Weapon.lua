@@ -51,6 +51,16 @@ function Weapon:OnCreate()
     
 end
 
+function Weapon:OnDestroy()
+
+    ScriptActor.OnDestroy(self)
+    
+    // Force end events just in case the weapon goes out of relevancy on the client for example.
+    self:TriggerEffects(self:GetPrimaryAttackPrefix() .. "_attack_end")
+    self:TriggerEffects(self:GetSecondaryAttackPrefix() .. "_alt_attack_end")
+
+end
+
 function Weapon:GetViewModelName()
     return ""
 end

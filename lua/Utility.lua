@@ -199,21 +199,21 @@ end
 
 // rgba are normalized values (0-1)
 function DebugLine(startPoint, endPoint, lifetime, r, g, b, a)
-    if (Client and not Client.GetIsRunningPrediction()) then
+    if (Client and not Shared.GetIsRunningPrediction()) then
         Client.DebugColor(r, g, b, a)
         Client.DebugLine(startPoint, endPoint, lifetime)
     end
 end
 
 function DebugPoint(point, size, lifetime, r, g, b, a)
-    if (Client and not Client.GetIsRunningPrediction()) then
+    if (Client and not Shared.GetIsRunningPrediction()) then
         Client.DebugColor(r, g, b, a)
         Client.DebugPoint(point, size, lifetime)
     end
 end
 
 function DebugCapsule(sweepStart, sweepEnd, capsuleRadius, capsuleHeight, lifetime)
-    if (Client and not Client.GetIsRunningPrediction()) then    
+    if (Client and not Shared.GetIsRunningPrediction()) then    
         Client.DebugCapsule(sweepStart, sweepEnd, capsuleRadius, capsuleHeight, lifetime)        
     end
 end
@@ -306,7 +306,7 @@ function PrintDetailed(formatString, ...)
 
     if(Server) then
         Server.Broadcast(player, timestampedMessage .. " (Server)")
-    elseif(Client and not Client.GetIsRunningPrediction()) then
+    elseif(Client and not Shared.GetIsRunningPrediction()) then
         Client.DebugMessage(timestampedMessage .. " (Client)")
     end    
     
