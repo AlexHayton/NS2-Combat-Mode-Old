@@ -1051,6 +1051,7 @@ function Player:OnInitLocalClient()
     self.cameraShakeAmount = 0
     self.cameraShakeSpeed = 0
     self.cameraShakeTime = 0
+    self.cameraShakeLastTime = 0
     
     self.crossHairText = ""
     self.crossHairTextColor = kFriendlyNeutralColor
@@ -1205,7 +1206,7 @@ function Player:CloseMenu(flashIndex)
         flashIndex = table.maxn(gFlashPlayers)
     end
     
-    if(GetFlashPlayerDisplaying(flashIndex)) then
+    if(self == Client.GetLocalPlayer() and GetFlashPlayerDisplaying(flashIndex)) then
         
         RemoveFlashPlayer(flashIndex)
     
@@ -1390,21 +1391,34 @@ function Player:GetRenderFov()
     return math.rad(self:GetFov())
 end
 
+// Ignore camera shaking when done quickly in a row
 function Player:SetCameraShake(amount, speed, time)
 
     // Overrides existing shake if it has elapsed or if new shake amount is larger
+    local success = false
+    
     local currentTime = Shared.GetTime()
     
-    if currentTime > self.cameraShakeTime or amount > self.cameraShakeAmount then
+    if currentTime > (self.cameraShakeLastTime + .5) then
     
-        self.cameraShakeAmount = amount
-
-        // "bumps" per second
-        self.cameraShakeSpeed = speed 
+        if currentTime > self.cameraShakeTime or amount > self.cameraShakeAmount then
         
-        self.cameraShakeTime = currentTime + time
+            self.cameraShakeAmount = amount
+
+            // "bumps" per second
+            self.cameraShakeSpeed = speed 
+            
+            self.cameraShakeTime = currentTime + time
+            
+            self.cameraShakeLastTime = currentTime
+            
+            success = true
+            
+        end
         
     end
+    
+    return success
     
 end
 
@@ -1782,7 +1796,7 @@ function Player:OnUpdate(deltaTime)
     LiveScriptActor.OnUpdate(self, deltaTime)
     
     
-    if not Client.GetIsRunningPrediction() then
+    if not Shared.GetIsRunningPrediction() then
     
         local isLocal = (self == Client.GetLocalPlayer())
         

@@ -20,7 +20,6 @@ kAlienWeaponEffects =
             {player_cinematic = "cinematics/alien/skulk/parasite_hit.cinematic", doer = "Parasite", done = true},
             {player_cinematic = "cinematics/alien/gorge/spit_impact.cinematic", doer = "Spit", done = true},        
             {player_cinematic = "cinematics/alien/lerk/spike_impact.cinematic", doer = "Spike", done = true},
-            {player_cinematic = "cinematics/alien/lerk/snipe_impact.cinematic", doer = "Spikes", done = true},
             {player_cinematic = "cinematics/alien/hydra/spike_impact.cinematic", doer = "HydraSpike", done = true},
             {player_cinematic = "cinematics/materials/%s/scrape.cinematic", doer = "SwipeBlink", done = true},
             {player_cinematic = "cinematics/materials/%s/scrape.cinematic", doer = "StabBlink", done = true},
@@ -105,7 +104,15 @@ kAlienWeaponEffects =
         biteAttackEffects = 
         {
             {sound = "sound/ns2.fev/alien/skulk/bite", attach_point = "Bip01_Head"},
-            {viewmodel_animation = "bite_attack"},
+            {
+            viewmodel_animation = 
+              {
+              {1, "bite_attack"},
+              {.2, "bite_attack2"},
+              {.5, "bite_attack3"},
+              {.5, "bite_attack4"},
+              },
+            },
             {overlay_animation = "bite", force = true},
         },
     },
@@ -240,7 +247,9 @@ kAlienWeaponEffects =
     {
         spikeAttackAnims = 
         {
-            {overlay_animation = "spikes"},            
+            //{overlay_animation = "snipe"}, 
+            //{viewmodel_animation = "spikes_snipe", done = true},
+            {overlay_animation = "spike"},     
             {viewmodel_animation = "spikes_attack_l", left = true, done = true},
             {viewmodel_animation = "spikes_attack_r", left = false, done = true},
         },
@@ -255,11 +264,11 @@ kAlienWeaponEffects =
     
     spikes_alt_attack =
     {
+
         spikeZoomEffect = 
         {
-            {overlay_animation = "spikes"},           
             {sound = "sound/ns2.fev/alien/lerk/spikes_zoom", upgraded = false, done = true},
-            {sound = "sound/ns2.fev/alien/lerk/spikes_zoomed_pierce", upgraded = false, done = true},
+            {sound = "sound/ns2.fev/alien/lerk/spikes_zoomed_pierce", upgraded = true, done = true},
         },
     },
     
@@ -268,6 +277,7 @@ kAlienWeaponEffects =
     {
         spikesSnipeEffects =
         {
+            {player_cinematic = "cinematics/alien/lerk/snipe_impact.cinematic"},
             {sound = "sound/ns2.fev/alien/lerk/spikes_zoomed", upgraded = false, done = true},
             {sound = "sound/ns2.fev/alien/lerk/spikes_zoomed_pierce", upgraded = true, done = true},           
         },
@@ -278,6 +288,7 @@ kAlienWeaponEffects =
     {
         spikesSnipedEffects =
         {
+            {player_cinematic = "cinematics/alien/lerk/snipe_impact.cinematic"},
             {sound = "sound/ns2.fev/alien/lerk/spikes_zoomed", upgraded = false, done = true},
             {sound = "sound/ns2.fev/alien/lerk/spikes_zoomed_pierce", upgraded = true, done = true},           
         },
@@ -289,7 +300,7 @@ kAlienWeaponEffects =
         {
             {sound = "sound/ns2.fev/alien/lerk/spores_shoot"},
             {viewmodel_animation = "spores_attack"},
-            {overlay_animation = "spores"},
+            {overlay_animation = "spore"},
             
             //{viewmodel_cinematic = "cinematics/alien/lerk/spore_view_fire.cinematic", attach_point = "?"},
             //{weapon_cinematic = "cinematics/alien/lerk/spores.cinematic", attach_point = "?"},

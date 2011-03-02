@@ -320,7 +320,7 @@ function Commander:UpdateMisc(input)
         self:UpdateAlerts()
     end
     
-    if Client and not Client.GetIsRunningPrediction() then
+    if Client and not Shared.GetIsRunningPrediction() then
         self:UpdateChat(input)
     end
     

@@ -15,7 +15,7 @@ kScoreboardDataIndexScore = 4
 kScoreboardDataIndexKills = 5
 kScoreboardDataIndexDeaths = 6
 kScoreboardDataIndexIsCommander = 7
-kScoreboardDataIndexPlasma = 8
+kScoreboardDataIndexResources = 8
 kScoreboardDataIndexPing = 9
 kScoreboardDataIndexStatus = 10
 kScoreboardDataIndexIsSpectator = 11
@@ -39,7 +39,7 @@ function Scoreboard_OnResetGame()
         playerRecord[kScoreboardDataIndexKills] = 0
         playerRecord[kScoreboardDataIndexDeaths] = 0
         playerRecord[kScoreboardDataIndexIsCommander] = false
-        playerRecord[kScoreboardDataIndexPlasma] = 0
+        playerRecord[kScoreboardDataIndexResources] = 0
         playerRecord[kScoreboardDataIndexStatus] = ""
         playerRecord[kScoreboardDataIndexIsSpectator] = false
         
@@ -68,7 +68,7 @@ function Scoreboard_OnClientDisconnect(clientIndex)
     
 end
 
-function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, kills, deaths, plasma, isCommander, status, isSpectator)
+function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, kills, deaths, resources, isCommander, status, isSpectator)
     
     // Lookup record for player and update it
     for i = 1, table.maxn(playerData) do
@@ -84,7 +84,7 @@ function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, ki
             playerRecord[kScoreboardDataIndexKills] = kills
             playerRecord[kScoreboardDataIndexDeaths] = deaths
             playerRecord[kScoreboardDataIndexIsCommander] = isCommander
-            playerRecord[kScoreboardDataIndexPlasma] = plasma
+            playerRecord[kScoreboardDataIndexResources] = resources
             playerRecord[kScoreboardDataIndexStatus] = status
             playerRecord[kScoreboardDataIndexIsSpectator] = isSpectator
             
@@ -103,7 +103,7 @@ function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, ki
     playerRecord[kScoreboardDataIndexKills] = kills
     playerRecord[kScoreboardDataIndexDeaths] = deaths
     playerRecord[kScoreboardDataIndexIsCommander] = isCommander
-    playerRecord[kScoreboardDataIndexPlasma] = 0
+    playerRecord[kScoreboardDataIndexResources] = 0
     playerRecord[kScoreboardDataIndexPing] = 0
     playerRecord[kScoreboardDataIndexStatus] = status
     playerRecord[kScoreboardDataIndexIsSpectator] = isSpectator
@@ -197,7 +197,7 @@ function GetScoreData(teamNumberTable)
             table.insert(scoreData, playerRecord[kScoreboardDataIndexKills])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexDeaths])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexIsCommander])
-            table.insert(scoreData, playerRecord[kScoreboardDataIndexPlasma])
+            table.insert(scoreData, playerRecord[kScoreboardDataIndexResources])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexPing])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexStatus])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexIsSpectator])

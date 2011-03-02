@@ -98,25 +98,29 @@ end
 /**
  * This function is called when the client receives a chat message.
  */
-function OnCommandChat(teamOnly, playerName, teamNumber, message)
+function OnCommandChat(teamOnly, playerName, locationId, teamNumber, message)
 
     local player = Client.GetLocalPlayer()
 
     if player then
         // color, playername, color, message        
         table.insert(chatMessages, GetColorForTeamNumber(tonumber(teamNumber)))
+
+        // Tack on location name if any
+        local locationNameText = ""
+        
+        // Lookup location name from passed in id
+        local locationName = ""
+        locationId = tonumber(locationId)
+        if locationId ~= 0 then
+            locationNameText = string.format("(Team, %s) ", Shared.GetString(locationId))
+        end
         
         // Pre-pend "team" or "all"
-        local preMessageString = string.format("%s%s: ", ConditionalValue(tonumber(teamOnly) == 1, "(Team) ", ""), DecodeStringFromNetwork(playerName))
-        
+        local preMessageString = string.format("%s%s: ", ConditionalValue(tonumber(teamOnly) == 1, locationNameText, "(All) "), DecodeStringFromNetwork(playerName), locationNameText)
+
         table.insert(chatMessages, preMessageString)
         table.insert(chatMessages, kChatTextColor)
-        
-        // Tack on location name if any
-        local locationName = player:GetLocationName()
-        if(locationName ~= "") then
-            message = string.format("%s (%s)", message, locationName)
-        end
         
         table.insert(chatMessages, message)
         

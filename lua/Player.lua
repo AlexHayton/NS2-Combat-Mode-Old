@@ -1319,9 +1319,25 @@ function Player:UpdateMovePhysics(input)
     local velocity = self:GetVelocity() + forwardVelocity * input.time
     
     // Add in the friction force.
-    local frictionForce = self:GetFrictionForce(input, velocity)
+    local friction = self:GetFrictionForce(input, velocity) * input.time
 
-    velocity = velocity + frictionForce * input.time
+    // If the friction force will cancel out the velocity completely, then just
+    // zero it out so that the velocity doesn't go "negative".
+    if ( math.abs(friction.x) >= math.abs(velocity.x) ) then
+        velocity.x = 0
+    else
+        velocity.x = friction.x + velocity.x
+    end    
+    if ( math.abs(friction.y) >= math.abs(velocity.y) ) then
+        velocity.y = 0
+    else
+        velocity.y = friction.y + velocity.y
+    end    
+    if ( math.abs(friction.z) >= math.abs(velocity.z) ) then
+        velocity.z = 0
+    else
+        velocity.z = friction.z + velocity.z
+    end    
     
     // Don't apply gravity if we're on a ladder or standing still on the ground so we're not sliding down ramps
     if ((not self:GetIsOnLadder()) and (not (self:GetIsOnGround() and self:GetVelocity():GetLengthXZ() < Player.kMinVelocityForGravity) and self.gravityEnabled)) then
@@ -1611,7 +1627,7 @@ function Player:UpdatePosition(velocity, time)
     if stuck then    
         self:Unstick()
     end
-    
+
     local completedMove = self:PerformMovement( velocity * time, maxSlideMoves, velocity )
     
     if not completedMove and onGround then
@@ -1881,21 +1897,7 @@ end
 function Player:GetIsStuck()
 
     PROFILE("Player:GetIsStuck")
-
-    // If we don't limit this to the ground then the player can get "stuck"
-    // on the ceiling as a skulk or on top of a ladder touching the ceiling
-    // for example.
-    if self:GetIsOnGround() then
-    
-        local offset = Vector(0, 0.05, 0)
-        
-        local trace = self.controller:Trace(offset, self:GetMovePhysicsMask())
-        
-        return trace.fraction ~= 1
-        
-    end
-    
-    return false
+    return self.controller:Test( self:GetMovePhysicsMask() )
     
 end
 

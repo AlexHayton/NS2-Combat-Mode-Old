@@ -191,9 +191,9 @@ function GUIScoreboard:CreateTeamBackground(color)
     resItem:SetAnchor(GUIItem.Left, GUIItem.Top)
     resItem:SetTextAlignmentX(GUITextItem.Align_Min)
     resItem:SetTextAlignmentY(GUITextItem.Align_Min)
-    resItem:SetPosition(Vector(currentColumnX, 5, 0))
+    resItem:SetPosition(Vector(currentColumnX , 5, 0))
     resItem:SetColor(color)
-    resItem:SetText("Plasma")
+    resItem:SetText("  Res")
     teamItem:AddChild(resItem)
     
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
@@ -285,7 +285,7 @@ function GUIScoreboard:UpdateTeam(updateTeam)
     teamNameGUIItem:SetText(string.format("%s (%s)", teamNameText, Pluralize(numPlayers, "Player")))
     
     // Update carbon display
-    local carbonString = ConditionalValue(isLocalTeam, string.format("%d Carbon", player:GetTeamCarbon()), "")
+    local carbonString = ConditionalValue(isLocalTeam, string.format("%d team resources", player:GetTeamCarbon()), "")
     teamInfoGUIItem:SetText(string.format("%s", carbonString))
     
     // Make sure there is enough room for all players on this team GUI.
@@ -304,7 +304,7 @@ function GUIScoreboard:UpdateTeam(updateTeam)
         local score = tostring(teamScores[currentPlayerIndex + 1])
         local kills = tostring(teamScores[currentPlayerIndex + 2])
         local deaths = tostring(teamScores[currentPlayerIndex + 3])
-        local plasmaStr = ConditionalValue(isLocalTeam, tostring(teamScores[currentPlayerIndex + 5]), "-")
+        local resourcesStr = ConditionalValue(isLocalTeam, tostring(teamScores[currentPlayerIndex + 5]), "-")
         local ping = teamScores[currentPlayerIndex + 6]
         local pingStr = tostring(ping)
         local currentPosition = Vector(player["Background"]:GetPosition())
@@ -341,7 +341,7 @@ function GUIScoreboard:UpdateTeam(updateTeam)
         player["Kills"]:SetText(kills)
         player["Deaths"]:SetText(deaths)
         player["Status"]:SetText(status)
-        player["Plasma"]:SetText(plasmaStr)
+        player["Resources"]:SetText(resourcesStr)
         player["Ping"]:SetText(pingStr)
         if ping < GUIScoreboard.kLowPingThreshold then
             player["Ping"]:SetColor(GUIScoreboard.kLowPingColor)
@@ -483,6 +483,6 @@ function GUIScoreboard:CreatePlayerItem()
     pingItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(pingItem)
     
-    return { Background = playerItem, Name = playerNameItem, Status = statusItem, Score = scoreItem, Kills = killsItem, Deaths = deathsItem, Plasma = resItem, Ping = pingItem }
+    return { Background = playerItem, Name = playerNameItem, Status = statusItem, Score = scoreItem, Kills = killsItem, Deaths = deathsItem, Resources = resItem, Ping = pingItem }
     
 end

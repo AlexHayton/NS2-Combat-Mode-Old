@@ -1174,3 +1174,31 @@ function CreateStructureInfestation(origin, teamNumber, infestationRadius, perce
     return infestation
 
 end
+
+// Get nearest valid target for commander ability activation, of specified team number nearest specified position.
+// Returns nil if none exists in range.
+function GetActivationTarget(teamNumber, position)
+
+    local nearestTarget = nil
+    local nearestDist = nil
+    
+    local targets = GetGamerules():GetEntities("LiveScriptActor", teamNumber, position, 2)
+    for index, target in ipairs(targets) do
+    
+        if target:GetIsVisible() and not target:isa("Infestation") then
+        
+            local dist = (target:GetOrigin() - position):GetLength()
+            if nearestTarget == nil or dist < nearestDist then
+            
+                nearestTarget = target
+                nearestDist = dist
+                
+            end
+            
+        end
+        
+    end
+    
+    return nearestTarget
+    
+end
