@@ -1,5 +1,5 @@
 // This module used to check the version of Combat Mode vs. NS2.
-kCombatModeVersion = 165
+kCombatModeVersion = 166
 
 function CombatMode_VersionCheck()
 	if (Shared.GetBuildNumber() ~= kCombatModeVersion) then

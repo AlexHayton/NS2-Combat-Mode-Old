@@ -20,7 +20,7 @@ kAlienStructureEffects =
         alienStructureComplete =
         {
             //"cinematics/alien/harvester/glow.cinematic"?
-            {sound = "sound/ns2.fev/alien/structures/harvester_active", classname = "Harvester"},
+            {parented_sound = "sound/ns2.fev/alien/structures/harvester_active", classname = "Harvester"},
             {animation = "active", classname = "Harvester", done = true},
             {sound = "sound/ns2.fev/alien/structures/hive_idle", classname = "Hive"},
         },
@@ -32,7 +32,7 @@ kAlienStructureEffects =
         {
             {animation = {{.4, "active1"}/*, {.7, "active2"}*/}, classname = "Harvester", from_animation = "deploy", blend_time = .3, force = true},            
             {stop_sound = "sound/ns2.fev/alien/structures/harvester_active", classname = "Harvester", from_animation = "deploy"},
-            {sound = "sound/ns2.fev/alien/structures/harvester_active", classname = "Harvester", from_animation = "deploy"},
+            {parented_sound = "sound/ns2.fev/alien/structures/harvester_active", classname = "Harvester", from_animation = "deploy"},
         },
     },
     
@@ -76,8 +76,28 @@ kAlienStructureEffects =
     {
         drifterFlareEffects = 
         {
+            {sound = "sound/ns2.fev/alien/drifter/flare"},
+            {animation = "flash", blend_time = .2},
         },
     },    
+
+    drifter_parasite =
+    {
+        drifterParasiteEffects = 
+        {
+            {sound = "sound/ns2.fev/alien/drifter/parasite"},
+            {animation = "parasite", blend_time = .2},
+        },
+    },    
+    
+    drifter_parasite_hit = 
+    {
+        parasiteHitEffects = 
+        {
+            {sound = "sound/ns2.fev/alien/skulk/parasite_hit"},
+            {player_cinematic = "cinematics/alien/skulk/parasite_hit.cinematic"},
+        },
+    },
     
     // "sound/ns2.fev/alien/drifter/drift"
     // "sound/ns2.fev/alien/drifter/ordered"

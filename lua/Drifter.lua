@@ -16,7 +16,6 @@ Drifter.kMapName = "drifter"
 
 Drifter.kModelName = PrecacheAsset("models/alien/drifter/drifter.model")
 
-Drifter.kFlareSoundName    = PrecacheAsset("sound/ns2.fev/alien/drifter/flare")
 Drifter.kOrdered2DSoundName  = PrecacheAsset("sound/ns2.fev/alien/drifter/ordered_2d")
 
 Drifter.kAnimFly = "fly"
@@ -35,8 +34,6 @@ Drifter.kCapsuleHeight = .05
 Drifter.kCapsuleRadius = .5
 Drifter.kStartDistance = 4
 Drifter.kHoverHeight = 1.2
-
-Drifter.kFlareAnim = "parasite"
 
 local networkVars = {
     // 0-1 scalar used to set move_speed model parameter according to how fast we recently moved
@@ -158,7 +155,6 @@ function Drifter:OverrideOrder(order)
     // If target is enemy, attack it
     if (order:GetType() == kTechId.Default) and orderTarget ~= nil and orderTarget:isa("LiveScriptActor") and GetEnemyTeamNumber(self:GetTeamNumber()) == orderTarget:GetTeamNumber() and orderTarget:GetIsAlive() then
     
-        Print("Attack")
         order:SetType(kTechId.Attack)
         
     else
@@ -213,7 +209,11 @@ function Drifter:OnThink()
         end
         
         return
-        
+    
+    elseif self.parasiteTime and (Shared.GetTime() > self.parasiteTime) then
+    
+        self:PerformParasite()
+            
     end
     
     local currentOrder = self:GetCurrentOrder()
@@ -365,22 +365,59 @@ function Drifter:GetTechButtons(techId)
     
 end
 
+function Drifter:GetActivationTechAllowed(techId)
+
+    if techId == kTechId.DrifterParasite or techId == kTechId.DrifterFlare then
+        return (self.flareExplodeTime == nil) and (self.parasiteTime == nil)
+    end
+    
+    return true
+    
+end
+
 function Drifter:PerformActivation(techId, position, normal, commander)
 
     if(techId == kTechId.DrifterFlare) then
     
         self:TriggerEffects("drifter_flare")
-        self:SetAnimationWithBlending(Drifter.kFlareAnim, nil, true)
         
-        self:PlaySound(Drifter.kFlareSoundName)
-        
-        self.flareExplodeTime = Shared.GetTime() + self:GetAnimationLength(Drifter.kFlareAnim)
+        self.flareExplodeTime = Shared.GetTime() + 2
         
         return true
+
+    elseif (techId == kTechId.DrifterParasite) then
+
+        self:TriggerEffects("drifter_parasite")
+        
+        if Server then
+        
+            local parasiteTarget = GetActivationTarget( GetEnemyTeamNumber(self:GetTeamNumber()), position )
+            
+            if parasiteTarget then
+            
+                self.parasiteTargetId = parasiteTarget:GetId()
+                self.parasiteTime = Shared.GetTime() + 1
+                self:SetActivityEnd(1)
+                
+            end
+            
+        end
+        
+    else
+
+        return LiveScriptActor.PerformActivation(self, techId, position, normal, commander)
         
     end
+    
+end
 
-    return LiveScriptActor.PerformAction(self, techNode, position)
+function Drifter:OnEntityChange(oldId, newId)
+
+    if oldId == self.parasiteTargetId and oldId ~= nil then
+        self.parasiteTargetId = newId
+    end
+    
+    LiveScriptActor.OnEntityChange(self, oldId, newId)
     
 end
 
@@ -432,7 +469,35 @@ function Drifter:PerformFlare()
     self:Kill(self, self)
     
     self.flareExplodeTime = nil
+    self.parasiteTime = nil
 
+end
+
+function Drifter:PerformParasite()
+
+    if self.parasiteTargetId and self.parasiteTargetId ~= Entity.invalidId then
+    
+        local target = Shared.GetEntity(self.parasiteTargetId)
+        assert(target ~= nil)
+        
+        local commander = self:GetOwner()
+        local direction = GetNormalizedVector(target:GetModelOrigin() - self:GetOrigin())
+        target:TakeDamage(Parasite.kDamage, commander, self, target:GetModelOrigin(), direction)
+                
+        target:TriggerEffects("drifter_parasite_hit")
+                
+        // Mark player or structure 
+        if not target:GetGameEffectMask(kGameEffect.Parasite) then
+        
+            target:SetGameEffectMask(kGameEffect.Parasite, true)
+            
+        end
+        
+    end
+
+    self.parasiteTargetId = nil
+    self.parasiteTime = nil
+    
 end
 
 function Drifter:GetWaypointGroupName()

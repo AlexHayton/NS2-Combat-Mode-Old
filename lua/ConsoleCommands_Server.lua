@@ -44,7 +44,7 @@ function OnCommandSay(client, chatMessage)
         
             // Broadcast a chat message to all players. Assumes incoming chatMessage
             // is a quoted string if it has spaces in it.
-            local command = string.format("chat 0 %s %d %s", EncodeStringForNetwork(player:GetName()), player:GetTeamNumber(), chatMessage)
+            local command = string.format("chat 0 %s %d %d %s", EncodeStringForNetwork(player:GetName()), player.locationId, player:GetTeamNumber(), chatMessage)
             
             Server.SendCommand(nil, command)
             
@@ -69,7 +69,7 @@ function OnCommandTeamSay(client, chatMessage)
             // is a quoted string if it has spaces in it.
             local players = GetGamerules():GetPlayers( player:GetTeamNumber() )
 
-            local command = string.format("chat 1 %s %d %s", EncodeStringForNetwork(player:GetName()), player:GetTeamNumber(), chatMessage)
+            local command = string.format("chat 1 %s %d %d %s", EncodeStringForNetwork(player:GetName()), player.locationId, player:GetTeamNumber(), chatMessage)
             
             for index, player in ipairs(players) do
                 Server.SendCommand(player, command)

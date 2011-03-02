@@ -771,10 +771,14 @@ function Player:RemoveChildren()
     // Loop through all child weapons and delete them 
     local childEntities = GetChildEntities(self, "Actor")
     for index, entity in ipairs(childEntities) do
+        entity:SetParent(nil)
         DestroyEntity(entity)
     end
     
     self.viewModelId = Entity.invalidId
+    
+    // Recompute upon removing all children so list is accurate.
+    self:ComputeHUDOrderedWeaponList()
 
 end
 

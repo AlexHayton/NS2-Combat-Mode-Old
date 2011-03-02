@@ -496,7 +496,7 @@ end
 
 function Structure:UpdatePoweredState()
 
-    if self:GetRequiresPower() then
+    if self:GetIsBuilt() and self:GetRequiresPower() then
     
         local powered = false
         local powerSource = self:FindPowerSource()

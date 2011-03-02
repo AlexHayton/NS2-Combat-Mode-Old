@@ -10,7 +10,7 @@
 
 function Commander:HandleCommanderHotkeys(input)
 
-    if Client and not Client.GetIsRunningPrediction() then
+    if Client and not Shared.GetIsRunningPrediction() then
     
         if input.hotkey ~= 0 then
         

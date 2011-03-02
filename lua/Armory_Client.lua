@@ -241,7 +241,7 @@ function Armory:OnUse(player, elapsedTime, useAttachPoint, usePoint)
             Client.SetMouseClipped(true)
     
             // Play looping "active" sound while logged in
-            Shared.PlayPrivateSound(self, Armory.kResupplySound, nil, 1.0, self:GetOrigin())
+            Shared.PlayPrivateSound(player, Armory.kResupplySound, player, 1.0, Vector(0, 0, 0))
             
         end
         

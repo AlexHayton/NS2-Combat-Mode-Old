@@ -169,7 +169,7 @@ function InfestationAbility:OnUpdate(deltaTime)
 
     Ability.OnUpdate(self, deltaTime)
     
-    if not Client.GetIsRunningPrediction() then
+    if not Shared.GetIsRunningPrediction() then
 
         local player = self:GetParent()
         

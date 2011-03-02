@@ -232,10 +232,4 @@ kGraphicsYResolutionOptionsKey = "graphics/display/y-resolution"
 
 kMouseSensitivityScalar         = 50
 
-// Maps tech buttons to keys in "grid" system
-kGridHotkeys =
-{
-    Move.Q, Move.W, Move.E, Move.R,
-    Move.A, Move.S, Move.D, Move.F,
-    Move.Z, Move.X, Move.C, Move.V,
-}
+
