@@ -9,4 +9,7 @@
   <file>
     <filename>..\Configuration\NS2GmOvrmind_ServerConfiguration.lua</filename>
   </file>
+  <file>
+    <filename>NS2GmOvrmind.lua</filename>
+  </file>
 </project>

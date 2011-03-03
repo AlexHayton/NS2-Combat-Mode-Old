@@ -1,0 +1,15 @@
+<NS2GmOvrmind>
+	<Ban Name="player name here">
+		<IP-Address></IP-Address>
+		<Steam-ID>STEAM_0:1:43563625</Steam-ID>
+		<Start>
+			<Date>01.01.2011</Date>
+			<Time>16:23:57:492</Time>
+		</Start>
+		<Duration>
+			<Date>04.23.0003</Date>
+			<Time>13:22:56:422</Time>
+		</Duration>
+		<Reason>reason here</Reason>
+	</Ban>
+</NS2GmOvrmind>

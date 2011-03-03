@@ -41,6 +41,7 @@ XPStyle on
 InstallDir "$PROGRAMFILES\Steam\steamapps\common\natural selection 2\${MOD_FOLDER}"
 InstallDirRegKey "${REG_ROOT}" "${REG_APP_PATH}" ""
 Var OVERMINDDIR
+Var MAINNS2FOLDER
 
 ######################################################################
 
@@ -96,10 +97,12 @@ Function .onInit
   GotInstallDir:
   StrCpy $INSTDIR "$0\steamapps\common\natural selection 2\${MOD_FOLDER}"
   StrCpy $OVERMINDDIR "$0\steamapps\common\natural selection 2\NS2GmOvrmind"
+  StrCpy $MAINNS2FOLDER "$0\steamapps\common\natural selection 2"
   Goto AllFinished
   
   NotGotInstallDir:
   StrCpy $OVERMINDDIR "$PROGRAMFILES\Steam\steamapps\common\natural selection 2\NS2GmOvrmind"
+  StrCpy $MAINNS2FOLDER "$PROGRAMFILES\Steam\steamapps\common\natural selection 2"
   AllFinished:
   Pop $0
   
@@ -199,7 +202,13 @@ SectionEnd
 
 Section "NS2GmOvrMind" NS2GmOvrMind
 ## NS2GmOvrMind stuff
-SetOverwrite off
+#SetOverwrite off
+SetOutPath "$MAINNS2FOLDER"
+File "..\msvcp100.dll"
+File "..\msvcr100.dll"
+File "..\QtCore4.dll"
+File "..\QtNetwork4.dll"
+File "..\QtXml4.dll"
 SetOutPath "$OVERMINDDIR"
 File "..\NS2GmOvrMind\Readme.url"
 File "..\NS2GmOvrMind\Game_Setup.xml"
@@ -208,12 +217,15 @@ SetOutPath "$OVERMINDDIR\Lua"
 File "..\NS2GmOvrMind\Lua\NS2GmOvrmind.deproj"
 File "..\NS2GmOvrMind\Lua\NS2GmOvrmind.deuser"
 File "..\NS2GmOvrMind\Lua\NS2GmOvrmind_Client.lua"
+File "..\NS2GmOvrMind\Lua\NS2GmOvrmind.lua"
 File "..\NS2GmOvrMind\Lua\NS2GmOvrmind_Server.lua"
-SetOutPath "$OVERMINDDIR\Binaries"
-File "..\NS2GmOvrMind\Binaries\NS2GmOvrmind_x86.dll"
+SetOutPath "$OVERMINDDIR\Binaries_x86"
+File "..\NS2GmOvrMind\Binaries_x86\NS2GmOvrmind.dll"
 SetOutPath "$OVERMINDDIR\Configuration"
 File "..\NS2GmOvrMind\Configuration\NS2GmOvrmind_ServerConfiguration.lua"
-SetOverwrite on
+File "..\NS2GmOvrMind\Configuration\ActiveBans.xml"
+File "..\NS2GmOvrMind\Configuration\ActiveUsers.xml"
+#SetOverwrite on
 SectionEnd
 
 ######################################################################
