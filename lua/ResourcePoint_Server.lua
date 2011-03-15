@@ -42,15 +42,16 @@ function ResourcePoint:ClearAttached()
 end
 
 // Create a new resource tower on this nozzle, returning false if already occupied or not enough room
-function ResourcePoint:SpawnResourceTowerForTeam(team, classname)
+function ResourcePoint:SpawnResourceTowerForTeam(team, techId)
 
     local success = false
     
     if(self:GetAttached() == nil) then
     
-        local tower = CreateEntity( classname, self:GetOrigin(), team:GetTeamNumber() )
+        // Force create because entity may not be cleaned up from round reset
+        local tower = CreateEntityForTeam(techId, self:GetOrigin(), team:GetTeamNumber(), nil)
         
-        if (tower:SpaceClearForEntity(self:GetOrigin())) then
+        if tower then
         
             tower:SetConstructionComplete()           
             
@@ -58,14 +59,10 @@ function ResourcePoint:SpawnResourceTowerForTeam(team, classname)
             
             success = true
             
-        else
-        
-            DestroyEntity(tower)
-            
         end
        
     else
-        Print("ResourcePoint:SpawnResourceTowerForTeam(%s): Entity %s already attached.", classname, self:GetAttached():GetClassName()) 
+        Print("ResourcePoint:SpawnResourceTowerForTeam(%s): Entity %s already attached.", EnumToString(kTechId, techId), self:GetAttached():GetClassName()) 
     end
     
     return success

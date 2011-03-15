@@ -35,6 +35,7 @@ PhysicsGroup = enum
         'CommanderPropsGroup',
         'CommanderUnitGroup',       // Macs, Drifters, doors, etc.
         'AttachClassGroup',         // Nozzles, tech points, etc.
+        'InfestationGroup',         // Infestation only
         'CollisionGeometryGroup'    // Used so players walk smoothly gratings and skulks wall-run on railings, etc.
     }
 
@@ -50,6 +51,9 @@ PhysicsMask = enum
         // Use these with trace functions to determine which entities we collide with. Use the filter to then
         // ignore specific entities. 
         AllButPCs = CreateGroupsFilterMask(PhysicsGroup.PlayerControllersGroup),
+        
+        // For building
+        AllButPCsAndInfestation = CreateGroupsFilterMask(PhysicsGroup.PlayerControllersGroup, PhysicsGroup.InfestationGroup),
 
         // Used for all types of prediction
         AllButPCsAndRagdolls = CreateGroupsFilterMask(PhysicsGroup.PlayerControllersGroup, PhysicsGroup.RagdollGroup),

@@ -35,6 +35,8 @@ function ResourcePoint:OnInit()
     // Make the nozzle kinematic so that the player will collide with it.
     self:SetPhysicsType(Actor.PhysicsType.Kinematic)
     
+    self:SetTechId(kTechId.ResourcePoint)
+    
     self.playingEffect = false
 
 end

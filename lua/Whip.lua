@@ -112,13 +112,15 @@ end
 function Whip:GetActivationTechAllowed(techId)
 
     if techId == kTechId.WhipRoot then
-        return self:GetGameEffectMask(kGameEffect.OnInfestation)
+        return self:GetIsBuilt() and self:GetGameEffectMask(kGameEffect.OnInfestation)
+    elseif techId == kTechId.WhipUnroot then
+        return self:GetIsBuilt() and (self.mode == Whip.kMode.Rooted)
     elseif techId == kTechId.UpgradeWhip then
-        return not self:isa("MatureWhip") and self.mode == Whip.kMode.Rooted
+        return self:GetIsBuilt() and not self:isa("MatureWhip") and (self.mode == Whip.kMode.Rooted)
     end
 
     return true
-    
+        
 end
 
 function Whip:UpdatePoseParameters(deltaTime)

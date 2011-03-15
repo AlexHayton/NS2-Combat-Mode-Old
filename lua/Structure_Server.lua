@@ -359,6 +359,11 @@ function Structure:OnTeamChange(teamNumber)
 end
 
 function Structure:OnDestroy()
+
+    local team = self:GetTeam()
+    if(team ~= nil) then
+        team:TechRemoved(self)
+    end
     
     if self.structureInfestationId then
         Server.DestroyEntity(Shared.GetEntity(self.structureInfestationId))
@@ -366,10 +371,11 @@ function Structure:OnDestroy()
     end
     
     LiveScriptActor.OnDestroy(self)
-
+    
 end
 
 function Structure:OnKill(damage, killer, doer, point, direction)
+
     if(self:GetIsAlive()) then
     
         self.buildTime = 0
@@ -378,11 +384,6 @@ function Structure:OnKill(damage, killer, doer, point, direction)
     
         self.alive = false
    
-        local team = self:GetTeam()
-        if(team ~= nil) then
-            team:TechRemoved(self)
-        end
-        
         self:ClearAttached()
         self:AbortResearch()
         

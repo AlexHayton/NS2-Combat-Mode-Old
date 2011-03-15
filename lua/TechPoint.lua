@@ -50,6 +50,8 @@ function TechPoint:OnInit()
     // Make the nozzle kinematic so that the player will collide with it.
     self:SetPhysicsType(Actor.PhysicsType.Kinematic)
     
+    self:SetTechId(kTechId.TechPoint)
+    
     if Server then
     
         self.techLevel = 1
