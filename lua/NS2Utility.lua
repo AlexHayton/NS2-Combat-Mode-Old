@@ -10,117 +10,188 @@
 Script.Load("lua/Table.lua")
 Script.Load("lua/Utility.lua")
 
-// Returns true or false if build attachments are fulfilled, as well as possible attach entity 
-// to be hooked up to. If snap radius passed, then snap build origin to it when nearby. Otherwise
-// use only a small tolerance to see if entity is close enough to an attach class.
-function GetIsBuildLegal(techId, position, snapRadius, player, silent)
+function GetAttachEntity(techId, position, snapRadius)
+
+    local attachClass = LookupTechData(techId, kStructureAttachClass)    
+
+    if attachClass then
+    
+        for index, currentEnt in ipairs( GetEntitiesIsaInRadius(attachClass, -1, position, ConditionalValue(snapRadius, snapRadius, .5)) ) do
+        
+            if not currentEnt:GetAttached() then
+            
+                return currentEnt
+                
+            end
+            
+        end
+        
+    end
+    
+    return nil
+    
+end
+
+function GetBuildAttachRequirementsMet(techId, position, teamNumber, snapRadius)
+
+    ASSERT(kStructureAttachRange ~= nil)    
 
     local legalBuild = true
-    local legalPosition = position
     local attachEntity = nil
-    local reason = ""
     
-    local attachClass = LookupTechData(techId, kStructureAttachClass)
+    local legalPosition = Vector(0, 0, 0)
+    VectorCopy(position, legalPosition)
+    
+    // Make sure we're within range of something that's required (ie, an infantry portal near a command station)
+    local attachRange = LookupTechData(techId, kStructureAttachRange, 0)
     local buildNearClass = LookupTechData(techId, kStructureBuildNearClass)
-    
-    if attachClass or buildNearClass then
+    if buildNearClass then
+        
+        local ents = GetEntitiesIsaInRadius(buildNearClass, teamNumber, position, attachRange)
+        legalBuild = (table.count(ents) > 0)
+        
+    end
+
+    // For build tech that must be attached, find free attachment nearby. Snap position to it.
+    local attachClass = LookupTechData(techId, kStructureAttachClass)    
+    if legalBuild and attachClass then
 
         // If attach range specified, then we must be within that range of this entity
         // If not specified, but attach class specified, we attach to entity of that type
         // so one must be very close by (.5)
-        local attachRange = LookupTechData(techId, kStructureAttachRange, 0)
-        if attachRange == 0 then
-            attachRange = ConditionalValue(snapRadius, snapRadius, .5)
-        end
-    
         legalBuild = false
         
-        for index, currentEnt in ipairs( GetEntitiesIsaInRadius(ConditionalValue(attachClass, attachClass, buildNearClass), -1, position, attachRange) ) do
+        attachEntity = GetAttachEntity(techId, position, snapRadius)
+        if attachEntity then            
         
-            if not attachClass or (currentEnt:GetAttached() == nil) then
-            
-                legalBuild = true
+            legalBuild = true
                 
-                if attachClass then
-                
-                    legalPosition = currentEnt:GetOrigin()
-                    attachEntity = currentEnt
-                    
-                end
-                
-                break
-                
-            end
+            VectorCopy(attachEntity:GetOrigin(), legalPosition)
             
         end
     
     end
+    
+    return legalBuild, legalPosition, attachEntity
+    
+end
 
-    if legalBuild and player then
+function GetInfestationRequirementsMet(techId, position)
+
+    local requirementsMet = true
     
-        local techTree = nil
-        if Client then
-            techTree = GetTechTree()
-        else
-            techTree = player:GetTechTree()
+    // Check infestation requirements
+    if LookupTechData(techId, kTechDataRequiresInfestation) then
+
+        if not GetIsPointOnInfestation(position) then
+            requirementsMet = false
         end
+        
+    // Don't allow marine structures on infestation
+    elseif LookupTechData(techId, kTechDataNotOnInfestation) then
+
+        if GetIsPointOnInfestation(position) then
+            requirementsMet = false
+        end
+        
+    end
     
-        local techNode = techTree:GetTechNode(techId)
+    return requirementsMet
+    
+end
+
+function GetExtents(techId)
+
+    local extents = LookupTechData(techId, kTechDataMaxExtents)
+    if not extents then
+        extents = Vector(.5, .5, .5)
+    end
+    return extents
+
+end
+
+// Assumes position at base of structure, so adjust position up by y extents
+function GetBuildNoCollision(techId, position, attachEntity, ignoreEntity)
+
+    local filter = nil
+    
+    if ignoreEntity and attachEntity then
+        filter = EntityFilterTwo(ignoreEntity, attachEntity)
+    elseif ignoreEntity then
+        filter = EntityFilterOne(ignoreEntity)
+    elseif attachEntity then
+        filter = EntityFilterOne(attachEntity)
+    end
+
+    local extents = GetExtents(techId)
+    local trace = Shared.TraceBox(extents, position + Vector(0, extents.y + .01, 0), position + Vector(0, extents.y + .02, 0), PhysicsMask.AllButPCsAndInfestation, filter)
+    
+    return (trace.fraction == 1)
+    
+end
+
+function CheckBuildEntityRequirements(techId, position, player, ignoreEntity)
+
+    local legalBuild = true
+    
+    local techTree = nil
+    if Client then
+        techTree = GetTechTree()
+    else
+        techTree = player:GetTechTree()
+    end
+
+    local techNode = techTree:GetTechNode(techId)
+    local attachClass = LookupTechData(techId, kStructureAttachClass)                
+    
+    // Build tech can't be built on top of LiveScriptActors
+    if techNode and techNode:GetIsBuild() then
+    
+        local trace = Shared.TraceBox(GetExtents(techId), position + Vector(0, 1, 0), position - Vector(0, 3, 0), PhysicsMask.AllButPCs, EntityFilterOne(ignoreEntity))
         
-        // Build tech can't be built on top of LiveScriptActors
-        if techNode and techNode:GetIsBuild() then
+        if trace.entity and trace.entity:isa("LiveScriptActor") then
+            legalBuild = false
+        end
         
-            local trace = Shared.TraceRay(position, position - Vector(0, 2, 0), PhysicsMask.AllButPCs)
-            if trace.entity and trace.entity:isa("LiveScriptActor") then
+        // Now make sure we're not building on top of something that is used for another purpose (ie, armory blocking use of tech point)
+        if trace.entity then
+            
+            local hitClassName = trace.entity:GetClassName()
+            if GetIsAttachment(hitClassName) and (hitClassName ~= attachClass) then
                 legalBuild = false
             end
-            
+
         end
 
-        if techNode and (techNode:GetIsBuild() or techNode:GetIsBuy()) and legalBuild then        
+        /*if legalBuild then
+            DebugLine(position, position - Vector(0, 2, 0), 10, 0, 1, 0, 1)
+        else
+            DebugLine(position, position - Vector(0, 2, 0), 10, 1, 0, 0, 1)
+        end*/
         
-            local numFriendlyEntitiesInRadius = 0
-            local entities = GetEntitiesIsaInRadius("ScriptActor", player:GetTeamNumber(), legalPosition, kMaxEntityRadius, true)
-            
-            for index, entity in ipairs(entities) do
-                
-                if not entity:isa("Infestation") then
-                
-                    local dist = (entity:GetOrigin() - legalPosition):GetLength()
-                    
-                    // Make sure we're not building too close to an entity with a different attach class
-                    // Prevents Commander from building non-RTs on resource nozzles, or non-Hives on tech points, etc.    
-                    if techNode:GetIsBuild() and (dist < kBlockAttachStructuresRadius) then
-                    
-                        // It's OK if we're attaching to type of entity
-                        if attachClass ~= entity:GetClassName() and entity:GetIsVisible() then
-                        
-                            if GetIsAttachment(entity:GetClassName()) or entity:isa("Structure") then
-                            
-                                legalBuild = false
-                                
-                                break
-                                
-                            end
-                            
-                        end
-                        
-                    end
-                    
-                    // Count number of friendly non-player units nearby and don't allow too many units in one area (prevents MAC/Drifter/Sentry spam/abuse)
-                    if not entity:isa("Player") and (entity:GetTeamNumber() == player:GetTeamNumber()) and entity:GetIsVisible() then
-                    
-                        numFriendlyEntitiesInRadius = numFriendlyEntitiesInRadius + 1
+    end
 
-                        if numFriendlyEntitiesInRadius >= (kMaxEntitiesInRadius - 1) then
-                        
-                            if not silent then
-                                Print("GetIsBuildLegal() - Too many entities in area.")
-                            end
-                            legalBuild = false
-                            break
-                            
+    if techNode and (techNode:GetIsBuild() or techNode:GetIsBuy()) and legalBuild then        
+    
+        local numFriendlyEntitiesInRadius = 0
+        local entities = GetEntitiesIsaInRadius("ScriptActor", player:GetTeamNumber(), position, kMaxEntityRadius, true)
+        
+        for index, entity in ipairs(entities) do
+            
+            if not entity:isa("Infestation") then
+            
+                // Count number of friendly non-player units nearby and don't allow too many units in one area (prevents MAC/Drifter/Sentry spam/abuse)
+                if not entity:isa("Player") and (entity:GetTeamNumber() == player:GetTeamNumber()) and entity:GetIsVisible() then
+                
+                    numFriendlyEntitiesInRadius = numFriendlyEntitiesInRadius + 1
+
+                    if numFriendlyEntitiesInRadius >= (kMaxEntitiesInRadius - 1) then
+                    
+                        if not silent then
+                            Print("GetIsBuildLegal() - Too many entities in area.")
                         end
+                        legalBuild = false
+                        break
                         
                     end
                     
@@ -129,27 +200,56 @@ function GetIsBuildLegal(techId, position, snapRadius, player, silent)
             end
             
         end
+                
+        // Now check nearby entities to make sure we're not building on top of something that is used for another purpose (ie, armory blocking use of tech point)
+        for index, currentEnt in ipairs( GetEntitiesIsaInRadius( "ScriptActor", -1, position, 1.5) ) do
         
-        // Check infestation requirements
-        if LookupTechData(techId, kTechDataRequiresInfestation) then
-        
-            if not GetIsPointOnInfestation(legalPosition) then
-                reason = string.format("Requires infestation but no infestation at point %s", ToString(legalPosition))
-                legalBuild = false
-            end
-            
-            //Print("Point %s on infestation: %s", ToString(legalPosition), ToString(legalBuild))
-
-        // Don't allow marine structures on infestation
-        elseif LookupTechData(techId, kTechDataNotOnInfestation) then
-        
-            if GetIsPointOnInfestation(legalPosition) then
-                reason = string.format("Requires NO infestation but infestation at point %s", ToString(legalPosition))
-                legalBuild = false
+            local nearbyClassName = currentEnt:GetClassName()
+            if GetIsAttachment(nearbyClassName) and (nearbyClassName ~= attachClass) then            
+                legalBuild = false                
             end
             
         end
         
+    end
+    
+    return legalBuild
+            
+end
+
+// Returns true or false if build attachments are fulfilled, as well as possible attach entity 
+// to be hooked up to. If snap radius passed, then snap build origin to it when nearby. Otherwise
+// use only a small tolerance to see if entity is close enough to an attach class.
+function GetIsBuildLegal(techId, position, snapRadius, player, ignoreEntity)
+
+    local legalBuild = true
+    local legalPosition = position
+    local attachEntity = nil
+    
+    // If structure needs to be attached to an entity, make sure it's near enough to one.
+    // Snaps position to it if necessary. Also makes sure we're not building on an attach 
+    // point that's used for something else (ie, putting an armory on a resource nozzle)
+    local teamNumber = -1
+    if player then
+        teamNumber = player:GetTeamNumber()
+    end
+    
+    // Check attach points
+    legalBuild, legalPosition, attachEntity = GetBuildAttachRequirementsMet(techId, legalPosition, teamNumber, snapRadius)
+    
+    // Check collision and make sure there aren't too many entities nearby
+    if legalBuild and player then
+        legalBuild = CheckBuildEntityRequirements(techId, legalPosition, player, ignoreEntity)
+    end    
+
+    // Check infestation requirements
+    if legalBuild then
+        legalBuild = GetInfestationRequirementsMet(techId, legalPosition)
+    end
+    
+    // Check collision
+    if legalBuild then    
+        legalBuild = GetBuildNoCollision(techId, legalPosition, attachEntity, ignoreEntity)
     end
     
     return legalBuild, legalPosition, attachEntity
@@ -185,46 +285,24 @@ function CreateEntityForTeam(techId, position, teamNumber, player)
 
     local newEnt = nil
     
-    // If structure requires attach entity, make sure there's one nearby
-    local legalBuild, buildPosition, attachEntity = GetIsBuildLegal(techId, position, nil, player)
+    local mapName = LookupTechData(techId, kTechDataMapName)
     
-    if legalBuild then
+    newEnt = CreateEntity( mapName, Vector(position), teamNumber )
     
-        local mapName = LookupTechData(techId, kTechDataMapName)
-        
-        newEnt = CreateEntity( mapName, Vector(buildPosition), teamNumber )
-        
-        // Allow entities to be positioned off ground (eg, hive hovers over tech point)        
-        local spawnHeight = LookupTechData(techId, kTechDataSpawnHeightOffset, .05)
-        local spawnHeightPosition = Vector(buildPosition.x, buildPosition.y + LookupTechData(techId, kTechDataSpawnHeightOffset, .05), buildPosition.z)
-        
-        if (newEnt:SpaceClearForEntity(spawnHeightPosition)) then
-
-            newEnt:SetOrigin(spawnHeightPosition)
-
-            // Set initial orientation if specified
-            if(orientation ~= nil) then        
-                newEnt:SetAngles(newEnt:GetAngles())            
-            end
-            
-            // Hook it up to attach entity
-            if attachEntity then
-            
-                newEnt:SetAttached(attachEntity)
-                
-            end
-            
-            newEnt:SetTeamNumber( teamNumber )
-            
-        else
-        
-            DestroyEntity(newEnt)
-            newEnt = nil
-            
-        end
-       
+    // Allow entities to be positioned off ground (eg, hive hovers over tech point)        
+    local spawnHeight = LookupTechData(techId, kTechDataSpawnHeightOffset, .05)
+    local spawnHeightPosition = Vector(position.x, position.y + LookupTechData(techId, kTechDataSpawnHeightOffset, .05), position.z)
+    
+    newEnt:SetOrigin(spawnHeightPosition)
+    
+    // Hook it up to attach entity
+    local attachEntity = GetAttachEntity(techId, position)    
+    if attachEntity then    
+        newEnt:SetAttached(attachEntity)        
     end
     
+    newEnt:SetTeamNumber( teamNumber )
+        
     return newEnt
     
 end
@@ -279,46 +357,6 @@ function GetAlienEvolveResearchTime(evolveResearchTime, entity)
     return evolveResearchTime + evolveResearchTime * metabolizeEffects * kMetabolizeResearchScalar
             
 end
-end
-
-function ReplicateStructure(techId, position, commander)
-    
-    local newEnt = nil
-    
-    local srcStructure = GetNearest(techId, position, commander)
-    if srcStructure then
-
-        newEnt = CreateEntityForCommander(srcStructure:GetTechId(), position, commander)        
-        if newEnt ~= nil then
-        
-            // Create replicate effect at source and destination
-            local replicateEffect = MarineCommander.kBuildEffect
-            if GetTechUpgradesFromTech(srcStructure:GetTechId(), kTechId.CommandStation) then
-                replicateEffect = MarineCommander.kBuildBigEffect
-            end
-            
-            Shared.CreateEffect(nil, replicateEffect, srcStructure, nil)
-            Shared.CreateEffect(nil, replicateEffect, newEnt, nil)
-            
-            // Set construction complete
-            newEnt:SetConstructionComplete()
-            
-            // Deploy it and set next think time to that duration
-            local animLength = newEnt:GetAnimationLength()
-            newEnt:SetNextThink(animLength)
-            
-            // Play replicate sound at target
-            newEnt:PlaySound(CommandStation.kReplicateSound)
-            
-            // Play private replicate sound for commander
-            Shared.PlayPrivateSound(commander, CommandStation.kReplicateSound, nil, 1.0, commander:GetOrigin())
-            
-        end
-        
-    end
-    
-    return newEnt
-    
 end
 
 end
@@ -487,27 +525,7 @@ end
 function GetIsBuildPickVecLegal(techId, player, pickVec, snapRadius)
 
     local trace = GetCommanderPickTarget(player, pickVec, false, true)
-    local legal = false
-    local point = trace.endPoint
-    local attachEntity = nil
-    
-    local techTree = nil
-    if Client then
-        techTree = GetTechTree()
-    else
-        techTree = player:GetTechTree()
-    end
-    
-    local techNode = techTree:GetTechNode(techId)   
-    
-    // Make sure slope isn't too steep for build nodes
-    if (trace.normal:DotProduct(Vector(0, 1, 0)) > .7) or (techNode and techNode:GetIsBuy()) then
-    
-        legal, point, attachEntity = GetIsBuildLegal(techId, trace.endPoint, snapRadius, player)
-        
-    end
-    
-    return legal, point, attachEntity
+    return GetIsBuildLegal(techId, trace.endPoint, snapRadius, player)
     
 end
 

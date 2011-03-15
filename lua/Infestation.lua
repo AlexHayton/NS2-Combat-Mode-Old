@@ -62,6 +62,8 @@ function Infestation:OnCreate()
         self.decal:SetMaterial("materials/infestation/infestation_decal.material")
     end
     
+    self:SetPhysicsGroup(PhysicsGroup.InfestationGroup)
+    
     self:SetUpdates(true)
     
 end

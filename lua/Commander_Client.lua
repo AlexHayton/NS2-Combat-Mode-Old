@@ -496,7 +496,10 @@ function Commander:UpdateGhostStructureVisuals()
     if self.ghostStructure then
 
         local x, y = Client.GetCursorPosScreen()           
-        local valid, position, attachEntity = GetIsBuildPickVecLegal(self.currentTechId, self, CreatePickRay(self, x, y), Commander.kStructureSnapRadius)
+        
+        local trace = GetCommanderPickTarget(self, CreatePickRay(self, x, y), false, true)
+        
+        local valid, position, attachEntity = GetIsBuildLegal(self.currentTechId, trace.endPoint, Commander.kStructureSnapRadius, self)        
         
         local coords = Coords.GetIdentity()        
 
@@ -649,7 +652,11 @@ function CommanderUI_IsValid(button, x, y)
         
             local techNode = GetTechNode(player.currentTechId)
             if techNode ~= nil and (techNode:GetIsBuild() or techNode:GetIsBuy()) then
-                valid = GetIsBuildPickVecLegal(player.currentTechId, player, CreatePickRay(player, x, y), Commander.kStructureSnapRadius)
+            
+                local trace = GetCommanderPickTarget(player, CreatePickRay(player, x, y), false, true)
+        
+                valid = GetIsBuildLegal(player.currentTechId, trace.endPoint, Commander.kStructureSnapRadius, player)        
+                
             else
                 valid = true
             end

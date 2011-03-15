@@ -370,8 +370,8 @@ function PlayingTeam:SpawnResourceTower(teamLocation)
         // Now spawn appropriate resource tower there
         if(closestPoint ~= nil) then
         
-            local towerClassName = ConditionalValue(self:GetIsAlienTeam(), Harvester.kMapName, Extractor.kMapName)
-            success = closestPoint:SpawnResourceTowerForTeam(self, towerClassName)
+            local techId = ConditionalValue(self:GetIsAlienTeam(), kTechId.Harvester, kTechId.Extractor)
+            success = closestPoint:SpawnResourceTowerForTeam(self, techId)
         
         end
         

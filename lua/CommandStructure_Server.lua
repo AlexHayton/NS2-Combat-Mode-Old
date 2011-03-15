@@ -188,7 +188,7 @@ function CommandStructure:OnUse(player, elapsedTime, useAttachPoint, usePoint)
         if(not Structure.OnUse(self, player, elapsedTime, useAttachPoint, usePoint)) then
         
             // Must use attach point if specified (Command Station)
-            /*if (not self.occupied) and (useAttachPoint or (self:GetUseAttachPoint() == "")) then
+            /*if self:GetIsBuilt() and (not self.occupied) and (useAttachPoint or (self:GetUseAttachPoint() == "")) then
 
                 self.timeStartedLogin = Shared.GetTime()
                 
@@ -203,7 +203,7 @@ function CommandStructure:OnUse(player, elapsedTime, useAttachPoint, usePoint)
                 end
                 
                 return true
-                
+                    
             end*/
             
         else

@@ -114,7 +114,7 @@ function Commander:AttemptToBuild(techId, origin, normal, orientation, pickVec, 
         // When Drifters and MACs build, or untargeted build/buy actions, no pickVec. Trace from order point down to see
         // if they're trying to build on top of anything and if that's OK.
         local trace = Shared.TraceRay(Vector(origin.x, origin.y + .1, origin.z), Vector(origin.x, origin.y - .2, origin.z), PhysicsMask.CommanderBuild, EntityFilterOne(builderEntity))
-        legalBuildPosition, position, attachEntity = GetIsBuildLegal(techId, trace.endPoint, Commander.kStructureSnapRadius, self)
+        legalBuildPosition, position, attachEntity = GetIsBuildLegal(techId, trace.endPoint, Commander.kStructureSnapRadius, self, builderEntity)
 
     else
     

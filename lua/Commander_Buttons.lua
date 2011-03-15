@@ -479,7 +479,7 @@ function Commander:InitTechTreeMaterialOffsets()
     // Change offset in CommanderUI_GetIdleWorkerOffset when changing harvester
     self.kAlienTechIdToMaterialOffset[kTechId.Harvester] = 27
     self.kAlienTechIdToMaterialOffset[kTechId.Drifter] = 28
-    self.kAlienTechIdToMaterialOffset[kTechId.HarvesterUpgrade] = 29
+    self.kAlienTechIdToMaterialOffset[kTechId.HarvesterUpgrade] = 12
     self.kAlienTechIdToMaterialOffset[kTechId.Egg] = 30
     self.kAlienTechIdToMaterialOffset[kTechId.Cocoon] = 31
     

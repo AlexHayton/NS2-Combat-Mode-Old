@@ -238,11 +238,12 @@ function Drifter:OnThink()
         elseif(currentOrder:GetType() == kTechId.Build) then 
         
             local distToTarget = (currentOrder:GetLocation() - self:GetOrigin()):GetLengthXZ()
-            if(distToTarget < Drifter.kBuildDistance) then
+            if(distToTarget < (drifterMoveSpeed * Drifter.kMoveThinkInterval)) then
             
                 // Play land_build animation, then build it
                 if not self.landed then
                 
+                    self:SetOrigin(currentOrder:GetLocation())
                     self:SetAnimationWithBlending(Drifter.kAnimLandBuild, nil, true)
                     local length = self:GetAnimationLength(Drifter.kAnimLandBuild)
                     self:SetActivityEnd(length)

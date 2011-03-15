@@ -34,7 +34,7 @@ kTechId = enum({
     'Door', 'DoorOpen', 'DoorClose', 'DoorLock', 'DoorUnlock',
 
     // Misc
-    'Target',
+    'ResourcePoint', 'TechPoint', 'Target',
     
     /////////////
     // Marines //

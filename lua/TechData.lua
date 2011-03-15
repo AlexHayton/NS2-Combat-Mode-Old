@@ -150,6 +150,8 @@ function BuildTechData()
         
         // Misc.        
         { [kTechDataId] = kTechId.PowerPoint,            [kTechDataMapName] = PowerPoint.kMapName,            [kTechDataDisplayName] = "Power node",  [kTechDataCostKey] = 0,   [kTechDataMaxHealth] = PowerPoint.kHealth, [kTechDataMaxArmor] = PowerPoint.kArmor, [kTechDataBuildTime] = kPowerPointBuildTime, [kTechDataModel] = PowerPoint.kOnModelName, [kTechDataPointValue] = kPowerPointPointValue},        
+        { [kTechDataId] = kTechId.ResourcePoint,         [kTechDataMapName] = ResourcePoint.kPointMapName,    [kTechDataDisplayName] = "Resource nozzle", [kTechDataModel] = ResourcePoint.kModelName},
+        { [kTechDataId] = kTechId.TechPoint,             [kTechDataMapName] = TechPoint.kMapName,             [kTechDataDisplayName] = "Tech point", [kTechDataModel] = TechPoint.kModelName},
         { [kTechDataId] = kTechId.Target,                [kTechDataMapName] = Target.kMapName,                [kTechDataDisplayName] = "Target", [kTechDataModel] = ""},
         { [kTechDataId] = kTechId.Door,                  [kTechDataDisplayName] = "Door", [kTechDataMapName] = Door.kMapName, [kTechDataModel] = Door.kModelName},
         { [kTechDataId] = kTechId.DoorOpen,              [kTechDataDisplayName] = "Open door", [kTechDataHotkey] = Move.O, [kTechDataTooltipInfo] = "Open door"},

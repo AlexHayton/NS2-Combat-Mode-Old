@@ -7,7 +7,7 @@
 !define APP_NAME "NS2 Combat Mode"
 !define COMP_NAME "MCMLXXXIV"
 !define WEB_SITE "http://www.unknownworlds.com/forums/index.php?showtopic=111818&st=0#entry1813965"
-!define VERSION "1.6.6.0"
+!define VERSION "1.6.7.0"
 !define COPYRIGHT "Free-as-in-Beer"
 !define DESCRIPTION "Natural Selection 2 Combat Mode"
 !define LICENSE_TXT "LICENSE.txt"

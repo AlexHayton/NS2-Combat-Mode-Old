@@ -329,9 +329,8 @@ kAlienStructureEffects =
     {
         whipMoveEffects = 
         {
+            // Don't play a sound as this is triggered every tick
             {animation = "walk", speed = 5},
-            // Need slimy sound here
-            {sound = "sound/ns2.fev/alien/structures/whip/idle"},
         },
     },
     
