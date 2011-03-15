@@ -1,8 +1,8 @@
---[[ NS2-GmOvrmind(v5) (Server-)Configuration
+--[[ NS2-GmOvrmind(v7) (Server-)Configuration
  --------------------------------------------
  Author: player (playeru@live.com)
- Date: 3-3-2011
- Mod-version: v5
+ Date: 6-3-2011
+ Mod-version: v7
  Readme(and Feedback)-URL: http://www.unknownworlds.com/forums/index.php?showtopic=112026
  Comments: - Use at your own risk and feel free to copy this script for use in your own projects
 		   - Please reference the Readme for further information regarding the configuration of NS2-GmOvrmind
@@ -82,10 +82,9 @@ Script.Load("..\\NS2GmOvrmind\\Lua\\NS2GmOvrmind.lua"); -- NS2-GmOvrmind prerequ
 	--[[ The listening-port of the query-responder
 	 Remark: - By default the query-responder will override NS2's responder, which operates 1 port above it's connect-port
 			 - Uses the UDP\IP-protocol
-	 In: INTEGER ListenPort (Default: NS2GmOvrmind.Server.GetExternalPort()+1)
+	 In: INTEGER ListenPort (Default: NS2GmOvrmind.Server.GetExternalPort()+2)
 	 Out: Nill ]]--
-	NS2GmOvrmind.ServerQuery.AddListenPort(NS2GmOvrmind.Server.GetExternalPort());
-	NS2GmOvrmind.ServerQuery.AddListenPort(NS2GmOvrmind.Server.GetExternalPort()+1);
+	NS2GmOvrmind.ServerQuery.AddListenPort(NS2GmOvrmind.Server.GetExternalPort()+2);
 	
 	--[[ The interval between query-data synchronizations
 	 Remarks: - Expressed in seconds
@@ -102,14 +101,14 @@ Script.Load("..\\NS2GmOvrmind\\Lua\\NS2GmOvrmind.lua"); -- NS2-GmOvrmind prerequ
 	--[[ Enable NS2-GmOvrmind's built-in RCon-system
 	 In: BOOLEAN Enable (Default: true)
 	 Out: Nill ]]--
-	NS2GmOvrmind.RCon.SetEnabled(false); -- Work in progress, do not enable.
+	NS2GmOvrmind.RCon.SetEnabled(true);
 
 	--[[ The listening-port of the RCon-system
 	 Remark: - By default the query-responder will override NS2's responder, which operates 1 port above it's connect-port
 			 - Uses the TCP\IP-protocol
-	 In: INTEGER ListenPort (Default: NS2GmOvrmind.Server.GetExternalPort()+1)
+	 In: INTEGER ListenPort (Default: NS2GmOvrmind.Server.GetExternalPort()+2)
 	 Out: Nill ]]--
-	NS2GmOvrmind.RCon.AddListenPort(NS2GmOvrmind.Server.GetExternalPort()+1);
+	NS2GmOvrmind.RCon.AddListenPort(NS2GmOvrmind.Server.GetExternalPort()+2);
 
 	--[[ The interval between RCon-data\command synchronizations
 	 Remarks: - Expressed in seconds
@@ -133,7 +132,7 @@ Script.Load("..\\NS2GmOvrmind\\Lua\\NS2GmOvrmind.lua"); -- NS2-GmOvrmind prerequ
 	--[[ Enable the ingame-statistics web-server
 	 In: BOOLEAN Enable (Default: false)
 	 Out: Nill ]]--
-	NS2GmOvrmind.WebStats.SetEnabled(false); -- Work in progress, do not enable.
+	NS2GmOvrmind.WebStats.SetEnabled(false);
 
 	--[[ The listening-port of the web-server
 	 Remarks: Uses the TCP\IP-protocol
