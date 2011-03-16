@@ -517,15 +517,17 @@ function ToString(t)
     
         // Insert commas in proper places
         local s = tostring(t)
+        local suffix = ""
         
         local index = string.len(s) - 3  
         
         // Take into account decimal place, if any
-        /*local decimalIndex = string.find(s, "(%p+)")
+        local decimalIndex = string.find(s, "(%.)")
         if decimalIndex ~= nil then
-            Print("Found . at index %d in %s", decimalIndex, s)
-            index = decimalIndex
-        end*/
+            index = decimalIndex - 4
+            suffix = string.sub(s, decimalIndex)            
+            s = string.sub(s, 1, decimalIndex - 1)            
+        end
         
         while index >= 1 do
         
@@ -536,7 +538,7 @@ function ToString(t)
             
         end
         
-        return s
+        return s .. suffix
         
     end
     
@@ -746,11 +748,18 @@ end
 
 function DebugTraceRay(p0, p1, mask, filter)
 
+    if not filter then
+        filter = EntityFilterOne(nil)
+    end
+    
     local trace = Shared.TraceRay(p0, p1, mask, filter)
-    if trace.fraction ~= 1 then
-        DebugLine(p0, p1, .1, 1, 0, 0, 1)
-    else
-        DebugLine(p0, p1, .1, 0, 1, 0, 1)
+    
+    if Client then
+        if trace.fraction ~= 1 and trace.entity then
+            DebugLine(p0, p1, 10, 1, 0, 0, 1)
+        else
+            DebugLine(p0, p1, 10, 0, 1, 0, 1)
+        end
     end
     
     return trace

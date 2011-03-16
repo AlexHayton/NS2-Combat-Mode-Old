@@ -46,7 +46,7 @@ kTechId = enum({
     // Marine alerts (specified alert sound and text in techdata if any)
     'MarineAlertAcknowledge', 'MarineAlertNeedMedpack', 'MarineAlertNeedAmmo', 'MarineAlertNeedOrder', 'MarineAlertHostiles',
     
-    'MarineAlertSentryFiring', 'MarineAlertSentryUnderAttack', 'MarineAlertCommandStationUnderAttack', 'MarineAlertStructureUnderAttack', 'MarineAlertExtractorUnderAttack', 'MarineAlertSoldierLost',
+    'MarineAlertSentryFiring', 'MarineAlertSentryUnderAttack', 'MarineAlertCommandStationUnderAttack', 'MarineAlertInfantryPortalUnderAttack', 'MarineAlertStructureUnderAttack', 'MarineAlertExtractorUnderAttack', 'MarineAlertSoldierLost',
     
     'MarineAlertResearchComplete', 'MarineAlertUpgradeComplete', 'MarineAlertOrderComplete', 'MarineAlertWeldingBlocked', 'MarineAlertMACBlocked', 'MarineAlertNotEnoughResources', 'MarineAlertObjectiveCompleted', 'MarineAlertConstructionComplete',
     

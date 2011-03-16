@@ -17,6 +17,7 @@ Drifter.kMapName = "drifter"
 Drifter.kModelName = PrecacheAsset("models/alien/drifter/drifter.model")
 
 Drifter.kOrdered2DSoundName  = PrecacheAsset("sound/ns2.fev/alien/drifter/ordered_2d")
+Drifter.kOrdered3DSoundName  = PrecacheAsset("sound/ns2.fev/alien/drifter/ordered")
 
 Drifter.kAnimFly = "fly"
 Drifter.kAnimLandBuild = "land_build"
@@ -106,7 +107,7 @@ function Drifter:SetOrder(order, clearExisting, insertFirst)
     
     self:SetNextThink(Drifter.kMoveThinkInterval)
     
-    self:PlaySound(Drifter.kOrdered2DSoundName)
+    self:PlaySound(Drifter.kOrdered3DSoundName)
     
     local owner = self:GetOwner()
     if owner then

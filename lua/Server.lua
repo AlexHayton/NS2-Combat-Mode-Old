@@ -620,8 +620,17 @@ local function OnWebRequest(actions)
     return getWebApi(datatype,command,kickedId)
 end
 
-Event.Hook("ClientConnect",		OnConnectCheckBan)
-Event.Hook("MapPreLoad",		OnMapPreLoad)
-Event.Hook("MapPostLoad",		OnMapPostLoad)
-Event.Hook("MapLoadEntity",		OnMapLoadEntity)
-Event.Hook("WebRequest",		OnWebRequest)
+/**
+ * Called by the engine to test if a player (represented by the entity they are
+ * controlling) can hear another player for the purposes of voice chat.
+ */
+local function OnCanPlayerHearPlayer(listener, speaker)
+    return GetGamerules():GetCanPlayerHearPlayer(listener, speaker)
+end
+
+Event.Hook("ClientConnect",		    OnConnectCheckBan)
+Event.Hook("MapPreLoad",		    OnMapPreLoad)
+Event.Hook("MapPostLoad",		    OnMapPostLoad)
+Event.Hook("MapLoadEntity",		    OnMapLoadEntity)
+Event.Hook("WebRequest",		    OnWebRequest)
+Event.Hook("CanPlayerHearPlayer",   OnCanPlayerHearPlayer)

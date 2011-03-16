@@ -21,6 +21,8 @@ Skulk.kIdleSound = PrecacheAsset("sound/ns2.fev/alien/skulk/idle")
 
 if Server then
     Script.Load("lua/Skulk_Server.lua")
+elseif Client then
+    Script.Load("lua/Skulk_Client.lua")
 end
 
 local networkVars = 
@@ -30,7 +32,8 @@ local networkVars =
     leaping                     = "compensated boolean",
     leapingAnimationPlaying     = "compensated boolean",
     wallWalkingNormalGoal       = "compensated vector",
-    wallWalkingNormalCurrent    = "compensated vector"
+    wallWalkingNormalCurrent    = "compensated vector",
+    wallWalkingStickGoal        = "compensated vector"
 }
 
 // Balance, movement, animation
@@ -52,6 +55,8 @@ Skulk.kWallWalkCheckInterval = .2
 Skulk.kWallWalkNormalSmoothRate = 5
 // How big the spheres are they are casted out to find walls, "feelers".
 Skulk.kWallWalkingFeelerSize = 0.1
+Skulk.kNormalWallWalkRange = 0.2
+Skulk.kStickyWallWalkRange = 0.5
 Skulk.kXExtents = .45
 Skulk.kYExtents = .45
 Skulk.kZExtents = .45
@@ -219,35 +224,54 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
     local angles = Angles(self:GetAngles())
 
     // Crouching turns off wallwalking like in NS
-    if self.crouching then
+    if self.crouching or self:GetRecentlyWallJumped() then
     
         self.wallWalking = false
         
-    elseif (not self:GetRecentlyWallJumped() and not self.crouching) then
+    else
         
         // Don't check wall walking every frame for performance    
         if (Shared.GetTime() > (self.timeLastWallWalkCheck + Skulk.kWallWalkCheckInterval)) then
-        
+            
             // Most of the time, it returns a fraction of 0, which means
             // trace started outside the world (and no normal is returned)           
-            local goal = self:GetAverageWallWalkingNormal()
+            local goal = self:GetAverageWallWalkingNormal(Skulk.kNormalWallWalkRange)
             
             if goal ~= nil then
                 self.wallWalkingNormalGoal = goal
+                self.wallWalkingStickGoal = nil
                 self.wallWalking = true
-            else
-                self.wallWalking = false
+            // If already wallwalking but we have moved too far from a wall
+            // check for a wall a bit further away and move towards it like
+            // a magnet.
+            elseif self.wallWalking == true then
+                // The player can try to stick to the wall better by using the
+                // movement modifier button.
+                // If the player is trying to stick to the wall put some extra
+                // effort into keeping them on it.
+                local stickDirectionGoal = self:GetAverageWallWalkingNormal(Skulk.kStickyWallWalkRange)
+                if stickDirectionGoal then
+                    self.wallWalkingNormalGoal = stickDirectionGoal
+                    self.wallWalkingStickGoal = stickDirectionGoal
+                    self.wallWalking = true
+                else
+                    self.wallWalking = false
+                end
             end
             
             self.timeLastWallWalkCheck = Shared.GetTime()
             
         end 
-       
+    
     end
     
+    local smoothMultiplier = 1
     if self.wallWalking == false then
         // When not wall walking, the goal is always directly up (running on ground).
         self.wallWalkingNormalGoal = Vector.yAxis
+        self.wallWalkingStickGoal = nil
+        // Smooth out faster when not wall walking.
+        smoothMultiplier = 3
     end
 
 
@@ -260,7 +284,7 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
         self.wallWalkingNormalCurrent = Vector(Vector.yAxis)
     end
     local normalDiff = self.wallWalkingNormalGoal - self.wallWalkingNormalCurrent
-    self.wallWalkingNormalCurrent = self.wallWalkingNormalCurrent + (normalDiff * (input.time * Skulk.kWallWalkNormalSmoothRate))
+    self.wallWalkingNormalCurrent = self.wallWalkingNormalCurrent + (normalDiff * (input.time * Skulk.kWallWalkNormalSmoothRate * smoothMultiplier))
     self.wallWalkingNormalCurrent:Normalize()
     
     // Build out the orientation.
@@ -288,6 +312,51 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
     // Make sure the Skulk isn't intersecting with any geometry.
     if self.wallWalking == true then
         self:PreventWallWalkIntersection(input.time)
+    end
+    
+end
+
+function Skulk:UpdatePosition(velocity, time)
+
+    // Fallback on default behavior when on the ground.
+    if self:GetIsOnGround() then
+        Alien.UpdatePosition(self, velocity, time)
+        return
+    end
+    
+    // We need to make a copy so that we aren't holding onto a reference
+    // which is updated when the origin changes.
+    local start = Vector(self:GetOrigin())
+
+    // First move the Skulk upwards from their current orientation to go over small obstacles. 
+    local offset = nil
+    local stepHeight = self:GetStepHeight()
+
+    // Handle when we're interpenetrating an object usually due to animation. Ie we're under a hive that's breathing into us
+    // or when we're standing on top of animated structures like Hives, Extractors, etc.
+    local stuck = self:GetIsStuck()
+    if stuck then    
+        self:Unstick()
+    end
+
+    // First try moving capsule half the desired distance.
+    self:PerformMovement(velocity * time * 0.5, 10, nil)
+    
+    // Then attempt to run over objects in the way.
+    self:PerformMovement( self:GetCoords().yAxis * stepHeight, 1 )
+    offset = self:GetOrigin() - start
+
+    // Complete the move.
+    self:PerformMovement(velocity * time * 0.5, 10, nil)
+
+    // Finally, move the skulk back down to compensate for moving them up.
+    // We add in an additional step height for moving down steps/ramps.
+    offset = -(self:GetCoords().yAxis * stepHeight)
+    self:PerformMovement( offset, 1, nil, true )
+    
+    // Move towards the stick goal if there is a stick goal.
+    if self.wallWalkingStickGoal then
+        self:PerformMovement(-self.wallWalkingStickGoal * (time * 2), 1, nil)
     end
     
 end
@@ -377,7 +446,7 @@ end
  * with others hit so we know if we're wall-walking and the normal to orient our model and the direction to jump away from
  * when jumping off a wall.
  */
-function Skulk:GetAverageWallWalkingNormal()
+function Skulk:GetAverageWallWalkingNormal(extraRange)
     
     local startPoint = Vector(self:GetOrigin())
     local extents = self:GetExtents()
@@ -387,7 +456,7 @@ function Skulk:GetAverageWallWalkingNormal()
     local wallNormals = {}
     
     // Trace in a circle around Skulk, looking for walls we hit
-    local wallWalkingRange = math.max(extents.x, extents.y) + .2
+    local wallWalkingRange = math.max(extents.x, extents.y) + extraRange
     local endPoint = Vector()
     
     for i = 0, numTraces - 1 do

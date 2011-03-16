@@ -41,8 +41,9 @@ kAlienStructureEffects =
         alienStructureDeathParticleEffect =
         {        
             // Plays the first effect that evalutes to true
-            
-            {cinematic = "cinematics/alien/structures/death_large.cinematic", classname = "Hive", done = true},
+            {cinematic = "cinematics/alien/structures/death_hive.cinematic", classname = "Hive", done = true},
+            {cinematic = "cinematics/alien/structures/death_large.cinematic", classname = "Whip", done = true},
+            {cinematic = "cinematics/alien/structures/death_harvester.cinematic", classname = "Harvester", done = true},
             {cinematic = "cinematics/alien/structures/death_small.cinematic", isalien = true, classname = "Structure", done = true},
         },
         

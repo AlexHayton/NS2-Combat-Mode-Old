@@ -1381,9 +1381,19 @@ function Player:GetCameraViewCoords()
         VectorCopy(origin, cameraCoords.origin)
         
     end
+    
+    cameraCoords = self:PlayerCameraCoordsAdjustment(cameraCoords)
         
     return cameraCoords
     
+end
+
+function Player:PlayerCameraCoordsAdjustment(cameraCoords)
+
+    // No adjustment by default. This function can be overridden to modify the camera
+    // coordinates right before rendering.
+    return cameraCoords
+
 end
 
 function Player:GetRenderFov()
@@ -1720,23 +1730,6 @@ function Player:UpdateDamageIndicators()
     for i, index in ipairs(indicesToRemove) do
         table.remove(self.damageIndicators, index)
     end
-    
-end
-
-/**
- * Inform player about something (research complete, a structure that can be used, etc.)
- */
-function Player:AddTooltip(message)
-    
-    // Strip out surrounding "s
-    local message = string.gsub(message, "\"(.*)\"", "%1")
-    
-    // Hook flash display 
-    HudTooltip_SetMessage(message)
-    
-    self:AddDisplayedTooltip(message)
-    
-    Shared.PlaySound(self, Player.kTooltipSound)
     
 end
 

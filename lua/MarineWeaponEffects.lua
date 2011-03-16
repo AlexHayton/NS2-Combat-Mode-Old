@@ -246,19 +246,19 @@ kMarineWeaponEffects =
             {sound = "sound/ns2.fev/marine/shotgun/fire", empty = false},
             {viewmodel_animation = "attack", empty = false, force = true},
             
-            {viewmodel_cinematic = "cinematics/marine/shotgun/muzzle_flash.cinematic", attach_point = "fxnode_shotgunmuzzle", empty = false},
-            {weapon_cinematic = "cinematics/marine/shotgun/muzzle_flash.cinematic", attach_point = "fxnode_shotgunmuzzle", empty = false},
+            {viewmodel_cinematic = "cinematics/marine/shotgun/muzzle_flash.cinematic", attach_point = "fxnode_shotgunmuzzle"},
+            {weapon_cinematic = "cinematics/marine/shotgun/muzzle_flash.cinematic", attach_point = "fxnode_shotgunmuzzle"},
             
             {viewmodel_cinematic = "cinematics/marine/shotgun/shell.cinematic", attach_point = "fxnode_shotguncasing", empty = false},            
             {weapon_cinematic = "cinematics/marine/shotgun/shell.cinematic", attach_point = "fxnode_shotguncasing", empty = false},            
 
         },
 
-        //shotgunAttackEmptyEffects = 
-        //{
-            //{sound = "sound/ns2.fev/marine/shotgun/fire_last", empty = true},
-            //{viewmodel_animation = "attack_last", empty = true, force = true},
-        //},
+        shotgunAttackEmptyEffects = 
+        {
+            {sound = "sound/ns2.fev/marine/shotgun/fire_last", empty = true},
+            {viewmodel_animation = "attack_last", empty = true, force = true},
+        },
     },   
     
     // Special shotgun reload effects
