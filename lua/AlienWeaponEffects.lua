@@ -27,6 +27,7 @@ kAlienWeaponEffects =
         },
         generalHitSounds = 
         {
+            {sound = "sound/ns2.fev/alien/skulk/bite_hit_marine", doer = "BiteLeap", classname = "Marine", done = true},
             {sound = "sound/ns2.fev/alien/skulk/bite_hit_%s", doer = "BiteLeap", done = true},
             {sound = "sound/ns2.fev/alien/skulk/parasite_hit", doer = "Parasite", done = true},
             {sound = "sound/ns2.fev/alien/gorge/spit_hit", doer = "Spit", done = true},

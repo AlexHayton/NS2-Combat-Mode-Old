@@ -118,7 +118,7 @@ function SpitSpray:HealEntities(player)
 
         if( targetEntity ~= player ) then
             
-            local isHurtPlayer = (GetEnemyTeamNumber(player:GetTeamNumber()) == targetEntity:GetTeamNumber())
+            local isHurtPlayer = (GetEnemyTeamNumber(player:GetTeamNumber()) == targetEntity:GetTeamNumber()) and targetEntity:isa("Player")
             local isHealTarget = (player:GetTeamNumber() == targetEntity:GetTeamNumber())
             
             // TODO: Traceline to target to make sure we don't go through objects (or check line of sight because of area effect?)

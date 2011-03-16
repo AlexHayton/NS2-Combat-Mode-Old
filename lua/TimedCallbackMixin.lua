@@ -8,11 +8,14 @@
 
 TimedCallbackMixin = { }
 
+function TimedCallbackMixin:__initmixin()
+
+    self.timedCallbacks = { }
+    
+end
+
 function TimedCallbackMixin:AddTimedCallback(addFunction, callRate)
 
-    if self.timedCallbacks == nil then
-        self.timedCallbacks = { }
-    end
     table.insert(self.timedCallbacks, { Function = addFunction, Rate = callRate, Time = 0 })
 
 end

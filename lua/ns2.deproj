@@ -846,4 +846,10 @@
   <file>
     <filename>..\..\core\lua\MixinUtility.lua</filename>
   </file>
+  <file>
+    <filename>TooltipMixin.lua</filename>
+  </file>
+  <file>
+    <filename>Skulk_Client.lua</filename>
+  </file>
 </project>

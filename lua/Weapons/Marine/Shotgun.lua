@@ -17,9 +17,6 @@ local kReloadPhase = enum( {'None', 'Start', 'LoadShell', 'End'} )
 
 local networkVars =
     {
-        reloadPhase         = string.format("integer (1 to %d)", kReloadPhase.End),
-        reloadPhaseEnd      = "float",
-        emptyPoseParam      = "compensated float"
     }
 
 Shotgun.kModelName = PrecacheAsset("models/marine/shotgun/shotgun.model")
@@ -151,6 +148,12 @@ function Shotgun:EnterReloadPhase(player, phase)
 
 end
 
+function Shotgun:GetCanIdle()
+
+    return (self.reloadPhase == kReloadPhase.None) and ClipWeapon.GetCanIdle(self)
+
+end
+
 function Shotgun:OnPrimaryAttack(player)
     
     self:EnterReloadPhase(player, kReloadPhase.None)
@@ -177,7 +180,7 @@ end
 function Shotgun:OnProcessMove(player, input)
     
     // We're ending a phase
-    if (self.reloadPhase ~= kReloadPhase.None and Shared.GetTime() > self.reloadPhaseEnd) then
+    if (self.reloadPhase ~= kReloadPhase.None and Shared.GetTime() >= self.reloadPhaseEnd) then
     
         // We just finished the start bullet load phase (also gives one shell), or the continues bullet load
         if (self.reloadPhase == kReloadPhase.Start or self.reloadPhase == kReloadPhase.LoadShell) then
@@ -197,7 +200,7 @@ function Shotgun:OnProcessMove(player, input)
             
         else
         
-            self.reloadPhase = kReloadPhase.None
+            self:EnterReloadPhase(player, kReloadPhase.None)
             
         end
 
@@ -223,7 +226,7 @@ end
 
 function Shotgun:OnHolster(player)
 
-    self.reloadPhase = kReloadPhase.None
+    self:EnterReloadPhase(player, kReloadPhase.None)
     self.reloadPhaseEnd = 0
     ClipWeapon.OnHolster(self, player)
     
@@ -240,7 +243,7 @@ function Shotgun:OnInit()
 end
 
 function Shotgun:UpdateViewModelPoseParameters(viewModel, input)
-    self.emptyPoseParam = Clamp(Slerp(self.emptyPoseParam, ConditionalValue(self.clip == 0, 1, 0), 0, 1, input.time*1), 0, 1)
+    self.emptyPoseParam = Clamp(Slerp(self.emptyPoseParam, ConditionalValue(self.clip == 0, 1, 0), input.time*1), 0, 1)
     viewModel:SetPoseParam("empty", self.emptyPoseParam)
 end
 

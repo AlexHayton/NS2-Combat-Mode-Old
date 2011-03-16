@@ -237,10 +237,10 @@ function Weapon:GetIsActive()
 end
 
 /**
- * Don't idle (we don't have a model by default).
+ * Only allow idle if this weapon is active.
  */
 function Weapon:GetCanIdle()
-    return false
+    return self:GetIsActive()
 end
 
 /**

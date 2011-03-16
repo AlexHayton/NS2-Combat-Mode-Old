@@ -74,7 +74,7 @@ function MarineCommander:OnSelectionChanged()
     
     if(table.maxn(self.selectedEntities) > 0) then
     
-        Shared.PlaySound(self, MarineCommander.kSelectSound)
+        Shared.PlayPrivateSound(self, MarineCommander.kSelectSound, nil, 1.0, self:GetOrigin())
         
     end
 

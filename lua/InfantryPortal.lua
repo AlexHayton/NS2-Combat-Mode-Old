@@ -16,6 +16,8 @@ InfantryPortal.kModelName = PrecacheAsset("models/marine/infantry_portal/infantr
 InfantryPortal.kAnimSpinStart = "spin_start"
 InfantryPortal.kAnimSpinContinuous = "spin"
 
+InfantryPortal.kUnderAttackSound = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/infantry_portal_under_attack")
+
 InfantryPortal.kLoopSound = PrecacheAsset("sound/ns2.fev/marine/structures/infantry_portal_active")
 
 InfantryPortal.kSquadSpawnFailureSound = PrecacheAsset("sound/ns2.fev/marine/common/squad_spawn_fail")
@@ -399,5 +401,10 @@ function InfantryPortal:OnPoweredChange(newPoweredState)
     end
     
 end
+
+function InfantryPortal:GetDamagedAlertId()
+    return kTechId.MarineAlertInfantryPortalUnderAttack
+end
+
 
 Shared.LinkClassToMap("InfantryPortal", InfantryPortal.kMapName)

@@ -231,11 +231,6 @@ function Player:SetRequestsScores(state)
     self.requestsScores = state
 end
 
-// Have gamerules determine who can hear voice
-function Player:GetCanPlayerHearPlayer(speakerPlayer)
-    return GetGamerules():GetCanPlayerHearPlayer(self, speakerPlayer)    
-end
-
 // Call to give player default weapons, abilities, equipment, etc. Usually called after CreateEntity() and OnInit()
 function Player:InitWeapons()
     self:ClearActivity()
@@ -457,6 +452,7 @@ function Player:CopyPlayerDataFrom(player)
     self.gameStarted = player.gameStarted
     self.countingDown = player.countingDown
     self.frozen = player.frozen
+    // .displayedTooltips is stored in TooltipMixin.
     table.copy(player.displayedTooltips, self.displayedTooltips)
     
     // Don't copy alive, health, maxhealth, armor, maxArmor, smoothCamera - they are set in Spawn()
@@ -935,14 +931,6 @@ end
 
 function Player:SetReticleTarget(state)
     self.reticleTarget = state
-end
-
-function Player:AddTooltip(tooltipText)
-
-    Server.SendCommand(self, string.format("%s \"%s\"", "tooltip", tooltipText))
-    self:AddDisplayedTooltip(tooltipText)
-    self.timeOfLastTooltip = Shared.GetTime()
-    
 end
 
 // Unlike vanilla NS2, get the tech tree from the player object.

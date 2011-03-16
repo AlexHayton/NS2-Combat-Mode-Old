@@ -62,7 +62,7 @@ function AlienCommander:OnSelectionChanged()
     
     if(table.maxn(self.selectedEntities) > 0) then
     
-        Shared.PlaySound(self, AlienCommander.kSelectSound)
+        Shared.PlayPrivateSound(self, AlienCommander.kSelectSound, nil, 1.0, self:GetOrigin())
         
     end
 

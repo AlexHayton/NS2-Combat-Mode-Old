@@ -58,6 +58,16 @@ function CommandStructure:OnInit()
     
 end
 
+function CommandStructure:OnDestroy()
+
+    if self.occupied then
+        self:Logout()
+    end
+
+    Structure.OnDestroy(self)                        
+            
+end
+
 function CommandStructure:GetCommanderClassName()
     return Commander.kMapName   
 end
@@ -246,7 +256,7 @@ end
 function CommandStructure:Logout()
 
     // Change commander back to player
-    if(self.commander ~= nil) then
+    if self.commander then
     
         local previousWeaponMapName = self.commander.previousWeaponMapName
         local previousOrigin = self.commander.lastGroundOrigin
@@ -266,6 +276,7 @@ function CommandStructure:Logout()
         player.frozen = false
 
         self.commander = nil
+        self.playerStartedLogin = nil
         
         self.occupied = false
         

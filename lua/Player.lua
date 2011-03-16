@@ -15,10 +15,16 @@ Script.Load("lua/TechData.lua")
 Script.Load("lua/Utility.lua")
 Script.Load("lua/LiveScriptActor.lua")
 Script.Load("lua/PhysicsGroups.lua")
+Script.Load("lua/TooltipMixin.lua")
 Script.Load("lua/WeaponOwnerMixin.lua")
 Script.Load("lua/Experience.lua")
 
 class 'Player' (LiveScriptActor)
+
+Player.kTooltipSound    = PrecacheAsset("sound/ns2.fev/common/tooltip")
+Player.kToolTipInterval = 18
+// Add the functionality from TooltipMixin to Player.
+AddMixin(Player, TooltipMixin, { kTooltipSound = Player.kTooltipSound, kToolTipInterval = Player.kToolTipInterval })
 
 // Add the functionality from WeaponOwnerMixin to Player.
 AddMixin(Player, WeaponOwnerMixin)
@@ -38,7 +44,6 @@ Player.kSpecialModelName            = PrecacheAsset("models/marine/male/male_spe
 Player.kClientConnectSoundName      = PrecacheAsset("sound/ns2.fev/common/connect")
 Player.kNotEnoughResourcesSound     = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/more")
 Player.kInvalidSound                = PrecacheAsset("sound/ns2.fev/common/invalid")
-Player.kTooltipSound                = PrecacheAsset("sound/ns2.fev/common/tooltip")
 Player.kChatSound                   = PrecacheAsset("sound/ns2.fev/common/chat")
 
 // Animations
@@ -67,7 +72,6 @@ Player.kXZExtents = 0.35
 Player.kYExtents = .95
 Player.kViewOffsetHeight = Player.kYExtents * 2 - .28 // Eyes a bit below the top of the head. NS1 marine was 64" tall.
 Player.kFov = 90
-Player.kToolTipInterval = 18
 
 // Percentage change in height when full crouched
 Player.kCrouchShrinkAmount = .5
@@ -284,7 +288,6 @@ function Player:OnCreate()
     self.score = 0
     self.kills = 0
     self.deaths = 0
-    self.displayedTooltips = {}
     
     self.sighted = false
     self.jumpHandled = false
@@ -750,7 +753,11 @@ function Player:GetMaxViewOffsetHeight()
 end
 
 function Player:GetCanViewModelIdle()
-    return self:GetIsAlive() and self:GetCanNewActivityStart() and (self.mode == kPlayerMode.Default)
+    local activeWeaponCanIdle = true
+    if self:GetActiveWeapon() then
+        activeWeaponCanIdle = self:GetActiveWeapon():GetCanIdle()
+    end
+    return self:GetIsAlive() and self:GetCanNewActivityStart() and (self.mode == kPlayerMode.Default) and activeWeaponCanIdle
 end
 
 function Player:LoadHeightmap()
@@ -2637,84 +2644,7 @@ function Player:GetShowSayings()
     return self.showSayings
 end
 
-function Player:GetShowTechUpgrades()
-	return self.showTechUpgrades
-end
-
-// Tooltips
-
-// Check if we've already displayed this tooltip. Returns false if we haven't, or if time
-// has expired since we've displayed
-function Player:GetCanDisplayTooltip(tooltipText, timeInterval)
-
-    local currentTime = Shared.GetTime()
-    
-    // Return false if we've recently added any tooltip
-    if self.timeOfLastTooltip ~= nil and currentTime < (self.timeOfLastTooltip + Player.kToolTipInterval) then
-    
-        return false
-        
-    end
-    
-    // Return false if we've too recently shown this particular tooltip
-    for index, entity in ipairs(self.displayedTooltips) do
-    
-        if(tooltipText == entity[1]) then
-        
-            if(timeInterval == nil or (currentTime < entity[2] + timeInterval)) then
-            
-                return false
-                
-            end
-            
-        end
-        
-    end
-    
-    return true
-    
-end
-
-function Player:AddTooltipOnce(tooltipText)
-
-    if(self:GetCanDisplayTooltip(tooltipText, nil)) then
-    
-        self:AddTooltip(tooltipText)
-        return true
-        
-    end
-
-    return false
-    
-end
-
-function Player:AddTooltipOncePer(tooltipText, timeInterval)
-
-    if(timeInterval == nil) then
-        timeInterval = 10
-    end
-    
-    if(self:GetCanDisplayTooltip(tooltipText, timeInterval)) then
-    
-        self:AddTooltip(tooltipText)
-        
-        return true
-        
-    end
-
-    return false
-
-end
-
-function Player:AddDisplayedTooltip(tooltipText)
-    table.insertunique(self.displayedTooltips, {tooltipText, Shared.GetTime()})
-end
-
-function Player:ClearDisplayedTooltips()
-    table.clear(self.displayedTooltips)
-end
-
-function Player:UpdateHelp()
+function Player:GetShowTechUpgrades()	return self.showTechUpgradesendfunction Player:UpdateHelp()
     return false
 end
 

@@ -222,12 +222,16 @@ function GUIMinimap:Uninitialize()
         self.scanlines = nil
     end
     
+    if self.minimap then
+        GUI.DestroyItem(self.minimap)
+    end
+    self.minimap = nil
+    
     if self.background then
         GUI.DestroyItem(self.background)
         self.background = nil
     end
-    GUI.DestroyItem(self.minimap)
-    self.minimap = nil
+    
     // The staticBlips are children of the background so will be cleaned up with it.
     self.staticBlips = { }
     

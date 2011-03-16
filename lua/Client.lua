@@ -383,7 +383,7 @@ function OnSendCharacterEvent(character)
 
 end
 
-function NotifyGUIItemDestroyed(destroyedItem)
+function OnNotifyGUIItemDestroyed(destroyedItem)
     
     gGUIManager:NotifyGUIItemDestroyed(destroyedItem)
 
@@ -489,10 +489,11 @@ function OnSetupCamera(camera)
     
 end
 
-Event.Hook("SetupCamera",           OnSetupCamera)
-Event.Hook("MapLoadEntity",         OnMapLoadEntity)
-Event.Hook("MapPreLoad",            OnMapPreLoad)
-Event.Hook("MapPostLoad",           OnMapPostLoad)
-Event.Hook("UpdateClient",          OnUpdateClient)
-Event.Hook("SendKeyEvent",          OnSendKeyEvent)
-Event.Hook("SendCharacterEvent",    OnSendCharacterEvent)
+Event.Hook("SetupCamera",            OnSetupCamera)
+Event.Hook("MapLoadEntity",          OnMapLoadEntity)
+Event.Hook("MapPreLoad",             OnMapPreLoad)
+Event.Hook("MapPostLoad",            OnMapPostLoad)
+Event.Hook("UpdateClient",           OnUpdateClient)
+Event.Hook("SendKeyEvent",           OnSendKeyEvent)
+Event.Hook("SendCharacterEvent",     OnSendCharacterEvent)
+Event.Hook("NotifyGUIItemDestroyed", OnNotifyGUIItemDestroyed)
