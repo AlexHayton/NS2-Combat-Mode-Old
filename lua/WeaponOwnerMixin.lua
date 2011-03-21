@@ -14,12 +14,12 @@ function WeaponOwnerMixin:UpdateWeapons(input)
     if not Shared.GetIsRunningPrediction() then
     
         self:ComputeHUDOrderedWeaponList()
-
-        // Call ProcessMove on all our weapons so they can update properly
-        for index, weapon in ipairs(self.hudOrderedWeaponList) do
-            weapon:OnProcessMove(self, input)
-        end
         
+    end
+    
+    // Call ProcessMove on all our weapons so they can update properly
+    for index, weapon in ipairs(self:GetHUDOrderedWeaponList()) do
+        weapon:OnProcessMove(self, input)
     end
         
 end

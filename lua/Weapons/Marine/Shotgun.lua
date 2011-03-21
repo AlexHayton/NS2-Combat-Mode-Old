@@ -17,6 +17,9 @@ local kReloadPhase = enum( {'None', 'Start', 'LoadShell', 'End'} )
 
 local networkVars =
     {
+        reloadPhase         = string.format("integer (1 to %d)", kReloadPhase.End),
+        reloadPhaseEnd      = "float",
+        emptyPoseParam      = "compensated float"
     }
 
 Shotgun.kModelName = PrecacheAsset("models/marine/shotgun/shotgun.model")
@@ -112,7 +115,6 @@ end
 
 function Shotgun:EnterReloadPhase(player, phase)
 
-    local time = 0
     local blockActivity = true
 
     if(phase == kReloadPhase.None) then
@@ -121,28 +123,29 @@ function Shotgun:EnterReloadPhase(player, phase)
         
     elseif(phase == kReloadPhase.Start) then
     
-        self:TriggerEffects("shotgun_reload_start")      
+        self:TriggerEffects("shotgun_reload_start")
                 
     elseif(phase == kReloadPhase.LoadShell) then
-    
-        self:TriggerEffects("shotgun_reload_shell")        
+
+        self:TriggerEffects("shotgun_reload_shell")
     
         // We can cancel reloading of every bullet past the first            
         blockActivity = false
         
     elseif(phase == kReloadPhase.End) then
-    
-        self:TriggerEffects("shotgun_reload_end")        
+
+        self:TriggerEffects("shotgun_reload_end")
 
     end
     
     self.reloadPhase = phase
     
-    self.reloadPhaseEnd = Shared.GetTime() + player:GetViewAnimationLength()
+    local viewAnimationLength = player:GetViewAnimationLength()
+    self.reloadPhaseEnd = Shared.GetTime() + viewAnimationLength
     
     if(blockActivity) then
     
-        player:SetActivityEnd(time)
+        player:SetActivityEnd(viewAnimationLength)
         
     end
 
@@ -150,19 +153,22 @@ end
 
 function Shotgun:GetCanIdle()
 
-    return (self.reloadPhase == kReloadPhase.None) and ClipWeapon.GetCanIdle(self)
+    // Allow idling when not reloading or when finishing reloading if the reload is done.
+    return ((self.reloadPhase == kReloadPhase.None) or (self.reloadPhase == kReloadPhase.End and (self.reloadPhaseEnd == nil or Shared.GetTime() >= self.reloadPhaseEnd))) and ClipWeapon.GetCanIdle(self)
 
 end
 
 function Shotgun:OnPrimaryAttack(player)
     
-    self:EnterReloadPhase(player, kReloadPhase.None)
+    // Only allow changing reload phase if we aren't reloading or are loading a shell. The other phases block.
+    if self.reloadPhase == kReloadPhase.None or self.reloadPhase == kReloadPhase.LoadShell then
+        self:EnterReloadPhase(player, kReloadPhase.None)
+    end
     
     ClipWeapon.OnPrimaryAttack(self, player)
     
 end
 
-// Takes a fraction of range (0-1, 1 representing max range) that is applied to damage
 // Load bullet if we can. Returns true if there are still more to reload.
 function Shotgun:LoadBullet(player)
 

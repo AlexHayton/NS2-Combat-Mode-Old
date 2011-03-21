@@ -1493,6 +1493,8 @@ function Player:OnProcessMove(input)
         // Everything else
         self:UpdateMisc(input)
         
+        self:UpdateSharedMisc(input)
+        
         // Debug if desired
         //self:OutputDebug()
         
@@ -2115,10 +2117,6 @@ function Player:UpdateSharedMisc(input)
     self:UpdateMode()
     // From WeaponOwnerMixin.
     self:UpdateWeapons(input)
-    
-    if Client then
-        self:UpdateChat(input)
-    end
 
     self:UpdateScoreboard(input) 
     

@@ -882,8 +882,6 @@ end
 
 function Player:UpdateMisc(input)
 
-    self:UpdateSharedMisc(input)
-
     // Update target under reticle (put back in when we're using it)
     /*
     local enemyUnderReticle = false

@@ -114,7 +114,7 @@ function Spikes:FireSpikeProjectile(player)
 
         local viewCoords = player:GetViewAngles():GetCoords()
         
-        local startPoint = player:GetEyePos() + viewCoords.zAxis * 1 - viewCoords.yAxis * .25
+        local startPoint = player:GetEyePos() + viewCoords.zAxis * 1 - viewCoords.yAxis * .1
         local trace = Shared.TraceRay(player:GetEyePos(), startPoint, PhysicsMask.Bullets, EntityFilterOne(player))
         if trace.fraction ~= 1 then
             // The eye position just barely sticks out past some walls so we
