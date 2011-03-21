@@ -2642,7 +2642,11 @@ function Player:GetShowSayings()
     return self.showSayings
 end
 
-function Player:GetShowTechUpgrades()	return self.showTechUpgradesendfunction Player:UpdateHelp()
+function Player:GetShowTechUpgrades()	
+	return self.showTechUpgrades
+end
+
+function Player:UpdateHelp()
     return false
 end
 
