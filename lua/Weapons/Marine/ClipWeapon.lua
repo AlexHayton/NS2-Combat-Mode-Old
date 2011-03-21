@@ -272,7 +272,7 @@ function ClipWeapon:OnPrimaryAttack(player)
         else
         
             self:TriggerEffects("clipweapon_empty")
-            player:SetActivityEnd(.5)
+            player:SetActivityEnd(player:GetViewAnimationLength())
             
             Weapon.OnPrimaryAttackEnd(self, player)
             

@@ -68,6 +68,7 @@ kEffectParamLifetime                = "lifetime"        // Lifetime for decals (
 kEffectParamScale                   = "scale"           // Scale for decals (default is 5)
 kEffectSoundParameter               = "sound_param"     // Not working yet
 kEffectParamDone                    = "done"
+kEffectParamWorldSpace              = "world_space"     // If true, the cinematic will emit particles into world space.
 
 // General effects. Chooses one effect from each block. Name of block is unused except for debugging/clarity. Add to InternalGetEffectMatches().
 kEffectFilterClassName              = "classname"

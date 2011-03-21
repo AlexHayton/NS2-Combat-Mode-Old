@@ -57,7 +57,7 @@ function LiveScriptActor:UpdateEffects()
             if firstPerson then
                 local viewModel = self:GetViewModelEntity()
                 if viewModel then
-                    Shared.CreateAttachedEffect(self, cinematicName, viewModel, Coords.GetTranslation(Vector(0, 0, 0)), "", true)
+                    Shared.CreateAttachedEffect(self, cinematicName, viewModel, Coords.GetTranslation(Vector(0, 0, 0)), "", true, false)
                 end
             else
                 Shared.CreateEffect(self, cinematicName, self, self:GetAngles():GetCoords())

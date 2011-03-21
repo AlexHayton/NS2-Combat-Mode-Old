@@ -405,7 +405,7 @@ end
 // the specified attach point name. If called on a player, it's expected to also be called on the 
 // player's client, as it won't be propagated to them.
 function ScriptActor:CreateAttachedEffect(effectName, entityAttachPointName)
-    Shared.CreateAttachedEffect(nil, effectName, self, self:GetCoords(), entityAttachPointName, false)
+    Shared.CreateAttachedEffect(nil, effectName, self, self:GetCoords(), entityAttachPointName, false, false)
 end
 
 // Pass entity and proposed location, returns true if entity can go there without colliding with something

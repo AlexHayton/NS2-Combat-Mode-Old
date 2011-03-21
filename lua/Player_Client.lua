@@ -719,9 +719,9 @@ function Player:UpdateMisc(input)
 
     if not Shared.GetIsRunningPrediction() then
     
-        self:UpdateSharedMisc(input)
         self:UpdateCrossHairText()
         self:UpdateDamageIndicators()
+        self:UpdateChat(input)
         
     end
     

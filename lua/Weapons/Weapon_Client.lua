@@ -9,9 +9,9 @@
 function Weapon:CreateWeaponEffect(player, playerAttachPointName, entityAttachPointName, cinematicName)
         
     if not player:GetIsThirdPerson() then
-        Shared.CreateAttachedEffect(player, cinematicName, player:GetViewModelEntity(), Coords.GetTranslation(player:GetViewOffset()), entityAttachPointName, true)    
+        Shared.CreateAttachedEffect(player, cinematicName, player:GetViewModelEntity(), Coords.GetTranslation(player:GetViewOffset()), entityAttachPointName, true, false)    
     else        
-        Shared.CreateAttachedEffect(player, cinematicName, self, Coords.GetIdentity(), entityAttachPointName, false)    
+        Shared.CreateAttachedEffect(player, cinematicName, self, Coords.GetIdentity(), entityAttachPointName, false, false)    
     end
     
 end

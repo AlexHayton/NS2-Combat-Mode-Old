@@ -447,9 +447,10 @@ function EffectManager:InternalTriggerCinematic(effectTable, triggeringParams, t
     // Parent effect to triggering entity
     elseif effectTable[kParentedCinematicType] then
     
+        local inWorldSpace = effectTable[kEffectParamWorldSpace]
         local attachPoint = effectTable[kEffectParamAttachPoint] 
         if attachPoint then
-            Shared.CreateAttachedEffect(player, cinematicName, triggeringEntity, Coords.GetIdentity(), attachPoint, false)
+            Shared.CreateAttachedEffect(player, cinematicName, triggeringEntity, Coords.GetIdentity(), attachPoint, false, inWorldSpace == true)
         else
             Shared.CreateEffect(player, cinematicName, triggeringEntity, Coords.GetIdentity())
         end
@@ -461,12 +462,13 @@ function EffectManager:InternalTriggerCinematic(effectTable, triggeringParams, t
 
         if Server then
         
+            local inWorldSpace = effectTable[kEffectParamWorldSpace]
             local attachPoint = effectTable[kEffectParamAttachPoint] 
             if attachPoint then
                 
                 if player then
                 
-                    Shared.CreateAttachedEffect(player, cinematicName, triggeringEntity, Coords.GetIdentity(), attachPoint, false)
+                    Shared.CreateAttachedEffect(player, cinematicName, triggeringEntity, Coords.GetIdentity(), attachPoint, false, inWorldSpace == true)
                     success = true
                     
                 else
@@ -486,6 +488,7 @@ function EffectManager:InternalTriggerCinematic(effectTable, triggeringParams, t
     
         if Client then
         
+            local inWorldSpace = effectTable[kEffectParamWorldSpace]
             local attachPoint = effectTable[kEffectParamAttachPoint]
             if attachPoint then
             
@@ -494,7 +497,7 @@ function EffectManager:InternalTriggerCinematic(effectTable, triggeringParams, t
                     local viewModel = player:GetViewModelEntity()
                     if viewModel then
                     
-                        Shared.CreateAttachedEffect(player, cinematicName, viewModel, Coords.GetTranslation(player:GetViewOffset()), attachPoint, true)    
+                        Shared.CreateAttachedEffect(player, cinematicName, viewModel, Coords.GetTranslation(player:GetViewOffset()), attachPoint, true, inWorldSpace == true)    
                         success = true
                         
                     else

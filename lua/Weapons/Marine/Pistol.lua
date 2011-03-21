@@ -78,14 +78,6 @@ function Pistol:GetPrimaryAttackRequiresPress()
 end
 
 function Pistol:CreatePrimaryAttackEffect(player)
-
-    if not self.altMode then
-    
-        local delay = self:GetPrimaryAttackDelay()
-        self:SetCameraShake(.003 + NetworkRandom()*.006, 1/delay, delay)
-        
-    end
-    
 end
 
 function Pistol:GetClipSize()
@@ -124,7 +116,11 @@ end
 
 function Pistol:UpdateViewModelPoseParameters(viewModel, input)
     
-    self.emptyPoseParam = Clamp(Slerp(self.emptyPoseParam, ConditionalValue(self.clip == 0, 1, 0), input.time*2.5), 0, 1)
+    if self.clip ~= 0 then
+        self.emptyPoseParam = 0
+    else
+        self.emptyPoseParam = Clamp(Slerp(self.emptyPoseParam, 1, input.time*5), 0, 1)
+    end
     viewModel:SetPoseParam("empty", self.emptyPoseParam)
     
 end
