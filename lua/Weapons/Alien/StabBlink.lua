@@ -52,7 +52,28 @@ function StabBlink:GetPrimaryAttackRequiresPress()
     return false
 end
 
-function StabBlink:OnThink()
+function StabBlink:PerformPrimaryAttack(player)
+    
+    Blink.PerformPrimaryAttack(self, player)
+    
+    // Play random animation
+    player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
+
+    player:SetAnimAndMode(chooseWeightedEntry(Fade.kAnimStabTable), kPlayerMode.FadeStab)
+    
+end
+
+function StabBlink:OnTag(tagName)
+
+    Blink.OnTag(self, tagName)
+    
+    if tagName == "hit" then
+        self:PerformMeleeAttack()
+    end
+
+end
+
+function StabBlink:PerformMeleeAttack()
 
     local player = self:GetParent()
     if player then
@@ -88,20 +109,6 @@ function StabBlink:OnThink()
         end
         
     end
-    
-end
-
-function StabBlink:PerformPrimaryAttack(player)
-    
-    Blink.PerformPrimaryAttack(self, player)
-    
-    // Play random animation
-    player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
-
-    player:SetAnimAndMode(chooseWeightedEntry(Fade.kAnimStabTable), kPlayerMode.FadeStab)
-
-    // Attack doesn't hit until later    
-    self:SetNextThink(.85) 
     
 end
 

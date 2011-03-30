@@ -10,6 +10,7 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/ScriptActor.lua")
+Script.Load("lua/LiveMixin.lua")
 
 class 'LiveScriptActor' (ScriptActor)
 
@@ -39,17 +40,8 @@ else
     Script.Load("lua/LiveScriptActor_Client.lua")
 end
 
-local networkVars = 
+LiveScriptActor.networkVars = 
 {
-    // Health and armor 
-    alive                   = "boolean",
-    
-    health                  = "float",
-    maxHealth               = "float",
-    
-    armor                   = "float",
-    maxArmor                = "float",
-    
     // Used for limiting frequency of abilities
     energy                  = "float",
     maxEnergy               = string.format("integer (0 to %s)", LiveScriptActor.kMaxEnergy),
@@ -85,6 +77,9 @@ local networkVars =
     
 }
 
+// This should be moved out to classes that derive from LiveScriptActor soon.
+PrepareClassForMixin(LiveScriptActor, LiveMixin)
+
 function LiveScriptActor:DestroyPhysicsController()
 
     if self.controller ~= nil then
@@ -105,15 +100,9 @@ end
 // Depends on tech id being set before calling
 function LiveScriptActor:OnInit()
 
-    ScriptActor.OnInit(self)
+    InitMixin(self, LiveMixin, { kHealth = LiveScriptActor.kHealth, kArmor = LiveScriptActor.kArmor })
     
-    self.alive = true
-
-    self.health = LookupTechData(self:GetTechId(), kTechDataMaxHealth, LiveScriptActor.kHealth)    
-    self.maxHealth = self.health
-
-    self.armor = LookupTechData(self:GetTechId(), kTechDataMaxArmor, LiveScriptActor.kArmor)    
-    self.maxArmor = self.armor
+    ScriptActor.OnInit(self)
     
     // Initialize energy
     self.energy = LookupTechData(self:GetTechId(), kTechDataInitialEnergy, 0)
@@ -303,58 +292,6 @@ function LiveScriptActor:GetStatusDescription()
     return nil, nil
 end
 
-function LiveScriptActor:GetHealthScalar()
-
-    local current = self:GetHealth() + self:GetArmor() * kHealthPointsPerArmor
-    local max = self:GetMaxHealth() + self:GetMaxArmor() * kHealthPointsPerArmor
-    
-    return current / max
-    
-end
-
-// Returns text and 0-1 scalar for health bar on commander HUD when selected
-function LiveScriptActor:GetHealthDescription()
-
-    local armorString = ""
-    
-    local armor = self:GetArmor()
-    local maxArmor = self:GetMaxArmor()
-    
-    if armor and maxArmor and armor > 0 and maxArmor > 0 then
-        armorString = string.format("  Armor %s/%s", ToString(math.ceil(armor)), ToString(maxArmor))
-    end
-    
-    return string.format("Health  %s/%s%s", ToString(math.ceil(self:GetHealth())), ToString(math.ceil(self:GetMaxHealth())), armorString), self:GetHealthScalar()
-    
-end
-
-function LiveScriptActor:GetHealth()
-    return self.health
-end
-
-function LiveScriptActor:SetHealth(health)
-    self.health = math.min(self:GetMaxHealth(), health)
-end
-
-function LiveScriptActor:GetArmorScalar()
-    if self:GetMaxArmor() == 0 then
-        return 0
-    end
-    return self:GetArmor() / self:GetMaxArmor()
-end
-
-function LiveScriptActor:GetArmor()
-    return self.armor
-end
-
-function LiveScriptActor:SetArmor(armor)
-    self.armor = math.min(self:GetMaxArmor(), armor)
-end
-
-function LiveScriptActor:GetMaxArmor()
-    return self.maxArmor
-end
-
 function LiveScriptActor:GetEnergy()
     return self.energy
 end
@@ -370,22 +307,6 @@ end
 
 function LiveScriptActor:GetMaxEnergy()
     return self.maxEnergy
-end
-
-function LiveScriptActor:Heal(amount) 
-
-    local healed = false
-    
-    local newHealth = math.min( math.max(0, self.health + amount), self:GetMaxHealth() )
-    if(self.alive and self.health ~= newHealth) then
-    
-        self.health = newHealth
-        healed = true
-        
-    end    
-    
-    return healed
-    
 end
 
 function LiveScriptActor:OnUpdate(deltaTime)
@@ -437,20 +358,8 @@ function LiveScriptActor:SetPoseParameters()
     self:SetPoseParam("intensity", self.flinchIntensity)
 end
 
-function LiveScriptActor:GetIsAlive()
-    return self.alive
-end
-
-function LiveScriptActor:SetIsAlive(state)
-    self.alive = state
-end
-
 function LiveScriptActor:GetIsSelectable()
-    return self.alive
-end
-
-function LiveScriptActor:GetMaxHealth()
-    return self.maxHealth
+    return self:GetIsAlive()
 end
 
 function LiveScriptActor:GetPointValue()
@@ -497,4 +406,4 @@ function LiveScriptActor:GetSendDeathMessage()
     return self:GetIsAlive()
 end
 
-Shared.LinkClassToMap("LiveScriptActor", LiveScriptActor.kMapName, networkVars )
+Shared.LinkClassToMap("LiveScriptActor", LiveScriptActor.kMapName, LiveScriptActor.networkVars )

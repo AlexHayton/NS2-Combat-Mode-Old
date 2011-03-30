@@ -290,22 +290,6 @@ function Structure:OnReplace(newStructure)
 
 end
 
-function Structure:Heal(amount) 
-
-    local healed = false
-    
-    local newHealth = math.min( math.max(0, self.health + amount), self.maxHealth )
-    if(self:GetIsAlive() and self.health ~= newHealth) then
-    
-        self.health = newHealth
-        healed = true
-        
-    end    
-    
-    return healed
-    
-end
-
 // Change health and max health when changing techIds
 function Structure:UpdateHealthValues(newTechId)
 

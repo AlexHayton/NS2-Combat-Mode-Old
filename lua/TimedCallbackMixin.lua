@@ -7,6 +7,7 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================    
 
 TimedCallbackMixin = { }
+TimedCallbackMixin.type = "TimedCallback"
 
 function TimedCallbackMixin:__initmixin()
 

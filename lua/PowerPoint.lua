@@ -184,7 +184,7 @@ end
  * Power points never die, which is what allows them to be repaired even
  * when they have 0 health.
  */
-function PowerPoint:GetIsAlive()
+function PowerPoint:GetIsAliveOverride()
     return true
 end
 

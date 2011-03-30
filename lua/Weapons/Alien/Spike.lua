@@ -30,11 +30,17 @@ function Spike:OnCreate()
     
     // Remember when we're created so we can fall off damage
     self.createTime = Shared.GetTime()
+        
+end
+
+function Spike:OnInit()
+
+    Projectile.OnInit(self)
     
     if Server then
         self:AddTimedCallback(Spike.TimeUp, Spike.kLifetime)
     end
-        
+
 end
 
 function Spike:SetDeathIconIndex(index)

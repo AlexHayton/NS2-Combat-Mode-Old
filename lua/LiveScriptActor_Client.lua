@@ -7,23 +7,10 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-
-// Client version of TakeDamage(). Just call OnTakeDamage() for pushing around ragdolls and such.
-function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
-
-    local killed = false
-    
-    if (self:GetIsAlive() and self:GetCanTakeDamage()) then
-    
-        self:OnTakeDamage(damage, doer, point)
-        
-    end
-    
-    return killed
-    
+function LiveScriptActor:OnTakeDamage(damage, doer, point)
 end
 
-function LiveScriptActor:OnTakeDamage(damage, doer, point)
+function LiveScriptActor:OnKill(damage, attacker, doer, point, direction)
 end
 
 function LiveScriptActor:OnSynchronized()

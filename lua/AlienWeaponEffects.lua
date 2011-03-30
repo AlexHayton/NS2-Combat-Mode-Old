@@ -104,9 +104,14 @@ kAlienWeaponEffects =
     
     bite_attack =
     {
-        biteAttackEffects = 
+        biteAttackSounds =
         {
+            {sound = "sound/ns2.fev/alien/skulk/bite_structure", attach_point = "Bip01_Head", surface = "structure", done = true},
             {sound = "sound/ns2.fev/alien/skulk/bite", attach_point = "Bip01_Head"},
+        },
+        
+        biteAttackAnims = 
+        {
             {
             viewmodel_animation = 
               {
@@ -321,10 +326,15 @@ kAlienWeaponEffects =
     
     swipe_attack = 
     {
-        swipeAttackEffects =
+        swipeAttackSounds =
+        {
+            {sound = "sound/ns2.fev/alien/fade/swipe_structure", surface = "structure", done = true},
+            {sound = "sound/ns2.fev/alien/fade/swipe"},
+        },
+        
+        swipeAttackAnims =
         {
             {viewmodel_animation = {{1, "swipe_attack"}, {1, "swipe_attack2"}, {1, "swipe_attack3"}, {1, "swipe_attack4"}, {1, "swipe_attack5"}, {1, "swipe_attack6"}}, force = true},            
-            {sound = "sound/ns2.fev/alien/fade/swipe"},
             {overlay_animation = { {1, "swipe"}, {1, "swipe2"}, {1, "swipe3"}, {1, "swipe4"}, {1, "swipe5"}, {1, "swipe6"} }, force = true},
         },
     },

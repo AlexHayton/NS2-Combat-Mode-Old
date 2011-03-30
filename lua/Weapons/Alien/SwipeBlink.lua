@@ -15,6 +15,11 @@ Script.Load("lua/Weapons/Alien/Blink.lua")
 class 'SwipeBlink' (Blink)
 SwipeBlink.kMapName = "swipe"
 
+local networkVars =
+{
+    lastSwipedEntityId = "entityid"
+}
+
 // TODO: Hold shift for "rebound" type ability. Shift while looking at enemy lets you blink above, behind or off of a wall.
 
 SwipeBlink.kHitMarineSound = PrecacheAsset("sound/ns2.fev/alien/fade/swipe_hit_marine")
@@ -26,6 +31,14 @@ SwipeBlink.kSwipeEnergyCost = kSwipeEnergyCost
 SwipeBlink.kPrimaryAttackDelay = kSwipeFireDelay
 SwipeBlink.kDamage = kSwipeDamage
 SwipeBlink.kRange = 1.5
+
+function SwipeBlink:OnInit()
+
+    Blink.OnInit(self)
+    
+    self.lastSwipedEntityId = Entity.invalidId
+
+end
 
 function SwipeBlink:GetEnergyCost(player)
     return SwipeBlink.kSwipeEnergyCost
@@ -63,13 +76,27 @@ function SwipeBlink:PerformPrimaryAttack(player)
 
     // Play random animation
     player:SetActivityEnd( player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay() ))
-
-    // Attack a short time later to match with animation
-    self:SetNextThink(.15) 
+    
+    // Check if the swipe may hit an entity. Don't actually do any damage yet.
+    local didHit, trace = self:CheckMeleeCapsule(player, StabBlink.kDamage, StabBlink.kRange)
+    self.lastSwipedEntityId = Entity.invalidId
+    if didHit and trace and trace.entity then
+        self.lastSwipedEntityId = trace.entity:GetId()
+    end
     
 end
 
-function SwipeBlink:OnThink()
+function SwipeBlink:OnTag(tagName)
+
+    Blink.OnTag(self, tagName)
+    
+    if tagName == "hit" then
+        self:PerformMeleeAttack()
+    end
+
+end
+
+function SwipeBlink:PerformMeleeAttack()
 
     local player = self:GetParent()
     if player then
@@ -103,4 +130,18 @@ function SwipeBlink:OnThink()
     
 end
 
-Shared.LinkClassToMap("SwipeBlink", SwipeBlink.kMapName, {} )
+function SwipeBlink:GetEffectParams(tableParams)
+
+    Blink.GetEffectParams(self, tableParams)
+    
+    // There is a special case for biting structures.
+    if self.lastSwipedEntityId ~= Entity.invalidId then
+        local lastSwipedEntity = Shared.GetEntity(self.lastSwipedEntityId)
+        if lastSwipedEntity and lastSwipedEntity:isa("Structure") then
+            tableParams[kEffectFilterHitSurface] = "structure"
+        end
+    end
+    
+end
+
+Shared.LinkClassToMap("SwipeBlink", SwipeBlink.kMapName, networkVars )

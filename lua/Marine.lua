@@ -183,10 +183,6 @@ function Marine:SetViewAngles(viewAngles, playerInput)
     
 end
 
-function Marine:GetMaxHealth()
-    return Marine.kHealth
-end
-
 function Marine:GetArmorAmount()
 
     local armorLevels = 0
@@ -757,7 +753,7 @@ function Marine:UpdateHelp()
 
     local activeWeaponName = self:GetActiveWeaponName()   
     local activeWeapon = self:GetActiveWeapon()
-    local outOfAmmo = (activeWeapon ~= nil and activeWeapon:isa("ClipWeapon") and activeWeapon:GetClip() == 0)
+    local outOfAmmo = (activeWeapon ~= nil and activeWeapon:isa("ClipWeapon") and activeWeapon:GetClip() == 0 and activeWeapon:GetAmmo() == 0)
     
     if self:AddTooltipOnce("You are now a marine! Press left-click to fire your rifle, right-click for a melee attack.") then
         return true

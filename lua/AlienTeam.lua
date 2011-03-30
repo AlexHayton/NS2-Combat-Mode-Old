@@ -553,9 +553,6 @@ function AlienTeam:InitTechTree()
     self.techTree:AddBuyNode(kTechId.Carapace, kTechId.CarapaceTech, kTechId.None, kTechId.Skulk)
     self.techTree:AddResearchNode(kTechId.FeedTech, kTechId.Crag, kTechId.None)
     self.techTree:AddBuyNode(kTechId.Feed, kTechId.FeedTech, kTechId.None, kTechId.Skulk)
-    
-    self.techTree:AddResearchNode(kTechId.LeapTech, kTechId.HiveMass, kTechId.None)
-    self.techTree:AddBuyNode(kTechId.Leap, kTechId.LeapTech, kTechId.None, kTechId.Skulk)
 
     self.techTree:AddResearchNode(kTechId.BloodThirstTech, kTechId.Whip, kTechId.None)
     self.techTree:AddBuyNode(kTechId.BloodThirst, kTechId.BloodThirstTech, kTechId.None, kTechId.Skulk)

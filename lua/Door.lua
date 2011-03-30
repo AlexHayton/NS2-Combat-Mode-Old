@@ -78,7 +78,8 @@ function Door:OnInit()
         
     end
     
-    self.health = self.weldHealth
+    self:SetMaxHealth(self.weldHealth)
+    self:SetHealth(self.weldHealth)
     
     if (self.weldTime == nil) then
     
@@ -244,10 +245,6 @@ function Door:GetWeldTime()
     return self.weldTime
 end
 
-function Door:GetMaxHealth()
-    return self.weldHealth
-end
-
 // If door is ready to be welded by buildbot right now, and in the future
 function Door:GetCanBeWelded(entity)
 
@@ -259,7 +256,7 @@ function Door:GetCanBeWelded(entity)
 end
 
 // If we've been destroyed or not (only after we've been welded and smashed)
-function Door:GetIsAlive()
+function Door:GetIsAliveOverride()
     return self.alive
 end
 

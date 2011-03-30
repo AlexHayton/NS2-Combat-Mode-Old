@@ -7,6 +7,7 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================    
 
 WeaponOwnerMixin = { }
+WeaponOwnerMixin.type = "WeaponOwner"
 
 function WeaponOwnerMixin:UpdateWeapons(input)
 

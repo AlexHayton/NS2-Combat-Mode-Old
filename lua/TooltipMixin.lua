@@ -7,6 +7,7 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================    
 
 TooltipMixin = { }
+TooltipMixin.type = "Tooltip"
 
 function TooltipMixin:__initmixin()
 
@@ -15,10 +16,10 @@ function TooltipMixin:__initmixin()
 end
 
 /**
- * Check if we've already displayed this tooltip. Returns false if we haven't, or if time
+ * Internal function to check if we've already displayed this tooltip. Returns false if we haven't, or if time
  * has expired since we've displayed
  */
-function TooltipMixin:GetCanDisplayTooltip(tooltipText, timeInterval)
+function TooltipMixin:_GetCanDisplayTooltip(tooltipText, timeInterval)
 
     ASSERT(type(tooltipText) == "string")
     
@@ -54,7 +55,7 @@ function TooltipMixin:AddTooltipOnce(tooltipText)
 
     ASSERT(type(tooltipText) == "string")
     
-    if(self:GetCanDisplayTooltip(tooltipText, nil)) then
+    if(self:_GetCanDisplayTooltip(tooltipText, nil)) then
     
         self:AddTooltip(tooltipText)
         return true
@@ -73,7 +74,7 @@ function TooltipMixin:AddTooltipOncePer(tooltipText, timeInterval)
         timeInterval = 10
     end
     
-    if(self:GetCanDisplayTooltip(tooltipText, timeInterval)) then
+    if(self:_GetCanDisplayTooltip(tooltipText, timeInterval)) then
     
         self:AddTooltip(tooltipText)
         
@@ -95,12 +96,13 @@ function TooltipMixin:AddTooltip(message)
         self:AddTooltipServer(message)
     end
     
-    self:AddDisplayedTooltip(message)
+    table.insertunique(self.displayedTooltips, {message, Shared.GetTime()})
+    self.timeOfLastTooltip = Shared.GetTime()
     
 end
 
 /**
- * Inform player about something (research complete, a structure that can be used, etc.)
+ * Display the tooltip and play a sound.
  */
 function TooltipMixin:AddTooltipClient(message)
     
@@ -114,20 +116,19 @@ function TooltipMixin:AddTooltipClient(message)
     
 end
 
+/**
+ * Send notification to the Client to add this tooltip.
+ */
 function TooltipMixin:AddTooltipServer(message)
     
     Server.SendCommand(self, string.format("%s \"%s\"", "tooltip", message))
-    self.timeOfLastTooltip = Shared.GetTime()
 
-end
-
-function TooltipMixin:AddDisplayedTooltip(message)
-
-    ASSERT(type(message) == "string")
-    table.insertunique(self.displayedTooltips, {message, Shared.GetTime()})
-    
 end
 
 function TooltipMixin:ClearDisplayedTooltips()
     table.clear(self.displayedTooltips)
+end
+
+function TooltipMixin:GetNumberOfDisplayedTooltips()
+    return table.count(self.displayedTooltips)
 end

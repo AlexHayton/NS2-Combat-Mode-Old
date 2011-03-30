@@ -88,13 +88,13 @@ function Door:OnWeld(entity, elapsedTime)
     
 end
 
-function Door:ComputeDamage(damage, damageType)
+function Door:ComputeDamageOverride(damage, damageType)
 
     if damageType ~= kDamageType.Door then
         damage = 0
     end
     
-    return LiveScriptActor.ComputeDamage(self, damage, damageType)
+    return damage, damageType
 
 end
 

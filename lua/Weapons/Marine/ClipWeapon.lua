@@ -20,9 +20,6 @@ local networkVars =
     ammo = "integer (0 to 255)",
     clip = "integer (0 to 200)",
     
-    // Weapon-specific weapon state
-    weaponState = "integer (0 to 5)",
-    
     reloadTime = "float",
     
     // 1 is most accurate, 0 is least accurate
@@ -158,7 +155,6 @@ function ClipWeapon:OnInit()
     
     self.ammo = self:GetNumStartClips() * self:GetClipSize()
     self.clip = 0
-    self.weaponState = 0
     self.reloadTime = 0
     self.accuracy = 1
 
@@ -244,6 +240,11 @@ function ClipWeapon:OnPrimaryAttack(player)
         
                 self:FirePrimary(player, self:GetBulletsPerShot(), self:GetRange(), self:GetPenetration())
                 
+                // Play the end effect now before the clip runs out in case there are effects that
+                // don't trigger when empty.
+                if self.clip == 1 then
+                    Weapon.OnPrimaryAttackEnd(self, player)
+                end
                 // Don't decrement ammo in Darwin mode
                 if(not Server or not GetGamerules():GetDarwinMode()) then
                     self.clip = self.clip - 1

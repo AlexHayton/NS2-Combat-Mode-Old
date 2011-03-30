@@ -221,7 +221,8 @@ end
 // If structure can be repaired by buildbot welder right now, along with whether it can be welded in the future
 function Structure:GetCanBeWelded(entity)
 
-    local canBeWeldedNow = self:GetIsBuilt() and entity:GetTeamNumber() == self:GetTeamNumber() and self:GetHealth() < self:GetMaxHealth()
+    local canBeWeldedNow = self:GetIsBuilt() and entity:GetTeamNumber() == self:GetTeamNumber() and
+                           (self:GetHealth() < self:GetMaxHealth() or self:GetArmor() < self:GetMaxArmor())
     local canBeWeldedFuture = false
     
     return canBeWeldedNow, canBeWeldedFuture

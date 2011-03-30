@@ -159,7 +159,11 @@ function Weapon:OnDraw(player, previousWeaponMapName)
     
 end
 
-function Weapon:AttackMeleeCapsule(player, damage, range)
+/**
+ * Checks if a melee capsule would hit anything. Does not actually carry
+ * out any attack or inflict any damage.
+ */
+function Weapon:CheckMeleeCapsule(player, damage, range)
 
     local viewOffset = player:GetViewOffset()
     local startPoint = viewOffset + player:GetOrigin()
@@ -170,12 +174,26 @@ function Weapon:AttackMeleeCapsule(player, damage, range)
     
     local filter = EntityFilterTwo(player, self)
     local trace  = Shared.TraceBox(extents, startPoint, endPoint, PhysicsMask.Melee, filter)
+    
+    local direction = nil
+    if trace.fraction < 1 then
+        direction = (trace.endPoint - startPoint):GetUnit()
+    end
+    
+    return trace.fraction < 1, trace, direction
+
+end
+
+/**
+ * Does an attack with a melee capsule.
+ */
+function Weapon:AttackMeleeCapsule(player, damage, range)
+
+    local didHit, trace, direction = self:CheckMeleeCapsule(player, damage, range)
 
     if trace.fraction < 1 then
     
-        
         if Server then
-            local direction = (trace.endPoint - startPoint):GetUnit()
             self:ApplyMeleeHitEffects(player, damage, trace.entity, trace.endPoint, direction)
         end
         
@@ -183,7 +201,7 @@ function Weapon:AttackMeleeCapsule(player, damage, range)
         
     end
     
-    return trace.fraction < 1, trace
+    return didHit, trace
     
 end
 

@@ -13,6 +13,8 @@ if (Server) then
 
     function PropDynamic:OnInit()
 
+        ScriptActor.OnInit(self)
+        
         self.modelName = self.model
         self.animationName = self.animation
         self.propScale = self.scale

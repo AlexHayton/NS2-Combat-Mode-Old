@@ -70,6 +70,8 @@ end
 
 function Infestation:OnDestroy()
 
+    LiveScriptActor.OnDestroy(self)
+
     if Client then
         Client.DestroyRenderDecal( self.decal )
         self.decal = nil
