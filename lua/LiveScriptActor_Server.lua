@@ -84,12 +84,12 @@ function LiveScriptActor:Upgrade(newTechId)
         
         self:SetTechId(newTechId)
         
-        self.maxHealth = LookupTechData(newTechId, kTechDataMaxHealth, self.maxHealth)
-        self.maxArmor = LookupTechData(newTechId, kTechDataMaxArmor, self.maxArmor)
+        self:SetMaxHealth(LookupTechData(newTechId, kTechDataMaxHealth, self:GetMaxHealth()))
+        self:SetMaxArmor(LookupTechData(newTechId, kTechDataMaxArmor, self:GetMaxArmor()))
         self.maxEnergy = LookupTechData(newTechId, kTechDataMaxEnergy, self.maxEnergy)
         
-        self.health = healthScalar * self.maxHealth
-        self.armor = armorScalar * self.maxArmor
+        self:SetHealth(healthScalar * self:GetMaxHealth())
+        self:SetArmor(armorScalar * self:GetMaxArmor())
         self.energy = energyScalar * self.maxEnergy
         
         return true
@@ -127,127 +127,6 @@ function LiveScriptActor:UpdateJustKilled()
     
 end
 
-// Server version of TakeDamage()
-function LiveScriptActor:TakeDamage(damage, attacker, doer, point, direction)
-
-    // Use AddHealth to give health
-    ASSERT( damage >= 0 )
-
-    if (self:GetIsAlive() and GetGamerules():CanEntityDoDamageTo(attacker, self)) then
-
-        // Get damage type from source    
-        local damageType = kDamageType.Normal
-        if doer ~= nil then 
-            damageType = doer:GetDamageType()
-        end
-	
-	local pointOwner = attacker
-        // If the pointOwner is not a player, award it's points to it's owner.
-        if pointOwner ~= nil and not pointOwner:isa("Player") then
-            pointOwner = pointOwner:GetOwner()
-        end
-
-        // Take into account upgrades on attacker (armor1, weapons1, etc.)        
-        damage = GetGamerules():GetUpgradedDamage(pointOwner, damage, damageType)
-
-        // highdamage cheat speeds things up for testing
-        damage = damage * GetGamerules():GetDamageMultiplier()
-		
-		// Moved the friendly fire check to here.
-		local isHealing = false
-		if (attacker ~= nil) then
-			local isAxeHit = false
-			// Check if this is an axe/welder hit
-			if (attacker:isa("Marine") and attacker:GetActiveWeapon():isa("Axe") and attacker:GetTeamNumber() == self:GetTeamNumber()) then
-				isAxeHit = true
-			end
-			
-			// Deal with axe/welder healing
-			if (isAxeHit) then
-				if (self:isa("Structure")) then
-					local damageHealed = self:AddHealth(damage*kHealingScalar)
-					if (pointOwner ~= nil and pointOwner:isa("Player")) then
-						local experience = Experience_ComputeExperience(self, damageHealed)
-						pointOwner:AddExperience(experience)
-						Experience_GrantNearbyExperience(pointOwner, experience)
-					end
-				end
-				isHealing = true
-			end
-		end
-        
-        // Children can override to change damage according to player mode, damage type, etc.
-        local armorUsed, healthUsed
-        damage, armorUsed, healthUsed = self:ComputeDamage(damage, damageType)
-        
-        local oldHealth = self.health
-        
-        if (damage > 0 and not isHealing) then
-		    self.armor = self.armor - armorUsed
-			self.health = math.max(self.health - healthUsed, 0)
-        
-            self:OnTakeDamage(damage, doer, point)
-            
-            // Notify the doer they are giving out damage.
-            local doerPlayer = doer
-            if doer and doer:GetParent() and doer:GetParent():isa("Player") then
-                doerPlayer = doer:GetParent()
-            end
-            if doerPlayer and doerPlayer:isa("Player") then
-                // Not sent reliably as this notification is just an added bonus.
-                Server.SendNetworkMessage(doerPlayer, "GiveDamageIndicator", BuildGiveDamageIndicatorMessage(damage), false)
-            end
-            
-            local pointOwner = attacker
-            // If the pointOwner is not a player, award it's points to it's owner.
-            if pointOwner ~= nil and not pointOwner:isa("Player") then
-                pointOwner = pointOwner:GetOwner()
-            end
-			
-			// Experience Calculations:
-			// Grant experience for damaging structures and also make a note of the total damage done 
-			// by each player for when we die
-			if (pointOwner ~= nil and pointOwner:isa("Player") and pointOwner:GetTeamNumber() ~= self:GetTeamNumber()) then
-			
-				local damageTaken = armorUsed + healthUsed
-		
-				// Award Experience for damaging structures
-				if (self:isa("Structure")) then
-					if (not self:isa("PowerPoint") or (self:isa("PowerPoint") and self:GetIsPowered())) then
-						local experience = Experience_ComputeExperience(self, damageTaken)
-						
-						pointOwner:AddExperience(experience)
-						Experience_GrantNearbyExperience(pointOwner, experience)
-					end
-				end
-				
-				// Record the player in the assists table
-				if (not self.damageList[pointOwner]) then 
-					self.damageList[pointOwner] = 0
-				end
-                self.damageList[pointOwner] = self.damageList[pointOwner] + damageTaken
-				self.totalDamage = self.totalDamage + damageTaken
-            end
-                
-            if (oldHealth > 0 and self.health == 0) then
-            
-                // Do this first to make sure death message is sent
-                GetGamerules():OnKill(self, damage, attacker, doer, point, direction)
-        
-                self:OnKill(damage, attacker, doer, point, direction)
-
-                self.justKilled = true
-                               
-            end
-            
-        end
-        
-    end
-    
-    return (self.justKilled == true)
-    
-end
-
 // Return the amount of health we added 
 function LiveScriptActor:AddHealth(health, playSound)
 
@@ -256,15 +135,15 @@ function LiveScriptActor:AddHealth(health, playSound)
 
     local total = 0
     
-    if self:GetIsAlive() and ((self.health < self:GetMaxHealth()) or (self.armor < self:GetMaxArmor())) then
+    if self:GetIsAlive() and ((self:GetHealth() < self:GetMaxHealth()) or (self:GetArmor() < self:GetMaxArmor())) then
     
         // Add health first, then armor if we're full
-        local healthAdded = math.min(health, self:GetMaxHealth() - self.health)
-        self.health = math.min(math.max(0, self.health + healthAdded), self:GetMaxHealth())
+        local healthAdded = math.min(health, self:GetMaxHealth() - self:GetHealth())
+        self:SetHealth(math.min(math.max(0, self:GetHealth() + healthAdded), self:GetMaxHealth()))
 
         local healthToAddToArmor = health - healthAdded
-        if(healthToAddToArmor > 0) then        
-            self.armor = math.min(math.max(0, self.armor + healthToAddToArmor), self:GetMaxArmor())   
+        if(healthToAddToArmor > 0) then
+            self:SetArmor(math.min(math.max(0, self:GetArmor() + healthToAddToArmor), self:GetMaxArmor()))
         end
         
         total = healthAdded + healthToAddToArmor
@@ -275,7 +154,7 @@ function LiveScriptActor:AddHealth(health, playSound)
         
     end
     
-    return total    
+    return total
     
 end
 
@@ -458,33 +337,6 @@ end
 
 function LiveScriptActor:Kill(attacker, doer, point, direction)
     self:TakeDamage(1000, attacker, doer, nil, nil)
-end
-
-// Calculate damage from damage types 
-function LiveScriptActor:ComputeDamage(damage, damageType)
-
-    local armorPointsUsed = 0
-    local healthPointsUsed = 0    
-
-    damage = GetGamerules():ComputeDamageFromType(damage, damageType, self)
-
-    if damage > 0 then
-    
-        // Calculate damage absorbed by armor according to damage type
-        local absorbPercentage = self:GetArmorAbsorbPercentage(damageType)
-        
-        // Each point of armor blocks a point of health but is only destroyed at half that rate (like NS1)
-        // Thanks Harimau!
-        healthPointsBlocked = math.min(self:GetHealthPerArmor(damageType) * self.armor, absorbPercentage * damage )
-        armorPointsUsed = healthPointsBlocked / self:GetHealthPerArmor(damageType)
-        
-        // Anything left over comes off of health
-        healthPointsUsed = damage - healthPointsBlocked   
-     
-    end
-    
-    return damage, armorPointsUsed, healthPointsUsed
-
 end
 
 // Children can override this to issue build, construct, etc. orders on right-click
@@ -776,44 +628,50 @@ end
 // Returns distance from location after move. 
 function LiveScriptActor:MoveToTarget(physicsGroupMask, location, movespeed, time)
 
-    // Any time waypoints are added to a group without naming it in the editor it will be named "GroundWaypoints" (kDefaultWaypointGroup)
+    // Any time waypoints are added to a group without naming it in the editor it will be named "GroundWaypoints" (kDefaultWaypointGroup).
     local movement = nil
     
     if self.pathingEnabled then
         movement = Server.MoveToTarget(physicsGroupMask, self, self:GetWaypointGroupName(), location, movespeed * time)
     end
 
-    // if the newer navigation fails, default to the old version;
-    if self.pathingEnabled and movement and movement.valid then
+    local newOrigin = Vector()
+    local distance = 0
     
-        local newOrigin = Vector()
+    // If the newer navigation fails, default to the old version.
+    if self.pathingEnabled and movement and movement.valid then
+
         VectorCopy(movement.position, newOrigin)
-        self:SnapToGround(newOrigin, physicsGroupMask)
-        self:SetOrigin(newOrigin)
         SetAnglesFromVector(self, movement.direction)
-        return movement.distance
+        distance = movement.distance
         
     else
     
-        // No pathing - move straight towards target 
+        // No pathing, move straight towards target.
         local distToTarget = (location - self:GetOrigin()):GetLength()
         if distToTarget < movespeed * time then
         
-            self:SnapToGround(location, physicsGroupMask)
-            self:SetOrigin(location)
-            return 0
+            VectorCopy(location, newOrigin)
+            distance = 0
 
         else
         
-            local newOrigin = self:GetOrigin() + GetNormalizedVector(location - self:GetOrigin()) * movespeed * time
-            self:SnapToGround(newOrigin, physicsGroupMask)
-            self:SetOrigin(newOrigin)
-            distToTarget = (location - self:GetOrigin()):GetLength()
-            return distToTarget
+            newOrigin = self:GetOrigin() + GetNormalizedVector(location - self:GetOrigin()) * movespeed * time
+            distance = (location - self:GetOrigin()):GetLength()
             
-        end            
+        end
 
     end
+    
+    // Don't allow movement through other entities.
+    local trace = Shared.TraceRay(self:GetOrigin(), newOrigin, physicsGroupMask, EntityFilterOne(self))
+    if trace.entity == nil then
+        self:SnapToGround(newOrigin, physicsGroupMask)
+        self:SetOrigin(newOrigin)
+        return distance
+    end
+    
+    return 0
     
 end
 
@@ -829,38 +687,6 @@ function LiveScriptActor:PerformAction(techNode, position)
 end
 
 function LiveScriptActor:OnWeld(entity, elapsedTime)
-end
-
-// Damage to marine armor could show sparks and debris and debris and castings for aliens
-// Damage to health shows blood and the player makes grunting/squealing/pain noises
-// Armor is best at absorbing melee damage, less against projectiles and not effective for gas/breathing damage
-// (the TSA designed their armor to deal best against skulks!)
-function LiveScriptActor:GetArmorAbsorbPercentage(damageType)
-
-    local armorAbsorbPercentage = kBaseArmorAbsorption
-    
-    if(damageType == kDamageType.Falling) then
-    
-        armorAbsorbPercentage = 0
-        
-    end
-    
-    return armorAbsorbPercentage
-    
-end
-
-function LiveScriptActor:GetHealthPerArmor(damageType)
-
-    local healthPerArmor = kHealthPointsPerArmor
-    
-    if damageType == kDamageType.Light then
-        healthPerArmor = kHealthPointsPerArmorLight
-    elseif damageType == kDamageType.Heavy then
-        healthPerArmor = kHealthPointsPerArmorHeavy
-    end
-    
-    return healthPerArmor
-    
 end
 
 // Sets or clears a game effect flag

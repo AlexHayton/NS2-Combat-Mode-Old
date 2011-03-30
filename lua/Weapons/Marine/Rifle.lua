@@ -211,10 +211,21 @@ function Rifle:OnSecondaryAttack(player)
 
         player:DeactivateWeaponLift()
         
-        self:DoMelee(player)
-        
         ClipWeapon.OnSecondaryAttack(self, player)
         
+    end
+
+end
+
+function Rifle:OnTag(tagName)
+
+    ClipWeapon.OnTag(self, tagName)
+    
+    if tagName == "hit" then
+        local player = self:GetParent()
+        if player then
+            self:DoMelee(player)
+        end
     end
 
 end

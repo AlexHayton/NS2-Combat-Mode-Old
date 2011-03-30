@@ -52,6 +52,25 @@ function HydraAbility:GetIconOffsetY(secondary)
     return kAbilityOffset.Hydra
 end
 
+// Check before energy is spent if a Hydra can be built in the current location.
+function HydraAbility:OnPrimaryAttack(player)
+
+    // Ensure the current location is valid for placement.
+    local coords, valid = self:GetPositionForHydra(player)
+    if valid then
+        // Ensure they have enough resources.
+        local cost = LookupTechData(kTechId.Hydra, kTechDataCostKey)
+        if player:GetPlasma() >= cost then
+            Ability.OnPrimaryAttack(self, player)
+        else
+            player:AddTooltip("Not enough resources to create Hydra.")
+        end
+    else
+        player:AddTooltip("Could not place Hydra in that location.")
+    end
+    
+end
+
 // Create hydra
 function HydraAbility:PerformPrimaryAttack(player)
 

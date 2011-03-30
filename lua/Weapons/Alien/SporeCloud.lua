@@ -91,6 +91,8 @@ end
 
 function SporeCloud:OnInit()
 
+    ScriptActor.OnInit(self)
+    
     self:SetUpdates(true)
 
     if Server then

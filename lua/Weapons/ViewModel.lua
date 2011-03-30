@@ -33,6 +33,27 @@ function ViewModel:OnCreate()
 
 end
 
+if Client then
+
+function ViewModel:OnSynchronized()
+
+    PROFILE("ViewModel:OnSynchronized")
+
+    // Make sure to call OnInit() for client ViewModels that have been propagated by the server
+    if(not self.clientInitedOnSynch) then
+    
+        self:OnInit()
+        
+        self.clientInitedOnSynch = true
+        
+    end
+    
+    BlendedActor.OnSynchronized(self)
+    
+end
+
+end
+
 function ViewModel:GetModelIndex()
     return self.modelIndex
 end
@@ -161,9 +182,16 @@ function ViewModel:GetAttachPointCoords(attachPoint)
     
 end
 
-// TODO: Pass along to weapon or player so melee attacks can be triggered at exact time of impact
-//function ViewModel:OnTag(tagHit)
-//end
+// Pass along to weapon so melee attacks can be triggered at exact time of impact.
+function ViewModel:OnTag(tagHit)
+
+    BlendedActor.OnTag(self, tagHit)
+    
+    if self.weapon then
+        self.weapon:OnTag(tagHit)
+    end
+
+end
 
 if (Client) then
 

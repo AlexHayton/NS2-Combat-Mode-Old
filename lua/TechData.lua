@@ -361,7 +361,6 @@ function BuildTechData()
 
         // Lifeform research
         { [kTechDataId] = kTechId.BloodThirstTech,              [kTechDataDisplayName] = "Bloodthirst", [kTechDataImplemented] = false,  [kTechDataCostKey] = kBloodThirstResearchCost, [kTechDataResearchTimeKey] = kBloodThirstResearchTime },        
-        { [kTechDataId] = kTechId.LeapTech,                     [kTechDataDisplayName] = "Running leap", [kTechDataCostKey] = kLeapResearchCost, [kTechDataResearchTimeKey] = kLeapResearchTime },                
         { [kTechDataId] = kTechId.FeedTech,                     [kTechDataDisplayName] = "Feed", [kTechDataImplemented] = false,  [kTechDataCostKey] = kFeedResearchCost, [kTechDataResearchTimeKey] = kFeedResearchTime },                
         { [kTechDataId] = kTechId.CarapaceTech,                 [kTechDataDisplayName] = "Carapace", [kTechDataImplemented] = false,  [kTechDataCostKey] = kCarapaceResearchCost, [kTechDataResearchTimeKey] = kCarapaceResearchTime },                
         
@@ -554,7 +553,7 @@ function LookupTechData(techId, fieldName, default)
             techIdString = EnumToString(kTechId, techId)
         end
         
-        Print("LookupTechData(%s, %s, %s) called improperly.", techIdString, tostring(fieldName), tostring(default))
+        Print("LookupTechData(%s, %s, %s) called improperly.", tostring(techIdString), tostring(fieldName), tostring(default))
         return kTechId.None
         
     end

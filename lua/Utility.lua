@@ -561,7 +561,7 @@ function Copy(t)
     elseif type(t) == "userdata" then
         if t:isa("Vector") then
             return Vector(t)
-        elseif t:isa("Trace") then
+        elseif (Trace ~= nil) and t:isa("Trace") then
             return Trace(t)
         else
             //Print("Copy(%s): Not implemented.", t:GetClassName())

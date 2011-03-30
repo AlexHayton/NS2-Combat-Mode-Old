@@ -84,8 +84,6 @@ function Axe:OnPrimaryAttack(player)
     // when not interrupted
     player:SetActivityEnd(self:GetPrimaryAttackDelay() * player:GetCatalystFireModifier())
     
-    self:AttackMeleeCapsule(player, Axe.kDamage, self:GetRange())
-    
 end
 
 function Axe:OnTag(tagName)
@@ -94,7 +92,10 @@ function Axe:OnTag(tagName)
 
     if(tagName == "hit") then
     
-        // TODO: Trigger melee
+        local player = self:GetParent()
+        if player then
+            self:AttackMeleeCapsule(player, Axe.kDamage, self:GetRange())
+        end
         
     end
     

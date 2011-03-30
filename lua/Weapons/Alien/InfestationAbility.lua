@@ -46,6 +46,18 @@ function InfestationAbility:GetPrimaryAttackDelay()
     return 1.0
 end
 
+// Check before energy is spent if a Infestation can be built in the current location.
+function InfestationAbility:OnPrimaryAttack(player)
+
+    local coords, valid = self:GetPositionForInfestation(player)
+    if valid then
+        Ability.OnPrimaryAttack(self, player)
+    else
+        player:AddTooltip("Could not place Infestation in that location.")
+    end
+    
+end
+
 // Create infestation
 function InfestationAbility:PerformPrimaryAttack(player)
 
@@ -175,7 +187,7 @@ function InfestationAbility:OnUpdate(deltaTime)
         
         if player == Client.GetLocalPlayer() and player:GetActiveWeapon() == self then
         
-            // Show ghost if we're able to create a hydra
+            // Show ghost if we're able to create an infestation patch.
             self.showGhost = player:GetCanNewActivityStart()
             
             // Create ghost

@@ -16,6 +16,19 @@ BiteLeap.kMapName = "bite"
 
 BiteLeap.kRange = 1.0    // 60" inches in NS1
 
+local networkVars =
+{
+    lastBittenEntityId = "entityid"
+}
+
+function BiteLeap:OnInit()
+
+    Ability.OnInit(self)
+    
+    self.lastBittenEntityId = Entity.invalidId
+
+end
+
 function BiteLeap:GetEnergyCost(player)
     return kBiteEnergyCost
 end
@@ -50,7 +63,12 @@ function BiteLeap:PerformPrimaryAttack(player)
     player:SetActivityEnd( player:AdjustFuryFireDelay(kBiteFireDelay) )
 
     // Trace melee attack
-    self:AttackMeleeCapsule(player, kBiteDamage, BiteLeap.kRange)   
+    local didHit, trace = self:AttackMeleeCapsule(player, kBiteDamage, BiteLeap.kRange)
+    
+    self.lastBittenEntityId = Entity.invalidId
+    if didHit and trace and trace.entity then
+        self.lastBittenEntityId = trace.entity:GetId()
+    end
 
 end
 
@@ -89,4 +107,18 @@ function BiteLeap:PerformSecondaryAttack(player)
     
 end
 
-Shared.LinkClassToMap("BiteLeap", BiteLeap.kMapName, {} )
+function BiteLeap:GetEffectParams(tableParams)
+
+    Ability.GetEffectParams(self, tableParams)
+    
+    // There is a special case for biting structures.
+    if self.lastBittenEntityId ~= Entity.invalidId then
+        local lastBittenEntity = Shared.GetEntity(self.lastBittenEntityId)
+        if lastBittenEntity and lastBittenEntity:isa("Structure") then
+            tableParams[kEffectFilterHitSurface] = "structure"
+        end
+    end
+    
+end
+
+Shared.LinkClassToMap("BiteLeap", BiteLeap.kMapName, networkVars )

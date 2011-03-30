@@ -15,6 +15,8 @@ Ragdoll.kPersistTime = 10
 
 function Ragdoll:OnInit()
 
+    ScriptActor.OnInit(self)
+    
     self:SetPhysicsType(Actor.PhysicsType.Dynamic)
     self:SetPhysicsGroup(PhysicsGroup.RagdollGroup)
     

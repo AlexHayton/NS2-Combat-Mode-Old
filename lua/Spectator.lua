@@ -272,7 +272,7 @@ function Spectator:OnProcessMove(input)
     
     self:UpdateCamera(input.time)
     
-    if Client and not Shared.GetIsRunningPrediction() then
+    if Client then
         self:UpdateChat(input)
     end
     

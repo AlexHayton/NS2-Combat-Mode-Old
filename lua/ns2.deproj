@@ -852,4 +852,7 @@
   <file>
     <filename>Skulk_Client.lua</filename>
   </file>
+  <file>
+    <filename>LiveMixin.lua</filename>
+  </file>
 </project>

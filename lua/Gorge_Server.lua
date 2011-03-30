@@ -20,7 +20,7 @@ function Gorge:InitWeapons()
 end
 
 // When we're in our Gorge armor shell, damage comes off of energy first
-function Gorge:ComputeDamage(damage, damageType)
+function Gorge:ComputeDamageOverride(damage, damageType)
 
     if(self.mode == kPlayerMode.GorgeArmor) then
     
@@ -33,7 +33,7 @@ function Gorge:ComputeDamage(damage, damageType)
         
     end
     
-    return Alien.ComputeDamage(self, damage, damageType)
+    return damage, damageType
     
 end
 

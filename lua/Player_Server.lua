@@ -774,7 +774,9 @@ function Player:RemoveChildren()
     self.viewModelId = Entity.invalidId
     
     // Recompute upon removing all children so list is accurate.
-    self:ComputeHUDOrderedWeaponList()
+    if HasMixin(self, "WeaponOwner") then
+        self:ComputeHUDOrderedWeaponList()
+    end
 
 end
 
@@ -784,6 +786,7 @@ function Player:InitViewModel()
     
         local viewModel = CreateEntity(ViewModel.mapName)
         viewModel:SetOrigin(self:GetOrigin())
+        viewModel:OnInit()
         viewModel:SetParent(self)
         self.viewModelId = viewModel:GetId()
         

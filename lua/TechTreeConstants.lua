@@ -115,7 +115,7 @@ kTechId = enum({
     
     // Alien abilities and upgrades - BabblerTech
     'BabblerTech', 'LobTech', 'EchoTech', 'PhantasmTech', 
-    'LeapTech', 'BloodThirstTech', 'FeedTech', 'Melee1Tech', 'Melee2Tech', 'Melee3Tech', 'AlienArmor1Tech', 'AlienArmor2Tech', 'AlienArmor3Tech',
+    'BloodThirstTech', 'FeedTech', 'Melee1Tech', 'Melee2Tech', 'Melee3Tech', 'AlienArmor1Tech', 'AlienArmor2Tech', 'AlienArmor3Tech',
     'AdrenalineTech', 'CorpulenceTech', 'BacteriaTech', 'FeintTech', 'SapTech', 'StompTech', 'BoneShieldTech', 'CarapaceTech', 'PiercingTech',
     
     // Alien buys

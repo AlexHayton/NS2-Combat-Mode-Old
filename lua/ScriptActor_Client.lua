@@ -22,7 +22,7 @@ function ScriptActor:OnSynchronized()
         
     end
     
-    Actor.OnSynchronized(self)
+    BlendedActor.OnSynchronized(self)
     
 end
 

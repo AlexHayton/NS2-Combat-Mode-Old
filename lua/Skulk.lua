@@ -30,6 +30,7 @@ local networkVars =
     wallWalking                 = "compensated boolean",
     timeLastWallWalkCheck       = "float",
     leaping                     = "compensated boolean",
+    timeOfLeap                  = "float",
     leapingAnimationPlaying     = "compensated boolean",
     wallWalkingNormalGoal       = "compensated vector",
     wallWalkingNormalCurrent    = "compensated vector",
@@ -43,6 +44,8 @@ Skulk.kHealth = kSkulkHealth
 Skulk.kArmor = kSkulkArmor
 Skulk.kLeapVerticalVelocity = 4
 Skulk.kLeapTime = 0.2
+// kLeapPreventStickTime is used as a time period not to stick to walls after leaping.
+Skulk.kLeapPreventStickTime = 0.05
 Skulk.kLeapForce = 12
 Skulk.kMaxSpeed = 6.2 // 8.7
 Skulk.kMaxWalkSpeed = Skulk.kMaxSpeed / 2
@@ -52,7 +55,7 @@ Skulk.kFov = 110
 Skulk.kMass = 45 // ~100 pounds
 Skulk.kWallWalkCheckInterval = .2
 // This is how quickly the 3rd person model will adjust to the new normal.
-Skulk.kWallWalkNormalSmoothRate = 5
+Skulk.kWallWalkNormalSmoothRate = 6
 // How big the spheres are they are casted out to find walls, "feelers".
 Skulk.kWallWalkingFeelerSize = 0.1
 Skulk.kNormalWallWalkRange = 0.2
@@ -120,19 +123,8 @@ function Skulk:OnLeap()
     local forwardVec = self:GetViewAngles():GetCoords().zAxis
     local newVelocity = velocity + forwardVec * Skulk.kLeapForce
     
-    if not self:GetHasUpgrade(kTechId.Leap) then
-    
-        // Mini leap not for offense but for navigation - reduce by current speed
-        local currSpeedScalar = Clamp(velocity:GetLength() / self:GetMaxSpeed(), 0, 1)
-        local amount = (1 - currSpeedScalar)            
-        newVelocity = velocity + forwardVec * Skulk.kLeapForce * amount
-        
-    end
-    
-    // Add in vertical component if on the ground
-    if(not self.wallWalking) then
-        newVelocity.y = newVelocity.y + Skulk.kLeapVerticalVelocity
-    end
+    // Add in vertical component.
+    newVelocity.y = newVelocity.y + Skulk.kLeapVerticalVelocity
     
     self:SetVelocity(newVelocity)
     
@@ -222,31 +214,27 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
     PROFILE("Skulk:PreUpdateMovePhysics")
 
     local angles = Angles(self:GetAngles())
-
+    
     // Crouching turns off wallwalking like in NS
-    if self.crouching or self:GetRecentlyWallJumped() then
+    if self.crouching or self:GetRecentlyWallJumped() or self:GetLeapPreventWallStick() then
     
         self.wallWalking = false
         
     else
-        
+
         // Don't check wall walking every frame for performance    
         if (Shared.GetTime() > (self.timeLastWallWalkCheck + Skulk.kWallWalkCheckInterval)) then
-            
+
             // Most of the time, it returns a fraction of 0, which means
             // trace started outside the world (and no normal is returned)           
             local goal = self:GetAverageWallWalkingNormal(Skulk.kNormalWallWalkRange)
             
             if goal ~= nil then
                 self.wallWalkingNormalGoal = goal
-                self.wallWalkingStickGoal = nil
+                self.wallWalkingStickGoal = goal
                 self.wallWalking = true
-            // If already wallwalking but we have moved too far from a wall
-            // check for a wall a bit further away and move towards it like
-            // a magnet.
-            elseif self.wallWalking == true then
-                // The player can try to stick to the wall better by using the
-                // movement modifier button.
+            // If not on the ground, check for a wall a bit further away and move towards it like a magnet.
+            elseif not self:GetIsOnGround() then
                 // If the player is trying to stick to the wall put some extra
                 // effort into keeping them on it.
                 local stickDirectionGoal = self:GetAverageWallWalkingNormal(Skulk.kStickyWallWalkRange)
@@ -274,16 +262,22 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
         smoothMultiplier = 3
     end
 
-
-    if ( self.leaping and (Alien.GetIsOnGround(self) or self.wallWalking) and (Shared.GetTime() > self.timeOfLeap + Skulk.kLeapTime) ) then
+    if self.leaping and (Alien.GetIsOnGround(self) or self.wallWalking) and (Shared.GetTime() > self.timeOfLeap + Skulk.kLeapTime) then
         self.leaping = false
     end
 
     // Smooth out the normal.
-    if self.wallWalkingNormalCurrent == nil then
-        self.wallWalkingNormalCurrent = Vector(Vector.yAxis)
-    end
     local normalDiff = self.wallWalkingNormalGoal - self.wallWalkingNormalCurrent
+    // Check if the vectors are polar opposites.
+    if self.wallWalkingNormalGoal:DotProduct(self.wallWalkingNormalCurrent) == -1 then
+        // Prefer spinning around the x axis.
+        if self:GetCoords().xAxis:DotProduct(self.wallWalkingNormalGoal) ~= -1 then
+            normalDiff = self.wallWalkingNormalGoal - self:GetCoords().xAxis
+        else
+            normalDiff = self.wallWalkingNormalGoal - self.wallWalkingNormalCurrent:GetPerpendicular()
+        end
+    end
+    
     self.wallWalkingNormalCurrent = self.wallWalkingNormalCurrent + (normalDiff * (input.time * Skulk.kWallWalkNormalSmoothRate * smoothMultiplier))
     self.wallWalkingNormalCurrent:Normalize()
     
@@ -313,7 +307,7 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
     if self.wallWalking == true then
         self:PreventWallWalkIntersection(input.time)
     end
-    
+
 end
 
 function Skulk:UpdatePosition(velocity, time)
@@ -433,10 +427,12 @@ function Skulk:TraceWallNormal(startPoint, endPoint, normals)
     // Don't allow wall-walking on entities    
     if (theTrace.fraction > 0 and theTrace.fraction < 1 and theTrace.entity == nil) then
     
-        // Add normal if it doesn't already exist
-        table.insertunique(normals, theTrace.normal)
+        table.insert(normals, theTrace.normal)
+        return true
         
     end
+    
+    return false
     
 end
 
@@ -472,7 +468,7 @@ function Skulk:GetAverageWallWalkingNormal(extraRange)
         
     end
     
-    // Trace above too
+    // Trace above too.
     self:TraceWallNormal(startPoint, startPoint + Vector(0, wallWalkingRange, 0), wallNormals)
     
     // Average results
@@ -491,7 +487,7 @@ function Skulk:GetAverageWallWalkingNormal(extraRange)
         local average = Vector(0, 0, 0)
     
         for i,currentNormal in ipairs(wallNormals) do
-            average = average + currentNormal 
+            average = average + currentNormal
         end
         
         if (average:Normalize() > 0) then
@@ -512,6 +508,13 @@ end
  */
 function Skulk:GetRecentlyWallJumped()
     return not (self.timeOfLastJump == nil or (Shared.GetTime() > (self.timeOfLastJump + Skulk.kJumpRepeatTime)))
+end
+
+/**
+ * Do not allow sticking to a wall right after leaping.
+ */
+function Skulk:GetLeapPreventWallStick()
+    return self.timeOfLeap ~= nil and Shared.GetTime() < self.timeOfLeap + Skulk.kLeapPreventStickTime
 end
 
 function Skulk:GetFrictionForce(input, velocity)
@@ -617,23 +620,18 @@ function Skulk:HandleJump(input, velocity)
     // Jumping off wall            
     elseif (self.wallWalking and not self:GetRecentlyWallJumped()) then
 
-        // Compute wallNormal (expensive)   
-        local wallNormal = self:ComputeWallNormal() 
-        
         // If we're not moving much, leap straight off the wall
         local kWallJumpVelocityMinimum = 2
         if(velocity:GetLength() < kWallJumpVelocityMinimum) then
 
             local kWallJumpVelocity = 70
             local wallJumpVelocity = Vector(0, 0, 1)
-            VectorCopy(wallNormal, wallJumpVelocity)
+            VectorCopy(self.wallWalkingNormalGoal, wallJumpVelocity)
             wallJumpVelocity:Scale(kWallJumpVelocity)
             
             velocity.x = velocity.x + wallJumpVelocity.x
             velocity.y = velocity.y + wallJumpVelocity.y
             velocity.z = velocity.z + wallJumpVelocity.z
-
-            Shared.PlaySound(self, Skulk.kJumpSoundName)
             
             self:SetOverlayAnimation(Player.kAnimStartJump)
 
@@ -650,11 +648,9 @@ function Skulk:HandleJump(input, velocity)
             local newVelocity = velocity
 
             newVelocity = newVelocity + viewCoords.yAxis * kWallJumpForce
-            newVelocity = newVelocity + wallNormal * kWallJumpForce
+            newVelocity = newVelocity + self.wallWalkingNormalGoal * kWallJumpForce
 
             VectorCopy(newVelocity, velocity)
-            
-            Shared.PlaySound(self, Skulk.kJumpSoundName)
             
             self:SetOverlayAnimation(Player.kAnimStartJump)
 

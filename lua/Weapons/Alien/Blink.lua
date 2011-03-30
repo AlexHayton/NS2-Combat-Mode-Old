@@ -133,7 +133,7 @@ function Blink:PerformBacktrace(player, startPos, endPos, endPosDiffStep, maxTra
         
         VectorCopy(trace.endPoint, blinkPosition)
         
-        validPosition = GetHasRoomForCapsule(player:GetExtents(), blinkPosition, PhysicsMask.AllButPCsAndRagdolls, player)
+        validPosition = GetHasRoomForCapsule(player:GetExtents(), blinkPosition + Vector(0, player:GetExtents().y, 0), PhysicsMask.AllButPCsAndRagdolls, player)
         
         if validPosition then
             break            

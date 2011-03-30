@@ -19,6 +19,8 @@ local networkVars =
 
 function Trigger:OnInit()
 
+    ScriptActor.OnInit(self)
+    
     // This is a vector, not a float
     if not self.scale then
         self.scale = Vector(1, 1, 1)

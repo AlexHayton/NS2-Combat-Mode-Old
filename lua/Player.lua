@@ -23,11 +23,6 @@ class 'Player' (LiveScriptActor)
 
 Player.kTooltipSound    = PrecacheAsset("sound/ns2.fev/common/tooltip")
 Player.kToolTipInterval = 18
-// Add the functionality from TooltipMixin to Player.
-AddMixin(Player, TooltipMixin, { kTooltipSound = Player.kTooltipSound, kToolTipInterval = Player.kToolTipInterval })
-
-// Add the functionality from WeaponOwnerMixin to Player.
-AddMixin(Player, WeaponOwnerMixin)
 
 if (Server) then
     Script.Load("lua/Player_Server.lua")
@@ -346,6 +341,12 @@ function Player:OnCreate()
 end
 
 function Player:OnInit()
+    
+    // Add the functionality from TooltipMixin to this instance of Player.
+    InitMixin(self, TooltipMixin, { kTooltipSound = Player.kTooltipSound, kToolTipInterval = Player.kToolTipInterval })
+
+    // Add the functionality from WeaponOwnerMixin to this instance of Player.
+    InitMixin(self, WeaponOwnerMixin)
     
     LiveScriptActor.OnInit(self)
     
@@ -1500,8 +1501,9 @@ function Player:OnProcessMove(input)
         
     elseif not self:GetIsAlive() and Client and (Client.GetLocalPlayer() == self) then
     
-        // Allow the use of scoreboard and map even when not alive.
+        // Allow the use of scoreboard, chat, and map even when not alive.
         self:UpdateScoreboard(input)
+        self:UpdateChat(input)
         self:UpdateShowMap(input)
         
     end

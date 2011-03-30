@@ -53,14 +53,15 @@ function Infestation:UpdateInfestation(deltaTime)
     
 end
 
-// Infestation can only take damage from flames
-function Infestation:ComputeDamage(damage, damageType) 
+// Infestation can only take damage from flames.
+function Infestation:ComputeDamageOverride(damage, damageType) 
 
     if damageType == kDamageType.Flame then
-        return LiveScriptActor.ComputeDamage(self, damage, damageType)  
+        return damage, damageType
     end
     
-    return 0, 0, 0
+    // Returning nil for the damage type will cause no damage.
+    return 0, nil
 
 end
 

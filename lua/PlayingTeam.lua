@@ -786,8 +786,8 @@ function PlayingTeam:ProcessEntityHelp(player)
         
         if entity:isa("PowerPoint") and entity:ProcessEntityHelp(player) then
             return true
-        elseif entity:isa("Structure") and not entity:GetIsBuilt() and player:isa("Marine") and player:AddTooltipOncePer("Help build this structure by pressing your use key.") then
-            return true            
+        elseif not enemy and entity:isa("Structure") and not entity:GetIsBuilt() and player:isa("Marine") and player:AddTooltipOncePer("Help build this structure by pressing your use key.") then
+            return true
         elseif entity:isa("Door") then
         
             if entity:GetState() == Door.kState.Locked and player:AddTooltipOncePer("This door has been locked by the Commander and can be broken by infestation or an Onos.") then

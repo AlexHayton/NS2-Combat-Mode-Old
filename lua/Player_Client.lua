@@ -1673,8 +1673,11 @@ end
 function PlayerUI_GetMapXY(worldX, worldZ)
 
     local player = Client.GetLocalPlayer()
-    local success, mapX, mapY = player:GetMapXY(worldX, worldZ)
-    return mapX, mapY
+    if player then
+        local success, mapX, mapY = player:GetMapXY(worldX, worldZ)
+        return mapX, mapY
+    end
+    return 0, 0
 
 end
 
@@ -1910,14 +1913,18 @@ end
 
 function Player:UpdateChat(input)
 
-    // Enter chat message
-    if (bit.band(input.commands, Move.TextChat) ~= 0) then
-        ChatUI_EnterChatMessage(false)
-    end
+    if not Shared.GetIsRunningPrediction() then
+    
+        // Enter chat message
+        if (bit.band(input.commands, Move.TextChat) ~= 0) then
+            ChatUI_EnterChatMessage(false)
+        end
 
-    // Enter chat message
-    if (bit.band(input.commands, Move.TeamChat) ~= 0) then
-        ChatUI_EnterChatMessage(true)
+        // Enter chat message
+        if (bit.band(input.commands, Move.TeamChat) ~= 0) then
+            ChatUI_EnterChatMessage(true)
+        end
+        
     end
     
 end

@@ -6,8 +6,8 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-Skulk.kCameraRollSpeedModifier = 0.75
-Skulk.kCameraRollTiltModifier = 0.07
+Skulk.kCameraRollSpeedModifier = 0.5
+Skulk.kCameraRollTiltModifier = 0.05
 
 function Skulk:UpdateMisc(input)
 
@@ -24,10 +24,12 @@ function Skulk:UpdateMisc(input)
 
 end
 
+local gEnableTilt = true
+
 // Tilt the camera based on the wall the Skulk is attached to.
 function Skulk:PlayerCameraCoordsAdjustment(cameraCoords)
 
-    if self.wallWalkingNormalCurrent then
+    if self.wallWalkingNormalCurrent and gEnableTilt then
         local viewModelTiltAngles = Angles()
         viewModelTiltAngles:BuildFromCoords(cameraCoords)
         // Don't rotate if too close to upside down (on ceiling).
@@ -48,3 +50,11 @@ function Skulk:PlayerCameraCoordsAdjustment(cameraCoords)
     return cameraCoords
 
 end
+
+function OnCommandSkulkViewTilt(enableTilt)
+
+    gEnableTilt = enableTilt ~= "false"
+
+end
+
+Event.Hook("Console_skulk_view_tilt",   OnCommandSkulkViewTilt)
