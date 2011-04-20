@@ -8,7 +8,9 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-class 'GUIBulletDisplay'
+Script.Load("lua/GUIScript.lua")
+
+class 'GUIBulletDisplay' (GUIScript)
 
 function GUIBulletDisplay:Initialize()
 
@@ -16,28 +18,28 @@ function GUIBulletDisplay:Initialize()
     self.weaponAmmo     = 0
     self.weaponClipSize = 50
 
-    self.background = GUI.CreateGraphicsItem()
+    self.background = GUIManager:CreateGraphicItem()
     self.background:SetSize( Vector(256, 512, 0) )
     self.background:SetPosition( Vector(0, 0, 0))    
     self.background:SetTexture("ui/RifleDisplay.dds")
 
     // Slightly larger copy of the text for a glow effect
-    self.ammoTextBg = GUI.CreateTextItem()
+    self.ammoTextBg = GUIManager:CreateTextItem()
     self.ammoTextBg:SetFontName("MicrogrammaDMedExt")
     self.ammoTextBg:SetFontIsBold(true)
     self.ammoTextBg:SetFontSize(135)
-    self.ammoTextBg:SetTextAlignmentX(GUITextItem.Align_Center)
-    self.ammoTextBg:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.ammoTextBg:SetTextAlignmentX(GUIItem.Align_Center)
+    self.ammoTextBg:SetTextAlignmentY(GUIItem.Align_Center)
     self.ammoTextBg:SetPosition(Vector(135, 88, 0))
     self.ammoTextBg:SetColor(Color(1, 1, 1, 0.25))
 
     // Text displaying the amount of ammo in the clip
-    self.ammoText = GUI.CreateTextItem()
+    self.ammoText = GUIManager:CreateTextItem()
     self.ammoText:SetFontName("MicrogrammaDMedExt")
     self.ammoText:SetFontIsBold(true)
     self.ammoText:SetFontSize(120)
-    self.ammoText:SetTextAlignmentX(GUITextItem.Align_Center)
-    self.ammoText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.ammoText:SetTextAlignmentX(GUIItem.Align_Center)
+    self.ammoText:SetTextAlignmentY(GUIItem.Align_Center)
     self.ammoText:SetPosition(Vector(135, 88, 0))
     
     // Create the indicators for the number of bullets in reserve.
@@ -50,7 +52,7 @@ function GUIBulletDisplay:Initialize()
     self.clip = { }
     
     for i =1,self.numClips do
-        self.clip[i] = GUI.CreateGraphicsItem()
+        self.clip[i] = GUIManager:CreateGraphicItem()
         self.clip[i]:SetTexture("ui/RifleDisplay.dds")
         self.clip[i]:SetSize( Vector(21, self.clipHeight, 0) )
         self.clip[i]:SetBlendTechnique( GUIItem.Add )

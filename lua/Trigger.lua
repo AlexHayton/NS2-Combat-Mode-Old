@@ -73,7 +73,7 @@ function Trigger:OnDestroy()
 
     if self.physicsBody then
     
-        Shared.DestroyPhysicsBody(self.physicsBody)
+        Shared.DestroyCollisionObject(self.physicsBody)
         self.physicsBody = nil
         
     end

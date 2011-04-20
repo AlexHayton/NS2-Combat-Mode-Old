@@ -12,8 +12,7 @@ Effect.kUpdateInterval = .5
 
 function Effect:SetOrigin(newOrigin)
 
-    self.origin = Vector()
-    VectorCopy(newOrigin, self.origin)
+    self.origin = Vector(newOrigin)
 
 end
 

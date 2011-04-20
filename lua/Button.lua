@@ -48,6 +48,31 @@ function Button:OnThink()
     
 end
 
+function Button:GetEntitiesWithName(targetName)
+
+    local entities = {}
+    local startEntity = nil
+    local currentEntity = nil
+    
+    if(targetName ~= nil) then
+    
+        repeat
+            
+            currentEntity = Shared.FindNextEntity(startEntity)
+            if(currentEntity and (currentEntity.targetname == targetName)) then
+                table.insert(entities, currentEntity)
+            end
+            
+            startEntity = currentEntity
+            
+        until currentEntity == nil
+        
+    end
+    
+    return entities
+
+end
+
 function Button:SetUseState(useState)
 
     if(useState ~= self.useState) then
@@ -65,7 +90,7 @@ function Button:SetUseState(useState)
         end
         
         // Lookup entity target
-        local entities = GetEntitiesWithName(self.ButtonTarget)
+        local entities = self:GetEntitiesWithName(self.ButtonTarget)
         for index, entity in pairs(entities) do
         
             // Play animation on it

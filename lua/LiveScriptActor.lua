@@ -11,6 +11,7 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/ScriptActor.lua")
 Script.Load("lua/LiveMixin.lua")
+Script.Load("lua/OrdersMixin.lua")
 
 class 'LiveScriptActor' (ScriptActor)
 
@@ -63,15 +64,6 @@ LiveScriptActor.networkVars =
     // Number of furys that are affecting this entity
     furyLevel               = string.format("integer (0 to %d)", kMaxStackLevel),
     
-    // Order data
-    hasOrder                = "boolean",
-    
-    orderX                  = "float",
-    orderY                  = "float",
-    orderZ                  = "float",
-    
-    orderType               = "integer",
-    
     activityEnd             = "float",  
     pathingEnabled          = "boolean"
     
@@ -79,6 +71,7 @@ LiveScriptActor.networkVars =
 
 // This should be moved out to classes that derive from LiveScriptActor soon.
 PrepareClassForMixin(LiveScriptActor, LiveMixin)
+PrepareClassForMixin(LiveScriptActor, OrdersMixin)
 
 function LiveScriptActor:DestroyPhysicsController()
 
@@ -87,6 +80,12 @@ function LiveScriptActor:DestroyPhysicsController()
         self.controller = nil
     end
 
+end
+
+function LiveScriptActor:OnCreate()
+
+    ScriptActor.OnCreate(self)
+    
 end
 
 function LiveScriptActor:OnDestroy()
@@ -101,6 +100,7 @@ end
 function LiveScriptActor:OnInit()
 
     InitMixin(self, LiveMixin, { kHealth = LiveScriptActor.kHealth, kArmor = LiveScriptActor.kArmor })
+    InitMixin(self, OrdersMixin, { kMoveToDistance = LiveScriptActor.kMoveToDistance })
     
     ScriptActor.OnInit(self)
     
@@ -123,14 +123,6 @@ function LiveScriptActor:OnInit()
     self.gameEffects = {}
     
     self.furyLevel = 0
-    
-    self.hasOrder = false
-        
-    self.orderX = 0
-    self.orderY = 0
-    self.orderZ = 0
-    
-    self.orderType = 0
     
     self.activityEnd = 0
     

@@ -65,7 +65,7 @@ end
 
 function AlienTeam:GetHasAbilityToRespawn()
     
-    local hives = GetGamerules():GetEntities("Hive", self:GetTeamNumber())
+    local hives = GetEntitiesForTeam("Hive", self:GetTeamNumber())
     return table.count(hives) > 0
     
 end
@@ -116,7 +116,7 @@ function AlienTeam:UpdateTeamAutoHeal(timePassed)
     if self.timeOfLastAutoHeal == nil or (time > (self.timeOfLastAutoHeal + AlienTeam.kAutoHealInterval)) then
     
         // Heal all players by this amount
-        local teamEnts = GetGamerules():GetEntities("LiveScriptActor", self:GetTeamNumber())
+        local teamEnts = GetEntitiesForTeam("LiveScriptActor", self:GetTeamNumber())
         
         for index, entity in ipairs(teamEnts) do
         
@@ -230,10 +230,10 @@ function AlienTeam:UpdateHiveSight()
         // Loop through enemy entities, creating blips for ones that are sighted. Each entry is a pair with the entity and it's blip type
         local time = Shared.GetTime()
         
-        // Blips aren't script actors, so can't use GetGamerules() functions
-        local blips = GetEntitiesIsa("Blip")
+        local blips = EntityListToTable(Shared.GetEntitiesWithClassname("Blip"))
         
-        for entIndex, entity in ipairs(GetGamerules():GetAllScriptActors()) do
+        local allScriptActors = Shared.GetEntitiesWithClassname("ScriptActor")
+        for entIndex, entity in ientitylist(allScriptActors) do
         
             local blipType = self:GetBlipType(entity)
             
@@ -269,7 +269,10 @@ function AlienTeam:DeleteOldBlips(time)
 
     PROFILE("AlienTeam:DeleteOldBlips")
 
-    for index, blip in ipairs( GetEntitiesIsa("Blip", -1) ) do
+    // We need to convert the EntityList to a table as we are destroying the entities
+    // inside the EntityList.
+    local entityTable = EntityListToTable(Shared.GetEntitiesWithClassname("Blip"))
+    for index, blip in ipairs(entityTable) do
     
         if blip.timeOfUpdate < time then
         
@@ -283,7 +286,7 @@ end
 
 function AlienTeam:GetUmbraCrags()
 
-    local crags = GetGamerules():GetEntities("Crag", self:GetTeamNumber())
+    local crags = GetEntitiesForTeam("Crag", self:GetTeamNumber())
     
     local umbraCrags = {}    
     
@@ -304,7 +307,7 @@ end
 
 function AlienTeam:GetFuryWhips()
 
-    local whips = GetGamerules():GetEntities("Whip", self:GetTeamNumber())
+    local whips = GetEntitiesForTeam("Whip", self:GetTeamNumber())
     
     local FuryWhips = {}    
     
@@ -324,7 +327,7 @@ function AlienTeam:GetFuryWhips()
 end
 
 function AlienTeam:GetShades()
-    return GetGamerules():GetEntities("Shade", self:GetTeamNumber())
+    return GetEntitiesForTeam("Shade", self:GetTeamNumber())
 end
 
 // Adds the InUmbra game effect to all specified entities within range of active crags. Returns

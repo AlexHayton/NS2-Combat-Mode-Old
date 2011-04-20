@@ -42,7 +42,7 @@ function Order:Initialize(orderType, orderParam, position, orientation)
     end
     
     if position then
-        VectorCopy(position, self.orderLocation)
+        self.orderLocation = position
     //else
     //    self.orderLocation = nil
     end
@@ -90,7 +90,7 @@ function Order:SetLocation(position)
     if self.orderLocation == nil then
         self.orderLocation = Vector()
     end
-    VectorCopy(position, self.orderLocation)
+    self.orderLocation = position
 end
 
 // In radians - could be nil

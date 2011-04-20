@@ -13,10 +13,7 @@ function BuildDisplayModesList()
     local numModes = Client.GetNumDisplayModes()
     
     for modeIndex = 1, numModes do
-    
-        local xResolution, yResolution = Client.GetDisplayMode(modeIndex)
-        modes[modeIndex] = { xResolution = xResolution, yResolution = yResolution }
-        
+        modes[modeIndex] = Client.GetDisplayMode(modeIndex)
     end
 
     return modes
@@ -55,8 +52,8 @@ function OptionsDialogUI_GetScreenResolutions()
     // Determine the aspect ratio of the monitor based on the startup resolution.
     // We use this to flag modes that have the same aspect ratio.
     
-    local xResolution, yResolution = Client.GetStartupDisplayMode()
-    local nativeAspect = xResolution / yResolution
+    local mode = Client.GetStartupDisplayMode()
+    local nativeAspect = mode.xResolution / mode.yResolution
 
     local resolutions = { }
     

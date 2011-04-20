@@ -163,7 +163,7 @@ function HarvesterAbility:GetResourcePoint(player)
     local origin = player:GetOrigin() + horizontalView * HarvesterAbility.kPlacementDistance
     
     // Look for nearest unoccupied resource nozzle near this point
-    local resourcePoints = GetEntitiesIsaInRadius("ResourcePoint", -1, origin, 2)
+    local resourcePoints = GetEntitiesWithinRange("ResourcePoint", origin, 2)
     for index, resourcePoint in ipairs(resourcePoints) do
     
         if resourcePoint:GetAttached() == nil then

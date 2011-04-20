@@ -12,13 +12,21 @@ Script.Load("lua/Globals.lua")
 Script.Load("lua/MainMenu.lua")
 Script.Load("lua/MenuManager.lua")
 
-mods = { "ns2", "faceoff", "MvM"}
-maps = 
-    { 
-        { name = "Rockdown",         fileName = "ns2_rockdown.level" },
-        { name = "Junction",         fileName = "ns2_junction.level" },
-        { name = "Tram",             fileName = "ns2_tram.level" }
-    }
+mods = { "ns2" }
+
+maps = { }
+
+local matchingFiles = { }
+Shared.GetMatchingFileNames("maps/*.level", false, matchingFiles)
+
+for _, mapFile in pairs(matchingFiles) do
+    local _, _, filename = string.find(mapFile, "maps/(.*).level")
+    local mapname = string.gsub(filename, 'ns2_', '', 1):gsub("^%l", string.upper)
+    local tagged,_ = string.match(filename, "ns2_", 1)
+    if tagged ~= nil then
+        table.insert(maps, {["name"] = mapname, ["fileName"] = filename})
+    end
+end
 
 /**
  * Called when the user types the "map" command at the console.

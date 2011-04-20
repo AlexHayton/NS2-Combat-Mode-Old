@@ -108,7 +108,7 @@ end
 
 function GUICommanderButtons:InitializeMarineBackground()
 
-    self.background = GUI.CreateGraphicsItem()
+    self.background = GUIManager:CreateGraphicItem()
     self.background:SetLayer(kGUILayerCommanderHUD)
     self.background:SetAnchor(GUIItem.Right, GUIItem.Bottom)
     self.background:SetSize(Vector(GUICommanderButtons.kBackgroundWidth, GUICommanderButtons.kBackgroundHeight, 0))
@@ -136,7 +136,7 @@ end
 
 function GUICommanderButtons:InitializeHighlighter()
 
-    self.highlightItem = GUI.CreateGraphicsItem()
+    self.highlightItem = GUIManager:CreateGraphicItem()
     self.highlightItem:SetAnchor(GUIItem.Left, GUIItem.Top)
     self.highlightItem:SetSize(Vector(GUICommanderButtons.kButtonWidth, GUICommanderButtons.kButtonHeight, 0))
     self.highlightItem:SetTexture("ui/" .. CommanderUI_MenuImage() .. ".dds")
@@ -155,7 +155,7 @@ function GUICommanderButtons:SharedInitializeButtons(settingsTable)
     for t = 1, self.numberOfTabs do
 
         // Top tab item first.
-        local topItem = GUI.CreateGraphicsItem()
+        local topItem = GUIManager:CreateGraphicItem()
         topItem:SetAnchor(GUIItem.Left, GUIItem.Top)
         topItem:SetSize(Vector(settingsTable.TabWidth, settingsTable.TabTopHeight, 0))
         local xPos = settingsTable.TabXOffset + (((t - 1) % settingsTable.NumberOfColumns) * (settingsTable.TabWidth + settingsTable.TabSpacing))
@@ -166,7 +166,7 @@ function GUICommanderButtons:SharedInitializeButtons(settingsTable)
         self.background:AddChild(topItem)
         
         // Bottom tab item next.
-        local bottomItem = GUI.CreateGraphicsItem()
+        local bottomItem = GUIManager:CreateGraphicItem()
         bottomItem:SetAnchor(GUIItem.Left, GUIItem.Bottom)
         bottomItem:SetSize(Vector(settingsTable.TabWidth, settingsTable.TabBottomHeight, 0))
         bottomItem:SetPosition(Vector(0, settingsTable.TabBottomOffset, 0))
@@ -175,17 +175,17 @@ function GUICommanderButtons:SharedInitializeButtons(settingsTable)
         topItem:AddChild(bottomItem)
         
         // Tab text.
-        local textItem = GUI.CreateTextItem()
+        local textItem = GUIManager:CreateTextItem()
         textItem:SetFontSize(GUICommanderButtons.kTabFontSize)
         textItem:SetAnchor(GUIItem.Middle, GUIItem.Center)
-        textItem:SetTextAlignmentX(GUITextItem.Align_Center)
-        textItem:SetTextAlignmentY(GUITextItem.Align_Center)
+        textItem:SetTextAlignmentX(GUIItem.Align_Center)
+        textItem:SetTextAlignmentY(GUIItem.Align_Center)
         textItem:SetColor(Color(1, 1, 1, 1))
         textItem:SetFontIsBold(true)
         topItem:AddChild(textItem)
         
         // Connector item.
-        local connectorItem = GUI.CreateGraphicsItem()
+        local connectorItem = GUIManager:CreateGraphicItem()
         connectorItem:SetAnchor(GUIItem.Left, GUIItem.Bottom)
         connectorItem:SetSize(Vector(settingsTable.TabConnectorWidth, settingsTable.TabConnectorHeight, 0))
         connectorItem:SetTexture(self.backgroundTextureName)
@@ -213,7 +213,7 @@ function GUICommanderButtons:SharedInitializeButtons(settingsTable)
     // Button rows.
     for i = 1, settingsTable.NumberOfButtons do
     
-        local buttonItem = GUI.CreateGraphicsItem()
+        local buttonItem = GUIManager:CreateGraphicItem()
         buttonItem:SetAnchor(GUIItem.Left, GUIItem.Top)
         buttonItem:SetSize(Vector(GUICommanderButtons.kButtonWidth, GUICommanderButtons.kButtonHeight, 0))
         local xPos = ((i - 1) % settingsTable.NumberOfColumns) * GUICommanderButtons.kButtonWidth
@@ -248,7 +248,7 @@ end
 
 function GUICommanderButtons:InitializeIdleWorkersIcon()
 
-    self.idleWorkers = GUI.CreateGraphicsItem()
+    self.idleWorkers = GUIManager:CreateGraphicItem()
     self.idleWorkers:SetSize(Vector(GUICommanderButtons.kIdleWorkersSize, GUICommanderButtons.kIdleWorkersSize, 0))
     self.idleWorkers:SetAnchor(GUIItem.Left, GUIItem.Top)
     self.idleWorkers:SetPosition(Vector(-GUICommanderButtons.kIdleWorkersSize - GUICommanderButtons.kIdleWorkersXOffset, 0, 0))
@@ -262,11 +262,11 @@ function GUICommanderButtons:InitializeIdleWorkersIcon()
     self.idleWorkers:SetIsVisible(false)
     self.background:AddChild(self.idleWorkers)
     
-    self.idleWorkersText = GUI.CreateTextItem()
+    self.idleWorkersText = GUIManager:CreateTextItem()
     self.idleWorkersText:SetFontSize(GUICommanderButtons.kIdleWorkersFontSize)
     self.idleWorkersText:SetAnchor(GUIItem.Middle, GUIItem.Bottom)
-    self.idleWorkersText:SetTextAlignmentX(GUITextItem.Align_Center)
-    self.idleWorkersText:SetTextAlignmentY(GUITextItem.Align_Min)
+    self.idleWorkersText:SetTextAlignmentX(GUIItem.Align_Center)
+    self.idleWorkersText:SetTextAlignmentY(GUIItem.Align_Min)
     self.idleWorkersText:SetColor(Color(1, 1, 1, 1))
     self.idleWorkers:AddChild(self.idleWorkersText)
 
@@ -274,7 +274,7 @@ end
 
 function GUICommanderButtons:InitializePlayerAlertIcon()
 
-    self.playerAlerts = GUI.CreateGraphicsItem()
+    self.playerAlerts = GUIManager:CreateGraphicItem()
     self.playerAlerts:SetSize(Vector(GUICommanderButtons.kIdleWorkersSize, GUICommanderButtons.kIdleWorkersSize, 0))
     self.playerAlerts:SetAnchor(GUIItem.Left, GUIItem.Top)
     self.playerAlerts:SetPosition(Vector(GUICommanderButtons.kPlayerAlertX, 0, 0))
@@ -289,11 +289,11 @@ function GUICommanderButtons:InitializePlayerAlertIcon()
     self.playerAlerts:SetIsVisible(false)
     self.background:AddChild(self.playerAlerts)
     
-    self.playerAlertsText = GUI.CreateTextItem()
+    self.playerAlertsText = GUIManager:CreateTextItem()
     self.playerAlertsText:SetFontSize(GUICommanderButtons.kIdleWorkersFontSize)
     self.playerAlertsText:SetAnchor(GUIItem.Middle, GUIItem.Bottom)
-    self.playerAlertsText:SetTextAlignmentX(GUITextItem.Align_Center)
-    self.playerAlertsText:SetTextAlignmentY(GUITextItem.Align_Min)
+    self.playerAlertsText:SetTextAlignmentX(GUIItem.Align_Center)
+    self.playerAlertsText:SetTextAlignmentY(GUIItem.Align_Min)
     self.playerAlertsText:SetColor(Color(1, 1, 1, 1))
     self.playerAlertsText:SetText("0")
     self.playerAlerts:AddChild(self.playerAlertsText)
@@ -302,7 +302,7 @@ end
 
 function GUICommanderButtons:InitializeSelectAllPlayersIcon()
 
-    self.selectAllPlayers = GUI.CreateGraphicsItem()
+    self.selectAllPlayers = GUIManager:CreateGraphicItem()
     self.selectAllPlayers:SetSize(Vector(GUICommanderButtons.kSelectAllPlayersSize, GUICommanderButtons.kSelectAllPlayersSize, 0))
     self.selectAllPlayers:SetAnchor(GUIItem.Left, GUIItem.Top)
     self.selectAllPlayers:SetPosition(Vector(GUICommanderButtons.kSelectAllPlayersX, GUICommanderButtons.kSelectAllPlayersY, 0))
@@ -559,7 +559,7 @@ function GUICommanderButtons:UpdateSelectAllPlayersIcon()
     
         local player = Client.GetLocalPlayer()
         
-        local friendlyPlayers = GetEntitiesIsa("Marine", player:GetTeamNumber())
+        local friendlyPlayers = GetEntitiesForTeam("Marine", player:GetTeamNumber())
         
         local visState = false
         

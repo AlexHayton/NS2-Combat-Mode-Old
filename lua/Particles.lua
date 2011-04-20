@@ -22,10 +22,7 @@ if (Client) then
             end
 
             local coords = Coords()
-            VectorCopy(Vector(1, 0, 0), coords.xAxis)
-            VectorCopy(Vector(0, 1, 0), coords.yAxis)
-            VectorCopy(Vector(0, 0, 1), coords.zAxis)
-            VectorCopy(self.origin, coords.origin)
+            coords.origin = self.origin
             
             Client.PlayParticlesWithIndex(self.cinematicNameIndex, coords)
             

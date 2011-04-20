@@ -11,6 +11,7 @@
 /////////////////////
 Vector.kEpsilon = 0.0001
 
+/*
 function Vector:GetLength()
     return InternalVectorLength(self)
 end
@@ -122,6 +123,7 @@ end
 function Vector:tostring()
     return string.format("<%.2f, %.2f, %.2f>", self.x, self.y, self.z)
 end
+*/
 
 ////////////////////////
 // Internal functions //

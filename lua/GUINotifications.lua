@@ -35,11 +35,11 @@ GUINotifications.kScoreDisplayFadeoutTimer = 2
 
 function GUINotifications:Initialize()
     
-    self.locationText = GUI.CreateTextItem()
+    self.locationText = GUIManager:CreateTextItem()
     self.locationText:SetFontSize(20)
     self.locationText:SetAnchor(GUIItem.Left, GUIItem.Top)
-    self.locationText:SetTextAlignmentX(GUITextItem.Align_Min)
-    self.locationText:SetTextAlignmentY(GUITextItem.Align_Min)
+    self.locationText:SetTextAlignmentX(GUIItem.Align_Min)
+    self.locationText:SetTextAlignmentY(GUIItem.Align_Min)
     self.locationText:SetPosition(Vector(20, 20, 0))
     self.locationText:SetColor(Color(1, 1, 1, 1))
     self.locationText:SetText(PlayerUI_GetLocationName())
@@ -63,19 +63,19 @@ end
 
 function GUINotifications:InitializeTooltip()
 
-    self.tooltipBackground = GUI.CreateGraphicsItem()
+    self.tooltipBackground = GUIManager:CreateGraphicItem()
     self.tooltipBackground:SetAnchor(GUIItem.Left, GUIItem.Bottom)
     self.tooltipBackground:SetSize(Vector(0, GUINotifications.kTooltipBackgroundHeight, 0))
     self.tooltipBackground:SetPosition(Vector(GUINotifications.kTooltipXOffset, GUINotifications.kTooltipYOffset, 0))
     self.tooltipBackground:SetColor(GUINotifications.kTooltipBackgroundColor)
     self.tooltipBackground:SetIsVisible(false)
     
-    self.tooltipText = GUI.CreateTextItem()
+    self.tooltipText = GUIManager:CreateTextItem()
     self.tooltipText:SetFontSize(GUINotifications.kTooltipFontSize)
     self.tooltipText:SetAnchor(GUIItem.Left, GUIItem.Center)
     self.tooltipText:SetPosition(Vector(GUINotifications.kTooltipBackgroundWidthBuffer, 0, 0))
-    self.tooltipText:SetTextAlignmentX(GUITextItem.Align_Min)
-    self.tooltipText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.tooltipText:SetTextAlignmentX(GUIItem.Align_Min)
+    self.tooltipText:SetTextAlignmentY(GUIItem.Align_Center)
     self.tooltipText:SetColor(GUINotifications.kTooltipTextColor)
     self.tooltipText:SetText(PlayerUI_GetLocationName())
     
@@ -95,13 +95,13 @@ end
 
 function GUINotifications:InitializeScoreDisplay()
 
-    self.scoreDisplay = GUI.CreateTextItem()
+    self.scoreDisplay = GUIManager:CreateTextItem()
     self.scoreDisplay:SetFontName(GUINotifications.kScoreDisplayFontName)
     self.scoreDisplay:SetFontSize(GUINotifications.kScoreDisplayFontHeight)
     self.scoreDisplay:SetAnchor(GUIItem.Middle, GUIItem.Center)
     self.scoreDisplay:SetPosition(Vector(0, GUINotifications.kScoreDisplayYOffset, 0))
-    self.scoreDisplay:SetTextAlignmentX(GUITextItem.Align_Center)
-    self.scoreDisplay:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.scoreDisplay:SetTextAlignmentX(GUIItem.Align_Center)
+    self.scoreDisplay:SetTextAlignmentY(GUIItem.Align_Center)
     self.scoreDisplay:SetColor(GUINotifications.kScoreDisplayTextColor)
     self.scoreDisplay:SetIsVisible(false)
     

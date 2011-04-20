@@ -79,10 +79,6 @@ kMarineWeaponEffects =
         // Adjust animation speed to change animation speed and reload time ("speed")
         gunReloadEffects =
         {
-            {stop_sound = "sound/ns2.fev/marine/rifle/fire_14_sec_loop", variant = 1},
-            {stop_sound = "sound/ns2.fev/marine/rifle/fire_loop_2", variant = 2},
-            {stop_sound = "sound/ns2.fev/marine/rifle/fire_loop_3", variant = 3},
-
             {viewmodel_animation = "reload", classname = "Rifle"},
             {sound = "sound/ns2.fev/marine/rifle/reload", classname = "Rifle"},
             {overlay_animation = "rifle_reload", classname = "Rifle", done = true},
@@ -93,6 +89,15 @@ kMarineWeaponEffects =
             
             // Default
             {viewmodel_animation = "reload"},
+        },
+    },
+    
+    reload_cancel =
+    {
+        gunReloadCancelEffects =
+        {
+            {stop_sound = "sound/ns2.fev/marine/rifle/reload", classname = "Rifle"},
+            {stop_sound = "sound/ns2.fev/marine/pistol/reload", classname = "Pistol"},
         },
     },
     
@@ -141,16 +146,6 @@ kMarineWeaponEffects =
                 attach_point = "fxnode_riflecasing"            
             },
             
-            // Play two sounds simultaneously, depending on rifle variant given to player (for variety)
-            {sound = "sound/ns2.fev/marine/rifle/fire_single", variant = 1},
-            {looping_sound = "sound/ns2.fev/marine/rifle/fire_14_sec_loop", variant = 1},
-            
-            {sound = "sound/ns2.fev/marine/rifle/fire_single_2", variant = 2},
-            {looping_sound = "sound/ns2.fev/marine/rifle/fire_loop_2", variant = 2},
-            
-            {sound = "sound/ns2.fev/marine/rifle/fire_single_3", variant = 3},
-            {looping_sound = "sound/ns2.fev/marine/rifle/fire_loop_3", variant = 3},
-            {viewmodel_animation = "attack"},
             {overlay_animation = "rifle_fire", force = true},
             
         }
@@ -161,10 +156,6 @@ kMarineWeaponEffects =
         rifleAttackEndEffects =
         {
             {overlay_animation = ""},
-            {sound = "sound/ns2.fev/marine/rifle/end", empty = false},
-            {stop_sound = "sound/ns2.fev/marine/rifle/fire_14_sec_loop", variant = 1, done = true},
-            {stop_sound = "sound/ns2.fev/marine/rifle/fire_loop_2", variant = 2, done = true},
-            {stop_sound = "sound/ns2.fev/marine/rifle/fire_loop_3", variant = 3, done = true},            
         },
     },
     
@@ -338,6 +329,7 @@ kMarineWeaponEffects =
             {stop_sound = "sound/ns2.fev/marine/flamethrower/attack_loop"},
             {stop_sound = "sound/ns2.fev/marine/flamethrower/attack_start"},
             {sound = "sound/ns2.fev/marine/flamethrower/attack_end"},
+            {viewmodel_animation = "attack_end"}
         },
     },
 

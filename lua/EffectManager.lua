@@ -100,8 +100,7 @@ function EffectManager:DisplayDebug(stringParam, effectTable, triggeringParams, 
             self:AddDebugText(debugText, debugOrigin, triggeringEntity)
         else
             // Send console message to all nearby clients
-            local allPlayers = GetGamerules():GetAllPlayers()
-            for index, toPlayer in ipairs(allPlayers) do
+            for index, toPlayer in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
                 if (toPlayer:GetOrigin() - debugOrigin):GetLength() < 25 then
                     local entIdString = ""
                     if triggeringEntity then
@@ -209,7 +208,10 @@ function EffectManager:TriggerQueuedAnimations()
     
         for index, queuedAnimation in ipairs(self.queuedAnimations) do
 
-            self:InternalTriggerAnimation(queuedAnimation[1], queuedAnimation[2], queuedAnimation[3])
+            local triggeringEntity = Shared.GetEntity(queuedAnimation[3])
+            if (triggeringEntity ~= nil) then
+                self:InternalTriggerAnimation(queuedAnimation[1], queuedAnimation[2], triggeringEntity)
+            end
 
         end
         
@@ -376,7 +378,7 @@ end
 function EffectManager:InternalGetEffectMatches(triggeringEntity, assetEntry, tableParams)
 
     PROFILE("EffectManager:InternalGetEffectMatches")
-
+    
     for filterName, filterValue in pairs(assetEntry) do
     
         if table.find(kEffectFilters, filterName) then
@@ -392,7 +394,7 @@ function EffectManager:InternalGetEffectMatches(triggeringEntity, assetEntry, ta
             if filterName == kEffectFilterDoerName then
                 
                 // Check the class hierarchy
-                if triggerFilterValue == nil or not Entity.isa( triggerFilterValue, filterValue ) then
+                if triggerFilterValue == nil or not classisa(triggerFilterValue, filterValue) then
                     return false
                 end
                                     
@@ -402,13 +404,13 @@ function EffectManager:InternalGetEffectMatches(triggeringEntity, assetEntry, ta
                 
                     // Allow view models to trigger animations for weapons                
                     
-                elseif not triggeringEntity or not triggeringEntity:isa(filterValue) then        
+                elseif not triggeringEntity or not triggeringEntity:isa(filterValue) then
                     return false            
                 end
 
             else
             
-                // Otherwise makes ure specified parameters match
+                // Otherwise makes sure specified parameters match
                 if filterValue ~= triggerFilterValue then
 
                     return false
@@ -420,7 +422,7 @@ function EffectManager:InternalGetEffectMatches(triggeringEntity, assetEntry, ta
         end            
         
     end
-        
+    
     return true
 
 end
@@ -675,7 +677,10 @@ function EffectManager:InternalTriggerSound(effectTable, triggeringParams, trigg
         end
         
         // Passes in "" if we are to stop all sounds
+        // Stop sounds on the triggering entity.
         Shared.StopSound(player, soundAssetName, triggeringEntity)
+        // Make sure sounds are stopped for this player too.
+        Shared.StopSound(player, soundAssetName)
         
         success = true
         
@@ -726,7 +731,7 @@ function EffectManager:InternalTriggerAnimation(effectTable, triggeringParams, t
     local playAnim = (self.lockedPlayer == nil) or (triggeringEntity ~= nil and triggeringEntity:GetParent() == self.lockedPlayer)
     if not playAnim and (effectTable[kAnimationType] or effectTable[kOverlayAnimationType]) then
     
-        table.insert(self.queuedAnimations, {effectTable, triggeringParams, triggeringEntity})
+        table.insert(self.queuedAnimations, {effectTable, triggeringParams, triggeringEntity:GetId()})
         
     else
         

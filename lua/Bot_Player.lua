@@ -64,11 +64,7 @@ function Player:UpdateOrderVariables()
     
     if self.hasOrder then
     
-        local orderLocation = order:GetLocation()
-        self.orderX = orderLocation.x
-        self.orderY = orderLocation.y
-        self.orderZ = orderLocation.z
-        
+        self.orderPosition = Vector(order:GetLocation())
         self.orderType = order:GetType()
 
     end
@@ -85,7 +81,7 @@ function Player:AttackVisibleTarget()
         local nearestTarget = nil
         local nearestTargetDistance = nil
         
-        local targets = GetGamerules():GetEntities("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), 20)
+        local targets = GetEntitiesForTeamWithinRange("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), 20)
         for index, target in pairs(targets) do
         
             if target:GetIsAlive() and target:GetIsVisible() and target:GetCanTakeDamage() and target ~= self then
@@ -159,13 +155,13 @@ function Player:ChooseRandomDestination(move)
     // Go to nearest unbuilt tech point or nozzle
     local className = ConditionalValue(math.random() < .5, "TechPoint", "ResourcePoint")
 
-    local ents = GetGamerules():GetEntities(className)
+    local ents = Shared.GetEntitiesWithClassname(className)
     
-    if table.count(ents) > 0 then 
+    if ents:GetSize() > 0 then 
     
-        local index = math.floor(math.random()*table.maxn(ents)) + 1
+        local index = math.floor(math.random() * ents:GetSize())
         
-        local destination = ents[index]
+        local destination = ents:GetEntityAtIndex(index)
         
         local order = CreateOrder(kTechId.Move, 0, destination:GetEngagementPoint())
                 

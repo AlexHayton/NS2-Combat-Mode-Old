@@ -71,7 +71,7 @@ function MarineCommander:GetSquadBallInfo()
     end
     
     local ballInfo = {}
-    local squadEntities = GetEntitiesIsaInRadius(GetSquadClass(), self:GetTeamNumber(), self:GetOrigin(), 20, true)
+    local squadEntities = GetEntitiesForTeamWithinXZRange(GetSquadClass(), self:GetTeamNumber(), self:GetOrigin(), 20)
     // Create list of squads nearby
     for index, entity in pairs(squadEntities) do
         

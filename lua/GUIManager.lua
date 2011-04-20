@@ -314,3 +314,16 @@ function GUIManager:SendCharacterEvent(character)
     return false
     
 end
+
+function GUIManager:CreateGraphicItem()
+  return GUI.CreateItem()
+end
+
+function GUIManager:CreateTextItem()
+  local item = GUI.CreateItem()
+
+  // Text Items Always Manager their own Rendering
+  item:SetOptionFlag(GUIItem.ManageRender)
+
+  return item
+end 

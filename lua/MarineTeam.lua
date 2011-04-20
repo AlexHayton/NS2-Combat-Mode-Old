@@ -75,7 +75,7 @@ function MarineTeam:GetHasAbilityToRespawn()
     // Any active IPs on team? There could be a case where everyone has died and no active
     // IPs but builder bots are mid-construction so a marine team could theoretically keep
     // playing but ignoring that case for now
-    local spawningStructures = GetGamerules():GetEntities("InfantryPortal", self:GetTeamNumber())
+    local spawningStructures = GetEntitiesForTeam("InfantryPortal", self:GetTeamNumber())
     
     for index, current in ipairs(spawningStructures) do
 
@@ -107,7 +107,7 @@ end
 // Called every so often by PlayingTeam() to figure assign players to squads.
 function UpdateSquads(teamNumber)
 
-    local playerList = GetGamerules():GetEntities(GetSquadClass(), teamNumber)
+    local playerList = GetEntitiesForTeam(GetSquadClass(), teamNumber)
     
     if(table.maxn(playerList) == 0) then
         return

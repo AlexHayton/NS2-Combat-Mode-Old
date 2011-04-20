@@ -25,19 +25,51 @@ Rifle.kButtDelay = kRifleMeleeFireDelay
 Rifle.kButtDamage = kRifleMeleeDamage
 Rifle.kButtRange = 1.5
 
+Rifle.kViewAnimationStates = enum( { 'None', 'AttackIn', 'Attack', 'AttackOut' } )
+
+Rifle.kNumberOfVariants = 3
+
+Rifle.kSingleShotSounds = { "sound/ns2.fev/marine/rifle/fire_single", "sound/ns2.fev/marine/rifle/fire_single_2", "sound/ns2.fev/marine/rifle/fire_single_3" }
+for k, v in ipairs(Rifle.kSingleShotSounds) do PrecacheAsset(v) end
+
+Rifle.kLoopingSounds = { "sound/ns2.fev/marine/rifle/fire_14_sec_loop", "sound/ns2.fev/marine/rifle/fire_loop_2", "sound/ns2.fev/marine/rifle/fire_loop_3" }
+for k, v in ipairs(Rifle.kLoopingSounds) do PrecacheAsset(v) end
+
+Rifle.kRifleEndSound = PrecacheAsset("sound/ns2.fev/marine/rifle/end")
+
+Rifle.kAttackInViewModelAnimation =     "attack_in"
+Rifle.kAttackViewModelAnimation =       "attack"
+Rifle.kAttackOutViewModelAnimation =    "attack_out"
+
 local networkVars =
 {
     timeOfLastPrimaryAttack     = "float",
     timeStartedAttack           = "float",
-    soundType                   = "integer (1 to 3)"
+    soundType                   = "integer (1 to 3)",
+    playingLoopingOnEntityId    = "entityid",
+    viewAnimationState          = "enum Rifle.kViewAnimationStates",
+    animationStateDoneTime      = "float"
 }
 
 function Rifle:OnInit()
 
     ClipWeapon.OnInit(self)
     
-    self.soundType = Shared.GetRandomInt(1, 3)
+    self.timeStartedAttack = 0
+    self.soundType = Shared.GetRandomInt(1, Rifle.kNumberOfVariants)
     
+    self.playingLoopingOnEntityId = Entity.invalidId
+    
+    self.viewAnimationState = Rifle.kViewAnimationStates.None
+    
+end
+
+function Rifle:OnDestroy()
+
+    ClipWeapon.OnDestroy(self)
+    
+    self:StopLoopingEffects()
+
 end
 
 function Rifle:GetViewModelName()
@@ -105,13 +137,6 @@ end
 
 function Rifle:CreatePrimaryAttackEffect(player)
 
-    local shakeAmount = 0
-    if self.timeStartedAttack then
-        shakeAmount = Clamp(((Shared.GetTime() - self.timeStartedAttack) / .5) * .005, 0, .005)
-    end
-    
-    self:SetCameraShake(.003 + NetworkRandom(string.format("%s:CreatePrimaryAttackEffect():SetCameraShake", self:GetClassName()))*shakeAmount, 1/self:GetPrimaryAttackDelay(), Rifle.kFireDelay)
-
     // Remember this so we can update gun_loop pose param
     self.timeOfLastPrimaryAttack = Shared.GetTime()
     
@@ -123,9 +148,126 @@ function Rifle:GetReloadCancellable()
     return true
 end
 
-function Rifle:OnHolster(player)
+function Rifle:GetCanIdle()
 
-    //self:StopPrimaryAttackSound()
+    return (ClipWeapon.GetCanIdle(self)) and (not self:GetIsShooting())
+
+end
+
+function Rifle:OnEntityChanged(oldId, newId)
+
+    // In case the parent is destroyed.
+    if oldId == self.playingLoopingOnEntityId then
+        self:StopLoopingEffects()
+        self:CancelReload()
+    end
+
+end
+
+function Rifle:GetIsShooting()
+
+    local hasParent = self:GetParent() ~= nil
+    local isNotHolstered = not self:GetIsHolstered()
+    local startedAttack = self.timeStartedAttack ~= 0
+    local notReloading = not self:GetIsReloading()
+    local hasAmmo = self:GetClip() > 0
+    return hasParent and isNotHolstered and startedAttack and notReloading and hasAmmo
+    
+end
+
+function Rifle:PlayLoopingEffects()
+
+    local parent = self:GetParent()
+    if parent then
+    
+        if self.viewAnimationState == Rifle.kViewAnimationStates.None then
+        
+            // Fire off a single shot on the first shot. Pew.
+            Shared.PlaySound(parent, Rifle.kSingleShotSounds[self.soundType])
+            local animationLength = parent:SetViewAnimation(Rifle.kAttackInViewModelAnimation, true, true)
+            self.playingLoopingOnEntityId = parent:GetId()
+            self.animationStateDoneTime = Shared.GetTime() + animationLength
+            self.viewAnimationState = Rifle.kViewAnimationStates.AttackIn
+            
+        elseif self.viewAnimationState == Rifle.kViewAnimationStates.AttackIn and Shared.GetTime() >= self.animationStateDoneTime then
+        
+            // Start the looping sound for the rest of the shooting. Pew pew pew...
+            Shared.PlaySound(parent, Rifle.kLoopingSounds[self.soundType])
+            parent:SetViewAnimation(Rifle.kAttackViewModelAnimation, true, true)
+            self.playingLoopingOnEntityId = parent:GetId()
+            // Looping animation has no predefined done time.
+            self.animationStateDoneTime = 0
+            self.viewAnimationState = Rifle.kViewAnimationStates.Attack
+            
+        end
+        
+    end
+
+end
+
+function Rifle:StopLoopingEffects()
+
+    local parent = Shared.GetEntity(self.playingLoopingOnEntityId)
+    if parent then
+    
+        if (self.viewAnimationState == Rifle.kViewAnimationStates.AttackIn and Shared.GetTime() >= self.animationStateDoneTime) or
+           (self.viewAnimationState == Rifle.kViewAnimationStates.Attack) then
+           
+            // Just assume the looping sound is playing.
+            Shared.StopSound(parent, Rifle.kLoopingSounds[self.soundType])
+            Shared.PlaySound(parent, Rifle.kRifleEndSound)
+            // If reloading, do not trigger the attack out view animation since the
+            // reload animation is already triggered.
+            if not self:GetIsReloading() then
+                local animationLength = parent:SetViewAnimation(Rifle.kAttackOutViewModelAnimation, true, true)
+                self.animationStateDoneTime = Shared.GetTime() + animationLength
+                self.viewAnimationState = Rifle.kViewAnimationStates.AttackOut
+            else
+                self.viewAnimationState = Rifle.kViewAnimationStates.None
+                self.animationStateDoneTime = 0
+            end
+            self.playingLoopingOnEntityId = Entity.invalidId
+            
+        end
+        
+    end
+
+end
+
+function Rifle:UpdateStateTransitions()
+
+    if self.viewAnimationState == Rifle.kViewAnimationStates.AttackOut then
+    
+        if Shared.GetTime() >= self.animationStateDoneTime then
+            self.viewAnimationState = Rifle.kViewAnimationStates.None
+            self.animationStateDoneTime = 0
+        end
+        
+    end
+
+end
+
+function Rifle:UpdateShootingEffects()
+
+    self:UpdateStateTransitions()
+    
+    if self:GetIsShooting() then
+        self:PlayLoopingEffects()
+    else
+        self:StopLoopingEffects()
+    end
+
+end
+
+function Rifle:OnProcessMove(player, input)
+
+    ClipWeapon.OnProcessMove(self, player, input)
+    
+    self:UpdateShootingEffects()
+
+end
+
+function Rifle:OnHolster(player)
     
     ClipWeapon.OnHolster(self, player)
     
@@ -133,9 +275,9 @@ end
 
 function Rifle:OnPrimaryAttack(player)
 	
-    if self.reloadTime == 0 then
+    if not self:GetIsReloading() then
 
-        if not player:GetPrimaryAttackLastFrame() then
+        if self.timeStartedAttack == 0 and self:GetClip() > 0 then
             self.timeStartedAttack = Shared.GetTime()
         end
     
@@ -147,10 +289,8 @@ end
 function Rifle:OnPrimaryAttackEnd(player)
 
     ClipWeapon.OnPrimaryAttackEnd(self, player)
-
-    self:SetOverlayAnimation( nil )
     
-    self.timeStartedAttack = nil
+    self.timeStartedAttack = 0
     
 end
 
@@ -159,9 +299,6 @@ function Rifle:DoMelee(player)
     self.lastAttackSecondary = true
     
     self:PerformMeleeAttack(player)
-    
-    // Cancel reload if we're not done
-    self.reloadTime = 0
 
 end
 
@@ -210,6 +347,8 @@ function Rifle:OnSecondaryAttack(player)
         player:SetActivityEnd(self:GetSecondaryAttackDelay() * player:GetCatalystFireModifier())
 
         player:DeactivateWeaponLift()
+        
+        self:CancelReload()
         
         ClipWeapon.OnSecondaryAttack(self, player)
         
@@ -273,7 +412,8 @@ end
 function Rifle:SetGunLoopParam(viewModel, paramName, rateOfChange)
 
     local current = viewModel:GetPoseParam(paramName)
-    local new = Clamp(current + rateOfChange, 0, 1)
+    // 0.5 instead of 1 as full arm_loop is intense.
+    local new = Clamp(current + rateOfChange, 0, 0.5)
     viewModel:SetPoseParam(paramName, new)
     
 end
@@ -286,8 +426,7 @@ function Rifle:UpdateViewModelPoseParameters(viewModel, input)
     local justAttacked = self.timeOfLastPrimaryAttack ~= nil and ((Shared.GetTime() - self.timeOfLastPrimaryAttack) < .2)
     local sign = ConditionalValue(justAttacked, 1, -1)
 
-    self:SetGunLoopParam(viewModel, "gun_loop", sign*input.time*3)
-    self:SetGunLoopParam(viewModel, "arm_loop", sign*input.time)
+    self:SetGunLoopParam(viewModel, "arm_loop", sign * input.time)
     
 end
 

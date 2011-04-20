@@ -307,7 +307,7 @@ end
 // Compute if active structures on our team that support this technology. Do this in batches for efficiency.
 function TechTree:UpdateTeamStructureData()
 
-    local structures = GetEntitiesIsa("Structure", self:GetTeamNumber())
+    local structures = GetEntitiesForTeam("Structure", self:GetTeamNumber())
     
     for index, node in pairs(self.nodeList) do
 

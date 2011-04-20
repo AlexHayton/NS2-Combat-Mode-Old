@@ -29,7 +29,7 @@ function PlayerUI_GetBlipInfo()
     if player then
     
         local eyePos = player:GetEyePos()
-        for index, blip in ipairs(GetEntitiesIsa("Blip")) do
+        for index, blip in ientitylist(Shared.GetEntitiesWithClassname("Blip")) do
         
             local blipType = blip.blipType
             local blipOrigin = blip:GetOrigin()

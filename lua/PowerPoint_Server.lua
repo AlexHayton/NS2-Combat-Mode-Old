@@ -227,7 +227,7 @@ end
 
 function PowerPoint:UpdatePoweredStructures()
 
-    local structures = GetEntitiesIsa("Structure")
+    local structures = EntityListToTable(Shared.GetEntitiesWithClassname("Structure"))
     
     table.removevalue(structures, self)
     

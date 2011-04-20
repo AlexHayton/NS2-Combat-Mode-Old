@@ -25,12 +25,12 @@ function GUIPlayerNames:Initialize()
     
     for i = 1, GUIPlayerNames.kMaxNames do
     
-        local playerNameItem = GUI.CreateTextItem()
+        local playerNameItem = GUIManager:CreateTextItem()
         
         playerNameItem:SetFontSize(GUIPlayerNames.kFontSize)
         playerNameItem:SetFontIsBold(true)
-        playerNameItem:SetTextAlignmentX(GUITextItem.Align_Center)
-        playerNameItem:SetTextAlignmentY(GUITextItem.Align_Min)
+        playerNameItem:SetTextAlignmentX(GUIItem.Align_Center)
+        playerNameItem:SetTextAlignmentY(GUIItem.Align_Min)
         playerNameItem:SetIsVisible(false)
         playerNameItem:SetColor(color)
 
@@ -63,7 +63,7 @@ function GUIPlayerNames:Update(deltaTime)
     
         self.playerIdList = {}
         
-        local players = GetEntitiesIsa("Player", player:GetTeamNumber())
+        local players = GetEntitiesForTeam("Player", player:GetTeamNumber())
         for index, currentPlayer in ipairs(players) do
 
             if currentPlayer:GetIsAlive() and not currentPlayer:isa("Commander") then

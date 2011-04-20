@@ -26,11 +26,11 @@ function GUIIncrementBar:Initialize(settingsTable)
     self.lowPercentageIncrementColor = settingsTable.LowPercentageIncrementColor
     self.incrementItems = { }
     
-    self.background = GUI.CreateGraphicsItem()
+    self.background = GUIManager:CreateGraphicItem()
     // The background is a completely invisible container only.
     self.background:SetColor(Color(0, 0, 0, 0))
     for i = 1, self.numberOfIncrements do
-        table.insert(self.incrementItems, GUI.CreateGraphicsItem())
+        table.insert(self.incrementItems, GUIManager:CreateGraphicItem())
         self.incrementItems[i]:SetSize(Vector(self.incrementWidth, self.incrementHeight, 0))
         local incrementX = (i - 1) * (self.incrementWidth + self.incrementSpacing)
         self.incrementItems[i]:SetPosition(Vector(incrementX, 0, 0))

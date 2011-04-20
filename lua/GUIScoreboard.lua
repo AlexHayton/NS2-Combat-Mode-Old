@@ -64,7 +64,7 @@ function GUIScoreboard:Initialize()
                                Color = GUIScoreboard.kSpectatorColor, PlayerList = { }, HighlightColor = GUIScoreboard.kSpectatorHighlightColor,
                                GetScores = ScoreboardUI_GetSpectatorScores, TeamNumber = kTeamReadyRoom })
 
-    self.playerHighlightItem = GUI.CreateGraphicsItem()
+    self.playerHighlightItem = GUIManager:CreateGraphicItem()
     self.playerHighlightItem:SetSize(Vector(GUIScoreboard.kTeamItemWidth - (GUIScoreboard.kPlayerItemWidthBuffer * 2), GUIScoreboard.kPlayerItemHeight, 0))
     self.playerHighlightItem:SetAnchor(GUIItem.Left, GUIItem.Top)
     self.playerHighlightItem:SetColor(Color(1, 1, 1, 1))
@@ -97,7 +97,7 @@ end
 function GUIScoreboard:CreateTeamBackground(color)
 
     // Create background.
-    local teamItem = GUI.CreateGraphicsItem()
+    local teamItem = GUIManager:CreateGraphicItem()
     teamItem:SetSize(Vector(GUIScoreboard.kTeamItemWidth, GUIScoreboard.kTeamItemHeight, 0))
     teamItem:SetAnchor(GUIItem.Middle, GUIItem.Center)
     teamItem:SetPosition(Vector(-GUIScoreboard.kTeamItemWidth / 2, -GUIScoreboard.kTeamItemHeight / 2, 0))
@@ -105,23 +105,23 @@ function GUIScoreboard:CreateTeamBackground(color)
     teamItem:SetIsVisible(ScoreboardUI_GetVisible())
     
     // Team name text item.
-    local teamNameItem = GUI.CreateTextItem()
+    local teamNameItem = GUIManager:CreateTextItem()
     teamNameItem:SetFontName(GUIScoreboard.kFontName)
     teamNameItem:SetFontSize(GUIScoreboard.kTeamNameFontSize)
     teamNameItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    teamNameItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    teamNameItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    teamNameItem:SetTextAlignmentX(GUIItem.Align_Min)
+    teamNameItem:SetTextAlignmentY(GUIItem.Align_Min)
     teamNameItem:SetPosition(Vector(5, 5, 0))
     teamNameItem:SetColor(color)
     teamItem:AddChild(teamNameItem)
     
     // Add team info (carbon and number of players)
-    local teamInfoItem = GUI.CreateTextItem()
+    local teamInfoItem = GUIManager:CreateTextItem()
     teamInfoItem:SetFontName(GUIScoreboard.kFontName)
     teamInfoItem:SetFontSize(GUIScoreboard.kTeamInfoFontSize)
     teamInfoItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    teamInfoItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    teamInfoItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    teamInfoItem:SetTextAlignmentX(GUIItem.Align_Min)
+    teamInfoItem:SetTextAlignmentY(GUIItem.Align_Min)
     teamInfoItem:SetPosition(Vector(15, GUIScoreboard.kTeamNameFontSize, 0))
     teamInfoItem:SetColor(color)
     teamItem:AddChild(teamInfoItem)
@@ -129,12 +129,12 @@ function GUIScoreboard:CreateTeamBackground(color)
     local currentColumnX = GUIScoreboard.kTeamScoreColumnStartX
     
     // Status text item.
-    local statusItem = GUI.CreateTextItem()
+    local statusItem = GUIManager:CreateTextItem()
     statusItem:SetFontName(GUIScoreboard.kFontName)
     statusItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     statusItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    statusItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    statusItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    statusItem:SetTextAlignmentX(GUIItem.Align_Min)
+    statusItem:SetTextAlignmentY(GUIItem.Align_Min)
     statusItem:SetPosition(Vector(currentColumnX, 5, 0))
     statusItem:SetColor(color)
     statusItem:SetText("")
@@ -143,12 +143,12 @@ function GUIScoreboard:CreateTeamBackground(color)
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX * 3
     
     // Score text item.
-    local scoreItem = GUI.CreateTextItem()
+    local scoreItem = GUIManager:CreateTextItem()
     scoreItem:SetFontName(GUIScoreboard.kFontName)
     scoreItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     scoreItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    scoreItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    scoreItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    scoreItem:SetTextAlignmentX(GUIItem.Align_Min)
+    scoreItem:SetTextAlignmentY(GUIItem.Align_Min)
     scoreItem:SetPosition(Vector(currentColumnX, 5, 0))
     scoreItem:SetColor(color)
     scoreItem:SetText("Score")
@@ -157,12 +157,12 @@ function GUIScoreboard:CreateTeamBackground(color)
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
     // Kill text item.
-    local killsItem = GUI.CreateTextItem()
+    local killsItem = GUIManager:CreateTextItem()
     killsItem:SetFontName(GUIScoreboard.kFontName)
     killsItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     killsItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    killsItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    killsItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    killsItem:SetTextAlignmentX(GUIItem.Align_Min)
+    killsItem:SetTextAlignmentY(GUIItem.Align_Min)
     killsItem:SetPosition(Vector(currentColumnX, 5, 0))
     killsItem:SetColor(color)
     killsItem:SetText("Kills")
@@ -171,12 +171,12 @@ function GUIScoreboard:CreateTeamBackground(color)
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
     // Deaths text item.
-    local deathsItem = GUI.CreateTextItem()
+    local deathsItem = GUIManager:CreateTextItem()
     deathsItem:SetFontName(GUIScoreboard.kFontName)
     deathsItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     deathsItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    deathsItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    deathsItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    deathsItem:SetTextAlignmentX(GUIItem.Align_Min)
+    deathsItem:SetTextAlignmentY(GUIItem.Align_Min)
     deathsItem:SetPosition(Vector(currentColumnX, 5, 0))
     deathsItem:SetColor(color)
     deathsItem:SetText("Deaths")
@@ -185,12 +185,12 @@ function GUIScoreboard:CreateTeamBackground(color)
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
     // Resources text item.
-    local resItem = GUI.CreateTextItem()
+    local resItem = GUIManager:CreateTextItem()
     resItem:SetFontName(GUIScoreboard.kFontName)
     resItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     resItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    resItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    resItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    resItem:SetTextAlignmentX(GUIItem.Align_Min)
+    resItem:SetTextAlignmentY(GUIItem.Align_Min)
     resItem:SetPosition(Vector(currentColumnX , 5, 0))
     resItem:SetColor(color)
     resItem:SetText("  Res")
@@ -199,12 +199,12 @@ function GUIScoreboard:CreateTeamBackground(color)
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
     // Ping text item.
-    local pingItem = GUI.CreateTextItem()
+    local pingItem = GUIManager:CreateTextItem()
     pingItem:SetFontName(GUIScoreboard.kFontName)
     pingItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     pingItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    pingItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    pingItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    pingItem:SetTextAlignmentX(GUIItem.Align_Min)
+    pingItem:SetTextAlignmentY(GUIItem.Align_Min)
     pingItem:SetPosition(Vector(currentColumnX, 5, 0))
     pingItem:SetColor(color)
     pingItem:SetText("Ping")
@@ -311,15 +311,6 @@ function GUIScoreboard:UpdateTeam(updateTeam)
         local playerStatus = teamScores[currentPlayerIndex + 7]
         local isSpectator = teamScores[currentPlayerIndex + 8]
         
-        if (isSpectator == true and (updateTeam["TeamNumber"] == kAlienTeamType or updateTeam["TeamNumber"] == kMarineTeamType)) then
-            playerStatus = "Dead"
-        end
-        
-        local status = ConditionalValue(isLocalTeam, playerStatus, "-")
-        if (playerStatus == "Dead") then
-            status = playerStatus
-        end
-        
         currentPosition.y = currentY
         player["Background"]:SetPosition(currentPosition)
         player["Background"]:SetColor(teamColor)
@@ -340,7 +331,7 @@ function GUIScoreboard:UpdateTeam(updateTeam)
         player["Score"]:SetText(score)
         player["Kills"]:SetText(kills)
         player["Deaths"]:SetText(deaths)
-        player["Status"]:SetText(status)
+        player["Status"]:SetText(playerStatus)
         player["Resources"]:SetText(resourcesStr)
         player["Ping"]:SetText(pingStr)
         if ping < GUIScoreboard.kLowPingThreshold then
@@ -386,7 +377,7 @@ function GUIScoreboard:CreatePlayerItem()
     end
     
     // Create background.
-    local playerItem = GUI.CreateGraphicsItem()
+    local playerItem = GUIManager:CreateGraphicItem()
     playerItem:SetSize(Vector(GUIScoreboard.kTeamItemWidth - (GUIScoreboard.kPlayerItemWidthBuffer * 2), GUIScoreboard.kPlayerItemHeight, 0))
     playerItem:SetAnchor(GUIItem.Left, GUIItem.Top)
     playerItem:SetPosition(Vector(GUIScoreboard.kPlayerItemWidthBuffer, GUIScoreboard.kPlayerItemHeight / 2, 0))
@@ -395,12 +386,12 @@ function GUIScoreboard:CreatePlayerItem()
     playerItem:SetTextureCoordinates(0, 0, 0.558, 0.16)
     
     // Player name text item.
-    local playerNameItem = GUI.CreateTextItem()
+    local playerNameItem = GUIManager:CreateTextItem()
     playerNameItem:SetFontName(GUIScoreboard.kFontName)
     playerNameItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     playerNameItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    playerNameItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    playerNameItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    playerNameItem:SetTextAlignmentX(GUIItem.Align_Min)
+    playerNameItem:SetTextAlignmentY(GUIItem.Align_Min)
     playerNameItem:SetPosition(Vector(5, 5, 0))
     playerNameItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(playerNameItem)
@@ -408,12 +399,12 @@ function GUIScoreboard:CreatePlayerItem()
     local currentColumnX = GUIScoreboard.kTeamScoreColumnStartX
     
     // Status text item.
-    local statusItem = GUI.CreateTextItem()
+    local statusItem = GUIManager:CreateTextItem()
     statusItem:SetFontName(GUIScoreboard.kFontName)
     statusItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     statusItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    statusItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    statusItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    statusItem:SetTextAlignmentX(GUIItem.Align_Min)
+    statusItem:SetTextAlignmentY(GUIItem.Align_Min)
     statusItem:SetPosition(Vector(currentColumnX, 5, 0))
     statusItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(statusItem)
@@ -421,12 +412,12 @@ function GUIScoreboard:CreatePlayerItem()
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX * 3
     
     // Score text item.
-    local scoreItem = GUI.CreateTextItem()
+    local scoreItem = GUIManager:CreateTextItem()
     scoreItem:SetFontName(GUIScoreboard.kFontName)
     scoreItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     scoreItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    scoreItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    scoreItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    scoreItem:SetTextAlignmentX(GUIItem.Align_Min)
+    scoreItem:SetTextAlignmentY(GUIItem.Align_Min)
     scoreItem:SetPosition(Vector(currentColumnX, 5, 0))
     scoreItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(scoreItem)
@@ -434,12 +425,12 @@ function GUIScoreboard:CreatePlayerItem()
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
     // Kill text item.
-    local killsItem = GUI.CreateTextItem()
+    local killsItem = GUIManager:CreateTextItem()
     killsItem:SetFontName(GUIScoreboard.kFontName)
     killsItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     killsItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    killsItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    killsItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    killsItem:SetTextAlignmentX(GUIItem.Align_Min)
+    killsItem:SetTextAlignmentY(GUIItem.Align_Min)
     killsItem:SetPosition(Vector(currentColumnX, 5, 0))
     killsItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(killsItem)
@@ -447,12 +438,12 @@ function GUIScoreboard:CreatePlayerItem()
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
     // Deaths text item.
-    local deathsItem = GUI.CreateTextItem()
+    local deathsItem = GUIManager:CreateTextItem()
     deathsItem:SetFontName(GUIScoreboard.kFontName)
     deathsItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     deathsItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    deathsItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    deathsItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    deathsItem:SetTextAlignmentX(GUIItem.Align_Min)
+    deathsItem:SetTextAlignmentY(GUIItem.Align_Min)
     deathsItem:SetPosition(Vector(currentColumnX, 5, 0))
     deathsItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(deathsItem)
@@ -460,12 +451,12 @@ function GUIScoreboard:CreatePlayerItem()
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
     // Resources text item.
-    local resItem = GUI.CreateTextItem()
+    local resItem = GUIManager:CreateTextItem()
     resItem:SetFontName(GUIScoreboard.kFontName)
     resItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     resItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    resItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    resItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    resItem:SetTextAlignmentX(GUIItem.Align_Min)
+    resItem:SetTextAlignmentY(GUIItem.Align_Min)
     resItem:SetPosition(Vector(currentColumnX, 5, 0))
     resItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(resItem)
@@ -473,12 +464,12 @@ function GUIScoreboard:CreatePlayerItem()
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
     // Ping text item.
-    local pingItem = GUI.CreateTextItem()
+    local pingItem = GUIManager:CreateTextItem()
     pingItem:SetFontName(GUIScoreboard.kFontName)
     pingItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     pingItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    pingItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    pingItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    pingItem:SetTextAlignmentX(GUIItem.Align_Min)
+    pingItem:SetTextAlignmentY(GUIItem.Align_Min)
     pingItem:SetPosition(Vector(currentColumnX, 5, 0))
     pingItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(pingItem)

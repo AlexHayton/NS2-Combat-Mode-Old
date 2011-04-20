@@ -540,7 +540,7 @@ function LookupTechData(techId, fieldName, default)
         end
         
         Print("LookupTechData(%s, %s, %s) called improperly.", tostring(techIdString), tostring(fieldName), tostring(default))
-        return kTechId.None
+        return nil
         
     end
 

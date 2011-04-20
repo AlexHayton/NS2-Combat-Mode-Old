@@ -42,12 +42,9 @@ function GetUnattachedEntityWithinRadius(attachclass, position, radius)
     local nearestDistance = 0
     local nearestEntity = nil
     
-    local entities = GetEntitiesIsa(attachclass)
+    for index, current in ientitylist(Shared.GetEntitiesWithClassname(attachclass)) do
     
-    for index, current in ipairs(entities) do
-    
-        local currentOrigin = Vector()
-        VectorCopy(current:GetOrigin(), currentOrigin)
+        local currentOrigin = Vector(current:GetOrigin())
         
         if(current:GetAttached() == nil) then
             
@@ -68,8 +65,9 @@ function GetUnattachedEntityWithinRadius(attachclass, position, radius)
     
 end
 
-function Commander:TakeDamage(damage, attacker, doer, point, direction)
-    // Do nothing, can't take damage
+// Can't take damage.
+function Commander:GetCanTakeDamage()
+    return false
 end
 
 function Commander:AttemptToResearchOrUpgrade(techNode, force)
@@ -627,7 +625,7 @@ function Commander:UpdateTeamHarvesterCount()
     if self.timeToSendTeamHarvesterCount == nil or (Shared.GetTime() > (self.timeToSendTeamHarvesterCount + 1.5)) then
     
         local resourceTowerName = ConditionalValue(self:isa("MarineCommander"), "Extractor", "Harvester")
-        local numResourceTowers = table.count(GetEntitiesIsa(resourceTowerName, self:GetTeamNumber()))
+        local numResourceTowers = table.count(GetEntitiesForTeam(resourceTowerName, self:GetTeamNumber()))
         
         Server.SendCommand(self, string.format("harvestercount %d", numResourceTowers))
         
@@ -646,7 +644,7 @@ function Commander:GetIdleWorkers()
 
     local className = ConditionalValue(self:isa("AlienCommander"), "Drifter", "MAC")
     
-    local workers = GetEntitiesIsa(className, self:GetTeamNumber())
+    local workers = GetEntitiesForTeam(className, self:GetTeamNumber())
     
     local idleWorkers = {}
     

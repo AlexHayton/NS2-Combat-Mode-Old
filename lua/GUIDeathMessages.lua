@@ -107,17 +107,17 @@ function GUIDeathMessages:AddMessage(killerColor, killerName, targetColor, targe
     end
     
     if insertMessage["Killer"] == nil then
-        insertMessage["Killer"] = GUI.CreateTextItem()
+        insertMessage["Killer"] = GUIManager:CreateTextItem()
     end
     insertMessage["Killer"]:SetFontSize(GUIDeathMessages.kNameFontSize)
     insertMessage["Killer"]:SetAnchor(GUIItem.Left, GUIItem.Center)
-    insertMessage["Killer"]:SetTextAlignmentX(GUITextItem.Align_Min)
-    insertMessage["Killer"]:SetTextAlignmentY(GUITextItem.Align_Center)
+    insertMessage["Killer"]:SetTextAlignmentX(GUIItem.Align_Min)
+    insertMessage["Killer"]:SetTextAlignmentY(GUIItem.Align_Center)
     insertMessage["Killer"]:SetColor(ColorIntToColor(killerColor))
     insertMessage["Killer"]:SetText(killerName)
     
     if insertMessage["Weapon"] == nil then
-        insertMessage["Weapon"] = GUI.CreateGraphicsItem()
+        insertMessage["Weapon"] = GUIManager:CreateGraphicItem()
     end
     insertMessage["Weapon"]:SetSize(Vector(iconWidth, iconHeight, 0))
     insertMessage["Weapon"]:SetAnchor(GUIItem.Middle, GUIItem.Center)
@@ -127,12 +127,12 @@ function GUIDeathMessages:AddMessage(killerColor, killerName, targetColor, targe
     insertMessage["Weapon"]:SetColor(Color(1, 1, 1, 1))
     
     if insertMessage["Target"] == nil then
-        insertMessage["Target"] = GUI.CreateTextItem()
+        insertMessage["Target"] = GUIManager:CreateTextItem()
     end
     insertMessage["Target"]:SetFontSize(GUIDeathMessages.kNameFontSize)
     insertMessage["Target"]:SetAnchor(GUIItem.Right, GUIItem.Center)
-    insertMessage["Target"]:SetTextAlignmentX(GUITextItem.Align_Max)
-    insertMessage["Target"]:SetTextAlignmentY(GUITextItem.Align_Center)
+    insertMessage["Target"]:SetTextAlignmentX(GUIItem.Align_Max)
+    insertMessage["Target"]:SetTextAlignmentY(GUIItem.Align_Center)
     insertMessage["Target"]:SetColor(ColorIntToColor(targetColor))
     insertMessage["Target"]:SetText(targetName)
     
@@ -141,7 +141,7 @@ function GUIDeathMessages:AddMessage(killerColor, killerName, targetColor, targe
     local textWidth = killerTextWidth + targetTextWidth
     
     if insertMessage["Background"] == nil then
-        insertMessage["Background"] = GUI.CreateGraphicsItem()
+        insertMessage["Background"] = GUIManager:CreateGraphicItem()
         insertMessage["Background"]:AddChild(insertMessage["Killer"])
         insertMessage["Background"]:AddChild(insertMessage["Weapon"])
         insertMessage["Background"]:AddChild(insertMessage["Target"])

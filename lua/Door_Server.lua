@@ -67,7 +67,7 @@ function Door:OnWeld(entity, elapsedTime)
     elseif(self.state ~= Door.kState.Welded) then
     
         // Make sure there is nothing obstructing door
-        local blockingEnts = GetGamerules():GetEntities("Entity", -1, self:GetOrigin(), 1)
+        local blockingEnts = GetEntitiesWithinRange("Entity", self:GetOrigin(), 1)
         
         // ...but we can't block ourselves
         table.removevalue(blockingEnts, self) 
@@ -122,19 +122,26 @@ function Door:OnThink()
     
         if (self.timeLastCommanderAction == 0) or (Shared.GetTime() > self.timeLastCommanderAction + 4) then
         
-            local players = GetGamerules():GetAllPlayers()
+            local allScriptActors = Shared.GetEntitiesWithClassname("ScriptActor")
             
             local desiredOpenState = false
-            for index, player in ipairs(players) do
+            for index, actor in ientitylist(allScriptActors) do
+                local opensForEntity = false
+                local openDistance = 1
+    
+                if HasMixin(actor, "Door") then
+                   opensForEntity, openDistance = actor:GetCanDoorInteract(self)
+                end                                
             
-                local dist = (player:GetOrigin() - self:GetOrigin()):GetLength()
-                if player:GetIsAlive() and player:GetIsVisible() and (dist < 4) then
+                if opensForEntity then
+                  local distSquared = (actor:GetOrigin() - self:GetOrigin()):GetLengthSquared()
+                  if ((not HasMixin(actor, "Live")) or actor:GetIsAlive()) and actor:GetIsVisible() and (distSquared < (openDistance * openDistance)) then
                 
                     desiredOpenState = true
                     break
                     
+                  end
                 end
-                
             end
             
             if desiredOpenState and (self:GetState() == Door.kState.Closed) then

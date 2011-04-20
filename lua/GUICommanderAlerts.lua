@@ -156,7 +156,7 @@ function GUICommanderAlerts:AddMessage(text, iconXOffset, iconYOffset, entityId,
     end
     
     if insertMessage["Icon"] == nil then
-        insertMessage["Icon"] = GUI.CreateGraphicsItem()
+        insertMessage["Icon"] = GUIManager:CreateGraphicItem()
     end
     local iconScaledWidth = GUICommanderAlerts.kIconWidth * GUICommanderAlerts.kIconSizeScalar
     local iconScaledHeight = GUICommanderAlerts.kIconHeight * GUICommanderAlerts.kIconSizeScalar
@@ -171,19 +171,19 @@ function GUICommanderAlerts:AddMessage(text, iconXOffset, iconYOffset, entityId,
     insertMessage["Icon"]:SetInheritsParentAlpha(true)
     
     if insertMessage["Message"] == nil then
-        insertMessage["Message"] = GUI.CreateTextItem()
+        insertMessage["Message"] = GUIManager:CreateTextItem()
     end
     insertMessage["Message"]:SetFontSize(GUICommanderAlerts.kMessageFontSize)
     insertMessage["Message"]:SetAnchor(GUIItem.Right, GUIItem.Center)
-    insertMessage["Message"]:SetTextAlignmentX(GUITextItem.Align_Min)
-    insertMessage["Message"]:SetTextAlignmentY(GUITextItem.Align_Center)
+    insertMessage["Message"]:SetTextAlignmentX(GUIItem.Align_Min)
+    insertMessage["Message"]:SetTextAlignmentY(GUIItem.Align_Center)
     insertMessage["Message"]:SetText(text)
     insertMessage["Message"]:SetInheritsParentAlpha(true)
     insertMessage["Message"]:SetPosition(Vector(GUICommanderAlerts.kBadgeWidthBuffer, 0, 0))
     
     // Only set children the first time this message is created.
     if insertMessage["Background"] == nil then
-        insertMessage["Background"] = GUI.CreateGraphicsItem()
+        insertMessage["Background"] = GUIManager:CreateGraphicItem()
         insertMessage["Background"]:SetLayer(kGUILayerCommanderAlerts)
         insertMessage["Background"]:AddChild(insertMessage["Icon"])
         insertMessage["Icon"]:AddChild(insertMessage["Message"])

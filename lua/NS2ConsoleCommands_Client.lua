@@ -103,10 +103,10 @@ function OnCommandTestSentry()
     if Shared.GetCheatsEnabled() then
     
         // Look for nearest sentry and have it show us what it sees
-        local sentries = GetEntitiesIsaInRadius("Sentry", player:GetTeamNumber(), player:GetOrigin(), 20)    
+        local sentries = GetEntitiesForTeamWithinRange("Sentry", player:GetTeamNumber(), player:GetOrigin(), 20)    
         for index, sentry in ipairs(sentries) do
             
-            local targets = GetEntitiesIsaInRadius("LiveScriptActor", -1, sentry:GetOrigin(), Sentry.kRange)
+            local targets = GetEntitiesWithinRange("LiveScriptActor", sentry:GetOrigin(), Sentry.kRange)
             for index, target in pairs(targets) do
             
                 if sentry ~= target then
@@ -158,7 +158,6 @@ function OnCommandChangeGCSettingClient(settingName, newValue)
     
 end
 
-Event.Hook("Console_debugspawn",            OnCommandDebugSpawn)
 Event.Hook("Console_hotgroup",              OnCommandHotgroup)
 Event.Hook("Console_minimapalert",          OnCommandMinimapAlert)
 Event.Hook("Console_tracereticle",          OnCommandTraceReticle)

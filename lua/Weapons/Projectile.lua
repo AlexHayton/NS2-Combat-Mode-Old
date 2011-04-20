@@ -46,7 +46,7 @@ function Projectile:OnDestroy()
     ScriptActor.OnDestroy(self)
 
     if (Server) then
-        Shared.DestroyPhysicsBody(self.physicsBody)
+        Shared.DestroyCollisionObject(self.physicsBody)
         self.physicsBody = nil
     end
     

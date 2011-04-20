@@ -9,6 +9,8 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+Script.Load("lua/GUIManager.lua")
+
 class 'GUIScript'
 
 function GUIScript:Initialize()

@@ -41,7 +41,7 @@ GUICommanderLogout.kTooltipFontSize = 16
 
 function GUICommanderLogout:Initialize()
 
-    self.background = GUI.CreateGraphicsItem()
+    self.background = GUIManager:CreateGraphicItem()
     self.background:SetSize(Vector(GUICommanderLogout.kBackgroundWidth, GUICommanderLogout.kBackgroundHeight, 0))
     self.background:SetAnchor(GUIItem.Right, GUIItem.Top)
     self.background:SetPosition(Vector(-GUICommanderLogout.kBackgroundWidth - GUICommanderLogout.kLogoutOffset, GUICommanderLogout.kLogoutOffset, 0))
@@ -69,7 +69,7 @@ function GUICommanderLogout:InitializeArrows()
     self.startArrow = 1
     
     for i = 1, 3 do
-        local arrowItem = GUI.CreateGraphicsItem()
+        local arrowItem = GUIManager:CreateGraphicItem()
         arrowItem:SetSize(Vector(GUICommanderLogout.kArrowWidth, GUICommanderLogout.kArrowHeight, 0))
         if CommanderUI_IsAlienCommander() then
             arrowItem:SetTexture(GUICommanderLogout.kLogoutAlienTextureName)
@@ -103,11 +103,11 @@ end
 
 function GUICommanderLogout:InitializeTooltip()
 
-    self.tooltip = GUI.CreateTextItem()
+    self.tooltip = GUIManager:CreateTextItem()
     self.tooltip:SetFontSize(GUICommanderLogout.kTooltipFontSize)
     self.tooltip:SetAnchor(GUIItem.Left, GUIItem.Top)
-    self.tooltip:SetTextAlignmentX(GUITextItem.Align_Min)
-    self.tooltip:SetTextAlignmentY(GUITextItem.Align_Max)
+    self.tooltip:SetTextAlignmentX(GUIItem.Align_Min)
+    self.tooltip:SetTextAlignmentY(GUIItem.Align_Max)
     self.tooltip:SetIsVisible(false)
     self.tooltip:SetFontIsBold(true)
     self.tooltip:SetText("Logout")

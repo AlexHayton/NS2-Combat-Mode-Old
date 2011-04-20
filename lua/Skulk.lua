@@ -20,9 +20,9 @@ Skulk.kViewModelName = PrecacheAsset("models/alien/skulk/skulk_view.model")
 Skulk.kIdleSound = PrecacheAsset("sound/ns2.fev/alien/skulk/idle")
 
 if Server then
-    Script.Load("lua/Skulk_Server.lua")
+    Script.Load("lua/Skulk_Server.lua", true)
 elseif Client then
-    Script.Load("lua/Skulk_Client.lua")
+    Script.Load("lua/Skulk_Client.lua", true)
 end
 
 local networkVars = 
@@ -312,10 +312,14 @@ end
 
 function Skulk:UpdatePosition(velocity, time)
 
+    return Alien.UpdatePosition(self, velocity, time)
+
+/*
+    Print("velocity = %s on ground = %s, leaping = %s", tostring(velocity), tostring(self:GetIsOnGround()), tostring(self.leaping) )
+
     // Fallback on default behavior when on the ground.
     if self:GetIsOnGround() then
-        Alien.UpdatePosition(self, velocity, time)
-        return
+        return Alien.UpdatePosition(self, velocity, time)
     end
     
     // We need to make a copy so that we aren't holding onto a reference
@@ -353,7 +357,10 @@ function Skulk:UpdatePosition(velocity, time)
         self:PerformMovement(-self.wallWalkingStickGoal * (time * 2), 1, nil)
     end
     
+    return velocity
+*/    
 end
+
 
 function Skulk:PreventWallWalkIntersection(dt)
     
@@ -593,9 +600,11 @@ function Skulk:ClampSpeed(input, velocity)
     else
     
         // Otherwise clamp XZ
-        Alien.ClampSpeed(self, input, velocity)
+        velocity = Alien.ClampSpeed(self, input, velocity)
         
     end    
+    
+    return velocity
     
 end
 

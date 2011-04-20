@@ -19,13 +19,13 @@ GUIEmbryoHUD.kHealthTextYOffset = 20
 
 function GUIEmbryoHUD:Initialize()
 
-    self.evolveText = GUI.CreateTextItem()
+    self.evolveText = GUIManager:CreateTextItem()
     self.evolveText:SetFontSize(GUIEmbryoHUD.kHealthTextFontSize)
     self.evolveText:SetFontName(GUIEmbryoHUD.kTextFontName)
     self.evolveText:SetAnchor(GUIItem.Middle, GUIItem.Center)
     self.evolveText:SetPosition(Vector(0, GUIEmbryoHUD.kHealthTextYOffset, 0))
-    self.evolveText:SetTextAlignmentX(GUITextItem.Align_Center)
-    self.evolveText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.evolveText:SetTextAlignmentX(GUIItem.Align_Center)
+    self.evolveText:SetTextAlignmentY(GUIItem.Align_Center)
     self.evolveText:SetColor(GUIEmbryoHUD.kFontColor)
 
 end

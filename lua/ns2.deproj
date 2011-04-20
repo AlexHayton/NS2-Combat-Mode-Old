@@ -849,4 +849,13 @@
   <file>
     <filename>LiveMixin.lua</filename>
   </file>
+  <file>
+    <filename>OrdersMixin.lua</filename>
+  </file>
+  <file>
+    <filename>DoorMixin.lua</filename>
+  </file>
+  <file>
+    <filename>GUIShotgunDisplay.lua</filename>
+  </file>
 </project>

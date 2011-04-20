@@ -113,7 +113,7 @@ function PlayerUI_GetNextWaypointInScreenspace()
     local nextWPDir = player.nextOrderWaypoint - player.lastPlayerEyePos
     local normToEntityVec = GetNormalizedVectorXZ(nextWPDir)
     local normViewVec = GetNormalizedVectorXZ(player.lastPlayerForwardNorm)
-    local dotProduct = normToEntityVec:DotProduct(normViewVec)
+    local dotProduct = Math.DotProduct(normToEntityVec, normViewVec)
     
     // Distance is used for scaling
     local nextWPDist = nextWPDir:GetLength()
@@ -241,7 +241,7 @@ function PlayerUI_GetOrderInfo()
     local player = Client.GetLocalPlayer()
     if player then
     
-        for index, order in ipairs(GetEntitiesIsa("Order")) do
+        for index, order in ientitylist(Shared.GetEntitiesWithClassname("Order")) do
         
             table.insert(orderInfo, order.orderType)
             table.insert(orderInfo, order.orderParam)
@@ -271,7 +271,7 @@ function PlayerUI_GetFinalWaypointInScreenspace()
     local finalWPDir = waypoint - player:GetEyePos()
     local normToEntityVec = GetNormalizedVectorXZ(finalWPDir)
     local normViewVec = GetNormalizedVectorXZ(player:GetViewAngles():GetCoords().zAxis)
-    local dotProduct = normToEntityVec:DotProduct(normViewVec)
+    local dotProduct = Math.DotProduct(normToEntityVec, normViewVec)
     
     // Distance is used for scaling
     local finalWPDist = finalWPDir:GetLengthSquared()
@@ -729,12 +729,11 @@ end
 
 /*
 // Inefficient - find another way
+// Note: This may not be inefficient anymore because of the new entity query code.
 function Player:UpdateCloaking()
 
     // Set cloaked enemy structures and players invisible
-    local ents = GetEntitiesIsa("LiveScriptActor", -1)
-    
-    for index, entity in ipairs(ents) do
+    for index, entity in ientitylist(Shared.GetEntitiesWithClassname("LiveScriptActor")) do
     
         if entity:GetGameEffectMask(kGameEffect.Cloaked) then
         
@@ -837,7 +836,6 @@ function Player:UpdateClientEffects(deltaTime, isLocal)
     if isLocal then
     
         self:UpdateScreenEffects(deltaTime)
-        self:UpdatePowerPointLights()
         
     end
     
@@ -866,39 +864,6 @@ function Player:ExpireDebugText()
         
     end
         
-end
-
-function Player:UpdatePowerPointLights()
-
-    // Only get power nodes on client every so often for performance reasons
-    local time = Shared.GetTime()
-    
-    // Get power points that are relevant
-    local forceUpdate = false
-    
-    if (self.timeOfLastPowerPoints == nil) or (time > (self.timeOfLastPowerPoints + 3)) then
-    
-        self.powerPoints = GetEntitiesIsa("PowerPoint")
-        
-        self.timeOfLastPowerPoints = time
-        
-        // If a power node wasn't relevant and becomes relevant, we need to update lights
-        forceUpdate = true
-        
-    end
-    
-    // Now update the lights every frame
-    for index, powerPoint in ipairs(self.powerPoints) do
-    
-        // But only update lights when necessary for performance reasons
-        if powerPoint:GetIsAffectingLights() or forceUpdate then
-        
-            powerPoint:UpdatePoweredLights()
-        
-        end
-        
-    end
-    
 end
 
 // Return flash player at index, creating it if it doesn't exist. Must call GetFlashPlayer(n-1) before calling GetFlashPlayer(n)
@@ -1061,9 +1026,6 @@ function Player:OnInitLocalClient()
     
     self.damageIndicators = {}
     
-    self.powerPoints = {}
-    self.timeOfLastPowerPoints = nil
-    
     // Set commander geometry visible
     Client.SetGroupIsVisible(kCommanderInvisibleGroupName, true)
     
@@ -1162,7 +1124,7 @@ end
 function Player:DebugVisibility()
 
     // For each visible entity on other team
-    local entities = GetEntitiesIsaMultiple({"Player", "ScriptActor"}, GetEnemyTeamNumber(self:GetTeamNumber()))
+    local entities = GetEntitiesMatchAnyTypesForTeam({"Player", "ScriptActor"}, GetEnemyTeamNumber(self:GetTeamNumber()))
     
     for entIndex, entity in ipairs(entities) do
     
@@ -1329,10 +1291,10 @@ function Player:GetCameraViewCoords()
         if(trace.fraction < 1) then
         
             // Add a little extra to avoid wall interpenetration
-            VectorCopy(trace.endPoint + cameraCoords.zAxis * .2, cameraCoords.origin)
+            cameraCoords.origin = trace.endPoint + cameraCoords.zAxis * .2
             
         else
-            VectorCopy(endPoint, cameraCoords.origin)
+            cameraCoords.origin = endPoint
         end        
 
     else    
@@ -1377,8 +1339,7 @@ function Player:GetCameraViewCoords()
         local yaw = GetYawFromVector(cameraCoords.zAxis)
         local pitch = GetPitchFromVector(cameraCoords.zAxis) + shakeAmount
         local angles = Angles(pitch, yaw, 0)
-        cameraCoords = angles:GetCoords()
-        VectorCopy(origin, cameraCoords.origin)
+        cameraCoords = angles:GetCoords(origin)
         
     end
     
@@ -1611,9 +1572,7 @@ function PlayerUI_GetStaticMapBlips()
     
     if player then
     
-        local mapBlips = GetEntitiesIsa("MapBlip")
-        
-        for index, blip in ipairs(mapBlips) do
+        for index, blip in ientitylist(Shared.GetEntitiesWithClassname("MapBlip")) do
             
             local blipOrigin = blip:GetOrigin()
             local posX, posY = PlayerUI_GetMapXY(blipOrigin.x, blipOrigin.z)
@@ -1791,24 +1750,17 @@ function Player:OnUpdate(deltaTime)
     // Need to update pose parameters every frame to keep them smooth
     LiveScriptActor.OnUpdate(self, deltaTime)
     
+    local isLocal = (self == Client.GetLocalPlayer())
     
-    if not Shared.GetIsRunningPrediction() then
+    if isLocal then
     
-        local isLocal = (self == Client.GetLocalPlayer())
+        self:UpdatePoseParameters(deltaTime)
         
-        if isLocal then
-        
-            self:UpdatePoseParameters(deltaTime)
-            
-        end
-        
-        GetEffectManager():OnUpdate(deltaTime)
-    
-        self:UpdateClientEffects(deltaTime, isLocal)
-        
-        self:ExpireDebugText()
-
     end
+
+    self:UpdateClientEffects(deltaTime, isLocal)
+    
+    self:ExpireDebugText()
     
 end
 

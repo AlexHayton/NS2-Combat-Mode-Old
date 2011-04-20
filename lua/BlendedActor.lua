@@ -121,7 +121,7 @@ function BlendedActor:SetAnimationWithBlending(baseAnimationName, blendTime, for
     end
 
     // Translate animation name to one that uses current weapon    
-    animationName = self:GetCustomAnimationName(baseAnimationName)
+    local animationName = self:GetCustomAnimationName(baseAnimationName)
     
     if(force == nil or force == false) then
     

@@ -151,8 +151,7 @@ function HydraAbility:GetPositionForHydra(player)
     // Trace short distance in front
     local trace = Shared.TraceRay(player:GetEyePos(), origin, PhysicsMask.AllButPCsAndRagdolls, EntityFilterTwo(player, self))
     
-    local displayOrigin = Vector()
-    VectorCopy(trace.endPoint, displayOrigin)
+    local displayOrigin = trace.endPoint
     
     // If we hit nothing, trace down to place on ground
     if trace.fraction == 1 then
@@ -171,7 +170,7 @@ function HydraAbility:GetPositionForHydra(player)
             validPosition = true
         end
         
-        VectorCopy(trace.endPoint, displayOrigin)
+        displayOrigin = trace.endPoint
         
     end
     

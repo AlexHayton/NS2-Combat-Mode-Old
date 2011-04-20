@@ -88,9 +88,7 @@ function Phantasm:GetAttackSoundName()
     return ""
 end
 
-function Phantasm:SetOrder(order, clearExisting, insertFirst)
-
-    LiveScriptActor.SetOrder(self, order, clearExisting, insertFirst)
+function Phantasm:OnOrderChanged()
     
     self:SetNextThink(Phantasm.kMoveThinkInterval)
     
@@ -98,7 +96,7 @@ function Phantasm:SetOrder(order, clearExisting, insertFirst)
         
 end
 
-function Phantasm:OverrideOrder(order)
+function Phantasm:OnOverrideOrder(order)
     
     local orderTarget = nil
     
@@ -107,13 +105,13 @@ function Phantasm:OverrideOrder(order)
     end
     
     // If target is enemy, attack it
-    if (order:GetType() == kTechId.Default) and orderTarget ~= nil and orderTarget:isa("LiveScriptActor") and GetEnemyTeamNumber(self:GetTeamNumber()) == orderTarget:GetTeamNumber() and orderTarget:GetIsAlive() then
-    
-        order:SetType(kTechId.Attack)
-        
-    else
-    
-        LiveScriptActor.OverrideOrder(self, order)
+    if (order:GetType() == kTechId.Default) then
+
+        if orderTarget ~= nil and orderTarget:isa("LiveScriptActor") and GetEnemyTeamNumber(self:GetTeamNumber()) == orderTarget:GetTeamNumber() and orderTarget:GetIsAlive() then
+            order:SetType(kTechId.Attack)
+        else
+            order:SetType(kTechId.Move)
+        end
         
     end
     
@@ -144,8 +142,7 @@ function Phantasm:UpdatePoseParameters(deltaTime)
     
         local moveSpeed = self:GetMoveSpeed()
         
-        local currentOrigin = Vector()
-        VectorCopy(self:GetOrigin(), currentOrigin)
+        local currentOrigin = Vector(self:GetOrigin())
         
         if(currentOrder:GetType() == kTechId.Move) then
 

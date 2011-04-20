@@ -14,12 +14,10 @@ function Commander:SetDefaultSelection()
     self.selectedEntities = {}
 
     // Find nearest hive or command station and select it
-    local commandStructures = GetEntitiesIsa("CommandStructure", -1)
-    
     local nearestCommandStructure = nil
     local nearestCommandStructureDistance = 0
     
-    for index, currentStructure in pairs(commandStructures) do
+    for index, currentStructure in ientitylist(Shared.GetEntitiesWithClassname("CommandStructure")) do
     
         local distance = (currentStructure:GetOrigin() - self:GetOrigin()):GetLength()
         if(nearestCommandStructure == nil or distance < nearestCommandStructureDistance) then
@@ -171,8 +169,7 @@ function Commander:MarqueeSelectEntities(pickStartVec, pickEndVec)
     local newSelection = {}
 
     // Add more class names here to allow selection of other entity types
-    local potentials = {}
-    table.adduniquetable(GetEntitiesIsa("LiveScriptActor", -1), potentials)
+    local potentials = EntityListToTable(Shared.GetEntitiesWithClassname("LiveScriptActor"))
     
     self:GetEntitiesBetweenVecs(potentials, pickStartVec, pickEndVec, newSelection)
 
@@ -281,8 +278,7 @@ function Commander:ControlClickSelectEntities(pickVec, screenStartVec, screenEnd
             local classname = clickEntity:GetClassName()
             if(classname ~= nil) then
             
-                local potentials = {}
-                table.addtable(GetEntitiesIsa(classname, -1), potentials)
+                local potentials = EntityListToTable(Shared.GetEntitiesWithClassname(classname))
                 self:GetEntitiesBetweenVecs(potentials, screenStartVec, screenEndVec, newSelection)
                 
             end
@@ -299,12 +295,7 @@ function Commander:SelectAllPlayers()
 
     local selectionIds = {}
     
-    local players = {}
-    if Server then
-        players = GetGamerules():GetPlayers(self:GetTeamNumber())
-    else
-        players = GetEntitiesIsa("Player", self:GetTeamNumber())
-    end
+    local players = GetEntitiesForTeam("Player", self:GetTeamNumber())
     
     for index, player in ipairs(players) do
     

@@ -57,10 +57,10 @@ function MenuManager.SetMenuCinematic(fileName)
 
 end
 
-function MenuManager.GetCinematicCamera(camera)
+function MenuManager.GetCinematicCamera()
     // Try to get the camera from the cinematic.
     if (MenuManager.menuCinematic ~= nil) then
-        return MenuManager.menuCinematic:GetCamera(camera)
+        return MenuManager.menuCinematic:GetCamera()
     else
         return false
     end

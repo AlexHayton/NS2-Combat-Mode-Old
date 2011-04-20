@@ -15,6 +15,7 @@ Script.Load("lua/LiveScriptActor.lua")
 Script.Load("lua/PhysicsGroups.lua")
 Script.Load("lua/TooltipMixin.lua")
 Script.Load("lua/WeaponOwnerMixin.lua")
+Script.Load("lua/DoorMixin.lua")
 
 class 'Player' (LiveScriptActor)
 
@@ -332,6 +333,9 @@ function Player:OnInit()
     // Add the functionality from WeaponOwnerMixin to this instance of Player.
     InitMixin(self, WeaponOwnerMixin)
     
+    // Add functionality from DoorMixin to this instance of Player
+    InitMixin(self, DoorMixin)
+    
     LiveScriptActor.OnInit(self)
     
     if Server then
@@ -428,10 +432,6 @@ function Player:GetStatusDescription()
     return string.format("%s - %s", self:GetName(), self:GetClassName()), nil
 end
 
-function Player:GetHealthDescription()
-    return "Health", self:GetHealth() / self:GetMaxHealth()
-end
-
 // Special unique client-identifier 
 function Player:GetClientIndex()
     return self.clientIndex
@@ -478,13 +478,7 @@ function Player:GetViewAngles()
 end
 
 function Player:GetViewAnglesCoords()
-
-    local currentCoords = self:GetViewAngles():GetCoords()
-    VectorCopy(self:GetOrigin(), currentCoords.origin)
-    currentCoords.origin = currentCoords.origin + self:GetViewOffset()
-    
-    return currentCoords
-
+    return self:GetViewAngles():GetCoords( self:GetOrigin() + self:GetViewOffset() )
 end
 
 function Player:SetBaseViewAngles(viewAngles)
@@ -531,6 +525,8 @@ function Player:OverrideInput(input)
     end
     
     self:OverrideSayingsMenu(input)
+    
+    return input
     
 end
 
@@ -816,13 +812,11 @@ end
 
 function Player:SetVelocity(velocity)
 
-    VectorCopy(velocity, self.velocity)
+    self.velocity = velocity
 
     // Snap to 0 when close to zero for network performance and our own sanity
     if (math.abs(self.velocity:GetLength()) < Player.kMinimumPlayerVelocity) then
-    
         self.velocity:Scale(0)
-        
     end
     
 end
@@ -937,7 +931,7 @@ function Player:Use()
     
     // Get entities in radius
     
-    local ents = GetEntitiesIsaInRadius("LiveScriptActor", self:GetTeamNumber(), self:GetOrigin(), Player.kUseRange)
+    local ents = GetEntitiesForTeamWithinRange("LiveScriptActor", self:GetTeamNumber(), self:GetOrigin(), Player.kUseRange)
     for index, entity in ipairs(ents) do
     
         // Look for attach point
@@ -1231,6 +1225,8 @@ function Player:ClampSpeed(input, velocity)
         
     end 
     
+    return velocity
+    
 end
 
 // Allow child classes to alter player's move at beginning of frame. Alter amount they
@@ -1254,6 +1250,8 @@ function Player:UpdateMove(input)
         end
         
     end
+    
+    return input
     
 end
 
@@ -1361,8 +1359,8 @@ function Player:UpdateMovePhysics(input)
     // The position doesn't need to be updated if there is no velocity.
     if(velocity:GetLengthSquared() > Vector.kEpsilon) then
         // Clamp speed to max speed
-        self:ClampSpeed(input, velocity)
-        self:UpdatePosition(velocity, input.time)
+        velocity = self:ClampSpeed(input, velocity)
+        velocity = self:UpdatePosition(velocity, input.time)
     end
 
     self:SetVelocity(velocity)
@@ -1400,7 +1398,7 @@ function Player:OnProcessMove(input)
       
         // Allow children to alter player's move before processing. To alter the move
         // before it's sent to the server, use OverrideInput
-        self:UpdateMove(input)
+        input = self:UpdateMove(input)
 
         // Before UpdateViewAngles and UpdateMovePhysics
         self:UpdateCrouch()
@@ -1688,6 +1686,8 @@ function Player:UpdatePosition(velocity, time)
         end    
         
     end
+    
+    return velocity
 
 end
 
@@ -2629,11 +2629,19 @@ end
 
 // Overwrite to get player status description
 function Player:GetPlayerStatusDesc()
+    if (self:GetIsAlive() == false) then
+        return "Dead"
+    end
     return ""
 end
 
 function Player:GetCanDoDamage()
     return true
+end
+
+// Overwrite how players interact with doors
+function Player:OnOverrideDoorInteraction(inEntity)
+    return true, 4
 end
 
 Shared.LinkClassToMap("Player", Player.kMapName, networkVars )

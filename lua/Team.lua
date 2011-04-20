@@ -370,8 +370,8 @@ end
 
 function Team:GetNumCommandStructures()
 
-    local commandStructures = GetEntitiesIsa("CommandStructure", self:GetTeamNumber())
-    return table.maxn(commandStructures)    
+    local commandStructures = GetEntitiesForTeam("CommandStructure", self:GetTeamNumber())
+    return table.maxn(commandStructures)
     
 end
 

@@ -27,7 +27,6 @@ Script.Load("lua/dkjson.lua")
 Server.readyRoomSpawnList = {}
 Server.playerSpawnList = {}
 Server.eggSpawnList = {}
-Server.locationList = {}
 Server.playerBanList = {}
 
 // map name, group name and values keys for all map entities loaded to
@@ -199,11 +198,11 @@ end
 // Use minimap extents object to create grid of waypoints throughout map
 function GenerateWaypoints()
 
-    local ents = GetGamerules():GetEntities("MinimapExtents")
+    local ents = Shared.GetEntitiesWithClassname("MinimapExtents")
 
-    if table.count(ents) == 1 then
+    if ents:GetSize() == 1 then
 
-        local minimapExtents = ents[1]
+        local minimapExtents = ents:GetEntityAtIndex(0)
 
         local kWaypointGridSizeXZ = 2
         local kWaypointGridSizeY = 1
@@ -257,7 +256,7 @@ function GenerateWaypoints()
 
         return dimensions
 
-    elseif table.count(ents) > 1 then
+    elseif ents:GetSize() > 1 then
         Print("Server:GenerateWaypoints() - Error, multiple minimap extents objects found.")
     else
         Print("Server:GenerateWaypoints() - Couldn't find minimap_extents entity, no waypoints generated.")
@@ -353,7 +352,7 @@ function webGetTeam(player, datatype)
 end
 
 function webFindPlayer(steamid)
-	for list, victim in ipairs(GetGamerules():GetAllPlayers()) do
+	for list, victim in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
 		if Server.GetOwner(victim):GetUserId() == tonumber(steamid) then
 			return victim
 		end
@@ -437,14 +436,14 @@ function getWebApi(datatype, command, kickedId)
 	local dlcList = {
 		specialEdition = kSpecialEditionProductId or false
 	}
-	local playerRecords = GetGamerules():GetAllPlayers()
+	local playerRecords = Shared.GetEntitiesWithClassname("Player")
 	local entity = nil
 	local stats = {
 		cheats = tostring(Shared.GetCheatsEnabled()),
 		devmode = tostring(Shared.GetDevMode()),
 		map = tostring(Shared.GetMapName()),
 		uptime = webServerUpTime(datatype),
-		players = table.maxn(playerRecords),
+		players = playerRecords:GetSize(),
 		playersMarine = GetGamerules():GetTeam1():GetNumPlayers(),
 		playersAlien = GetGamerules():GetTeam2():GetNumPlayers(),
 		marineCarbon = nil,
@@ -456,25 +455,31 @@ function getWebApi(datatype, command, kickedId)
 		local playerData = {}
 		local playerDlc = {}
 		local playerList = {}
-		for index,player in ipairs(playerRecords) do
-			entity = Server.GetOwner(player)
-			for dlcKey,dlcValue in pairs(dlcList) do
-				playerDlc[dlcKey] = tostring(Server.GetIsDlcAuthorized(entity, dlcValue))
-			end
-			playerData = {
-				name	= player:GetName(),
-				steamid	= entity:GetUserId(),
-				isbot	= tostring(entity:GetIsVirtual()),
-				team	= webGetTeam(player, datatype),
-				iscomm	= webIsCommander(player, datatype),
-				score	= player:GetScore(),
-				kills	= player:GetKills(),
-				deaths	= player:GetDeaths(),
-				plasma	= player:GetPlasma(),
-				ping	= entity:GetPing(),
-				dlc		= playerDlc
-			}
-			table.insert(playerList,playerData)
+		for index,player in ientitylist(playerRecords) do
+			local entity = Server.GetOwner(player)
+			// The ServerClient may be nil if this player was just removed from the server
+			// right before this function was called.
+			if entity then
+			
+                for dlcKey,dlcValue in pairs(dlcList) do
+                    playerDlc[dlcKey] = tostring(Server.GetIsDlcAuthorized(entity, dlcValue))
+                end
+                playerData = {
+                    name	= player:GetName(),
+                    steamid	= entity:GetUserId(),
+                    isbot	= tostring(entity:GetIsVirtual()),
+                    team	= webGetTeam(player, datatype),
+                    iscomm	= webIsCommander(player, datatype),
+                    score	= player:GetScore(),
+                    kills	= player:GetKills(),
+                    deaths	= player:GetDeaths(),
+                    plasma	= player:GetPlasma(),
+                    ping	= entity:GetPing(),
+                    dlc		= playerDlc
+                }
+                table.insert(playerList,playerData)
+                
+            end
 		end
 		local data = {
 			webdomain		= '[[webdomain]]',
@@ -540,33 +545,39 @@ function getWebApi(datatype, command, kickedId)
 		local kickbtext = ''
 		local steamid = 0
 
-		for index, player in ipairs(playerRecords) do
+		for index, player in ientitylist(playerRecords) do
 
-			entity = Server.GetOwner(player)
-			steamid = entity:GetUserId()
+            local entity = Server.GetOwner(player)
+            // The ServerClient may be nil if this player was just removed from the server
+			// right before this function was called.
+			if entity then
+			
+                steamid = entity:GetUserId()
 
-			if (entity:GetIsVirtual() == true) then
-				kickbtext = 'Bot'
-				kickbutton = 'disabled'
-			elseif (tonumber(kickedId) == tonumber(steamid)) then
-				kickbtext = 'Kicked...'
-				kickbutton = 'disabled'
-			else
-				kickbtext = 'Kick'
-				kickbutton = ''
-			end
+                if (entity:GetIsVirtual() == true) then
+                    kickbtext = 'Bot'
+                    kickbutton = 'disabled'
+                elseif (tonumber(kickedId) == tonumber(steamid)) then
+                    kickbtext = 'Kicked...'
+                    kickbutton = 'disabled'
+                else
+                    kickbtext = 'Kick'
+                    kickbutton = ''
+                end
 
-			result = result .. '<tr>'
-							.. '<td valign="middle" class="bb"><b>' .. player:GetName() .. '</b> ' .. webIsCommander(player, datatype) .. '</td>'
-							.. '<td valign="middle" class="bb">' .. webGetTeam(player, datatype) .. '</td>'
-							.. '<td valign="middle" align="center" class="bb">' .. player:GetScore() .. '</td>'
-							.. '<td valign="middle" align="center" class="bb">' .. player:GetKills() .. '</td>'
-							.. '<td valign="middle" align="center" class="bb">' .. player:GetDeaths() .. '</td>'
-							.. '<td valign="middle" align="center" class="bb">' .. player:GetPlasma() .. '</td>'
-							.. '<td valign="middle" class="bb">' .. steamid .. '</td>'
-							.. '<td valign="middle" align="center" class="bb">' .. entity:GetPing() .. '</td>'
-							.. '<td valign="middle"><form name="' .. steamid .. '_playerlist" action="http://localhost:[[webport]]/" method="post" style="display:inline;"><input type="hidden" name="steamid" value="' .. steamid .. '" /><input type="submit" name="kick" value="' .. kickbtext .. '" ' .. kickbutton .. ' /> <input type="submit" name="ban" value="Ban" ' .. kickbutton .. ' /><input type="submit" name="kickban" value="Kick &amp; Ban" ' .. kickbutton .. ' /> <b>Duration:</b> <select name="ban_duration" ' .. kickbutton .. '><option value="-1" disabled="disabled">Forever (TODO)</option><option value="0" selected>This server session</option><option value="30">30 Minuets</option><option value="120">2 Hours</option><option value="480">8 Hours</option><option value="960">16 hours</option><option value="1440">1 Day</option><option value="2880">2 Days</option><option value="5760">4 Days</option></select></form></td>'
-							.. '</tr>'.."\n"
+                result = result .. '<tr>'
+                                .. '<td valign="middle" class="bb"><b>' .. player:GetName() .. '</b> ' .. webIsCommander(player, datatype) .. '</td>'
+                                .. '<td valign="middle" class="bb">' .. webGetTeam(player, datatype) .. '</td>'
+                                .. '<td valign="middle" align="center" class="bb">' .. player:GetScore() .. '</td>'
+                                .. '<td valign="middle" align="center" class="bb">' .. player:GetKills() .. '</td>'
+                                .. '<td valign="middle" align="center" class="bb">' .. player:GetDeaths() .. '</td>'
+                                .. '<td valign="middle" align="center" class="bb">' .. player:GetPlasma() .. '</td>'
+                                .. '<td valign="middle" class="bb">' .. steamid .. '</td>'
+                                .. '<td valign="middle" align="center" class="bb">' .. entity:GetPing() .. '</td>'
+                                .. '<td valign="middle"><form name="' .. steamid .. '_playerlist" action="http://localhost:[[webport]]/" method="post" style="display:inline;"><input type="hidden" name="steamid" value="' .. steamid .. '" /><input type="submit" name="kick" value="' .. kickbtext .. '" ' .. kickbutton .. ' /> <input type="submit" name="ban" value="Ban" ' .. kickbutton .. ' /><input type="submit" name="kickban" value="Kick &amp; Ban" ' .. kickbutton .. ' /> <b>Duration:</b> <select name="ban_duration" ' .. kickbutton .. '><option value="-1" disabled="disabled">Forever (TODO)</option><option value="0" selected>This server session</option><option value="30">30 Minuets</option><option value="120">2 Hours</option><option value="480">8 Hours</option><option value="960">16 hours</option><option value="1440">1 Day</option><option value="2880">2 Days</option><option value="5760">4 Days</option></select></form></td>'
+                                .. '</tr>'.."\n"
+                                
+            end
 		end
 		result = result	.. '</table><br clear="all"/>'.."\n"
 			.. '<table width="800" class="t" cellspacing="4" cellpadding="2">'.."\n"
@@ -628,9 +639,13 @@ local function OnCanPlayerHearPlayer(listener, speaker)
     return GetGamerules():GetCanPlayerHearPlayer(listener, speaker)
 end
 
+local function OnUpdateServer(deltaTime)
+end
+
 Event.Hook("ClientConnect",		    OnConnectCheckBan)
 Event.Hook("MapPreLoad",		    OnMapPreLoad)
 Event.Hook("MapPostLoad",		    OnMapPostLoad)
 Event.Hook("MapLoadEntity",		    OnMapLoadEntity)
 Event.Hook("WebRequest",		    OnWebRequest)
 Event.Hook("CanPlayerHearPlayer",   OnCanPlayerHearPlayer)
+Event.Hook("UpdateServer",          OnUpdateServer)

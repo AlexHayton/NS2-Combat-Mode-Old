@@ -155,6 +155,10 @@ function LiveMixin:GetHealthPerArmor(damageType)
         healthPerArmor = kHealthPointsPerArmorHeavy
     end
     
+    if self.GetHealthPerArmorOverride then
+        return self:GetHealthPerArmorOverride(damageType, healthPerArmor)
+    end
+    
     return healthPerArmor
     
 end
@@ -173,6 +177,10 @@ function LiveMixin:GetArmorAbsorbPercentage(damageType)
     
         armorAbsorbPercentage = 0
         
+    end
+    
+    if self.GetArmorAbsorbPercentageOverride then
+        armorAbsorbPercentage = self:GetArmorAbsorbPercentageOverride(damageType, armorAbsorbPercentage)
     end
     
     return armorAbsorbPercentage
@@ -222,10 +230,12 @@ function LiveMixin:TakeDamage(damage, attacker, doer, point, direction)
     
     local killed = false
     
-    if Client then
-        killed = self:TakeDamageClient(damage, attacker, doer, point, direction)
-    else
-        killed = self:TakeDamageServer(damage, attacker, doer, point, direction)
+    if self:GetCanTakeDamage() then
+        if Client then
+            killed = self:TakeDamageClient(damage, attacker, doer, point, direction)
+        else
+            killed = self:TakeDamageServer(damage, attacker, doer, point, direction)
+        end
     end
     
     return killed
@@ -237,7 +247,7 @@ end
  */
 function LiveMixin:TakeDamageClient(damage, attacker, doer, point, direction)
     
-    if (self:GetIsAlive() and self:GetCanTakeDamage()) then
+    if self:GetIsAlive() then
     
         self:OnTakeDamage(damage, doer, point)
         

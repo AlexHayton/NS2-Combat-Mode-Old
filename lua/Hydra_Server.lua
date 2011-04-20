@@ -14,7 +14,7 @@ function Hydra:GetSortedTargetList()
     PROFILE("Hydra:GetSortedTargetList")
 
     local hydraAttackOrigin = self:GetModelOrigin()
-    local targets = GetGamerules():GetEntities("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), hydraAttackOrigin, Hydra.kRange)
+    local targets = GetEntitiesForTeamWithinRange("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), hydraAttackOrigin, Hydra.kRange)
 
     function sortSentryTargets(ent1, ent2)
     

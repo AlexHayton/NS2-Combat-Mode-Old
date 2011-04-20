@@ -81,7 +81,7 @@ end
 function Blink:GetBlinkOrientation(player, origin)
 
     // Look for any enemy players or structures nearby. Bias towards closest ones.
-    local ents = GetEntitiesIsaInRadius("LiveScriptActor", GetEnemyTeamNumber(player:GetTeamNumber()), origin, Blink.kOrientationScanRadius, false, true, false)
+    local ents = GetEntitiesForTeamWithinRangeAreVisible("LiveScriptActor", GetEnemyTeamNumber(player:GetTeamNumber()), origin, Blink.kOrientationScanRadius, true)
     
     // Remove player from the list so we don't try to face ourselves
     table.removevalue(ents, player)
@@ -155,8 +155,8 @@ function Blink:GetBlinkPosition(player)
     // Trace distance in front
     local trace = Shared.TraceRay(startOrigin, endOrigin, PhysicsMask.AllButPCsAndRagdolls, EntityFilterTwo(player, self))
     
-    local originalBlinkPosition = Vector(trace.endPoint)
-    local blinkPosition = Vector(trace.endPoint)
+    local originalBlinkPosition = trace.endPoint
+    local blinkPosition = trace.endPoint
     
     local validPosition = false
     local blinkType = kBlinkType.Unknown
@@ -197,6 +197,7 @@ function Blink:GetBlinkPosition(player)
             
                 // Trace towards us until it's valid
                 trace, validPosition = self:PerformBacktrace(player, startOrigin, originalBlinkPosition, playerViewDirection * -2*Fade.XZExtents, 20, blinkPosition)
+                blinkPosition = trace.endPoint
                 
                 if validPosition then                    
                 
@@ -277,7 +278,7 @@ function Blink:PerformBlink(player)
         
         if Client then
         
-            local destCoords = CopyCoords(coords)
+            local destCoords = coords
             destCoords.origin = destCoords.origin + player:GetViewOffset()
             
             self:SetBlinkCamera(player:GetViewAnglesCoords(), destCoords, blinkTime)             

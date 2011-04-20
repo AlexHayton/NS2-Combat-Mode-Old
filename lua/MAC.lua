@@ -9,6 +9,8 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/LiveScriptActor.lua")
+Script.Load("lua/DoorMixin.lua")
+
 class 'MAC' (LiveScriptActor)
 
 MAC.kMapName = "mac"
@@ -58,7 +60,7 @@ MAC.kGreetingDistance = 5
 MAC.kUseTime = 2.0
 
 function MAC:OnCreate()
-    
+
     LiveScriptActor.OnCreate(self)
  
     // Create the controller for doing collision detection.
@@ -74,6 +76,8 @@ end
 
 function MAC:OnInit()
 
+    InitMixin(self, DoorMixin)
+    
     LiveScriptActor.OnInit(self)
 
     self:SetModel(MAC.kModelName)
@@ -133,7 +137,7 @@ function MAC:GetHoverHeight()
     return MAC.kHoverHeight
 end
 
-function MAC:OverrideOrder(order)
+function MAC:OnOverrideOrder(order)
     
     local orderTarget = nil
     if (order:GetParam() ~= nil) then
@@ -164,10 +168,6 @@ function MAC:OverrideOrder(order)
         // Convert default order (right-click) to move order
         order:SetType(kTechId.Move)
         
-    else
-    
-        LiveScriptActor.OverrideOrder(self, order)
-        
     end
     
 end
@@ -177,7 +177,7 @@ function MAC:GetIsOrderHelpingOtherMAC(order)
     if order:GetType() == kTechId.Construct then
     
         // Look for friendly nearby MACs
-        local macs = GetGamerules():GetEntities("MAC", self:GetTeamNumber(), self:GetOrigin(), 3)
+        local macs = GetEntitiesForTeamWithinRange("MAC", self:GetTeamNumber(), self:GetOrigin(), 3)
         for index, mac in ipairs(macs) do
         
             if mac ~= self then
@@ -196,28 +196,30 @@ function MAC:GetIsOrderHelpingOtherMAC(order)
     return false
 end
 
-function MAC:SetOrder(order, clearExisting, insertFirst)
+function MAC:OnOrderChanged()
 
-    LiveScriptActor.SetOrder(self, order, clearExisting, insertFirst)
-    
     self:SetNextThink(MAC.kMoveThinkInterval)
 
-    // Look for nearby MAC doing the same thing
-    if self:GetIsOrderHelpingOtherMAC(order) then
-        self:PlayChatSound(MAC.kHelpingSoundName)
-    elseif order:GetType() == kTechId.Construct then
-        self:PlayChatSound(MAC.kStartConstructionSoundName)        
-    else
-        self:PlayChatSound(MAC.kConfirmSoundName)
-    end
+    local order = self:GetCurrentOrder()
     
-    local owner = self:GetOwner()
-    if owner then
-        Server.PlayPrivateSound(owner, MAC.kConfirm2DSoundName, owner, 1.0, Vector(0, 0, 0))
+    if order then
+        // Look for nearby MAC doing the same thing
+        if self:GetIsOrderHelpingOtherMAC(order) then
+            self:PlayChatSound(MAC.kHelpingSoundName)
+        elseif order:GetType() == kTechId.Construct then
+            self:PlayChatSound(MAC.kStartConstructionSoundName)
+        else
+            self:PlayChatSound(MAC.kConfirmSoundName)
+        end
+        
+        local owner = self:GetOwner()
+        if owner then
+            Server.PlayPrivateSound(owner, MAC.kConfirm2DSoundName, owner, 1.0, Vector(0, 0, 0))
+        end
+        
+        self:TriggerEffects("mac_set_order")
     end
-    
-    self:TriggerEffects("mac_set_order")
-            
+
 end
 
 function MAC:OverrideTechTreeAction(techNode, position, orientation, commander)
@@ -320,7 +322,7 @@ function MAC:ProcessJustSpawned()
     self.justSpawned = nil
     
     // Now look for nearby command station to see if it has a rally point for us
-    local ents = GetGamerules():GetEntities("CommandStation", self:GetTeamNumber(), self:GetOrigin(), 1)
+    local ents = GetEntitiesForTeamWithinRange("CommandStation", self:GetTeamNumber(), self:GetOrigin(), 1)
 
     if(table.maxn(ents) == 1) then
     
@@ -373,7 +375,7 @@ function MAC:UpdateGreetings()
     
         if self.timeOfLastGreeting == 0 or (time > (self.timeOfLastGreeting + MAC.kGreetingInterval)) then
         
-            local ents = GetEntitiesIsaMultiple({"MAC", "Drifter"})
+            local ents = GetEntitiesMatchAnyTypes({"MAC", "Drifter"})
             for index, ent in ipairs(ents) do
             
                 if (ent ~= self) and (self:GetOrigin() - ent:GetOrigin()):GetLength() < MAC.kGreetingDistance then
@@ -559,7 +561,7 @@ function MAC:FindSomethingToDo()
 
         self.timeOfLastFindSomethingTime = Shared.GetTime()
         
-        local ents = GetEntitiesIsaInRadius("Structure", self:GetTeamNumber(), self:GetOrigin(), MAC.kOrderScanRadius)
+        local ents = GetEntitiesForTeamWithinRange("Structure", self:GetTeamNumber(), self:GetOrigin(), MAC.kOrderScanRadius)
         
         for index, structure in ipairs(ents) do
         
@@ -627,6 +629,22 @@ end
 
 function MAC:GetWaypointGroupName()
     return kAirWaypointsGroup
+end
+
+function MAC:OnOverrideDoorInteraction(inEntity)
+    // MACs will not open the door if they are currently
+    // welding it shut
+    if self:GetHasOrder() then
+        local order = self:GetCurrentOrder()
+        local targetId = order:GetParam()
+        local target = Shared.GetEntity(targetId)
+        if (target ~= nil) then
+            if (target == inEntity) then
+               return false, 0
+            end
+        end
+    end
+    return true, 4
 end
 
 Shared.LinkClassToMap("MAC", MAC.kMapName, {})

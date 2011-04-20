@@ -160,6 +160,8 @@ function Fade:UpdateMove(input)
         input.move:Scale(0.00001)
         
     end
+    
+    return input
 
 end
 

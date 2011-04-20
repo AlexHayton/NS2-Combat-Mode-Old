@@ -10,6 +10,10 @@
 // Global gamerules accessors. When gamerules are initialized by map they should call SetGamerules(). 
 local globalGamerules = nil
 
+function GetHasGameRules()
+    return globalGamerules ~= nil
+end
+
 function SetGamerules(gamerules)
 
     if(gamerules ~= globalGamerules) then
@@ -24,6 +28,8 @@ end
 function GetGamerules()
 
     if(Server) then
+    
+        ASSERT(globalGamerules ~= nil)
     
         if(globalGamerules == nil) then
         

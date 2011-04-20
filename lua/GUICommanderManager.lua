@@ -40,7 +40,7 @@ end
 
 function GUICommanderManager:CreateSelector()
 
-    self.selector = GUI.CreateGraphicsItem()
+    self.selector = GUIManager:CreateGraphicItem()
     self.selector:SetAnchor(GUIItem.Top, GUIItem.Left)
     self.selector:SetIsVisible(self.selectorCursorDown)
     
@@ -48,11 +48,11 @@ end
 
 function GUICommanderManager:CreateLocationText()
 
-    self.locationText = GUI.CreateTextItem()
+    self.locationText = GUIManager:CreateTextItem()
     self.locationText:SetFontSize(40)
     self.locationText:SetAnchor(GUIItem.Left, GUIItem.Top)
-    self.locationText:SetTextAlignmentX(GUITextItem.Align_Min)
-    self.locationText:SetTextAlignmentY(GUITextItem.Align_Min)
+    self.locationText:SetTextAlignmentX(GUIItem.Align_Min)
+    self.locationText:SetTextAlignmentY(GUIItem.Align_Min)
     self.locationText:SetPosition(Vector(GUICommanderManager.kLocationTextOffset, GUICommanderManager.kLocationTextOffset, 0))
     self.locationText:SetColor(Color(1, 1, 1, 0.5))
     self.locationText:SetText(PlayerUI_GetLocationName())

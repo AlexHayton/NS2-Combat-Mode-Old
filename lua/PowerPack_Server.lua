@@ -29,7 +29,7 @@ end
 function PowerPack:UpdateNearbyPowerState()
 
     // Trigger event to update power for nearby structures
-    local structures = GetGamerules():GetEntities("Structure", self:GetTeamNumber(), self:GetOrigin(), PowerPack.kRange, true)
+    local structures = GetEntitiesForTeamWithinXZRange("Structure", self:GetTeamNumber(), self:GetOrigin(), PowerPack.kRange)
 
     for index, structure in ipairs(structures) do
     

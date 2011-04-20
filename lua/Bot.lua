@@ -13,7 +13,7 @@ end
 
 class 'Bot'
 
-function Bot:__init(forceTeam)
+function Bot:Initialize(forceTeam)
 
     // Create a virtual client for the bot
     self.client = Server.AddVirtualClient()
@@ -41,7 +41,8 @@ function OnConsoleAddBots(client, numBotsParam, forceTeam)
         
         for index = 1, numBots do
         
-            local bot = Bot(tonumber(forceTeam))
+            local bot = Bot()
+            bot:Initialize(tonumber(forceTeam))
             table.insert( bots, bot )
             
         end

@@ -159,7 +159,7 @@ function PlayingTeam:OnResearchComplete(structure, researchId)
     node:SetResearched(true)
     
     // Loop through all entities on our team and tell them research was completed
-    local teamEnts = GetEntitiesIsa("ScriptActor", self:GetTeamNumber())
+    local teamEnts = GetEntitiesForTeam("ScriptActor", self:GetTeamNumber())
     for index, ent in ipairs(teamEnts) do
         ent:OnResearchComplete(structure, researchId)
     end
@@ -348,12 +348,11 @@ function PlayingTeam:SpawnResourceTower(teamLocation)
     local success = false
     if(teamLocation ~= nil) then
         local teamLocationOrigin = Vector(teamLocation:GetOrigin())
-        
-        local resourcePoints = GetEntitiesIsa("ResourcePoint", -1)
+
         local closestPoint = nil
         local closestPointDistance = 0
         
-        for index, current in ipairs(resourcePoints) do
+        for index, current in ientitylist(Shared.GetEntitiesWithClassname("ResourcePoint")) do
         
             local pointOrigin = Vector(current:GetOrigin())
             local distance = (pointOrigin - teamLocationOrigin):GetLength()
@@ -561,7 +560,8 @@ function PlayingTeam:ComputeLOS()
     local entities = {}
     local enemyTeamNumber = GetEnemyTeamNumber(self:GetTeamNumber())
     
-    for index, entity in ipairs( GetGamerules():GetAllScriptActors() ) do
+    local allScriptActors = Shared.GetEntitiesWithClassname("ScriptActor")
+    for index, entity in ientitylist(allScriptActors) do
     
         if IsFriendlyLOSGivingUnit(entity) then
             table.insert(seeingUnits, entity)
@@ -775,7 +775,7 @@ end
 function PlayingTeam:ProcessEntityHelp(player)
     
     // Look for entities to give help about
-    local entities = GetNearbyGameEntitiesInView(player, 4)
+    local entities = GetEntitiesWithinRangeInView("ScriptActor", 4, player)
     
     for index, entity in ipairs(entities) do
     
@@ -904,9 +904,9 @@ function PlayingTeam:UpdateGameEffects(timePassed)
     if self.timeSinceLastGameEffectUpdate >= PlayingTeam.kUpdateGameEffectsInterval then
 
         // Friendly entities that alien structures can affect
-        local teamEntities = GetGamerules():GetEntities("LiveScriptActor", self:GetTeamNumber())
-        local enemyPlayers = GetGamerules():GetPlayers( GetEnemyTeamNumber(self:GetTeamNumber()) )
-            
+        local teamEntities = GetEntitiesForTeam("LiveScriptActor", self:GetTeamNumber())
+        local enemyPlayers = GetEntitiesForTeam("Player", GetEnemyTeamNumber(self:GetTeamNumber()))
+        
         self:UpdateTeamSpecificGameEffects(teamEntities, enemyPlayers)       
         
         self.timeSinceLastGameEffectUpdate = self.timeSinceLastGameEffectUpdate - PlayingTeam.kUpdateGameEffectsInterval        

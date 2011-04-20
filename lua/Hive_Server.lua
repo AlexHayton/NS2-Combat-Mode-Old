@@ -72,7 +72,7 @@ end
 function Hive:GetNumEggs()
 
     local numEggs = 0
-    local eggs = GetGamerules():GetEntities("Egg", self:GetTeamNumber())    
+    local eggs = GetEntitiesForTeam("Egg", self:GetTeamNumber())    
     for index, egg in ipairs(eggs) do
         if egg:GetLocationName() == self:GetLocationName() then
             numEggs = numEggs + 1

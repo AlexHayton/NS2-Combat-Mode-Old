@@ -320,6 +320,10 @@ end
 
 function Structure:GetTeam()
 
+    if not GetHasGameRules() then
+        return nil
+    end
+
     local teamNumber = self:GetTeamNumber()
     return GetGamerules():GetTeam(teamNumber)
     
@@ -437,9 +441,7 @@ end
 // Return alive power pack that's powering us, or power point in our location. 
 function Structure:FindPowerSource()
 
-    local powerPoints = GetGamerules():GetEntities("PowerPoint")
-    
-    for index, powerPoint in ipairs(powerPoints) do
+    for index, powerPoint in ientitylist(Shared.GetEntitiesWithClassname("PowerPoint")) do
     
         if powerPoint:GetLocationName() == self:GetLocationName() and powerPoint:GetIsPowered() then
 
@@ -450,7 +452,7 @@ function Structure:FindPowerSource()
     end
     
     // Look for power packs
-    local powerPacks = GetGamerules():GetEntities("PowerPack", self:GetTeamNumber(), self:GetOrigin(), PowerPack.kRange, true)
+    local powerPacks = GetEntitiesForTeamWithinXZRange("PowerPack", self:GetTeamNumber(), self:GetOrigin(), PowerPack.kRange)
     
     for index, powerPack in ipairs(powerPacks) do
     

@@ -11,12 +11,7 @@ WeaponOwnerMixin.type = "WeaponOwner"
 
 function WeaponOwnerMixin:UpdateWeapons(input)
 
-    // Get list once a frame
-    if not Shared.GetIsRunningPrediction() then
-    
-        self:ComputeHUDOrderedWeaponList()
-        
-    end
+    self:ComputeHUDOrderedWeaponList()
     
     // Call ProcessMove on all our weapons so they can update properly
     for index, weapon in ipairs(self:GetHUDOrderedWeaponList()) do

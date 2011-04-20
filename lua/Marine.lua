@@ -778,12 +778,12 @@ function Marine:SetWaypoint(waypoint)
 
     if destwaypoint:isa("Vector") then
     
-        VectorCopy(waypoint, self.waypointOrigin)
+        self.waypointOrigin = waypoint
         self.waypointEntityId = Entity.invalidId
         
     else
     
-        VectorCopy(Vector(0, 0, 0), self.waypointOrigin)
+        self.waypointOrigin = Vector(0, 0, 0)
         self.waypointEntityId = waypoint
         
     end

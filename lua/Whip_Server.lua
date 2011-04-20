@@ -23,7 +23,7 @@ function Whip:AcquireTarget()
         self.shortestDistanceToTarget = nil
         self.targetIsaPlayer = false
         
-        local targets = GetGamerules():GetEntities("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), Whip.kRange, true)
+        local targets = GetEntitiesForTeamWithinXZRange("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), Whip.kRange)
         
         for index, target in pairs(targets) do
         
@@ -67,7 +67,7 @@ end
 
 function Whip:GetIsTargetValid(target)
 
-    if(target ~= nil and target:GetIsAlive() and target ~= self and target:GetCanTakeDamage() and target:GetIsVisible()) then
+    if(target ~= nil and target ~= self and HasMixin(target, "Live") and target:GetIsAlive() and target:GetCanTakeDamage() and target:GetIsVisible()) then
     
         local distance = (target:GetOrigin() - self:GetOrigin()):GetLength()
         
@@ -111,7 +111,7 @@ function Whip:StrikeTarget()
         self:DamageTarget(target)
         
         // Try to hit other targets close by
-        local nearbyEnts = GetGamerules():GetEntities("LiveScriptActor", target:GetTeamNumber(), target:GetModelOrigin(), Whip.kAreaEffectRadius, false, true)
+        local nearbyEnts = GetEntitiesForTeamWithinRangeAreVisible("LiveScriptActor", target:GetTeamNumber(), target:GetModelOrigin(), Whip.kAreaEffectRadius, true)
         for index, ent in ipairs(nearbyEnts) do
         
             if ent ~= target then
@@ -166,8 +166,6 @@ end
 
 function Whip:OnDestroyCurrentOrder(currentOrder)
 
-    Structure.OnDestroyCurrentOrder(self, currentOrder)
-    
     // Order was stopped or canceled
     if(currentOrder:GetType() == kTechId.Move and self.mode == Whip.kMode.UnrootedStationary) then
         self:SetDesiredMode(Whip.kMode.UnrootedStationary)        
@@ -176,8 +174,6 @@ function Whip:OnDestroyCurrentOrder(currentOrder)
 end
 
 function Whip:OnOrderComplete(currentOrder)
-
-    Structure.OnOrderComplete(self, currentOrder)
 
     if(currentOrder:GetType() == kTechId.Move) then
         self:SetDesiredMode(Whip.kMode.UnrootedStationary)        

@@ -414,11 +414,11 @@ function Player:CopyPlayerDataFrom(player)
     
     // Copy waypoint
     if player.nextOrderWaypoint and self.nextOrderWaypoint then
-        VectorCopy(player.nextOrderWaypoint, self.nextOrderWaypoint)
+        self.nextOrderWaypoint = player.nextOrderWaypoint
     end
     
     if player.finalWaypoint and self.finalWaypoint then
-        VectorCopy(player.finalWaypoint, self.finalWaypoint)
+        self.finalWaypoint = player.finalWaypoint
     end
     
     self.nextOrderWaypointActive = player.nextOrderWaypointActive

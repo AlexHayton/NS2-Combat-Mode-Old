@@ -34,6 +34,7 @@ end
 
 local networkVars = 
 {
+    isHostered = "boolean"
 }
 
 function Weapon:OnCreate()
@@ -48,6 +49,7 @@ function Weapon:OnCreate()
     self.moveWithView = false
     
     self:SetIsVisible(false)
+    self.isHostered = true
     
 end
 
@@ -133,12 +135,18 @@ end
 function Weapon:OnReload(player)
 end
 
+function Weapon:GetIsHolstered()
+    return self.isHostered
+end
+
 function Weapon:OnHolster(player)
+    self.isHostered = true
     self:SetIsVisible(false)
 end
 
 function Weapon:OnDraw(player, previousWeaponMapName)
 
+    self.isHostered = false
     self:SetIsVisible(true)
     
     player:SetViewModel(self:GetViewModelName(), self)
@@ -251,7 +259,7 @@ end
 
 function Weapon:GetIsActive()
     local parent = self:GetParent()
-    return (parent ~= nil and (parent:GetActiveWeapon() == self))
+    return (parent ~= nil and (parent.GetActiveWeapon) and (parent:GetActiveWeapon() == self))
 end
 
 /**

@@ -148,7 +148,7 @@ function MarineCommander:SelectSquad(squadNumber)
     local newSelection = {}
     local time = Shared.GetTime()
     
-    local playerList = GetEntitiesIsa(GetSquadClass(), self:GetTeamNumber())    
+    local playerList = GetEntitiesForTeam(GetSquadClass(), self:GetTeamNumber())    
     for index, player in ipairs(playerList) do
     
         if player:GetSquad() == squadNumber then
@@ -166,7 +166,7 @@ end
 
 function MarineCommander:BuildSortedSquadList()
 
-    local squadEntities = GetEntitiesIsa(GetSquadClass(), teamNumber)
+    local squadEntities = GetEntitiesForTeam(GetSquadClass(), self:GetTeamNumber())
     
     // Count number of squads to propagate to client
     local numSquads = 0
@@ -213,7 +213,7 @@ function MarineCommander:UpdateSquads(deltaTime)
         // If we have a squad selected, set our selection to all ents in this squad
         if (self.selectedSquad ~= 0) then
         
-            local squadEntities = GetEntitiesIsa(GetSquadClass(), teamNumber)
+            local squadEntities = GetEntitiesForTeam(GetSquadClass(), self:GetTeamNumber())
             local selection = {}
             
             for index, ent in ipairs(squadEntities) do

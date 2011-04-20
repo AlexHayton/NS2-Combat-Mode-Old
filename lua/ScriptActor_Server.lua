@@ -69,36 +69,19 @@ function ScriptActor:AddScoreForOwner(score)
 
 end
 
-// Pass newId of object is turning into or 0/nil if it's being deleted. Called by Actor:OnDestroy() and Player:Replace(). 
-// Called both on Client and Server.
+// Pass newId of object is turning into or 0/nil if it's being deleted. Called
+// by Actor:OnDestroy() and Player:Replace(). 
 function ScriptActor:SendEntityChanged(newId)
 
-    // Process entity change server-side
-    if Server then
-    
+    // This happens during the game shutdown process, so don't force a new game
+    // rules to be created if one doesn't already exist.
+    if GetHasGameRules() then
+        // Process entity change server-side
         GetGamerules():OnEntityChange(self:GetId(), newId)
-    
-        local ents = GetGamerules():GetAllScriptActors()
-        
-        // Tell every ScriptActor we've changed ids been deleted (changed to nil)
-        for index, ent in ipairs(ents) do
-       
-            if ent ~= self then
-            
-                ent:OnEntityChange(self:GetId(), newId)
+    end
 
-            end
-            
-        end
-        
-    end
-    
-    if Server then
-    
-        // Send message to everyone that the player changed ids
-        Server.SendNetworkMessage("EntityChanged", BuildEntityChangedMessage(self:GetId(), ConditionalValue(newId ~= nil, newId, -1)), true)
-        
-    end
+    // Send message to everyone that the player changed ids
+    Server.SendNetworkMessage("EntityChanged", BuildEntityChangedMessage(self:GetId(), ConditionalValue(newId ~= nil, newId, -1)), true)
     
 end
 
@@ -146,7 +129,12 @@ function ScriptActor:OnDestroy()
     
     // Remove all owned entities.
     function RemoveOwnedEntityFunctor(entity)
-        entity:SetOwner(nil)
+        // I am not sure why entity is nil here,
+        // it shouldn't be happening as far as I can tell but
+        // definitely is in some cases.
+        if entity then
+            entity:SetOwner(nil)
+        end
     end
     table.foreachfunctor(self.ownedEntities, RemoveOwnedEntityFunctor)
     table.clear(self.ownedEntities)
@@ -198,7 +186,7 @@ function ScriptActor:FindTarget(attackDistance)
 
     // Find enemy in range
     local enemyTeamNumber = GetEnemyTeamNumber(self:GetTeamNumber())
-    local potentialTargets = GetGamerules():GetEntities("LiveScriptActor", enemyTeamNumber, self:GetOrigin(), attackDistance)
+    local potentialTargets = GetEntitiesForTeamWithinRange("LiveScriptActor", enemyTeamNumber, self:GetOrigin(), attackDistance)
     
     local nearestTarget = nil
     local nearestTargetDistance = 0
@@ -239,12 +227,6 @@ end
 // specified by commander when giving order.
 function ScriptActor:OverrideTechTreeAction(techNode, position, orientation, commander)
     return false, true
-end
-
-function ScriptActor:OverrideOrder(order)
-end
-
-function ScriptActor:SetOrder(order, clearExisting, insertFirst)
 end
 
 // A structure can be attached to another structure (ie, resource tower to resource nozzle)
