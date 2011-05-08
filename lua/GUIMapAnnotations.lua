@@ -16,10 +16,13 @@ GUIMapAnnotations.kMaxDisplayDistance = 30
 
 GUIMapAnnotations.kNumberOfDataFields = 6
 
+GUIMapAnnotations.kAfterPostGetAnnotationsTime = 0.5
+
 function GUIMapAnnotations:Initialize()
 
     self.visible = false
     self.annotations = { }
+    self.getLatestAnnotationsTime = 0
 
 end
 
@@ -97,6 +100,27 @@ function GUIMapAnnotations:Update(deltaTime)
         end
     end
     
+    if self.getLatestAnnotationsTime > 0 and Shared.GetTime() >= self.getLatestAnnotationsTime then
+        self:GetLatestAnnotations()
+        self.getLatestAnnotationsTime = 0
+    end
+    
+end
+
+function GUIMapAnnotations:GetLatestAnnotations()
+
+    self:ClearAnnotations()
+    local urlString = "http://unknownworldsstats.appspot.com/statlocationdata?version=" .. ToString(Shared.GetBuildNumber()) .. "&map=" .. Shared.GetMapName() .. "&output=json"
+    Shared.GetWebpage(urlString, ParseAnnotations)
+    
+end
+
+function GUIMapAnnotations:GetLatestAnnotationsLater(laterTime)
+
+    ASSERT(laterTime >=0)
+    
+    self.getLatestAnnotationsTime = Shared.GetTime() + laterTime
+
 end
 
 function OnCommandAnnotate(...)
@@ -127,15 +151,16 @@ function OnCommandAnnotate(...)
                       "&value=0&map=" .. Shared.GetMapName() .. "&mapx=" .. string.format("%.2f", origin.x) .. "&mapy=" .. string.format("%.2f", origin.y)..
                       "&mapz=" .. string.format("%.2f", origin.z)
     Shared.GetWebpage(urlString, function (data) end)
+    
+    // Automatically update the annotations in a little bit so the user sees this new one.
+    GetGUIManager():GetGUIScriptSingle("GUIMapAnnotations"):GetLatestAnnotationsLater(GUIMapAnnotations.kAfterPostGetAnnotationsTime)
 
 end
 
 function OnCommandDisplayAnnotations(display)
 
     if display == "true" then
-        GetGUIManager():GetGUIScriptSingle("GUIMapAnnotations"):ClearAnnotations()
-        local urlString = "http://unknownworldsstats.appspot.com/statlocationdata?version=" .. ToString(Shared.GetBuildNumber()) .. "&map=" .. Shared.GetMapName() .. "&output=json"
-        Shared.GetWebpage(urlString, ParseAnnotations)
+        GetGUIManager():GetGUIScriptSingle("GUIMapAnnotations"):GetLatestAnnotations()
         GetGUIManager():GetGUIScriptSingle("GUIMapAnnotations"):SetIsVisible(true)
     else
         GetGUIManager():GetGUIScriptSingle("GUIMapAnnotations"):SetIsVisible(false)

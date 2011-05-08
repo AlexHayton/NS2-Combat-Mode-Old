@@ -257,6 +257,10 @@ function Structure:OnInit()
     
     self:TriggerEffects("spawn")
     
+    // Make attachment before setting construction complete as the
+    // construction complete callback may require the attachment.
+    self:FindAndMakeAttachment()
+    
     if GetGamerules():GetAutobuild() then
         self:SetConstructionComplete()
     end
@@ -265,6 +269,12 @@ function Structure:OnInit()
         self:SetConstructionComplete()
     end
     
+end
+
+/**
+ * Find whatever this Structure should be attached to and attach to it.
+ */
+function Structure:FindAndMakeAttachment()
 end
 
 function Structure:OnLoad()
@@ -370,7 +380,7 @@ function Structure:OnKill(damage, killer, doer, point, direction)
         self.buildFraction = 0
         self.constructionComplete = false
     
-        self.alive = false
+        self:SetIsAlive(false)
    
         self:ClearAttached()
         self:AbortResearch()
@@ -417,9 +427,7 @@ function Structure:OnConstructionComplete()
         self:GetTeam():TriggerAlert(kTechId.MarineAlertConstructionComplete, self) 
     end
     
-    self:TriggerEffects("construction_complete")
-    
-    self:SpawnInfestation()
+    self:TriggerEffects("construction_complete")   
     
     if self:GetRequiresPower() then
         self:UpdatePoweredState()
@@ -623,6 +631,10 @@ function Structure:OnWeld(entity, elapsedTime)
     
 end
 
+function Structure:OnWeldCanceled(entity)
+    return true
+end
+
 function Structure:SetConstructionComplete()
 
     // Built structures need to belong to one team or the other, so give it to the builder's team if not set
@@ -634,7 +646,7 @@ function Structure:SetConstructionComplete()
     
     self.buildFraction = 1
     
-    self.alive = true
+    self:SetIsAlive(true)
     
     self:OnConstructionComplete()
     
@@ -643,24 +655,6 @@ function Structure:SetConstructionComplete()
     local team = self:GetTeam()
     if(team ~= nil) then
         team:TechBuilt(self)
-    end
-    
-end
-
-function Structure:SpawnInfestation(percent)
-
-    // Create small infestation for alien structures (hive overrides this)
-    if self:GetTeamType() == kAlienTeamType then
-    
-        local origin = self:GetOrigin()
-        local attached = self:GetAttached()
-        if attached then
-            origin = attached:GetOrigin()
-        end
-        
-        local infestation = CreateStructureInfestation(origin, self:GetTeamNumber(), kStructureInfestationRadius, percent)
-        self.structureInfestationId = infestation:GetId()
-        
     end
     
 end
@@ -677,17 +671,13 @@ function Structure:GetIsValidForRecycle()
 end
 
 function Structure:GetRecycleScalar()
-    return Structure.kRecyclePaybackScalar
+    return kRecyclePaybackScalar
 end
 
 function Structure:PerformAction(techNode, position)
 
     if(techNode.techId == kTechId.Recycle) and self:GetIsValidForRecycle() then
     
-        // Amount to get back at full health
-        local carbonBack = LookupTechData(self:GetTechId(), kTechDataCostKey) * self:GetHealthScalar() * self:GetRecycleScalar()
-        self:GetTeam():AddCarbon(carbonBack)
-        
         self:AbortResearch()
         
         self:TriggerEffects("recycle")
@@ -696,6 +686,17 @@ function Structure:PerformAction(techNode, position)
         if(team ~= nil) then
             team:TechRemoved(self)
         end
+        
+        // Amount to get back, accounting for upgraded structures too
+        local upgradeLevel = 0
+        if self.GetUpgradeLevel then
+            upgradeLevel = self:GetUpgradeLevel()
+        end
+        
+        local amount = GetRecycleAmount(self:GetTechId(), upgradeLevel)
+        local scalar = self:GetRecycleScalar()
+        
+        self:GetTeam():AddCarbon(amount * scalar)
         
         self:SafeDestroy()   
         

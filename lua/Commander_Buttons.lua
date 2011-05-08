@@ -288,13 +288,25 @@ function Commander:ComputeMenuTechAvailability()
         // Loop through all selected entities. If any of them allow this tech, then the button is enabled
         for index, entity in ipairs(self.selectedSubGroupEntities) do
         
-            if(entity ~= nil and entity:GetTechAllowed(techId, techNode, self)) then
-            
-                menuTechButtonAllowed = true
-                break
-                
-            end
-            
+			if (entity ~= nil) then 
+				// We will always likely allow for recyling so bail early
+				if (techId == kTechId.Recycle and entity:GetTechAllowed(techId, techNode, self)) then
+					menuTechButtonAllowed = true
+					break
+				end
+				
+				
+				if (entity:GetTechAllowed(techId, techNode, self)) then
+					// if we have anything that is being built then bail
+					if (entity:isa("Structure") and not entity:GetIsBuilt()) then
+						menuTechButtonAllowed = false
+						break
+					end
+					
+					menuTechButtonAllowed = true
+					break
+				end
+			end            
         end       
         
         table.insert(self.menuTechButtonsAllowed, menuTechButtonAllowed)

@@ -69,8 +69,9 @@ Shared.RegisterNetworkMessage( "Ping", kPingMessage )
 local kScoresMessage = 
 {
     clientId = "integer",
+    entityId = "entityid",
     playerName = string.format("string (%d)", kMaxNameLength),
-    teamNumber = string.format("integer (0 to %d)", kRandomTeamType),
+    teamNumber = string.format("integer (-1 to %d)", kRandomTeamType),
     score = string.format("integer (0 to %d)", kMaxScore),
     kills = string.format("integer (0 to %d)", kMaxKills),
     deaths = string.format("integer (0 to %d)", kMaxDeaths),
@@ -87,6 +88,7 @@ function BuildScoresMessage(scorePlayer, sendToPlayer)
     local t = {}
 
     t.clientId = scorePlayer:GetClientIndex()
+    t.entityId = scorePlayer:GetId()
     t.playerName = string.sub(scorePlayer:GetName(), 0, kMaxNameLength)
     t.teamNumber = scorePlayer:GetTeamNumber()
     t.score = scorePlayer:GetScore()
@@ -337,7 +339,7 @@ end
 local kExecuteSayingMessage = 
 {
     sayingIndex = "integer (1 to 5)",
-    sayingsMenu = "integer (1 to 2)"
+    sayingsMenu = "integer (1 to 3)"
 }
 
 function BuildExecuteSayingMessage(sayingIndex, sayingsMenu)

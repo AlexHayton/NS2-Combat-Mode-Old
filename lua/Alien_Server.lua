@@ -115,6 +115,9 @@ function Alien:OnInit()
     Player.OnInit(self)
     
     self.abilityEnergy = Ability.kMaxEnergy
+    
+    self.armor = self:GetArmorAmount()
+    self.maxArmor = self.armor
 
 end
 
@@ -123,15 +126,34 @@ function Alien:GetArmorAbsorbPercentageOverride(damageType, baseArmorAbsorption)
     
     local bonusArmorAbsorption = 1    
     if(GetTechSupported(self, kTechId.AlienArmor3Tech, true)) then
-        bonusArmorAbsorption = kAlienArmor3
+        bonusArmorAbsorption = kAlienArmorAbsorption3
     elseif(GetTechSupported(self, kTechId.AlienArmor2Tech, true)) then
-        bonusArmorAbsorption = kAlienArmor2
+        bonusArmorAbsorption = kAlienArmorAbsorption2
     elseif(GetTechSupported(self, kTechId.AlienArmor1Tech, true)) then
-        bonusArmorAbsorption = kAlienArmor1
+        bonusArmorAbsorption = kAlienArmorAbsorption1
     end
 
     return baseArmorAbsorption * bonusArmorAbsorption
     
+end
+
+function Alien:OnResearchComplete(structure, researchId)
+    local success = Player.OnResearchComplete(self, structure, researchId)
+    
+    // For armor upgrades, give us more armor immediately (preserving percentage)
+    if success then
+    
+        if researchId == kTechId.AlienArmor1Tech or researchId == kTechId.AlienArmor2Tech or researchId == kTechId.AlienArmor3Tech then
+        
+            local armorPercent = self.armor/self.maxArmor
+            self.maxArmor = self:GetArmorAmount()
+            self.armor = self.maxArmor * armorPercent
+            
+        end    
+        
+    end
+    
+    return success  
 end
 
 function Alien:MakeSpecialEdition()

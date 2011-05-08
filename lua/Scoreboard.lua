@@ -9,16 +9,17 @@
 local playerData = {}
 
 kScoreboardDataIndexClientIndex = 1
-kScoreboardDataIndexName = 2
-kScoreboardDataIndexEntityTeamNumber = 3
-kScoreboardDataIndexScore = 4
-kScoreboardDataIndexKills = 5
-kScoreboardDataIndexDeaths = 6
-kScoreboardDataIndexIsCommander = 7
-kScoreboardDataIndexResources = 8
-kScoreboardDataIndexPing = 9
-kScoreboardDataIndexStatus = 10
-kScoreboardDataIndexIsSpectator = 11
+kScoreboardDataIndexEntityId = 2
+kScoreboardDataIndexName = 3
+kScoreboardDataIndexEntityTeamNumber = 4
+kScoreboardDataIndexScore = 5
+kScoreboardDataIndexKills = 6
+kScoreboardDataIndexDeaths = 7
+kScoreboardDataIndexIsCommander = 8
+kScoreboardDataIndexResources = 9
+kScoreboardDataIndexPing = 10
+kScoreboardDataIndexStatus = 11
+kScoreboardDataIndexIsSpectator = 12
 
 function Scoreboard_Clear()
 
@@ -34,6 +35,7 @@ function Scoreboard_OnResetGame()
     
         local playerRecord = playerData[i]
         
+        playerRecord[kScoreboardDataIndexEntityId] = 0
         playerRecord[kScoreboardDataIndexEntityTeamNumber] = 0
         playerRecord[kScoreboardDataIndexScore] = 0
         playerRecord[kScoreboardDataIndexKills] = 0
@@ -68,7 +70,7 @@ function Scoreboard_OnClientDisconnect(clientIndex)
     
 end
 
-function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, kills, deaths, resources, isCommander, status, isSpectator)
+function Scoreboard_SetPlayerData(clientIndex, entityId, playerName, teamNumber, score, kills, deaths, resources, isCommander, status, isSpectator)
     
     // Lookup record for player and update it
     for i = 1, table.maxn(playerData) do
@@ -78,6 +80,7 @@ function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, ki
         if playerRecord[kScoreboardDataIndexClientIndex] == clientIndex then
 
             // Update entry
+            playerRecord[kScoreboardDataIndexEntityId] = entityId
             playerRecord[kScoreboardDataIndexName] = playerName
             playerRecord[kScoreboardDataIndexEntityTeamNumber] = teamNumber
             playerRecord[kScoreboardDataIndexScore] = score
@@ -97,6 +100,7 @@ function Scoreboard_SetPlayerData(clientIndex, playerName, teamNumber, score, ki
     // Otherwise insert a new record
     local playerRecord = {}
     playerRecord[kScoreboardDataIndexClientIndex] = clientIndex
+    playerRecord[kScoreboardDataIndexEntityId] = entityId
     playerRecord[kScoreboardDataIndexName] = playerName
     playerRecord[kScoreboardDataIndexEntityTeamNumber] = teamNumber
     playerRecord[kScoreboardDataIndexScore] = score
@@ -276,5 +280,38 @@ function ScoreboardUI_IsPlayerLocal(playerName)
     end
     
     return false
+    
+end
+
+function ScoreboardUI_GetOrderedCommanderNames(teamNumber)
+
+    local commanders = {}
+    
+    // Create table of commander entity ids and names
+    for i = 1, table.maxn(playerData) do
+    
+        local playerRecord = playerData[i]
+        
+        // TODO: Remove "not" once done testing
+        if (playerRecord[kScoreboardDataIndexEntityTeamNumber] == teamNumber) and not playerRecord[kScoreboardDataIndexIsCommander] then
+            table.insert( commanders, {playerRecord[kScoreboardDataIndexEntityId], playerRecord[kScoreboardDataIndexName]} )
+        end
+        
+    end
+    
+    function sortCommandersByEntity(pair1, pair2)
+        return pair1[1] < pair2[1]
+    end
+    
+    // Sort it by entity id
+    table.sort(commanders, sortCommandersByEntity)
+    
+    // Return names in order
+    local commanderNames = {}
+    for index, pair in ipairs(commanders) do
+        table.insert(commanderNames, pair[2])
+    end
+    
+    return commanderNames
     
 end

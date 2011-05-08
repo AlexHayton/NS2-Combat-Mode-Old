@@ -284,6 +284,9 @@ function GUIMinimap:UpdateIcon()
         self.playerIcon:SetIsVisible(false)
         self.cameraIconMask:SetIsVisible(true)
         local topLeftPoint, topRightPoint, bottomLeftPoint, bottomRightPoint = CommanderUI_ViewFarPlanePoints()
+        if topLeftPoint == nil then
+            return
+        end
         local topLeftX, topLeftY = PlayerUI_GetMapXY(topLeftPoint.x, topLeftPoint.z)
         local bottomRightX, bottomRightY = PlayerUI_GetMapXY(bottomRightPoint.x, bottomRightPoint.z)
         

@@ -134,6 +134,10 @@ function CommanderUI_ViewFarPlanePoints()
     local bottomRightLine = frustum:GetPoint(6) - frustum:GetPoint(2)
     local bottomRightPoint = GetLinePlaneIntersection(planePoint, planeNormal, frustum:GetPoint(2), GetNormalizedVector(bottomRightLine))
     
+    if topLeftPoint == nil or topRightPoint == nil or bottomLeftPoint == nil or bottomRightPoint == nil then
+        return
+    end
+    
     ASSERT(topLeftPoint.z < topRightPoint.z)
     ASSERT(bottomLeftPoint.z < bottomRightPoint.z)
     ASSERT(topLeftPoint.x > bottomLeftPoint.x)
@@ -484,7 +488,7 @@ function Commander:DestroyGhostStructure()
     
         Client.DestroyRenderModel(self.ghostStructure)
         self.ghostStructure = nil
-        self.ghostStructureValid = nil
+        self.ghostStructureValid = false
         
     end
     
@@ -590,7 +594,7 @@ end
 
 function Commander:CloseMenu()
 
-    if self.ghostStructureValid ~= nil then
+    if self.ghostStructure ~= nil then
         return self:DestroyGhostStructure()
     end
     
@@ -605,7 +609,7 @@ function CommanderUI_TargetedAction(index, x, y, button)
     local player = Client.GetLocalPlayer()
     local normalizedPickRay = CreatePickRay(player, x, y)
     
-    if (player.ghostStructureValid == nil or player.ghostStructureValid == true) and button == 1 then
+    if (player.ghostStructureValid == false or player.ghostStructureValid == true) and button == 1 then
     
         // Send order target to where ghost structure is, in case it was snapped to an attach point
         if player.ghostStructureValid then
@@ -1411,12 +1415,11 @@ function Commander:ClientOnMouseRelease(mouseButton, x, y)
 
     local displayConfirmationEffect = false
     
-    local normalizedPickRay = CreatePickRay(self, x, y)
-
+    local normalizedPickRay = CreatePickRay(self, x, y)	
     if(mouseButton == 0) then
-
+		
         // Don't do anything if we're ghost structure is at invalid place
-        if self.ghostStructure == nil or self.ghostStructureValid == true then
+        if self.ghostStructure ~= nil or self.ghostStructureValid == true then
 
             // See if we have indicated an orientation for the structure yet (sentries only right now)
             if((self.currentTechId == kTechId.Sentry) and not self.specifyingOrientation) then

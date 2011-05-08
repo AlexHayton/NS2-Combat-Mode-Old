@@ -132,10 +132,12 @@ function LiveMixin:Heal(amount)
 end
 
 function LiveMixin:GetIsAlive()
+
     if (self.GetIsAliveOverride) then
         return self:GetIsAliveOverride()
     end
     return self.alive
+    
 end
 
 function LiveMixin:SetIsAlive(state)
@@ -164,7 +166,7 @@ function LiveMixin:GetHealthPerArmor(damageType)
 end
 
 /**
- * Damage to marine armor could show sparks and debris and debris and castings for aliens
+ * Damage to marine armor could show sparks and debris and castings for aliens
  * Damage to health shows blood and the player makes grunting/squealing/pain noises
  * Armor is best at absorbing melee damage, less against projectiles and not effective for gas/breathing damage
  * (the TSA designed their armor to deal best against skulks!)

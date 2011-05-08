@@ -18,7 +18,11 @@ end
 function EntityFilterTwo(entity1, entity2)
     return function (test) return test == entity1 or test == entity2 end
 end
-  
+
+function EntityFilterOnly(entity)
+    return function(test) return entity ~= test end
+end
+
 // Splits string into array, along whitespace boundaries. First element indexed at 1.
 function StringToArray(instring)
 
@@ -326,7 +330,7 @@ end
 
 // Save to server log for 3rd party utilities
 function PrintToLog(formatString, ...)
-    // TODO: Add to log
+    Print(formatString, ...)
 end
 
 function ConditionalValue(expression, value1, value2) 
@@ -516,6 +520,8 @@ function ToString(t)
             return string.format("angles yaw/pitch/roll: %.2f, %.2f, %.2f", t.yaw, t.pitch, t.roll)
         elseif t:isa("Coords") then
             return CoordsToString(t)
+        elseif t:isa("Actor") then
+            return t:GetClassName() .. "-" .. t:GetId()
         elseif t.GetClassName then
             return t:GetClassName()
         else
@@ -1197,6 +1203,17 @@ function StringEndsWith(inString, endString)
 
 end
 
+/**
+ * Return a string that removes any leading or trailing whitespace characters from the passed in string.
+ */
+function StringTrim(inString)
+
+    ASSERT(type(inString) == "string")
+    
+    return (inString:gsub("^%s*(.-)%s*$", "%1"))
+    
+end
+
 // Returns base value when dev is off, base value * scalar when it's on
 function GetDevScalar(value, scalar)
     return ConditionalValue(Shared.GetDevMode(), value * scalar, value)
@@ -1374,4 +1391,48 @@ function CheckPredictionData(key, includeTime, values)
         Client.StorePredictionData(key, data)
     end
 
+end
+
+/**
+ * Scale the passed in value down based on two other values.
+ */
+function math.scaledown(value, av, mv)
+    if mv ~= 0 and av >= mv then
+        return value
+    end
+    if mv == 0 then
+        mv = av
+    end
+    return math.percentf((av/mv)*100,value)
+end
+
+/**
+ * Rounds to nearest number by the passed in decimal places.
+ */
+function math.round(num, idp)
+    local mult = 10^(idp or 0)
+    return math.floor(num * mult + 0.5) / mult
+end
+
+/**
+ * Returns the value from the percentage p of v where p is between 0 and 100.
+ */
+function math.percentf(p, v)
+    return (p/100)*v
+end
+
+/**
+ * ColorValue(0-255) : Convert standard convention to decimal.
+ */
+function ColorValue(val)
+    ASSERT(type(val) == "number")
+    return (val/255)
+end
+
+/**
+ * AlphaValue(0-100) : Percentage Transparency ~ Convert standard convention to decimal.
+ */
+function AlphaValue(val)
+    ASSERT(type(val) == "number")
+    return (val/100)
 end

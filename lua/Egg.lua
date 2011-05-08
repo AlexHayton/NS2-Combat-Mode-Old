@@ -9,8 +9,10 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Structure.lua")
 Script.Load("lua/Onos.lua")
+Script.Load("lua/InfestationMixin.lua")
 
 class 'Egg' (Structure)
+PrepareClassForMixin(Egg, InfestationMixin)
 
 Egg.kMapName = "egg"
 
@@ -31,7 +33,6 @@ Egg.kArmor = kEggArmor
 Egg.kThinkInterval = .5
 
 function Egg:OnCreate()
-
     Structure.OnCreate(self)
     
     self:SetModel(Egg.kModelName)
@@ -39,6 +40,7 @@ function Egg:OnCreate()
 end
 
 function Egg:OnInit()
+    InitMixin(self, InfestationMixin)
     
     Structure.OnInit(self)
     
@@ -54,6 +56,14 @@ function Egg:OnInit()
         
     end
     
+end
+
+function Egg:GetBaseArmor()
+    return Egg.kArmor
+end
+
+function Egg:GetArmorFullyUpgradedAmount()
+    return 0
 end
 
 function Egg:GetIsAlienStructure()
@@ -183,6 +193,13 @@ function Egg:OnThink()
     
     self:SetNextThink(Egg.kThinkInterval)
     
+end
+
+function Egg:OnConstructionComplete()
+
+    Structure.OnConstructionComplete(self)
+    
+    self:SpawnInfestation()
 end
 end
 

@@ -19,6 +19,7 @@ AlienCommander.kResearchCompleteSoundName = PrecacheAsset("sound/ns2.fev/alien/v
 AlienCommander.kStructureUnderAttackSound = PrecacheAsset("sound/ns2.fev/alien/voiceovers/structure_under_attack")
 AlienCommander.kHarvesterUnderAttackSound = PrecacheAsset("sound/ns2.fev/alien/voiceovers/harvester_under_attack")
 AlienCommander.kLifeformUnderAttackSound = PrecacheAsset("sound/ns2.fev/alien/voiceovers/lifeform_under_attack")
+AlienCommander.kCommanderEjectedSoundName = PrecacheAsset("sound/ns2.fev/alien/voiceovers/commander_ejected")
 
 function AlienCommander:GetTeamType()
     return kAlienTeamType

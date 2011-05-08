@@ -161,6 +161,8 @@ function MarineTeam:InitTechTree()
     // Marine tier 1
     self.techTree:AddBuildNode(kTechId.CommandStation,            kTechId.None,                kTechId.None)
     self.techTree:AddBuildNode(kTechId.Extractor,                 kTechId.None,                kTechId.None)
+    
+    // When adding marine upgrades that morph structures, make sure to add to GetRecycleCost() also
     self.techTree:AddUpgradeNode(kTechId.ExtractorUpgrade,        kTechId.Extractor,           kTechId.None)
     self.techTree:AddBuildNode(kTechId.InfantryPortal,            kTechId.None,                kTechId.None)
     self.techTree:AddResearchNode(kTechId.SentryTech,             kTechId.None,                kTechId.None)

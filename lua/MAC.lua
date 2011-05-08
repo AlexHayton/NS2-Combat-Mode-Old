@@ -222,6 +222,18 @@ function MAC:OnOrderChanged()
 
 end
 
+function MAC:OnDestroyCurrentOrder(currentOrder)
+	
+	local orderTarget = nil
+    if (currentOrder:GetParam() ~= nil) then
+        orderTarget = Shared.GetEntity(currentOrder:GetParam())
+    end
+	
+    if(currentOrder:GetType() == kTechId.Weld and GetOrderTargetIsWeldTarget(currentOrder, self:GetTeamNumber())) then
+        orderTarget:OnWeldCanceled(self)
+    end
+end
+
 function MAC:OverrideTechTreeAction(techNode, position, orientation, commander)
 
     local success = false
@@ -229,13 +241,8 @@ function MAC:OverrideTechTreeAction(techNode, position, orientation, commander)
     
     // Convert build tech actions into build orders
     if(techNode:GetIsBuild()) then
-    
-        local order = CreateOrder(kTechId.Build, techNode:GetTechId(), position, orientation)
-                
-        // Converts default orders into something more appropriate for unit
-        self:OverrideOrder(order)
-                
-        self:SetOrder(order, not commander.queuingOrders, false)
+        
+        self:GiveOrder(kTechId.Build, techNode:GetTechId(), position, orientation, not commander.queuingOrders, false)
         
         // If MAC was orphaned by commander that has left chair or server, take control
         if self:GetOwner() == nil then
@@ -299,8 +306,9 @@ function MAC:ProcessWeldOrder()
         
         else
         
-            // otherwise move towards it    
-            self:MoveToTarget(PhysicsMask.AIMovement, target:GetEngagementPoint(), self:GetMoveSpeed(), MAC.kMoveThinkInterval)
+            // otherwise move towards it
+            local hoverAdjustedLocation = self:GetHoverAt(target:GetEngagementPoint())
+            self:MoveToTarget(PhysicsMask.AIMovement, hoverAdjustedLocation, self:GetMoveSpeed(), MAC.kMoveThinkInterval)
 
         end
 
@@ -342,7 +350,8 @@ end
 function MAC:ProcessMove()
 
     local currentOrder = self:GetCurrentOrder()
-    local distToTarget = self:MoveToTarget(PhysicsMask.AIMovement, currentOrder:GetLocation(), self:GetMoveSpeed(), MAC.kMoveThinkInterval)
+    local hoverAdjustedLocation = self:GetHoverAt(currentOrder:GetLocation())
+    local distToTarget = self:MoveToTarget(PhysicsMask.AIMovement, hoverAdjustedLocation, self:GetMoveSpeed(), MAC.kMoveThinkInterval)
     if(distToTarget < kEpsilon) then
     
         self:TriggerEffects("mac_move_complete")
@@ -444,7 +453,7 @@ function MAC:ProcessBuildConstruct()
                     
                         team:AddCarbon(-cost)                                
                         
-                        self:SetOrder( CreateOrder(kTechId.Construct, createdStructureId), false, true )
+                        self:GiveOrder(kTechId.Construct, createdStructureId, nil, nil, false, true)
                         
                         self:SetNextThink(MAC.kConstructThinkInterval)
                         
@@ -495,7 +504,8 @@ function MAC:ProcessBuildConstruct()
         
     else
     
-        self:MoveToTarget(PhysicsMask.AIMovement, currentOrder:GetLocation(), self:GetMoveSpeed(), MAC.kMoveThinkInterval)
+        local hoverAdjustedLocation = self:GetHoverAt(currentOrder:GetLocation())
+        self:MoveToTarget(PhysicsMask.AIMovement, hoverAdjustedLocation, self:GetMoveSpeed(), MAC.kMoveThinkInterval)
         
     end
     
@@ -550,8 +560,15 @@ function MAC:OnThink()
 end
 
 function MAC:OnUpdate(deltaTime)
+
     LiveScriptActor.OnUpdate(self, deltaTime)
+    
+    if Server and not self:GetHasOrder() then
+        self:FindSomethingToDo()
+    end
+    
     self:UpdateControllerFromEntity()
+    
 end
 
 function MAC:FindSomethingToDo()
@@ -567,16 +584,8 @@ function MAC:FindSomethingToDo()
         
             if(not structure:GetIsBuilt()) and structure:GetIsVisible() then
             
-                local order = CreateOrder(kTechId.Construct, structure:GetId(), structure:GetOrigin(), nil)
-                
-                self:OverrideOrder(order)
-                    
-                if(order:GetType() ~= kTechId.None) then
-                
-                    self:SetOrder(order, false, false)
-                    return true
-                    
-                end
+                local acceptedOrder = self:GiveOrder(kTechId.Construct, structure:GetId(), structure:GetOrigin(), nil, false, false) ~= kTechId.None
+                return acceptedOrder
                 
             end
             

@@ -89,10 +89,10 @@ end
 
 function Spikes:PerformPrimaryAttack(player)
 
+    // Alternate view model animation to fire left then right
+    self.fireLeftNext = not self.fireLeftNext
+
     if not self.zoomedIn then
-    
-        // Alternate view model animation to fire left then right
-        self.fireLeftNext = not self.fireLeftNext
     
         self:FireSpikeProjectile(player)        
         
@@ -111,18 +111,31 @@ function Spikes:FireSpikeProjectile(player)
 
     // On server, create projectile
     if(Server) then
-
-        local viewCoords = player:GetViewAngles():GetCoords()
+    
+        // trace using view coords, but back off the given distance to make sure we don't miss any walls
+        local backOffDist = 0.5
+        // fire from one meter in front of the lerk, to avoid the lerk flying into his own projectils (the projectile
+        // will only start moving on the NEXT tick, and the lerk might be updated before the projectile. considering that
+        // a lerk has a topspeed of 5-10m/sec, and a slow server update might be 100ms, you are looking at a lerk movement
+        // per tick of 0.5-1m ... 1m should be good enough.
+        local firePointOffs = 1.0
+        // seems to be a bug in trace; make sure any entity indicate as hit are inside this range. 
+        local maxTraceLen = backOffDist + firePointOffs
         
-        local startPoint = player:GetEyePos() + viewCoords.zAxis * 1 - viewCoords.yAxis * .1
-        local trace = Shared.TraceRay(player:GetEyePos(), startPoint, PhysicsMask.Bullets, EntityFilterOne(player))
-        if trace.fraction ~= 1 then
-            // The eye position just barely sticks out past some walls so we
-            // need to move the emit point back a tiny bit to compensate.
-            VectorCopy(player:GetEyePos() - (viewCoords.zAxis * 0.2), startPoint)
+        local viewCoords = player:GetViewAngles():GetCoords()
+        local alternate = (self.fireLeftNext and -.1) or .1
+        local firePoint = player:GetEyePos() + viewCoords.zAxis * firePointOffs - viewCoords.yAxis * .1 + viewCoords.xAxis * alternate
+        
+        // To avoid the lerk butting his face against a wall and shooting blindly, trace and move back the firepoint
+        // if hitting a wall
+        local startTracePoint = player:GetEyePos() - viewCoords.zAxis * backOffDist + viewCoords.xAxis * alternate
+        local trace = Shared.TraceRay(startTracePoint, firePoint, PhysicsMask.Bullets, EntityFilterOne(player))
+        if trace.fraction ~= 1 and (trace.entity == nil or (trace.entity:GetOrigin() - startTracePoint):GetLength() < maxTraceLen) then
+            local offset = math.max(backOffDist, trace.fraction * maxTraceLen)
+            firePoint = startTracePoint + (viewCoords.zAxis * offset)
         end
         
-        local spike = CreateEntity(Spike.kMapName, startPoint, player:GetTeamNumber())
+        local spike = CreateEntity(Spike.kMapName, firePoint, player:GetTeamNumber())
         
         // Add slight randomness to start direction. Gaussian distribution.
         local x = (NetworkRandom() - .5) + (NetworkRandom() - .5)

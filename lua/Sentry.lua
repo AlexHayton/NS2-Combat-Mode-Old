@@ -41,6 +41,9 @@ PrecacheMultipleAssets(Sentry.kRicochetEffect, kSurfaceList)
 // Balance
 Sentry.kPingInterval = 4
 Sentry.kFov = 160
+Sentry.kMaxPitch = 45
+Sentry.kMaxYaw = Sentry.kFov/2
+
 Sentry.kBaseROF = kSentryAttackBaseROF
 Sentry.kRandROF = kSentryAttackRandROF
 Sentry.kSpread = Vector( 0.02618, 0.02618, 0.02618 )
@@ -104,6 +107,15 @@ function Sentry:OnCreate()
     
 end
 
+if (Client) then
+
+    function Sentry:OnDestroy()
+        self:StopSound(Sentry.kAttackSoundName)
+        Structure.OnDestroy(self)
+    end
+    
+end
+
 function Sentry:OnInit()
     Structure.OnInit(self)
     self:SetUpdates(true)
@@ -119,7 +131,18 @@ end
 
 // Fire out out muzzle attach point
 function Sentry:GetEyePos()
-    return self:GetAttachPointOrigin(Sentry.kEyeNode)
+    // Great idea .. but it doesn't quite work - the eyepos being offset from the
+    // center of the scan means that sometimes the sensor will see a target and
+    // sometimes not. An alien placing itself at the edge of the fov would be a valid 
+    // target when the barrel faces in the middle, but become invalid when it faces
+    // the alien. To solve it would reqire the introduction of a field-of-fire for the
+    // gun iteself, while the field-of-view belonged to the sensor.
+    // Too much work, and the simple fix is to move the eye to the center of rotation. 
+    // return self:GetAttachPointOrigin(Sentry.kEyeNode)
+    local sensorPoint = self:GetAttachPointOrigin(Sentry.kEyeNode)
+    local modelPoint = self:GetOrigin()
+    modelPoint.y = sensorPoint.y
+    return modelPoint
 end
 
 function Sentry:GetDeathIconIndex()
@@ -181,11 +204,11 @@ function Sentry:UpdateAngles(deltaTime)
         
             local yawDiffRadians = GetAnglesDifference(GetYawFromVector(self.targetDirection), self:GetAngles().yaw)
             local yawDegrees = DegreesTo360(math.deg(yawDiffRadians))        
-            self.desiredYawDegrees = Clamp(yawDegrees, -45, 45)
+            self.desiredYawDegrees = Clamp(yawDegrees, -Sentry.kMaxYaw, Sentry.kMaxYaw)
             
             local pitchDiffRadians = GetAnglesDifference(GetPitchFromVector(self.targetDirection), self:GetAngles().pitch)
             local pitchDegrees = DegreesTo360(math.deg(pitchDiffRadians))
-            self.desiredPitchDegrees = Clamp(pitchDegrees, -180, 180)       
+            self.desiredPitchDegrees = Clamp(pitchDegrees, -Sentry.kMaxPitch, Sentry.kMaxPitch)       
 
             self.scanTime = nil
             self.barrelYawDegrees = Slerp(self.barrelYawDegrees, self.desiredYawDegrees, Sentry.kBarrelMoveRate*deltaTime)

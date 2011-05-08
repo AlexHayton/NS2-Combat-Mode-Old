@@ -40,6 +40,9 @@ function PlayingTeam:Initialize(teamName, teamNumber)
     self:OnCreate()
         
     self.timeSinceLastLOSUpdate = Shared.GetTime()
+    
+    self.ejectCommVoteManager = VoteManager()
+    self.ejectCommVoteManager:Initialize()
 
 end
 
@@ -85,6 +88,8 @@ function PlayingTeam:OnInit()
     self.alertsEnabled = false
     self:SpawnInitialStructures(self.teamLocation)
     self.alertsEnabled = true
+    
+    self.ejectCommVoteManager:Reset()
 
 end
 
@@ -681,6 +686,8 @@ function PlayingTeam:Update(timePassed)
     
     self:UpdateGameEffects(timePassed)
     
+    self:UpdateVoteToEject()
+    
 end
 
 function PlayingTeam:GetTechTree()
@@ -786,10 +793,16 @@ function PlayingTeam:ProcessEntityHelp(player)
         elseif not enemy and entity:isa("Structure") and not entity:GetIsBuilt() and player:isa("Marine") and player:AddTooltipOncePer("Help build this structure by pressing your use key.") then
             return true
         elseif entity:isa("Door") then
-        
-            if entity:GetState() == Door.kState.Locked and player:AddTooltipOncePer("This door has been locked by the Commander and can be broken by infestation or an Onos.") then
-                return true
-            elseif player:AddTooltipOncePer("This door can be controlled by the Commander and welded shut.") then
+
+            if entity:GetState() == Door.kState.Locked then
+            
+                if player:isa("Marine") and player:AddTooltipOncePer("This door has been locked by the Commander - you can temporarily unlock it with your use key.") then
+                    return true       
+                elseif player:AddTooltipOncePer("This door has been locked by the Commander and can be broken by infestation or an Onos.") then
+                    return true
+                end
+                
+            elseif player:AddTooltipOncePer("This door can be locked and welded shut by the Commander.") then
                 return true
             end
             
@@ -944,3 +957,40 @@ function PlayingTeam:UpdateTeamSpecificGameEffects(teamEntities, enemyPlayers)
     end
     
 end
+
+function PlayingTeam:VoteToEjectCommander(votingPlayer, targetCommander)
+
+    local votingPlayerSteamId = tonumber(Server.GetOwner(votingPlayer):GetUserId())
+    local targetSteamId = tonumber(Server.GetOwner(targetCommander):GetUserId())
+    
+    if self.ejectCommVoteManager:PlayerVotesFor(votingPlayerSteamId, targetSteamId, Shared.GetTime()) then
+        PrintToLog("%s cast vote to eject commander %s", votingPlayer:GetName(), targetCommander:GetName())
+    end
+    
+end
+
+function PlayingTeam:UpdateVoteToEject()
+
+    // Update with latest team size
+    self.ejectCommVoteManager:SetNumPlayers(self:GetNumPlayers())
+
+    // Eject commander if enough votes cast
+    if self.ejectCommVoteManager:GetVotePassed() then    
+        
+        local targetCommander = GetPlayerFromUserId( self.ejectCommVoteManager:GetTarget() )
+        
+        if targetCommander and targetCommander.Eject then
+            targetCommander:Eject()
+        end        
+        
+        self.ejectCommVoteManager:Reset()
+        
+    elseif self.ejectCommVoteManager:GetVoteElapsed(Shared.GetTime()) then
+    
+        self.ejectCommVoteManager:Reset()
+            
+    end
+    
+end
+
+

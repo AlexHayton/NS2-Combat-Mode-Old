@@ -121,4 +121,22 @@ function BiteLeap:GetEffectParams(tableParams)
     
 end
 
+/**
+ * Allow weapons to have different capsules
+ * Skulks are so low to the groun, they need a slimmer box in the vertical range
+ * to avoid biting into the ground so easily.
+ */
+function BiteLeap:GetMeleeCapsule()
+    return Vector(0.4, 0.1, 0.01)
+end
+
+/**
+ * Offset the start of the melee capsule with this much from the viewpoint.
+ * Skulk needs a bit more than others, as they are four-legged critters, with more
+ * of their body between their midpoint and their head.
+ */
+function BiteLeap:GetMeleeOffset()
+    return 0.4
+end
+
 Shared.LinkClassToMap("BiteLeap", BiteLeap.kMapName, networkVars )

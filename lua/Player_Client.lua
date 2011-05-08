@@ -1052,9 +1052,6 @@ function Player:OnDestroy()
 
     LiveScriptActor.OnDestroy(self)
     
-    Shared.DestroyCollisionObject(self.controller)
-    self.controller = nil
-
     if (self.viewModel ~= nil) then
         Client.DestroyRenderViewModel(self.viewModel)
         self.viewModel = nil

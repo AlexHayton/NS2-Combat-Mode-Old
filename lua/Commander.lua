@@ -96,6 +96,9 @@ function Commander:OnInit()
         self.scrollY = 0
        
         self.timeSinceUpdateMenu = 0
+        
+        self.ghostStructure = nil
+        self.ghostStructureValid = false
                 
     end
     
@@ -480,7 +483,7 @@ function Commander:OnEntityChange(oldEntityId, newEntityId)
     end
     
     if selectionChanged then
-        self:InternalSetSelection(newSelection)
+        self:InternalSetSelection(newSelection, true)
     end
     
     // Hotkey groups are handled in player.

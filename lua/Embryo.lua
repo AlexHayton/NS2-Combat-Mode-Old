@@ -45,6 +45,14 @@ function Embryo:OnInit()
     
 end
 
+function Embryo:GetBaseArmor()
+    return 0
+end
+
+function Embryo:GetArmorFullyUpgradedAmount()
+    return 0
+end
+
 function Embryo:OnInitLocalClient()
 
     Alien.OnInitLocalClient(self)

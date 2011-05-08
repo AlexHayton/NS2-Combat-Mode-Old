@@ -12,8 +12,11 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Structure.lua")
+Script.Load("lua/InfestationMixin.lua")
 
 class 'Crag' (Structure)
+
+PrepareClassForMixin(Crag, InfestationMixin)
 
 Crag.kMapName = "crag"
 
@@ -34,6 +37,8 @@ Crag.kUmbraBulletChance = 2
 function Crag:OnConstructionComplete()
 
     Structure.OnConstructionComplete(self)
+    
+    self:SpawnInfestation()
     
     self:SetNextThink(Crag.kThinkInterval)
     
@@ -142,6 +147,67 @@ function Crag:PerformHealing()
     
 end
 
+function Crag:PerformHealingUsingTargetCache()
+
+    // a crag uses the marine static and mobile targeting list ... 
+    // note that we use the HealTarget list - it will ignore los. If crags shouldn't heal through
+    // walls, just replace the RawHealTargetList with RawTargetList. Then it will function more like
+    // a sentry gun.
+    local targets = nil
+    targets, self.staticTargets, self.staticTargetsVersion = GetGamerules():GetTargetCache():GetRawHealTargetList(
+            self,
+            Crag.kHealRadius, 
+            TargetCache.kMmtl, 
+            TargetCache.kAshtl, 
+            self.staticTargets, 
+            self.staticTargetsVersion)
+
+    // Can only heal a certain number of targets                 
+    local entsHealed = 0
+    
+    // first heal players
+    for index, targetAndSqRange in ipairs(targets) do 
+        local target, sqRange = unpack(targetAndSqRange)
+               
+        if (entsHealed >= Crag.kMaxTargets) then      
+            break           
+        end
+        
+        if target:isa("Player") then
+            entsHealed = entsHealed + self:TryHeal(target, sqRange)
+        end
+    end
+    
+    // then heal non-players (except self)
+    for index, targetAndSqRange in ipairs(targets) do
+        local target, sqRange = unpack(targetAndSqRange)
+
+        if (entsHealed >= Crag.kMaxTargets) then      
+            break           
+        end
+        
+        if not target:isa("Player") and target ~= self then     
+            entsHealed = entsHealed + self:TryHeal(target, sqRange)
+         end
+    end
+
+    if entsHealed > 0 then   
+        local energyCost = LookupTechData(kTechId.CragHeal, kTechDataCostKey, 0)  
+        self:AddEnergy(-energyCost)        
+        self:TriggerEffects("crag_heal")       
+    end
+    
+end
+
+function Crag:TryHeal(target, sqRange)
+    local amountHealed = target:AddHealth(Crag.kHealAmount)
+    if (amountHealed > 0) then
+        target:TriggerEffects("crag_target_healed")           
+        GetGamerules():GetTargetCache():LogTarget("%s healed %s at range %.2f for %d", self, target,math.sqrt(sqRange), amountHealed)       
+    end
+    return amountHealed
+end
+
 function Crag:UpdateHealing()
 
     local time = Shared.GetTime()
@@ -153,8 +219,11 @@ function Crag:UpdateHealing()
         
         if self:GetEnergy() >= energyCost then
     
-            self:PerformHealing()
-            
+            if GetGamerules():GetTargetCache():IsEnabled() then
+                self:PerformHealingUsingTargetCache()
+            else  
+                self:PerformHealing()
+            end
             self.timeOfLastHeal = time
             
         end
@@ -259,6 +328,11 @@ function Crag:PerformActivation(techId, position, normal, commander)
     
     return success
     
+end
+
+function Crag:OnInit()
+    InitMixin(self, InfestationMixin)    
+    Structure.OnInit(self)   
 end
 
 Shared.LinkClassToMap("Crag", Crag.kMapName, {})

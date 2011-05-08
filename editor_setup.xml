@@ -181,6 +181,9 @@
     <class name="masc"> <parent>base_structure</parent><model><file>models/marine/masc/masc.model</file></model></class>
     <class name="hive"> <parent>base_structure</parent><model><file>models/alien/hive/hive.model</file></model></class>
     <class name="harvester"> <parent>base_structure</parent><model><file>models/alien/harvester/harvester.model</file></model></class>
+	<class name="hydra"> <parent>base_structure</parent><model><file>models/alien/hydra/hydra.model</file></model></class>
+	<class name="crag"> <parent>base_structure</parent><model><file>models/alien/crag/crag.model</file></model></class>
+	<class name="observatory"> <parent>base_structure</parent><model><file>models/marine/observatory/observatory.model</file></model></class>
     
     <!-- Location for command station or hive -->
     <class name="team_location">

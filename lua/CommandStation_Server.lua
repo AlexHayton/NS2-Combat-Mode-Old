@@ -11,8 +11,8 @@ function CommandStation:OnCreate()
     CommandStructure.OnCreate(self)    
     
     self:SetLevelTechId(1, kTechId.CommandStation)
-    self:SetLevelTechId(2, kTechId.CommandFacilityUpgrade)
-    self:SetLevelTechId(3, kTechId.CommandCenterUpgrade)
+    self:SetLevelTechId(2, kTechId.CommandFacility)
+    self:SetLevelTechId(3, kTechId.CommandCenter)
     
     self:SetTechId(kTechId.CommandStation)
     
@@ -28,6 +28,17 @@ function CommandStation:OnKill(damage, attacker, doer, point, direction)
         self:GetAttached():SetTechLevel(1)
     end
 
+end
+
+function CommandStation:OnPoweredChange(newPoweredState)
+
+    CommandStructure.OnPoweredChange(self, newPoweredState)
+    
+    // Logout active commander on power down
+    if not newPoweredState then
+        self:Logout()
+    end
+    
 end
 
 function CommandStation:GetTeamType()
@@ -71,7 +82,7 @@ function CommandStation:GetIsPlayerInside(player)
 end
 
 function CommandStation:GetIsPlayerValidForCommander(player)
-    return player ~= nil and player:isa("Marine") and player:GetTeamNumber() == self:GetTeamNumber() and self:GetIsPlayerInside(player)
+    return player ~= nil and player:isa("Marine") and player:GetIsAlive() and player:GetTeamNumber() == self:GetTeamNumber() and self:GetIsPlayerInside(player)
 end
 
 function CommandStation:KillPlayersInside()

@@ -6,9 +6,12 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+
 function Whip:OnConstructionComplete()
 
     Structure.OnConstructionComplete(self)
+    
+    self:SpawnInfestation()
 
     self:SetNextThink(1.0)
         
@@ -20,33 +23,10 @@ function Whip:AcquireTarget()
     
     if(self.timeOfLastTargetAcquisition == nil or (Shared.GetTime() > self.timeOfLastTargetAcquisition + Whip.kTargetCheckTime)) then
     
-        self.shortestDistanceToTarget = nil
-        self.targetIsaPlayer = false
-        
-        local targets = GetEntitiesForTeamWithinXZRange("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), Whip.kRange)
-        
-        for index, target in pairs(targets) do
-        
-            local validTarget, distanceToTarget = self:GetIsTargetValid(target)
-            
-            if validTarget then
-            
-                local newTargetCloser = (self.shortestDistanceToTarget == nil or (distanceToTarget < self.shortestDistanceToTarget))
-                local newTargetIsaPlayer = target:isa("Player")
-        
-                // Give players priority over regular entities, but still pick closer players
-                if( (not self.targetIsaPlayer and newTargetIsaPlayer) or
-                    (newTargetCloser and not (self.targetIsaPlayer and not newTargetIsaPlayer)) ) then
-            
-                    // Set new target
-                    finalTarget = target
-                    self.shortestDistanceToTarget = distanceToTarget
-                    self.targetIsaPlayer = newTargetIsaPlayer
-                    
-                end           
-                
-            end
-                
+        if GetGamerules():GetTargetCache():IsEnabled() then
+            finalTarget, self.shortestDistanceToTarget, self.targetIsaPlayer = self:_AcquireTargetUsingTargetCache()
+        else
+            finalTarget, self.shortestDistanceToTarget, self.targetIsaPlayer = self:_AcquireTarget()        
         end
         
         if finalTarget ~= nil then
@@ -64,6 +44,61 @@ function Whip:AcquireTarget()
     end
     
 end
+
+function Whip:_AcquireTargetUsingTargetCache()
+    local finalTarget = nil
+    local distanceToTarget = nil
+    local targetIsaPlayer = nil
+    
+    if(self.timeOfLastTargetAcquisition == nil or (Shared.GetTime() > self.timeOfLastTargetAcquisition + Whip.kTargetCheckTime)) then        
+        finalTarget, self.staticTargets, self.staticTargetsVersion = GetGamerules():GetTargetCache():AcquirePlayerPreferenceTarget(
+                self,
+                Whip.kRange, 
+                TargetCache.kAmtl,
+                TargetCache.kAstl, 
+                self.staticTargets, 
+                self.staticTargetsVersion)
+        if finalTarget then
+            distanceToTarget = (finalTarget:GetOrigin() - self:GetOrigin()):GetLength()
+            targetIsaPlayer = finalTarget:isa("Player")
+        end      
+    end
+    return finalTarget, distanceToTarget, targetIsaPlayer
+end
+
+
+function Whip:_AcquireTarget()
+    local finalTarget = nil
+    
+    self.shortestDistanceToTarget = nil
+    self.targetIsaPlayer = false
+    
+    local targets = GetEntitiesForTeamWithinXZRange("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), Whip.kRange)    
+    for index, target in pairs(targets) do
+    
+        local validTarget, distanceToTarget = self:GetIsTargetValid(target)
+        
+        if validTarget then
+        
+            local newTargetCloser = (self.shortestDistanceToTarget == nil or (distanceToTarget < self.shortestDistanceToTarget))
+            local newTargetIsaPlayer = target:isa("Player")
+    
+            // Give players priority over regular entities, but still pick closer players
+            if( (not self.targetIsaPlayer and newTargetIsaPlayer) or
+                (newTargetCloser and not (self.targetIsaPlayer and not newTargetIsaPlayer)) ) then
+        
+                // Set new target
+                finalTarget = target
+                self.shortestDistanceToTarget = distanceToTarget
+                self.targetIsaPlayer = newTargetIsaPlayer
+                
+            end           
+            
+        end
+    end
+    return finalTarget, distanceToTarget, targetIsaPlayer
+end
+
 
 function Whip:GetIsTargetValid(target)
 
@@ -149,6 +184,8 @@ function Whip:UpdateMode(deltaTime)
         if (self.desiredMode == Whip.kMode.UnrootedStationary) and (self.mode == Whip.kMode.Rooted) then
         
             self:SetMode(Whip.kMode.Unrooting)
+            // when we move, our static targets becomes invalid
+            self.staticTargetsVersion = -1 
             
         elseif self.desiredMode == Whip.kMode.Moving and (self.mode == Whip.kMode.UnrootedStationary) then
         
@@ -238,6 +275,10 @@ function Whip:UpdateAttack(deltaTime)
                 
                 // This is negative because of how model is set up (spins clockwise)
                 local attackYawRadians = -math.atan2(attackDir.x, attackDir.z)
+                
+                // Factor in the orientation of the whip.
+                attackYawRadians = attackYawRadians + self:GetAngles().yaw
+                
                 self.attackYaw = DegreesTo360(math.deg(attackYawRadians))
                 
                 if self.attackYaw < 0 then

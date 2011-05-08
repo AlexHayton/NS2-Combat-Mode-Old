@@ -44,7 +44,7 @@ kTechId = enum({
     'Marine', 'Heavy', "MarineCommander",
     
     // Marine alerts (specified alert sound and text in techdata if any)
-    'MarineAlertAcknowledge', 'MarineAlertNeedMedpack', 'MarineAlertNeedAmmo', 'MarineAlertNeedOrder', 'MarineAlertHostiles',
+    'MarineAlertAcknowledge', 'MarineAlertNeedMedpack', 'MarineAlertNeedAmmo', 'MarineAlertNeedOrder', 'MarineAlertHostiles', 'MarineCommanderEjected',
     
     'MarineAlertSentryFiring', 'MarineAlertSentryUnderAttack', 'MarineAlertCommandStationUnderAttack', 'MarineAlertInfantryPortalUnderAttack', 'MarineAlertStructureUnderAttack', 'MarineAlertExtractorUnderAttack', 'MarineAlertSoldierLost',
     
@@ -125,7 +125,7 @@ kTechId = enum({
     'DrifterFlareTech', 'DrifterFlare', 'DrifterParasiteTech', 'DrifterParasite', 
     
     // Alien alerts
-    'AlienAlertNeedHealing', 'AlienAlertStructureUnderAttack', 'AlienAlertHiveUnderAttack', 'AlienAlertHiveDying', 'AlienAlertHarvesterUnderAttack', 'AlienAlertLifeformUnderAttack', 'AlienAlertGorgeBuiltHarvester',
+    'AlienAlertNeedHealing', 'AlienAlertStructureUnderAttack', 'AlienAlertHiveUnderAttack', 'AlienAlertHiveDying', 'AlienAlertHarvesterUnderAttack', 'AlienAlertLifeformUnderAttack', 'AlienAlertGorgeBuiltHarvester', 'AlienCommanderEjected',
     
     'AlienAlertNotEnoughResources', 'AlienAlertResearchComplete', 'AlienAlertUpgradeComplete', 'AlienAlertHiveComplete',
     
@@ -140,6 +140,9 @@ kTechId = enum({
     
     // Commander abilities
     'Grow', 'MetabolizeTech', 'Metabolize',
+    
+    // Voting commands
+    'VoteDownCommander1', 'VoteDownCommander2', 'VoteDownCommander3', 
 
     // Maximum index
     'Max'

@@ -42,7 +42,9 @@ function Scan:OnInit()
 end
 
 function Scan:OnThink()
-    DestroyEntity(self)
+    if (Server) then
+        DestroyEntity(self)
+    end
 end
 
 function Scan:OnDestroy()
@@ -65,7 +67,7 @@ if Client then
             Structure.OnUpdate(self, deltaTime)
             
             local coords = Coords.GetIdentity()
-            VectorCopy(self:GetOrigin(), coords.origin)
+            coords.origin = self:GetOrigin()
             self.scanEffect:SetCoords(coords)
             
         end 

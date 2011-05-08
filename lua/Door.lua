@@ -20,10 +20,10 @@ Door.kWeldedSound = PrecacheAsset("sound/ns2.fev/common/door_welded")
 Door.kLockSound = PrecacheAsset("sound/ns2.fev/common/door_lock")
 Door.kUnlockSound = PrecacheAsset("sound/ns2.fev/common/door_unlock")
 
-// Open means it's opening, close means it's closing
-Door.kState = enum( {'Opened', 'Open', 'Closed', 'Close', 'Welded', 'Lock', 'Locked', 'Unlock', 'Unlocked', 'LockDestroyed'} )
-Door.kStateAnim = {'opened', 'open', 'closed', 'close', 'welded', 'lock', 'locked', 'unlock', 'unlocked', ''}
-Door.kStateSound = {'', Door.kOpenSound, '', Door.kCloseSound, Door.kWeldedSound, Door.kLockSound, '', Door.kUnlockSound, '', ''}
+// Open means it's opening, close means it's closing, welding means its being welded
+Door.kState = enum( {'Opened', 'Open', 'Closed', 'Close', 'Welded', 'Lock', 'Locked', 'Unlock', 'Unlocked', 'LockDestroyed', 'Welding'} )
+Door.kStateAnim = {'opened', 'open', 'closed', 'close', 'welded', 'lock', 'locked', 'unlock', 'unlocked', '', ''}
+Door.kStateSound = {'', Door.kOpenSound, '', Door.kCloseSound, Door.kWeldedSound, Door.kLockSound, '', Door.kUnlockSound, '', '', ''}
 
 Door.kDefaultWeldTime = 15
 Door.kDefaultHealth = 500
@@ -44,6 +44,9 @@ local networkVars   = {
     
     // Saved weld time we restore to on reset
     weldTime        = "float",
+    
+    // Marine overriding the lock temporarily
+    overrideUnlockTime = "float",
     
     // So door doesn't act on its own accord too soon after Commander affects it
     timeLastCommanderAction = "float",
@@ -87,11 +90,13 @@ function Door:OnInit()
         
     end
     
+    self.overrideUnlockTime = 0
+    
     self.time = 0
     
     self.timeLastCommanderAction = 0
     
-    self.alive = true
+    self:SetIsAlive(true)
     
     self:SetState(Door.kState.Closed)   
 
@@ -142,6 +147,10 @@ function Door:PerformActivation(techId, position, normal, commander)
         if state == Door.kState.Locked then
         
             self:SetState(Door.kState.Unlock, commander)
+            
+            // Clear marine override so it doesn't lock on us again
+            self.overrideUnlockTime = 0
+            
             success = true
             
         else
@@ -153,7 +162,7 @@ function Door:PerformActivation(techId, position, normal, commander)
     if success == false then
         self:PlaySound(Door.kInoperableSound)
     else
-        self.timeLastCommanderAction = Shared.GetTime()
+        self.timeLastCommanderAction = Shared.GetTime()        
     end
     
     return success
@@ -231,6 +240,11 @@ function Door:SetState(state, commander)
                 
             end
             
+            // Clear override once locked again
+            if self.state == Door.kState.Lock or self.state == Door.kState.Locked then
+                self.overrideUnlockTime = 0
+            end
+            
         end
         
     end
@@ -267,8 +281,15 @@ end
 function Door:OnUse(player, elapsedTime, useAttachPoint, usePoint)
 
     local state = self:GetState()
-    if state == Door.kState.Welded or state == Door.kState.Locked then
+    if state == Door.kState.Welded then
         self:PlaySound(Door.kInoperableSound)
+        
+    // Unlock door temporarily (this won't work properly for MvM)
+    elseif state == Door.kState.Locked and player:isa("Marine") then
+    
+        self:SetState(Door.kState.Unlock, player)
+        self.overrideUnlockTime = Shared.GetTime()
+        
     end
     
 end

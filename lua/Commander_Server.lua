@@ -9,7 +9,7 @@
 function Commander:CopyPlayerDataFrom(player)
 
     Player.CopyPlayerDataFrom(self, player)
-    self.alive = player.alive
+    self:SetIsAlive(player:GetIsAlive())
     
     self.health = player.health
     self.maxHealth = player.maxHealth
@@ -99,10 +99,7 @@ function Commander:AttemptToResearchOrUpgrade(techNode, force)
     
 end
 
-// Returns true or false, as well as the entity id of the new structure (or -1 if false)
-// pickVec optional (for AI units). In those cases, builderEntity will be the entity doing the building.
-function Commander:AttemptToBuild(techId, origin, normal, orientation, pickVec, buildTech, builderEntity)
-
+function Commander:EvalBuildIsLegal(techId, origin, builderEntity, pickVec)
     local legalBuildPosition = false
     local position = nil
     local attachEntity = nil
@@ -117,9 +114,22 @@ function Commander:AttemptToBuild(techId, origin, normal, orientation, pickVec, 
     else
     
         // Make sure entity is near enough to attach class if required (snap to it as well)
-        legalBuildPosition, position, attachEntity = GetIsBuildLegal(techId, origin, snapRadius, self)
+        legalBuildPosition, position, attachEntity = GetIsBuildLegal(techId, origin, Commander.kStructureSnapRadius, self, builderEntity)
         
     end
+    
+    return legalBuildPosition, position, attachEntity
+end
+
+// Returns true or false, as well as the entity id of the new structure (or -1 if false)
+// pickVec optional (for AI units). In those cases, builderEntity will be the entity doing the building.
+function Commander:AttemptToBuild(techId, origin, normal, orientation, pickVec, buildTech, builderEntity)
+
+    local legalBuildPosition = false
+    local position = nil
+    local attachEntity = nil
+    
+    legalBuildPosition, position, attachEntity = self:EvalBuildIsLegal(techId, origin, builderEntity, pickVec)
     
     if legalBuildPosition then
     
@@ -796,6 +806,31 @@ function Commander:Logout()
     commandStructure:Logout()
         
 end
+
+// Force player out of command station or hive
+function Commander:Eject()
+
+    // Get data before we create new player
+    local teamNumber = self:GetTeamNumber()
+    local userId = Server.GetOwner(self):GetUserId()
+    
+    self:AddTooltip("You have been voted out of a Commander role.")
+    self:Logout()
+
+    // Tell all players on team about this
+    local team = GetGamerules():GetTeam(teamNumber)
+    if team:GetTeamType() == kMarineTeamType then
+        team:TriggerAlert(kTechId.MarineCommanderEjected, self)
+    else
+        team:TriggerAlert(kTechId.AlienCommanderEjected, self)
+    end
+        
+    // Add player to list of players that can no longer command on this server (until brought down)    
+    GetGamerules():BanPlayerFromCommand(userId)
+
+    
+end
+
 
 function Commander:SetCommandStructure(commandStructure)
     self.commandStationId = commandStructure:GetId()

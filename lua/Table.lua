@@ -74,6 +74,8 @@ end
  */
 function table.find(findTable, value)
 
+    assert(type(findTable) == "table")
+    
     for i,element in ipairs(findTable) do
         if elementEqualsElement(element, value) then
             return i
@@ -82,6 +84,24 @@ function table.find(findTable, value)
 
     return nil
 
+end
+
+/**
+ * Returns true if the passed in table contains the passed in value. This
+ * function can be used on any table (dictionary-like tables as well as those
+ * created with table.insert()).
+ */
+function table.contains(inTable, value)
+
+    assert(type(inTable) == "table")
+    
+    for _, element in pairs(inTable) do
+        if element == value then
+            return true
+        end
+    end
+    return false
+    
 end
 
 /**

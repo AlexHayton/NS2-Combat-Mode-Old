@@ -217,6 +217,8 @@ local networkVars =
     // Used to smooth out the eye movement when going up steps.
     stepStartTime           = "float",
     stepAmount              = "float",
+    
+    isUsing                 = "boolean"
 
 }
 
@@ -227,6 +229,10 @@ function Player:OnCreate()
     self:SetLagCompensated(true)
     
     self:SetUpdates(true)
+    
+    if (Server) then
+        self.name = ""
+    end
     
     // Create the controller for doing collision detection.
     // Just use default values for the capsule size for now. Player will update to correct
@@ -323,6 +329,8 @@ function Player:OnCreate()
     self.nextOrderWaypointActive = false
     self.waypointType = kTechId.None
     
+    self.isUsing = false
+    
 end
 
 function Player:OnInit()
@@ -385,6 +393,8 @@ end
 
 function Player:OnEntityChange(oldEntityId, newEntityId)
 
+    LiveScriptActor.OnEntityChange(self, oldEntityId, newEntityId)
+    
     if Server then
 
         // Loop through hotgroups and update accordingly
@@ -532,12 +542,17 @@ end
 
 function Player:OverrideSayingsMenu(input)
 
-    if(self:GetHasSayings() and (bit.band(input.commands, Move.ToggleSayings1) ~= 0 or bit.band(input.commands, Move.ToggleSayings2) ~= 0)) then
+    if(self:GetHasSayings() and ( bit.band(input.commands, Move.ToggleSayings1) ~= 0 or bit.band(input.commands, Move.ToggleSayings2) ~= 0 or bit.band(input.commands, Move.ToggleVoteMenu) ~= 0 ) ) then
     
         // If enough time has passed
         if(self.timeLastSayingsAction == nil or (Shared.GetTime() > self.timeLastSayingsAction + .2)) then
 
-            local newMenu = ConditionalValue(bit.band(input.commands, Move.ToggleSayings1) ~= 0, 1, 2)
+            local newMenu = 1
+            if bit.band(input.commands, Move.ToggleSayings2) ~= 0 then
+                newMenu = 2
+            elseif bit.band(input.commands, Move.ToggleVoteMenu) ~= 0 then
+                newMenu = 3
+            end
 
             // If not visible, bring up menu
             if(not self.showSayings) then
@@ -561,10 +576,12 @@ function Player:OverrideSayingsMenu(input)
         end
         
         // Sayings toggles are handled client side.
-        local removeToggleSayingsMask = bit.bxor(0xFFFFFFFF, Move.ToggleSayings1)
-        input.commands = bit.band(input.commands, removeToggleSayingsMask)
-        removeToggleSayingsMask = bit.bxor(0xFFFFFFFF, Move.ToggleSayings2)
-        input.commands = bit.band(input.commands, removeToggleSayingsMask)
+        local removeToggleMenuMask = bit.bxor(0xFFFFFFFF, Move.ToggleSayings1)
+        input.commands = bit.band(input.commands, removeToggleMenuMask)
+        removeToggleMenuMask = bit.bxor(0xFFFFFFFF, Move.ToggleSayings2)
+        input.commands = bit.band(input.commands, removeToggleMenuMask)
+        removeToggleMenuMask = bit.bxor(0xFFFFFFFF, Move.ToggleVoteMenu)
+        input.commands = bit.band(input.commands, removeToggleMenuMask)
 
         // Record time
         self.timeLastSayingsAction = Shared.GetTime()
@@ -917,17 +934,14 @@ end
  * Check to see if there's a LiveScriptActor we can use. Checks any attachpoints returned from  
  * GetAttachPointOrigin() and if that fails, does a regular traceray. Returns true if we processed the action.
  */
-function Player:Use()
+function Player:Use(timePassed)
 
+    ASSERT(timePassed >= 0)
+    
     local success = false
     
     local startPoint = self:GetViewOffset() + self:GetOrigin()
     local viewCoords = self:GetViewAngles():GetCoords()
-    
-    local elapsedTime = 0
-    if self.timeOfLastUse ~= 0 then
-        elapsedTime = math.min(Shared.GetTime() - self.timeOfLastUse, Player.kDefaultBuildTime)
-    end
     
     // Get entities in radius
     
@@ -943,7 +957,7 @@ function Player:Use()
             local toAttachPoint = attachPoint - startPoint
             local legalUse = toAttachPoint:GetLength() < Player.kUseRange and viewCoords.zAxis:DotProduct(GetNormalizedVector(toAttachPoint)) > .8
             
-            if(legalUse and entity:OnUse(self, elapsedTime, true, attachPoint)) then
+            if(legalUse and entity:OnUse(self, timePassed, true, attachPoint)) then
             
                 success = true
                 
@@ -967,7 +981,7 @@ function Player:Use()
             
             if trace.entity:GetCanBeUsed(self) then
 
-                success = trace.entity:OnUse(self, elapsedTime, false, trace.endPoint)
+                success = trace.entity:OnUse(self, timePassed, false, trace.endPoint)
                 
             end
 
@@ -978,16 +992,15 @@ function Player:Use()
     // Put away weapon when we +use
     if success then
     
-    
         if self:isa("Marine") and not self:GetWeaponHolstered() then
             self:Holster(true)
         end
         
         self:SetActivityEnd(Structure.kUseInterval)
-        
-        self.timeOfLastUse = Shared.GetTime()
-        
+        self:SetIsUsing(true)
     end
+    
+    self.timeOfLastUse = Shared.GetTime()
     
     return success
     
@@ -1177,12 +1190,18 @@ end
 function Player:UpdateEnergy(input)
 end
 
-function Player:UpdateUse(deltaTime)
-
+function Player:EndUse(deltaTime)
+    if not self:GetIsUsing() then
+        return
+    end        
+    
     // Pull out weapon again if we haven't built for a bit
-    if self:GetWeaponHolstered() and self:isa("Marine") and ((Shared.GetTime() - self.timeOfLastUse) > (Structure.kUseInterval + .2)) then    
-        self:Draw()        
-    end 
+    if self:GetWeaponHolstered() and self:isa("Marine") and ((Shared.GetTime() - self.timeOfLastUse) > (Structure.kUseInterval + .1)) then    
+        self:Draw()
+        self:SetIsUsing(false)
+    elseif self:isa("Alien") then
+        self:SetIsUsing(false)
+    end
 
     local viewModel = self:GetViewModelEntity()
     if viewModel then
@@ -1197,7 +1216,7 @@ function Player:UpdateUse(deltaTime)
     end
     
     self.updatedSinceUse = true
-        
+    
 end
 
 // Make sure we can't move faster than our max speed (esp. when holding
@@ -1345,12 +1364,9 @@ function Player:UpdateMovePhysics(input)
         velocity.z = friction.z + velocity.z
     end    
     
-    // Don't apply gravity if we're on a ladder or standing still on the ground so we're not sliding down ramps
-    if ((not self:GetIsOnLadder()) and (not (self:GetIsOnGround() and self:GetVelocity():GetLengthXZ() < Player.kMinVelocityForGravity) and self.gravityEnabled)) then
-    
+    if self.gravityEnabled and not self:GetIsOnLadder() and not self:GetIsOnGround() then
         // Update velocity with gravity after we update our position (it accounts for gravity and varying frame rates)
         velocity.y = velocity.y + self:GetGravityForce(input) * input.time
-        
     end
     
     // Add additional velocity according to specials
@@ -1388,11 +1404,19 @@ end
 function Player:OnProcessMove(input)
 
     PROFILE("Player:OnProcessMove")
-    
+
     SetRunningProcessMove(self)
-  
+    
+    LiveScriptActor.OnProcessMove(self, input)
+    
     // Only update player movement on server or for local player
     if (self:GetIsAlive() and (Server or (Client.GetLocalPlayer() == self))) then
+        
+        ASSERT(self.controller ~= nil)
+
+        // Force an update to whether or not we're on the ground in case something
+        // has moved out from underneath us.
+        self.onGroundNeedsUpdate = true
     
         local runningPrediction = Shared.GetIsRunningPrediction()
       
@@ -1458,8 +1482,8 @@ function Player:OnProcessMove(input)
         // Because we aren't predicting the use operation, we shouldn't predict
         // the end of the use operation (or else with lag we can get rogue weapon
         // drawing while holding down use)
-        self:UpdateUse(input.time)
-    end
+        self:EndUse(input.time)
+    end        
     
     SetRunningProcessMove(nil)
     
@@ -2232,6 +2256,9 @@ function Player:CanDrawWeapon()
 end
 
 function Player:HandleAttacks(input)
+    if (self:GetIsUsing()) then
+        return
+    end
 
     if (bit.band(input.commands, Move.PrimaryAttack) ~= 0) then
     
@@ -2299,13 +2326,13 @@ end
 function Player:HandleButtons(input)
 
     PROFILE("Player:HandleButtons")
+
+    if (bit.band(input.commands, Move.Use) ~= 0) then
+        self:Use(input.time)    
+    end
     
     if not Shared.GetIsRunningPrediction() then
     
-        if (bit.band(input.commands, Move.Use) ~= 0) then
-            self:Use()
-        end
-           
         // Player is bringing up the buy menu (don't toggle it too quickly)
         if (bit.band(input.commands, Move.Buy) ~= 0 and Shared.GetTime() > (self.timeLastMenu + .3)) then
         
@@ -2642,6 +2669,14 @@ end
 // Overwrite how players interact with doors
 function Player:OnOverrideDoorInteraction(inEntity)
     return true, 4
+end
+
+function Player:SetIsUsing (isUsing)
+  self.isUsing = isUsing
+end
+
+function Player:GetIsUsing ()
+  return self.isUsing
 end
 
 Shared.LinkClassToMap("Player", Player.kMapName, networkVars )

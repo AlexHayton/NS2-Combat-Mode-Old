@@ -766,14 +766,14 @@ function EffectManager:InternalTriggerAnimation(effectTable, triggeringParams, t
                     triggeringEntity = parent
                 end        
                 
-                // Get view model entity form our parent - assumes this is being called
-                if triggeringEntity and triggeringEntity.SetViewAnimation then
+                // Get view model entity form our parent. This works on the server or the client if
+                // the triggeringEntity is the local player's entity (as only the local player has a
+                // view model on the client.
+                if triggeringEntity and triggeringEntity.SetViewAnimation and (Server or Client.GetLocalPlayer() == triggeringEntity) then
                     
                     triggeringEntity:SetViewAnimation(animationName, not force, ConditionalValue(blend ~= 0, blend, nil), speed)
                     success = true
 
-                else
-                    Print("EffectManager:InternalTriggerAnimation(): Tried to play view model animation \"%s\" but entity %s isn't a player or a weapon.%s", animationName, SafeClassName(triggeringEntity), self:GetQueuedText())
                 end
 
             elseif effectTable[kOverlayAnimationType] then

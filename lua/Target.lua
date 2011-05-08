@@ -77,7 +77,7 @@ if (Server) then
     
         self.detectedPlayer = false
         
-        self.alive = true
+        self:SetIsAlive(true)
         
         self.health = self.initialHealth
         
@@ -93,14 +93,14 @@ if (Server) then
             
         self:SetNextThink(4)
         
-        self.alive = false
+        self:SetIsAlive(false)
 
     end
             
     // Create new target here
     function Target:OnThink()
     
-        if self.alive then
+        if self:GetIsAlive() then
         
             if not self.detectedPlayer then
             

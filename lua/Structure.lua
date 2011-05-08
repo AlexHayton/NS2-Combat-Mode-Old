@@ -34,9 +34,6 @@ Structure.kAnimDeploy = "deploy"
 Structure.kAnimPowerDown = "power_down"
 Structure.kAnimPowerUp = "power_up"
 
-// At full health, get half the price back
-Structure.kRecyclePaybackScalar = .5
-
 Structure.kRandomDamageEffectNode = "fxnode_damage"     // Looks for 1-5 to find damage points
 
 local networkVars =
@@ -46,12 +43,11 @@ local networkVars =
 
     // 0 to 1 scalar of progress
     researchProgress        = "float",
-        
-    // Time we've spent building
-    buildTime               = "float",
     
-    // 0-1 scalar representing build completion time
-    buildFraction           = "float",
+    // 0-1 scalar representing build completion time. Since we use this to blend
+    // animations, it must be interpolated for the animations to appear smooth
+    // on the client.
+    buildFraction           = "interpolated float",
     
     // true if structure finished building
     constructionComplete    = "boolean",
@@ -99,7 +95,7 @@ function Structure:SetTechId(techId)
 end
 
 function Structure:GetIsActive()
-    return self:GetIsPowered() or not self:GetRequiresPower()
+    return self:GetIsAlive() and (self:GetIsPowered() or not self:GetRequiresPower())
 end
 
 function Structure:GetResearchingId()
@@ -234,9 +230,7 @@ function Structure:OnUpdate(deltaTime)
     LiveScriptActor.OnUpdate(self, deltaTime)
 
     // Pose parameters calculated on server from current order
-    if not Shared.GetIsRunningPrediction() then
-        self:UpdatePoseParameters(deltaTime)
-    end
+    self:UpdatePoseParameters(deltaTime)
     
 end
 

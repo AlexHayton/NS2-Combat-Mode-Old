@@ -16,7 +16,7 @@ function Commander:HandleCommanderHotkeys(input)
         
             for index, hotkey in ipairs(kGridHotkeys) do
             
-                if (input.hotkey == hotkey) and self.menuTechButtonsAllowed[index] then
+                if (input.hotkey == hotkey) and self.menuTechButtonsAllowed and self.menuTechButtonsAllowed[index] then
                 
                     // Check if the last hotkey was released.
                     if hotkey ~= nil and self.lastHotkeyIndex ~= index then

@@ -60,6 +60,14 @@ function Fade:OnInit()
 
 end
 
+function Fade:GetBaseArmor()
+    return Fade.kArmor
+end
+
+function Fade:GetArmorFullyUpgradedAmount()
+    return kFadeArmorFullyUpgradedAmount
+end
+
 function Fade:GetMaxViewOffsetHeight()
     return Fade.kViewOffsetHeight
 end

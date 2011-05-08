@@ -18,11 +18,16 @@ Script.Load("lua/MarineTeam.lua")
 Script.Load("lua/AlienTeam.lua")
 Script.Load("lua/TeamJoin.lua")
 Script.Load("lua/Bot.lua")
+Script.Load("lua/VoteManager.lua")
 
 Script.Load("lua/ConsoleCommands_Server.lua")
 Script.Load("lua/NetworkMessages_Server.lua")
 
 Script.Load("lua/dkjson.lua")
+
+Script.Load("lua/DbgTracer_Server.lua") 
+Server.dbgTracer = DbgTracer()
+Server.dbgTracer:Init()
 
 Server.readyRoomSpawnList = {}
 Server.playerSpawnList = {}
@@ -37,14 +42,31 @@ Server.mapLoadLiveEntityValues = {}
 // on and rebuilt on map reset.
 Server.mapLiveEntities = {}
 
+// Map entities are stored here in order of their priority so they are loaded
+// in the correct order (Structure assumes that Gamerules exists upon loading for example).
+Server.mapPostLoadEntities = {}
+
 /**
- * Called as the map is being loaded to create the entities.
+ * Map entities with a higher priority are loaded first.
  */
-function OnMapLoadEntity(mapName, groupName, values)
+local kMapEntityLoadPriorities = { }
+kMapEntityLoadPriorities[NS2Gamerules.kMapName] = 1
+local function GetMapEntityLoadPriority(mapName)
+
+    local priority = 0
+    
+    if kMapEntityLoadPriorities[mapName] then
+        priority = kMapEntityLoadPriorities[mapName]
+    end
+    
+    return priority
+
+end
+
+local function LoadMapEntity(mapName, groupName, values)
 
     // Skip the classes that are not true entities and are handled separately
     // on the client.
-
     if ( mapName ~= "prop_static"
         and mapName ~= "light_point"
         and mapName ~= "light_spot"
@@ -139,6 +161,19 @@ function OnMapLoadEntity(mapName, groupName, values)
         Shared.PrecacheCinematic(values.cinematicName)
 
     end
+
+end
+
+/**
+ * Called as the map is being loaded to create the entities.
+ */
+function OnMapLoadEntity(mapName, groupName, values)
+
+    local priority = GetMapEntityLoadPriority(mapName)
+    if Server.mapPostLoadEntities[priority] == nil then
+        Server.mapPostLoadEntities[priority] = { }
+    end
+    table.insert(Server.mapPostLoadEntities[priority], { MapName = mapName, GroupName = groupName, Values = values })
 
 end
 
@@ -269,6 +304,20 @@ end
  */
 function OnMapPostLoad()
 
+    // Higher priority entities are loaded first.
+    local highestPriority = 0
+    for k, v in pairs(kMapEntityLoadPriorities) do
+        if v > highestPriority then highestPriority = v end
+    end
+    for i = highestPriority, 0, -1 do
+        if Server.mapPostLoadEntities[i] then
+            for k, entityData in ipairs(Server.mapPostLoadEntities[i]) do
+                LoadMapEntity(entityData.MapName, entityData.GroupName, entityData.Values)
+            end
+        end
+    end
+    Server.mapPostLoadEntities = { }
+    
     // Build the data for pathing around the map.
     /*local dimensions = GenerateWaypoints()
     if dimensions then

@@ -57,13 +57,11 @@ end
 
 function Player:UpdateOrderVariables()
 
-    local order = self:GetCurrentOrder()
-    self.hasOrder = (order ~= nil)
-    
     self.orderType = kTechId.None
     
-    if self.hasOrder then
+    if self:GetHasOrder() then
     
+        local order = self:GetCurrentOrder()
         self.orderPosition = Vector(order:GetLocation())
         self.orderType = order:GetType()
 
@@ -116,13 +114,7 @@ function Player:AttackVisibleTarget()
                 name = nearestTarget:GetName()
             end
             
-            //Print("%s now attacking %s", self:GetName(), name)
-            local order = CreateOrder(kTechId.Attack, nearestTarget:GetId(), nearestTarget:GetEngagementPoint())
-                
-            // Converts default orders into something more appropriate for unit
-            self:OverrideOrder(order)
-                    
-            self:SetOrder(order, true, true)
+            self:GiveOrder(kTechId.Attack, nearestTarget:GetId(), nearestTarget:GetEngagementPoint(), nil, true, true)
             
             success = true
         end
@@ -163,12 +155,7 @@ function Player:ChooseRandomDestination(move)
         
         local destination = ents:GetEntityAtIndex(index)
         
-        local order = CreateOrder(kTechId.Move, 0, destination:GetEngagementPoint())
-                
-        // Converts default orders into something more appropriate for unit
-        self:OverrideOrder(order)
-                
-        self:SetOrder(order, true, true)
+        self:GiveOrder(kTechId.Move, 0, destination:GetEngagementPoint(), nil, true, true)
         
         return true
         

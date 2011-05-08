@@ -7,7 +7,11 @@
 // Creepy plant turret the Gorge can create.
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
+Script.Load("lua/InfestationMixin.lua")
+
 Hydra.kThinkInterval = .5
+
+PrepareClassForMixin(Hydra, InfestationMixin)
     
 function Hydra:GetSortedTargetList()
 
@@ -68,6 +72,16 @@ function Hydra:AcquireTarget()
     end
         
 end
+function Hydra:AcquireTargetUsingTargetCache()
+
+    self.target, self.staticTargets, self.staticTargetsVersion = GetGamerules():GetTargetCache():AcquirePlayerPreferenceTarget(
+            self,
+            Hydra.kRange, 
+            TargetCache.kAmtl, 
+            TargetCache.kAstl, 
+            self.staticTargets, 
+            self.staticTargetsVersion)
+end
 
 function Hydra:GetDistanceToTarget(target)
     return (target:GetEngagementPoint() - self:GetModelOrigin()):GetLength()           
@@ -75,7 +89,7 @@ end
 
 function Hydra:GetTargetValid(target, logError)
 
-    if(target ~= nil and (target:isa("Player") or target:isa("Structure")) and target.alive and target ~= self and target:GetCanTakeDamage()) then
+    if(target ~= nil and (target:isa("Player") or target:isa("Structure")) and HasMixin(target, "Live") and target:GetIsAlive() and target ~= self and target:GetCanTakeDamage()) then
     
         // Perform trace to make sure nothing is blocking our target. Trace from enemy to us
         local trace = Shared.TraceRay(target:GetModelOrigin(), self:GetModelOrigin(), PhysicsMask.AllButPCs, EntityFilterTwo(target, self))               
@@ -106,14 +120,24 @@ end
 
 function Hydra:CreateSpikeProjectile()
 
-    local direction = GetNormalizedVector(self.target:GetEngagementPoint() - self:GetModelOrigin())
-    local startPos = self:GetModelOrigin() + direction
+    local directionToTarget = self.target:GetEngagementPoint() - self:GetEyePos()
+    local targetDistanceSquared = directionToTarget:GetLengthSquared()
+    local theTimeToReachEnemy = targetDistanceSquared / (Hydra.kSpikeSpeed * Hydra.kSpikeSpeed)
+
+    local predictedEngagementPoint = self.target:GetEngagementPoint()
+    if self.target.GetVelocity then
+        local targetVelocity = self.target:GetVelocity()
+        predictedEngagementPoint = self.target:GetEngagementPoint() + ((targetVelocity:GetLength() * Hydra.kTargetVelocityFactor * theTimeToReachEnemy) * GetNormalizedVector(targetVelocity))
+    end
+    
+    local direction = GetNormalizedVector(predictedEngagementPoint - self:GetEyePos())
+    local startPos = self:GetEyePos() + direction
     
     // Create it outside of the hydra a bit
     local spike = CreateEntity(HydraSpike.kMapName, startPos, self:GetTeamNumber())
     SetAnglesFromVector(spike, direction)
     
-    local startVelocity = direction * 25
+    local startVelocity = direction * Hydra.kSpikeSpeed
     spike:SetVelocity(startVelocity)
     
     spike:SetGravityEnabled(false)
@@ -128,7 +152,7 @@ end
 
 function Hydra:GetIsEnemyNearby()
 
-    local enemyPlayers = GetGamerules():GetPlayers( GetEnemyTeamNumber(self:GetTeamNumber()) )
+    local enemyPlayers = GetEntitiesForTeam("Player", GetEnemyTeamNumber(self:GetTeamNumber()))
     
     for index, player in ipairs(enemyPlayers) do                
     
@@ -155,8 +179,12 @@ function Hydra:OnThink()
     
     if self:GetIsBuilt() and self:GetIsAlive() then    
     
-        self:AcquireTarget()
-    
+        if GetGamerules():GetTargetCache():IsEnabled() then
+            self:AcquireTargetUsingTargetCache()
+        else
+            self:AcquireTarget()
+        end
+
         if self.target then
         
             if(self.timeOfNextFire == nil or (Shared.GetTime() > self.timeOfNextFire)) then
@@ -192,13 +220,16 @@ function Hydra:OnConstructionComplete()
 
     Structure.OnConstructionComplete(self)
     
+    self:SpawnInfestation()
+    
     // Start scanning for targets once built
     self:SetNextThink(Hydra.kThinkInterval)
         
 end
 
 function Hydra:OnInit()
-
+    InitMixin(self, InfestationMixin)
+    
     Structure.OnInit(self)
    
     self:SetNextThink(Hydra.kThinkInterval)
