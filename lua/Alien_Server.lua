@@ -119,9 +119,7 @@ function Alien:OnInit()
 end
 
 // Increase armor absorption the depending on our defensive upgrade level
-function Alien:GetArmorAbsorbPercentage(damageType)
-
-    local baseArmorAbsorption = Player.GetArmorAbsorbPercentage(self, damageType)
+function Alien:GetArmorAbsorbPercentageOverride(damageType, baseArmorAbsorption)
     
     local bonusArmorAbsorption = 1    
     if(GetTechSupported(self, kTechId.AlienArmor3Tech, true)) then

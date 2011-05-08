@@ -59,7 +59,7 @@ if (Server) then
         
         local centerOrigin = self:GetOrigin()
         
-        local infestations = GetGamerules():GetEntities("Infestation", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), Grenade.kDamageRadius/2)
+        local infestations = GetEntitiesForTeamWithinRange("Infestation", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), Grenade.kDamageRadius / 2)
         
         for index, target in ipairs(infestations) do
         
@@ -83,7 +83,7 @@ if (Server) then
     function Grenade:Detonate(targetHit)
     
         // Do damage to targets
-        local hitEntities = GetGamerules():GetEntities("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), Grenade.kDamageRadius)
+        local hitEntities = GetEntitiesForTeamWithinRange("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), Grenade.kDamageRadius)
         
         // Remove grenade and add firing player
         table.removevalue(hitEntities, self)

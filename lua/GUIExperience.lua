@@ -63,7 +63,7 @@ function GUIExperience:Initialize()
 end
 
 function GUIExperience:CreateExperienceBar()
-    self.experienceBarBackground = GUI.CreateGraphicsItem()
+    self.experienceBarBackground = GUIManager.CreateGraphicsItem()
     self.experienceBarBackground:SetSize(Vector(GUIExperience.kExperienceBackgroundWidth, GUIExperience.kExperienceBackgroundMinimisedHeight, 0))
     self.experienceBarBackground:SetAnchor(GUIItem.Center, GUIItem.Bottom)
     self.experienceBarBackground:SetPosition(GUIExperience.kExperienceBackgroundOffset)
@@ -72,7 +72,7 @@ function GUIExperience:CreateExperienceBar()
     self.experienceBarBackground:SetTexturePixelCoordinates(GUIExperience.kExperienceBackgroundTextureX1, GUIExperience.kExperienceBackgroundTextureY1, GUIExperience.kExperienceBackgroundTextureX2, GUIExperience.kExperienceBackgroundTextureY2)
     self.experienceBarBackground:SetIsVisible(false)
     
-    self.experienceBar = GUI.CreateGraphicsItem()
+    self.experienceBar = GUIManager.CreateGraphicsItem()
     self.experienceBar:SetSize(Vector(GUIExperience.kExperienceBarWidth, GUIExperience.kExperienceBarHeight, 0))
     self.experienceBar:SetAnchor(GUIItem.Left, GUIItem.Top)
     self.experienceBar:SetPosition(GUIExperience.kExperienceBarOffset)
@@ -81,13 +81,13 @@ function GUIExperience:CreateExperienceBar()
     self.experienceBar:SetIsVisible(false)
     self.experienceBarBackground:AddChild(self.experienceBar)
     
-    self.experienceText = GUI.CreateTextItem()
+    self.experienceText = GUIManager.CreateTextItem()
     self.experienceText:SetFontSize(GUIExperience.kExperienceTextFontSize)
     self.experienceText:SetFontName(GUIExperience.kTextFontName)
     self.experienceText:SetFontIsBold(false)
     self.experienceText:SetAnchor(GUIItem.Center, GUIItem.Top)
-    self.experienceText:SetTextAlignmentX(GUITextItem.Align_Center)
-    self.experienceText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.experienceText:SetTextAlignmentX(GUIItem.Align_Center)
+    self.experienceText:SetTextAlignmentY(GUIItem.Align_Center)
     self.experienceText:SetPosition(GUIExperience.kExperienceTextOffset)
     self.experienceText:SetIsVisible(false)
     self.experienceBarBackground:AddChild(self.experienceText)
@@ -221,7 +221,7 @@ end
 function GUIExperience:Uninitialize()
 
 	if self.experienceBar then
-        GUI.DestroyItem(self.experienceBarBackground)
+        GUIManager.DestroyItem(self.experienceBarBackground)
         self.experienceBar = nil
         self.experienceBarText = nil
         self.experienceBarBackground = nil

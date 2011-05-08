@@ -112,7 +112,7 @@ function SpitSpray:HealEntities(player)
     
     local success = false
     
-    local ents = GetEntitiesIsaInRadius("LiveScriptActor", -1, self:GetHealOrigin(player), SpitSpray.kHealRadius, false, true)
+    local ents = GetEntitiesWithinRangeAreVisible("LiveScriptActor", self:GetHealOrigin(player), SpitSpray.kHealRadius, true)
     
     for index, targetEntity in ipairs(ents) do
 

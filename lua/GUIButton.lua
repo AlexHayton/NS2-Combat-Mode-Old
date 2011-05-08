@@ -26,16 +26,16 @@ GUIButton.kTooltipFontSize = 16
 
 function GUIButton:Initialize(settingsTable)
     
-    self.button = GUI.CreateGraphicsItem()
+    self.button = GUIManager:CreateGraphicItem()
     self.button:SetSize(Vector(settingsTable.Width, settingsTable.Height, 0))
     self.button:SetPosition(Vector(settingsTable.X, settingsTable.Y, 0))
     self.button:SetTexture(settingsTable.TextureName)
     
-    self.tooltip = GUI.CreateTextItem()
+    self.tooltip = GUIManager:CreateTextItem()
     self.tooltip:SetFontSize(GUIButton.kTooltipFontSize)
     self.tooltip:SetAnchor(GUIItem.Left, GUIItem.Top)
-    self.tooltip:SetTextAlignmentX(GUITextItem.Align_Min)
-    self.tooltip:SetTextAlignmentY(GUITextItem.Align_Max)
+    self.tooltip:SetTextAlignmentX(GUIItem.Align_Min)
+    self.tooltip:SetTextAlignmentY(GUIItem.Align_Max)
     self.tooltip:SetIsVisible(false)
     self.button:AddChild(self.tooltip)
     

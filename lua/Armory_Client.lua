@@ -206,8 +206,7 @@ function Armory_Debug()
     
     function isaArmory(entity) return entity:isa("Armory") end
     
-    local armories = GetEntitiesIsa("Armory", -1)
-    for index, armory in pairs(armories) do
+    for index, armory in ientitylist(Shared.GetEntitiesWithClassname("Armory")) do
     
         local startPoint = armory:GetOrigin()
         

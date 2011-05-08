@@ -158,13 +158,7 @@ function InfestationAbility:GetPositionForInfestation(player)
         ASSERT(ValidateValue(coords.yAxis))
         ASSERT(ValidateValue(coords.zAxis))
 
-        local infestations = {}
-        
-        if Server then
-            infestations = GetGamerules():GetEntities("Infestation", player:GetTeamNumber(), coords.origin, 1)
-        else
-            infestations = GetEntitiesIsaInRadius("Infestation", player:GetTeamNumber(), coords.origin, 1)
-        end
+        local infestations = GetEntitiesForTeamWithinRange("Infestation", player:GetTeamNumber(), coords.origin, 1)
         
         if table.count(infestations) >= 3 then
             validPosition = false

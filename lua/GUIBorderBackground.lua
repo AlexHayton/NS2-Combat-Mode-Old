@@ -18,7 +18,7 @@ function GUIBorderBackground:Initialize(settingsTable)
     self.width = settingsTable.Width
     self.height = settingsTable.Height
     
-    self.background = GUI.CreateGraphicsItem()
+    self.background = GUIManager:CreateGraphicItem()
     self.background:SetSize(Vector(self.width, self.height, 0))
     self.background:SetPosition(Vector(settingsTable.X, settingsTable.Y, 0))
     // The background is an invisible container only.
@@ -32,7 +32,7 @@ function GUIBorderBackground:Initialize(settingsTable)
     local textureName = settingsTable.TextureName
     
     // Corner parts.
-    self.topLeftBackground = GUI.CreateGraphicsItem()
+    self.topLeftBackground = GUIManager:CreateGraphicItem()
     if textureName and string.len(textureName) > 0 then
         self.topLeftBackground:SetTexture(textureName)
     else
@@ -42,7 +42,7 @@ function GUIBorderBackground:Initialize(settingsTable)
     self.background:AddChild(self.topLeftBackground)
     table.insert(self.parts, self.topLeftBackground)
     
-    self.topRightBackground = GUI.CreateGraphicsItem()
+    self.topRightBackground = GUIManager:CreateGraphicItem()
     if textureName and string.len(textureName) > 0 then
         self.topRightBackground:SetTexture(textureName)
     else
@@ -52,7 +52,7 @@ function GUIBorderBackground:Initialize(settingsTable)
     self.background:AddChild(self.topRightBackground)
     table.insert(self.parts, self.topRightBackground)
     
-    self.bottomLeftBackground = GUI.CreateGraphicsItem()
+    self.bottomLeftBackground = GUIManager:CreateGraphicItem()
     if textureName and string.len(textureName) > 0 then
         self.bottomLeftBackground:SetTexture(textureName)
     else
@@ -62,7 +62,7 @@ function GUIBorderBackground:Initialize(settingsTable)
     self.background:AddChild(self.bottomLeftBackground)
     table.insert(self.parts, self.bottomLeftBackground)
     
-    self.bottomRightBackground = GUI.CreateGraphicsItem()
+    self.bottomRightBackground = GUIManager:CreateGraphicItem()
     if textureName and string.len(textureName) > 0 then
         self.bottomRightBackground:SetTexture(textureName)
     else
@@ -73,7 +73,7 @@ function GUIBorderBackground:Initialize(settingsTable)
     table.insert(self.parts, self.bottomRightBackground)
     
     // Scaled middle parts.
-    self.topMiddleBackground = GUI.CreateGraphicsItem()
+    self.topMiddleBackground = GUIManager:CreateGraphicItem()
     if textureName and string.len(textureName) > 0 then
         self.topMiddleBackground:SetTexture(textureName)
     else
@@ -83,7 +83,7 @@ function GUIBorderBackground:Initialize(settingsTable)
     self.background:AddChild(self.topMiddleBackground)
     table.insert(self.parts, self.topMiddleBackground)
     
-    self.bottomMiddleBackground = GUI.CreateGraphicsItem()
+    self.bottomMiddleBackground = GUIManager:CreateGraphicItem()
     if textureName and string.len(textureName) > 0 then
         self.bottomMiddleBackground:SetTexture(textureName)
     else
@@ -93,7 +93,7 @@ function GUIBorderBackground:Initialize(settingsTable)
     self.background:AddChild(self.bottomMiddleBackground)
     table.insert(self.parts, self.bottomMiddleBackground)
     
-    self.leftCenterBackground = GUI.CreateGraphicsItem()
+    self.leftCenterBackground = GUIManager:CreateGraphicItem()
     if textureName and string.len(textureName) > 0 then
         self.leftCenterBackground:SetTexture(textureName)
     else
@@ -103,7 +103,7 @@ function GUIBorderBackground:Initialize(settingsTable)
     self.background:AddChild(self.leftCenterBackground)
     table.insert(self.parts, self.leftCenterBackground)
     
-    self.rightCenterBackground = GUI.CreateGraphicsItem()
+    self.rightCenterBackground = GUIManager:CreateGraphicItem()
     if textureName and string.len(textureName) > 0 then
         self.rightCenterBackground:SetTexture(textureName)
     else
@@ -114,7 +114,7 @@ function GUIBorderBackground:Initialize(settingsTable)
     table.insert(self.parts, self.rightCenterBackground)
     
     // Middle part.
-    self.middleBackground = GUI.CreateGraphicsItem()
+    self.middleBackground = GUIManager:CreateGraphicItem()
     if textureName and string.len(textureName) > 0 then
         self.middleBackground:SetTexture(textureName)
     else

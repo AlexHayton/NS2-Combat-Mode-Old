@@ -53,11 +53,7 @@ end
 function CreateServerUI_GetMapNameIndex()
 
     // Get saved map name and return index
-    // local mapName = Client.GetOptionString( kMapNameKey, "" )
-	
-	// Combat mode - override the default here.
-	Client.SetOptionString( kMapNameKey, "ns2_junction_combat.level" )
-	local mapName = "ns2_junction_combat.level"
+    local mapName = Client.GetOptionString( kMapNameKey, "" )
     
     if (mapName ~= "") then
         

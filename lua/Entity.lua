@@ -6,14 +6,6 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-/**
- * Iterator over entities in the world of a specific class. This is used
- * similarly to the built-in Lua ipairs function.
- */
-function ientities(className)
-    return Shared.FindEntityWithClassname, className, nil
-end
-
 function EntityToString(entity)
 
     if (entity == nil) then
@@ -28,247 +20,195 @@ function EntityToString(entity)
     
 end
 
-// Pass team number or -1 or nil to ignore team number.
-// Don't call often, it's relatively slow. Compute the results 
-// once per frame and store them if needed.
-function GetEntitiesIsa(isaName, teamNumber, silent)
-
-    PROFILE("GetEntitiesIsa")
-    
-    //if not silent then
-    //    Print("GetEntitiesIsa(%s) - %.2f", isaName, Shared.GetTime())
-    //end
-    
-    local entities = {}
-
-    local startEntity = nil
-    local currentEntity = nil
-    
-    repeat
-        
-        currentEntity = Shared.FindNextEntity(startEntity)
-        if(currentEntity and currentEntity:isa(isaName)) then
-            if(teamNumber == nil or teamNumber == -1) or (currentEntity:isa("ScriptActor") and (teamNumber == currentEntity:GetTeamNumber())) then
-                table.insert(entities, currentEntity)
-            end
-        end
-        
-        startEntity = currentEntity
-        
-    until currentEntity == nil
-
-    return entities
-    
-end
-
-function GetEntitiesInViewFunctor(player, functor)
-
-    local entities = {}
-
-    local startEntity = nil
-    local currentEntity = nil
-    
-    repeat
-        
-        currentEntity = Shared.FindNextEntity(startEntity)
-        
-        if currentEntity and currentEntity:isa("ScriptActor") then
-        
-            if(functor(currentEntity)) then
-            
-                if(player:GetCanSeeEntity(currentEntity)) then
-                
-                    table.insert(entities, currentEntity)
-                    
-                end
-                
-            end
-            
-        end
-        
-        startEntity = currentEntity
-        
-    until currentEntity == nil
-
-    return entities
-    
-end
-
-function GetNearbyGameEntitiesInView(player, radius)
-
-    function teamEntityNearby(entity)
-    
-        if(entity:isa("ScriptActor")) then
-        
-            local dist = player:GetDistance(entity)
-            
-            if(dist < radius) then
-            
-                return true
-                
-            end
-            
-        end
-        
-        return false
-        
-    end
-    
-    return GetEntitiesInViewFunctor(player, teamEntityNearby)
-    
-end
-
-// Get entities of a class name, but use functor to determine if we should return them
-function GetEntitiesIsaFunctor(isaName, functor)
-
-    //Print("GetEntitiesIsaFunctor(%s) - %.2f", isaName, Shared.GetTime())
-
-    local entities = {}
-
-    local startEntity = nil
-    local currentEntity = nil
-    
-    repeat
-        
-        currentEntity = Shared.FindNextEntity(startEntity)
-        
-        if(currentEntity and currentEntity:isa(isaName)) then
-        
-            if(functor(currentEntity)) then
-                table.insert(entities, currentEntity)
-            end
-            
-        end
-        
-        startEntity = currentEntity
-        
-    until currentEntity == nil
-
-    return entities
-    
-end
-
 /**
- * Returns list of entities that are in the isaNames table of class names.
- * Pass -1 for teamNumber if you want to ignore.
+ * For use in Lua for statements to iterate over EntityList objects.
  */
-function GetEntitiesIsaMultiple(isaNames, teamNumber)
-
-    //Print("GetEntitiesIsaFunctor - %.2f", Shared.GetTime())
-
-    local entities = {}
-
-    local startEntity = nil
-    local currentEntity = nil
-    
-    repeat
-        
-        currentEntity = Shared.FindNextEntity(startEntity)
-        
-        if(currentEntity ~= nil) then
-        
-            for index, isaName in ipairs(isaNames) do
-                
-                if(teamNumber == nil or teamNumber == -1) or (currentEntity:isa("ScriptActor") and teamNumber == currentEntity:GetTeamNumber()) then
-                
-                    if(currentEntity:isa(isaName)) then
-                    
-                        table.insert(entities, currentEntity)  
-                  
-                        break
-                    
-                    end
-                    
-                end
-                
-            end
-            
+function ientitylist(entityList)
+    local function ientitylist_it(entityList, currentIndex)
+        if currentIndex >= entityList:GetSize() then
+            return nil
         end
-        
-        startEntity = currentEntity
-        
-    until currentEntity == nil
-
-    return entities
-
-end
-
-function GetEntitiesWithName(targetName)
-
-    local entities = {}
-    local startEntity = nil
-    local currentEntity = nil
-    
-    if(targetName ~= nil) then
-    
-        repeat
-            
-            currentEntity = Shared.FindNextEntity(startEntity)
-            if(currentEntity and (currentEntity.targetname == targetName)) then
-                table.insert(entities, currentEntity)
-            end
-            
-            startEntity = currentEntity
-            
-        until currentEntity == nil
-        
+        local currentEnt = entityList:GetEntityAtIndex(currentIndex)
+        currentIndex = currentIndex + 1
+        return currentIndex, currentEnt
     end
-    
-    return entities
-
+    return ientitylist_it, entityList, 0
 end
 
-function GetFirstEntityId(targetName)
+function GetEntitiesWithFilter(entityList, filterFunction)
 
-    local entityId = -1
-    local entities = GetEntitiesWithName(targetName)
+    ASSERT(entityList ~= nil)
+    ASSERT(type(filterFunction) == "function")
     
-    if(table.maxn(entities) > 0) then
-        entityId = entities[1]:GetId()
-    end
+    local filteredEntities = { }
     
-    return entityId
-    
-end
-
-/** 
- * Returns entities that are derived from specified class-name, on specified team and within 
- * radius of origin. Pass -1 for team to not filter on team. Pass checkXZOnly as true to 
- * check XZ (top-down) distance.
- */
-function GetEntitiesIsaInRadius(className, teamNumber, origin, radius, checkXZOnly, visibleOnly, log)
-
-    //Print("GetEntitiesIsaInRadius(%s) - %.2f", className, Shared.GetTime())
-
-    local entities = GetEntitiesIsa(className, teamNumber)
-    
-    local returnEntities = {}
-    
-    for index, current in ipairs(entities) do
-        
-        local currentOrigin = current:GetOrigin()
-        local diff = currentOrigin - origin
-        local distance = ConditionalValue(checkXZOnly, diff:GetLengthXZ(), diff:GetLength())
-        
-        if(distance <= radius) then
-        
-            if not visibleOnly or current:GetIsVisible() then
-            
-                if log then
-                    Print("GetEntitiesIsaInRadius(%s, %d, %s, %.2f, %s, %s) - Inserting %s (visible: %s)", 
-                        className, teamNumber, origin:tostring(), radius, tostring(checkXZOnly), tostring(visibleOnly), current:GetClassName(), tostring(current:GetIsVisible()) )
-                end
-                
-                table.insert(returnEntities, current)
-                
-            end
-            
+    for index, entity in ientitylist(entityList) do
+        if filterFunction(entity) then
+            table.insert(filteredEntities, entity)
         end
-        
     end
     
-    return returnEntities
-        
+    return filteredEntities
+
+end
+
+function EntityListToTable(entityList)
+
+    return GetEntitiesWithFilter(entityList, function(entity) return true end)
+
+end
+
+function GetEntitiesForTeam(className, teamNumber)
+
+    ASSERT(type(className) == "string")
+    ASSERT(type(teamNumber) == "number")
+    
+    local function teamFilterFunction(entity)
+        return entity:GetTeamNumber() == teamNumber
+    end
+    return GetEntitiesWithFilter(Shared.GetEntitiesWithClassname(className), teamFilterFunction)
+
+end
+
+function GetEntitiesForTeamWithinRange(className, teamNumber, origin, range)
+
+    ASSERT(type(className) == "string")
+    ASSERT(type(teamNumber) == "number")
+    ASSERT(origin ~= nil)
+    ASSERT(type(range) == "number")
+    
+    local function teamInRangeFilterFunction(entity)
+        local inRange = (entity:GetOrigin() - origin):GetLengthSquared() <= (range * range)
+        return entity:GetTeamNumber() == teamNumber and inRange
+    end
+    return GetEntitiesWithFilter(Shared.GetEntitiesWithClassname(className), teamInRangeFilterFunction)
+    
+end
+
+function GetEntitiesWithinRange(className, origin, range)
+
+    ASSERT(type(className) == "string")
+    ASSERT(origin ~= nil)
+    ASSERT(type(range) == "number")
+    
+    local function inRangeFilterFunction(entity)
+        local inRange = (entity:GetOrigin() - origin):GetLengthSquared() <= (range * range)
+        return inRange
+    end
+    return GetEntitiesWithFilter(Shared.GetEntitiesWithClassname(className), inRangeFilterFunction)
+    
+end
+
+function GetEntitiesForTeamWithinXZRange(className, teamNumber, origin, range)
+    
+    ASSERT(type(className) == "string")
+    ASSERT(type(teamNumber) == "number")
+    ASSERT(origin ~= nil)
+    ASSERT(type(range) == "number")
+    
+    local function inRangeXZFilterFunction(entity)
+        local inRange = (entity:GetOrigin() - origin):GetLengthSquaredXZ() <= (range * range)
+        return entity:GetTeamNumber() == teamNumber and inRange
+    end
+    return GetEntitiesWithFilter(Shared.GetEntitiesWithClassname(className), inRangeXZFilterFunction)
+    
+end
+
+function GetEntitiesForTeamWithinRangeAreVisible(className, teamNumber, origin, range, visibleState)
+
+    ASSERT(type(className) == "string")
+    ASSERT(type(teamNumber) == "number")
+    ASSERT(origin ~= nil)
+    ASSERT(type(range) == "number")
+    ASSERT(type(visibleState) == "boolean")
+    
+    local function teamInRangeVisibleStateFilterFunction(entity)
+        local inRange = (entity:GetOrigin() - origin):GetLengthSquared() <= (range * range)
+        return entity:GetTeamNumber() == teamNumber and inRange and entity:GetIsVisible() == visibleState
+    end
+    return GetEntitiesWithFilter(Shared.GetEntitiesWithClassname(className), teamInRangeVisibleStateFilterFunction)
+    
+end
+
+function GetEntitiesWithinRangeAreVisible(className, origin, range, visibleState)
+
+    ASSERT(type(className) == "string")
+    ASSERT(origin ~= nil)
+    ASSERT(type(range) == "number")
+    ASSERT(type(visibleState) == "boolean")
+    
+    local function teamInRangeVisibleStateFilterFunction(entity)
+        local inRange = (entity:GetOrigin() - origin):GetLengthSquared() <= (range * range)
+        return inRange and entity:GetIsVisible() == visibleState
+    end
+    return GetEntitiesWithFilter(Shared.GetEntitiesWithClassname(className), teamInRangeVisibleStateFilterFunction)
+    
+end
+
+function GetEntitiesWithinXZRangeAreVisible(className, origin, range, visibleState)
+
+    ASSERT(type(className) == "string")
+    ASSERT(origin ~= nil)
+    ASSERT(type(range) == "number")
+    ASSERT(type(visibleState) == "boolean")
+    
+    local function inRangeXZFilterFunction(entity)
+        local inRange = (entity:GetOrigin() - origin):GetLengthSquaredXZ() <= (range * range)
+        return inRange and entity:GetIsVisible()
+    end
+    return GetEntitiesWithFilter(Shared.GetEntitiesWithClassname(className), inRangeXZFilterFunction)
+    
+end
+
+function GetEntitiesWithinRangeInView(className, range, player)
+
+    ASSERT(type(className) == "string")
+    ASSERT(type(range) == "number")
+    ASSERT(player ~= nil)
+    
+    function withinViewFilter(entity)
+        local dist = player:GetDistance(entity)
+        return (dist <= range) and player:GetCanSeeEntity(entity)
+    end
+    
+    return GetEntitiesWithFilter(Shared.GetEntitiesWithClassname(className), withinViewFilter)
+    
+end
+
+function GetEntitiesMatchAnyTypesForTeam(typeList, teamNumber)
+
+    ASSERT(type(typeList) == "table")
+    ASSERT(type(teamNumber) == "number")
+    
+    local function teamFilter(entity)
+        return entity:GetTeamNumber() == teamNumber
+    end
+    
+    local allMatchingEntsList = { }
+    
+    for i, type in ipairs(typeList) do
+        local matchingEntsForType = GetEntitiesWithFilter(Shared.GetEntitiesWithClassname(type), teamFilter)
+        table.adduniquetable(matchingEntsForType, allMatchingEntsList)
+    end
+    
+    return allMatchingEntsList
+
+end
+
+function GetEntitiesMatchAnyTypes(typeList)
+
+    ASSERT(type(typeList) == "table")
+    
+    local allMatchingEntsList = { }
+    
+    for i, type in ipairs(typeList) do
+        for i, entity in ientitylist(Shared.GetEntitiesWithClassname(type)) do
+            table.insertunique(allMatchingEntsList, entity)
+        end
+    end
+    
+    return allMatchingEntsList
+
 end
 
 // Fades damage linearly from center point to radius (0 at far end of radius)
@@ -330,11 +270,9 @@ end
 function FindNearestEntityId(className, location)
 
     local entityId = -1
-    local shortestDistance = nil
+    local shortestDistance = nil   
     
-    local entities = GetEntitiesIsa(className)    
-    
-    for index, current in ipairs(entities) do
+    for index, current in ientitylist(Shared.GetEntitiesWithClassname(className)) do
 
         local distance = (current:GetOrigin() - location):GetLength()
         

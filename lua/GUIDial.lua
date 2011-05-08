@@ -21,7 +21,7 @@ function GUIDial:Initialize(settingsTable)
     self.percentage = 1
     
     // Background.
-    self.dialBackground = GUI.CreateGraphicsItem()
+    self.dialBackground = GUIManager:CreateGraphicItem()
     self.dialBackground:SetSize(Vector(settingsTable.BackgroundWidth, settingsTable.BackgroundHeight, 0))
     self.dialBackground:SetAnchor(settingsTable.BackgroundAnchorX, settingsTable.BackgroundAnchorY)
     self.dialBackground:SetPosition(Vector(0, -settingsTable.BackgroundHeight, 0) + settingsTable.BackgroundOffset)
@@ -34,7 +34,7 @@ function GUIDial:Initialize(settingsTable)
                                                    settingsTable.BackgroundTextureX2, settingsTable.BackgroundTextureY2)
     
     // Left side.
-    self.leftSide = GUI.CreateGraphicsItem()
+    self.leftSide = GUIManager:CreateGraphicItem()
     self.leftSide:SetUseStencil(true)
     self.leftSide:SetSize(Vector(settingsTable.BackgroundWidth / 2, settingsTable.BackgroundHeight, 0))
     self.leftSide:SetAnchor(GUIItem.Left, GUIItem.Bottom)
@@ -46,7 +46,7 @@ function GUIDial:Initialize(settingsTable)
     self.leftSide:SetTexturePixelCoordinates(settingsTable.ForegroundTextureX1, settingsTable.ForegroundTextureY1,
                                              x2, settingsTable.ForegroundTextureY2)
 
-    self.leftSideMask = GUI.CreateGraphicsItem()
+    self.leftSideMask = GUIManager:CreateGraphicItem()
     self.leftSideMask:SetIsStencil(true)
     self.leftSideMask:SetSize(Vector(settingsTable.BackgroundWidth / 2, settingsTable.BackgroundHeight + GUIDial.kMaskHeightBuffer, 0))
     self.leftSideMask:SetAnchor(GUIItem.Center, GUIItem.Middle)
@@ -58,7 +58,7 @@ function GUIDial:Initialize(settingsTable)
     self.dialBackground:AddChild(self.leftSideMask)
     
     // Right side.
-    self.rightSide = GUI.CreateGraphicsItem()
+    self.rightSide = GUIManager:CreateGraphicItem()
     self.rightSide:SetUseStencil(true)
     self.rightSide:SetSize(Vector(settingsTable.BackgroundWidth / 2, settingsTable.BackgroundHeight, 0))
     self.rightSide:SetAnchor(GUIItem.Right, GUIItem.Bottom)
@@ -70,7 +70,7 @@ function GUIDial:Initialize(settingsTable)
     self.rightSide:SetTexturePixelCoordinates(x1, settingsTable.ForegroundTextureY1,
                                               settingsTable.ForegroundTextureX2, settingsTable.ForegroundTextureY2)
 
-    self.rightSideMask = GUI.CreateGraphicsItem()
+    self.rightSideMask = GUIManager:CreateGraphicItem()
     self.rightSideMask:SetIsStencil(true)
     self.rightSideMask:SetSize(Vector(settingsTable.BackgroundWidth / 2, settingsTable.BackgroundHeight + GUIDial.kMaskHeightBuffer, 0))
     self.rightSideMask:SetAnchor(GUIItem.Center, GUIItem.Middle)

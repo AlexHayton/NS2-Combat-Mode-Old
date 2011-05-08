@@ -46,12 +46,12 @@ end
 
 function GUIMapAnnotations:AddAnnotation(text, worldOrigin)
     
-    local annotationItem = { Item = GUI.CreateTextItem(), Origin = Vector(worldOrigin) }
+    local annotationItem = { Item = GUIManager:CreateTextItem(), Origin = Vector(worldOrigin) }
     annotationItem.Item:SetLayer(kGUILayerDebugText)
     annotationItem.Item:SetFontSize(20)
     annotationItem.Item:SetAnchor(GUIItem.Left, GUIItem.Top)
-    annotationItem.Item:SetTextAlignmentX(GUITextItem.Align_Center)
-    annotationItem.Item:SetTextAlignmentY(GUITextItem.Align_Center)
+    annotationItem.Item:SetTextAlignmentX(GUIItem.Align_Center)
+    annotationItem.Item:SetTextAlignmentY(GUIItem.Align_Center)
     annotationItem.Item:SetColor(Color(1, 1, 1, 1))
     annotationItem.Item:SetText(text)
     annotationItem.Item:SetIsVisible(false)

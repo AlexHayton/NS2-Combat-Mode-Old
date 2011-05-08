@@ -132,7 +132,7 @@ function TriggerTracer(clientPlayer, startPoint, endPoint, velocity)
     else
     
         // Send tracer network message to nearby players, not including this one
-        for index, player in ipairs(GetGamerules():GetAllPlayers()) do
+        for index, player in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
         
             if player ~= clientPlayer and player:GetTeamNumber() ~= kTeamReadyRoom then
         

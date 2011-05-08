@@ -39,7 +39,7 @@ end
 
 function MarineCommander:OverrideInput(input)
 
-    Commander.OverrideInput(self, input)
+    input = Commander.OverrideInput(self, input)
     
     if self.selectSquad ~= nil and self.selectSquad >= 1 and self.selectSquad <= 5 then
     
@@ -50,6 +50,8 @@ function MarineCommander:OverrideInput(input)
         self.selectSquad = nil
         
     end    
+    
+    return input
     
 end
 

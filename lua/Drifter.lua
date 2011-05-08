@@ -9,6 +9,7 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/LiveScriptActor.lua")
+Script.Load("lua/DoorMixin.lua")
 
 class 'Drifter' (LiveScriptActor)
 
@@ -58,6 +59,8 @@ end
 
 function Drifter:OnInit()
 
+    InitMixin(self, DoorMixin)
+    
     self:SetModel(Drifter.kModelName)
     
     self:SetPhysicsType(Actor.PhysicsType.Kinematic)
@@ -101,10 +104,8 @@ function Drifter:GetDeathIconIndex()
     return kDeathMessageIcon.Drifter
 end
 
-function Drifter:SetOrder(order, clearExisting, insertFirst)
+function Drifter:OnOrderChanged()
 
-    LiveScriptActor.SetOrder(self, order, clearExisting, insertFirst)
-    
     self:SetNextThink(Drifter.kMoveThinkInterval)
     
     self:PlaySound(Drifter.kOrdered3DSoundName)
@@ -145,7 +146,7 @@ function Drifter:OverrideTechTreeAction(techNode, position, orientation, command
     
 end
 
-function Drifter:OverrideOrder(order)
+function Drifter:OnOverrideOrder(order)
     
     local orderTarget = nil
     
@@ -154,13 +155,13 @@ function Drifter:OverrideOrder(order)
     end
     
     // If target is enemy, attack it
-    if (order:GetType() == kTechId.Default) and orderTarget ~= nil and orderTarget:isa("LiveScriptActor") and GetEnemyTeamNumber(self:GetTeamNumber()) == orderTarget:GetTeamNumber() and orderTarget:GetIsAlive() then
+    if (order:GetType() == kTechId.Default) then
     
-        order:SetType(kTechId.Attack)
-        
-    else
-    
-        LiveScriptActor.OverrideOrder(self, order)
+        if orderTarget ~= nil and orderTarget:isa("LiveScriptActor") and GetEnemyTeamNumber(self:GetTeamNumber()) == orderTarget:GetTeamNumber() and orderTarget:GetIsAlive() then
+            order:SetType(kTechId.Attack)
+        else
+            order:SetType(kTechId.Move)
+        end
         
     end
     
@@ -171,7 +172,7 @@ function Drifter:ProcessJustSpawned()
     self.justSpawned = nil
     
     // Now look for nearby hive to see if it has a rally point for us
-    local ents = GetGamerules():GetEntities("Hive", self:GetTeamNumber(), self:GetOrigin(), 1)
+    local ents = GetEntitiesForTeamWithinRange("Hive", self:GetTeamNumber(), self:GetOrigin(), 1)
 
     if(table.maxn(ents) == 1) then
     
@@ -222,8 +223,7 @@ function Drifter:OnThink()
     
         local drifterMoveSpeed = GetDevScalar(Drifter.kMoveSpeed, 8)
         
-        local currentOrigin = Vector()
-        VectorCopy(self:GetOrigin(), currentOrigin)
+        local currentOrigin = Vector(self:GetOrigin())
         
         if(currentOrder:GetType() == kTechId.Move) then
 
@@ -431,7 +431,7 @@ function Drifter:PerformFlare()
     
     // Blind enemies them temporarily. Show effect for friendly players too, but very mild.
     local score = 0
-    for index, player in ipairs(GetGamerules():GetAllPlayers()) do
+    for index, player in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
     
         local scalar = 0
         local canSee = player:GetCanSeeEntity(self)
@@ -514,5 +514,8 @@ function Drifter:GetMeleeAttackInterval()
     return kDrifterAttackDelay
 end
 
+function Drifter:OnOverrideDoorInteraction(inEntity)
+    return true, 4
+end
 
 Shared.LinkClassToMap("Drifter", Drifter.kMapName, networkVars)

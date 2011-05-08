@@ -47,13 +47,7 @@ local networkVars =
 
 function GetArmory(entity)
 
-    local teamArmories = {}
-    
-    if Server then
-        teamArmories = GetGamerules():GetEntities("Armory", entity:GetTeamNumber(), entity:GetOrigin(), Armory.kResupplyUseRange)
-    else
-        teamArmories = GetEntitiesIsaInRadius("Armory", entity:GetTeamNumber(), entity:GetOrigin(), Armory.kResupplyUseRange)
-    end
+    local teamArmories = GetEntitiesForTeamWithinRange("Armory", entity:GetTeamNumber(), entity:GetOrigin(), Armory.kResupplyUseRange)
     
     if table.count(teamArmories) > 0 then
     

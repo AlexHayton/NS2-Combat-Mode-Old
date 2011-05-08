@@ -16,7 +16,7 @@ function GetAttachEntity(techId, position, snapRadius)
 
     if attachClass then
     
-        for index, currentEnt in ipairs( GetEntitiesIsaInRadius(attachClass, -1, position, ConditionalValue(snapRadius, snapRadius, .5)) ) do
+        for index, currentEnt in ipairs( GetEntitiesWithinRange(attachClass, position, ConditionalValue(snapRadius, snapRadius, .5)) ) do
         
             if not currentEnt:GetAttached() then
             
@@ -39,15 +39,14 @@ function GetBuildAttachRequirementsMet(techId, position, teamNumber, snapRadius)
     local legalBuild = true
     local attachEntity = nil
     
-    local legalPosition = Vector(0, 0, 0)
-    VectorCopy(position, legalPosition)
+    local legalPosition = Vector(position)
     
     // Make sure we're within range of something that's required (ie, an infantry portal near a command station)
     local attachRange = LookupTechData(techId, kStructureAttachRange, 0)
     local buildNearClass = LookupTechData(techId, kStructureBuildNearClass)
     if buildNearClass then
         
-        local ents = GetEntitiesIsaInRadius(buildNearClass, teamNumber, position, attachRange)
+        local ents = GetEntitiesForTeamWithinRange(buildNearClass, teamNumber, position, attachRange)
         legalBuild = (table.count(ents) > 0)
         
     end
@@ -174,7 +173,7 @@ function CheckBuildEntityRequirements(techId, position, player, ignoreEntity)
     if techNode and (techNode:GetIsBuild() or techNode:GetIsBuy()) and legalBuild then        
     
         local numFriendlyEntitiesInRadius = 0
-        local entities = GetEntitiesIsaInRadius("ScriptActor", player:GetTeamNumber(), position, kMaxEntityRadius, true)
+        local entities = GetEntitiesForTeamWithinXZRange("ScriptActor", player:GetTeamNumber(), position, kMaxEntityRadius)
         
         for index, entity in ipairs(entities) do
             
@@ -202,7 +201,7 @@ function CheckBuildEntityRequirements(techId, position, player, ignoreEntity)
         end
                 
         // Now check nearby entities to make sure we're not building on top of something that is used for another purpose (ie, armory blocking use of tech point)
-        for index, currentEnt in ipairs( GetEntitiesIsaInRadius( "ScriptActor", -1, position, 1.5) ) do
+        for index, currentEnt in ipairs( GetEntitiesWithinRange( "ScriptActor", position, 1.5) ) do
         
             local nearbyClassName = currentEnt:GetClassName()
             if GetIsAttachment(nearbyClassName) and (nearbyClassName ~= attachClass) then            
@@ -260,7 +259,7 @@ function GetTriggerEntity(position, teamNumber)
 
     local triggerEntity = nil
     local minDist = nil
-    local ents = GetEntitiesIsaInRadius("LiveScriptActor", teamNumber, position, .5)
+    local ents = GetEntitiesForTeamWithinRange("LiveScriptActor", teamNumber, position, .5)
     
     for index, ent in ipairs(ents) do
     
@@ -315,37 +314,10 @@ function CreateEntityForCommander(techId, position, commander)
         newEnt:SetOwner(commander)
     end
     
-    UpdateInfestationMask( {newEnt} )
+    UpdateInfestationMask(newEnt)
     
     return newEnt
     
-end
-
-function GetNearest(techId, position, commander)
-
-    local nearestEntity = nil
-    local nearestEntityDistance = nil
-    
-    local ents = GetEntitiesIsa("ScriptActor", commander:GetTeamNumber())
-    for index, ent in ipairs(ents) do
-    
-        if ent:GetTechId() == techId then
-        
-            local distance = (ent:GetOrigin() - position):GetLength()
-            
-            if nearestEntityDistance == nil or (distance < nearestEntityDistance) then
-            
-                nearestEntity = ent
-                nearestEntityDistance = distance
-                
-            end
-            
-        end
-        
-    end
-    
-    return nearestEntity
-
 end
 
 if Server then
@@ -391,9 +363,7 @@ end
 // Trace line to each target to make sure it's not blocked by a wall 
 function GetWallBetween(startPoint, endPoint, ignoreEntity)
 
-    local currentStart = Vector()
-    VectorCopy(startPoint, currentStart)
-    
+    local currentStart = Vector(startPoint)
     local filter = EntityFilterOne(ignoreEntity)
 
     // Don't trace too much 
@@ -410,7 +380,7 @@ function GetWallBetween(startPoint, endPoint, ignoreEntity)
             filter = EntityFilterTwo(ignoreEntity, trace.entity)
         end
         
-        VectorCopy(trace.endPoint, currentStart)
+        currentStart = trace.endPoint
         
     end
     
@@ -461,7 +431,7 @@ function GetEntsWithTechId(techIdTable)
 
     local ents = {}
     
-    for index, entity in ipairs(GetEntitiesIsa("ScriptActor")) do
+    for index, entity in ientitylist(Shared.GetEntitiesWithClassname("ScriptActor")) do
     
         if table.find(techIdTable, entity:GetTechId()) then
             table.insert(ents, entity)
@@ -481,8 +451,7 @@ function GetFreeAttachEntsForTechId(techId)
 
     if attachClass ~= nil then    
     
-        local ents = GetEntitiesIsa(attachClass)
-        for index, ent in ipairs(ents) do
+        for index, ent in ientitylist(Shared.GetEntitiesWithClassname(attachClass)) do
         
             if ent ~= nil and ent:GetAttached() == nil then
             
@@ -565,7 +534,7 @@ function GetCommanderPickTarget(player, pickVec, worldCoordsSpecified, forBuild)
             done = true
 
         // Only hit a target that's facing us (skip surfaces facing away from us)            
-        elseif(trace.normal:DotProduct(Vector(0, 1, 0)) < 0) then
+        elseif trace.normal.y < 0 then
         
             // Trace again from what we hit
             startPoint = trace.endPoint
@@ -610,8 +579,7 @@ function GetRandomSpaceForEntity(basePoint, minRadius, maxRadius, boxExtents, mi
         local offset = Vector( math.cos(randomRadians) * distance, .2, math.sin(randomRadians) * distance )
         local testLocation = basePoint + offset
         
-        local finalLocation = Vector()
-        VectorCopy(testLocation, finalLocation)
+        local finalLocation = Vector(testLocation)
         DropToFloor(finalLocation)
         
         //DebugLine(basePoint, finalLocation, .1, 1, 0, 0, 1)
@@ -660,7 +628,7 @@ function GetRandomSpaceForEntity(basePoint, minRadius, maxRadius, boxExtents, mi
                     else
                     
                         // Check visible entities only
-                        local ents = GetEntitiesIsaInRadius("ScriptActor", -1, finalLocation, minEntityDistance, true, true, false)
+                        local ents = GetEntitiesWithinXZRangeAreVisible("ScriptActor", finalLocation, minEntityDistance, true)
                         
                         if table.count(ents) == 0 then
                         
@@ -740,8 +708,7 @@ end
 
 function SpawnPlayerAtPoint(player, origin, angles)
 
-    local originOnFloor = Vector()
-    VectorCopy(origin, originOnFloor)
+    local originOnFloor = Vector(origin)
     originOnFloor.y = origin.y + .5
     
     //Print("Respawning player (%s) to angles: %.2f, %.2f, %.2f", player:GetClassName(), angles.yaw, angles.pitch, angles.roll)
@@ -794,8 +761,7 @@ function GetNearestTechPoint(origin, teamType, availableOnly)
     local nearestTechPoint = nil
     local nearestTechPointDistance = 0
 
-    local techPoints = GetEntitiesIsa("TechPoint", -1)
-    for index, techPoint in pairs(techPoints) do
+    for index, techPoint in ientitylist(Shared.GetEntitiesWithClassname("TechPoint")) do
     
         // Only use unoccupied tech points that are neutral or marked for use with our team
         local techPointTeamNumber = techPoint:GetTeamNumber()
@@ -843,7 +809,7 @@ function GetCanSeeEntity(seeingEntity, targetEntity)
         end
         
         local normViewVec = seeingEntity:GetViewAngles():GetCoords().zAxis       
-        local dotProduct = toEntity:DotProduct(normViewVec)
+        local dotProduct = Math.DotProduct(toEntity, normViewVec)
         local halfFov = math.rad(seeingEntity:GetFov()/2)
         local s = math.acos(dotProduct)
         if(s < halfFov) then
@@ -874,11 +840,7 @@ end
 
 function GetLocations()
 
-    if Server then
-        return Server.locationList
-    else        
-        return GetEntitiesIsa("Location")
-    end
+    return EntityListToTable(Shared.GetEntitiesWithClassname("Location"))
 
 end
 
@@ -1151,19 +1113,10 @@ end
 
 function GetIsPointOnInfestation(point)
 
-    // Use all infestation entities, regardless of team number
-    local infestations = {}
-    
-    if Server then
-        infestations = GetGamerules():GetEntities("Infestation")
-    else
-        infestations = GetEntitiesIsa("Infestation")
-    end
-
     local onInfestation = false
     
     // See if entity is on infestation
-    for infestationIndex, infestation in ipairs(infestations) do
+    for infestationIndex, infestation in ientitylist(Shared.GetEntitiesWithClassname("Infestation")) do
     
         if infestation:GetIsPointOnInfestation(point) then
         
@@ -1200,7 +1153,7 @@ function GetActivationTarget(teamNumber, position)
     local nearestTarget = nil
     local nearestDist = nil
     
-    local targets = GetGamerules():GetEntities("LiveScriptActor", teamNumber, position, 2)
+    local targets = GetEntitiesForTeamWithinRange("LiveScriptActor", teamNumber, position, 2)
     for index, target in ipairs(targets) do
     
         if target:GetIsVisible() and not target:isa("Infestation") then

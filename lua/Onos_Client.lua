@@ -14,9 +14,7 @@ function Onos:PlayFootstepSound(sendMessage)
     if not Shared.GetIsRunningPrediction() then
     
         // Get all nearby players and shake their screen
-        local players = GetEntitiesIsa("Player")
-        
-        for index, player in ipairs(players) do
+        for index, player in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
         
             if player:GetIsAlive() and not player:isa("Commander") then
             

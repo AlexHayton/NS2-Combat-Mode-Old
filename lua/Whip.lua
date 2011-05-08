@@ -10,6 +10,7 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Structure.lua")
+Script.Load("lua/DoorMixin.lua")
 
 class 'Whip' (Structure)
 
@@ -59,8 +60,12 @@ function Whip:OnCreate()
 end
 
 function Whip:OnInit()
+
+    InitMixin(self, DoorMixin)
+    
     Structure.OnInit(self)
     self:SetUpdates(true)
+    
 end
 
 // Used for targeting
@@ -101,7 +106,7 @@ function Whip:GetTechButtons(techId)
         end
        
     elseif(techId == kTechId.UpgradesMenu) then 
-        techButtons = {kTechId.BloodThirstTech, kTechId.PiercingTech, kTechId.Melee1Tech, kTechId.Melee2Tech, kTechId.Melee3Tech, kTechId.None, kTechId.None}
+        techButtons = {kTechId.None, kTechId.None, kTechId.Melee1Tech, kTechId.Melee2Tech, kTechId.Melee3Tech, kTechId.None, kTechId.None}
         techButtons[kAlienBackButtonIndex] = kTechId.RootMenu
     end
     
@@ -137,6 +142,14 @@ end
 
 function Whip:GetIsRooted()
     return self.mode == Whip.kMode.Rooted
+end
+
+function Whip:OnOverrideDoorInteraction(inEntity)
+    // Do not open doors when rooted.
+    if (self:GetIsRooted()) then
+        return false, 0
+    end
+    return true, 4
 end
 
 Shared.LinkClassToMap("Whip", Whip.kMapName, networkVars)

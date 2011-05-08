@@ -80,40 +80,41 @@ end
 function UpdateInfestation(teamNumber)
 
     // Get all infestation nodes
-    local infestations = GetGamerules():GetEntities("Infestation", teamNumber)
+    local infestations = GetEntitiesForTeam("Infestation", teamNumber)
     
     UpdateInfestationConnections(infestations)
     
 end
 
-// Clear OnInfestation game effect mask on all entities, unless they are standing on infestation
-function UpdateInfestationMask(liveScriptActorList)
+function UpdateInfestationMasks(entityList)
 
-    // Use all infestation entities, regardless of team number
-    local infestations = GetGamerules():GetEntities("Infestation")
-
-    for entIndex, entity in ipairs(liveScriptActorList) do
+    for index, entity in ientitylist(entityList) do
+        UpdateInfestationMask(entity)
+    end
     
-        local onInfestation = false
-        local entOrigin = entity:GetOrigin()            
+end
+
+// Clear OnInfestation game effect mask on all entities, unless they are standing on infestation
+function UpdateInfestationMask(forEntity)
+
+    local onInfestation = false
+    local entOrigin = forEntity:GetOrigin()            
+    
+    // See if entity is on infestation
+    for infestationIndex, infestation in ientitylist(Shared.GetEntitiesWithClassname("Infestation")) do
+    
+        if infestation:GetIsPointOnInfestation(entOrigin) then
         
-        // See if entity is on infestation
-        for infestationIndex, infestation in ipairs(infestations) do
-        
-            if infestation:GetIsPointOnInfestation(entOrigin) then
-            
-                onInfestation = true
-                break
-                
-            end
+            onInfestation = true
+            break
             
         end
         
-        // Set the mask
-        if entity.GetGameEffectMask and (entity:GetGameEffectMask(kGameEffect.OnInfestation) ~= onInfestation) then
-            entity:SetGameEffectMask(kGameEffect.OnInfestation, onInfestation)
-        end
-        
+    end
+    
+    // Set the mask
+    if forEntity.GetGameEffectMask and (forEntity:GetGameEffectMask(kGameEffect.OnInfestation) ~= onInfestation) then
+        forEntity:SetGameEffectMask(kGameEffect.OnInfestation, onInfestation)
     end
         
 end

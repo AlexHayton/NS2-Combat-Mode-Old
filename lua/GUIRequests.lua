@@ -31,7 +31,7 @@ GUIRequests.kTextBackgroundColor = Color(0.4, 0.4, 0.4, 1)
 
 function GUIRequests:Initialize()
     
-    self.background = GUI.CreateGraphicsItem()
+    self.background = GUIManager:CreateGraphicItem()
     self.background:SetAnchor(GUIItem.Left, GUIItem.Top)
     // Start off-screen.
     self.background:SetPosition(Vector(GUIRequests.kBackgroundXOffset, GUIRequests.kBackgroundYOffset, 0))
@@ -136,17 +136,17 @@ function GUIRequests:CreateSayingItem()
         return returnSayingItem
     end
     
-    local textBackground = GUI.CreateGraphicsItem()
+    local textBackground = GUIManager:CreateGraphicItem()
     textBackground:SetAnchor(GUIItem.Left, GUIItem.Top)
     textBackground:SetColor(GUIRequests.kTextBackgroundColor)
     textBackground:SetInheritsParentAlpha(true)
     
-    local newSayingItem = GUI.CreateTextItem()
+    local newSayingItem = GUIManager:CreateTextItem()
     newSayingItem:SetFontSize(GUIRequests.kTextFontSize)
     newSayingItem:SetAnchor(GUIItem.Left, GUIItem.Center)
     newSayingItem:SetPosition(Vector(GUIRequests.kTextBackgroundWidthBuffer, 0, 0))
-    newSayingItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    newSayingItem:SetTextAlignmentY(GUITextItem.Align_Center)
+    newSayingItem:SetTextAlignmentX(GUIItem.Align_Min)
+    newSayingItem:SetTextAlignmentY(GUIItem.Align_Center)
     newSayingItem:SetColor(GUIRequests.kTextSayingColor)
     newSayingItem:SetInheritsParentAlpha(true)
     textBackground:AddChild(newSayingItem)

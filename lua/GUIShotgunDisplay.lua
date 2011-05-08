@@ -8,6 +8,8 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+Script.Load("lua/GUIScript.lua")
+
 // Global state that can be externally set to adjust the display.
 weaponClip     = 0
 weaponAmmo     = 0
@@ -23,15 +25,15 @@ function GUIShotgunDisplay:Initialize()
     self.weaponAmmo     = 0
     self.weaponClipSize = 50
 
-    self.background = GUI.CreateGraphicsItem()
+    self.background = GUIManager:CreateGraphicItem()
     self.background:SetSize( Vector(256, 128, 0) )
     self.background:SetPosition( Vector(0, 0, 0))    
     self.background:SetTexture("ui/ShotgunDisplay.dds")
     
-    self.clipText, self.clipTextBg = self:CreateTextItem(52, 66)
-    self.ammoText, self.ammoTextBg = self:CreateTextItem(177, 66)
+    self.clipText, self.clipTextBg = self:CreateItem(52, 66)
+    self.ammoText, self.ammoTextBg = self:CreateItem(177, 66)
     
-    local slash, slashBg = self:CreateTextItem(100, 66)
+    local slash, slashBg = self:CreateItem(100, 66)
     slash:SetText("/")
     slashBg:SetText("/")
     
@@ -40,22 +42,22 @@ function GUIShotgunDisplay:Initialize()
 
 end
 
-function GUIShotgunDisplay:CreateTextItem(x, y)
+function GUIShotgunDisplay:CreateItem(x, y)
 
-    local textBg = GUI.CreateTextItem()
+    local textBg = GUIManager:CreateTextItem()
     textBg:SetFontName("MicrogrammaDMedExt")
     textBg:SetFontSize(85)
-    textBg:SetTextAlignmentX(GUITextItem.Align_Center)
-    textBg:SetTextAlignmentY(GUITextItem.Align_Center)
+    textBg:SetTextAlignmentX(GUIItem.Align_Center)
+    textBg:SetTextAlignmentY(GUIItem.Align_Center)
     textBg:SetPosition(Vector(x, y, 0))
     textBg:SetColor(Color(0.88, 0.98, 1, 0.25))
 
     // Text displaying the amount of reserve ammo
-    local text = GUI.CreateTextItem()
+    local text = GUIManager:CreateTextItem()
     text:SetFontName("MicrogrammaDMedExt")
     text:SetFontSize(75)
-    text:SetTextAlignmentX(GUITextItem.Align_Center)
-    text:SetTextAlignmentY(GUITextItem.Align_Center)
+    text:SetTextAlignmentX(GUIItem.Align_Center)
+    text:SetTextAlignmentY(GUIItem.Align_Center)
     text:SetPosition(Vector(x, y, 0))
     text:SetColor(Color(0.88, 0.98, 1))
     

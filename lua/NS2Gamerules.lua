@@ -198,48 +198,10 @@ function NS2Gamerules:ComputeDamageFromType(damage, damageType, entity)
     
 end
 
-function NS2Gamerules:UpdateEntityLists(oldId, newId)
-
-    local oldEnt = nil
-    if oldId ~= nil then
-        oldEnt = Shared.GetEntity(oldId)
-    end
-    
-    local newEnt = nil
-    if newId then
-        newEnt = Shared.GetEntity(newId)
-    end
-    
-    function inList(elem) 
-        return elem == oldEnt 
-    end
-    
-    if not self.playerList then
-        self:UpdatePlayerList()
-    end
-
-    table.removeConditional(self.playerList, inList)
-    
-    if newEnt and newEnt:isa("Player") then
-        table.insertunique(self.playerList, newEnt)
-    end        
-        
-    if not self.scriptActorList then
-        self:UpdateScriptActorList()
-    end
-
-    table.removeConditional(self.scriptActorList, inList)
-    
-    if newEnt and newEnt:isa("ScriptActor") then
-        table.insertunique(self.scriptActorList, newEnt)
-    end
-    
-end
-
 // Update player and entity lists
 function NS2Gamerules:OnEntityChange(oldId, newId)
 
-    self:UpdateEntityLists(oldId, newId)
+    PROFILE("NS2Gamerules:OnEntityChange")
     
     self.worldTeam:OnEntityChange(oldId, newId)
     self.team1:OnEntityChange(oldId, newId)
@@ -259,6 +221,15 @@ function NS2Gamerules:OnEntityChange(oldId, newId)
         
     end
     
+    local allScriptActors = Shared.GetEntitiesWithClassname("ScriptActor")
+    
+    // Tell every ScriptActor we've changed ids been deleted (changed to nil)
+    for index, ent in ientitylist(allScriptActors) do
+        if ent:GetId() ~= oldId then
+            ent:OnEntityChange(oldId, newId)
+        end
+    end    
+    
 end
 
 // Called whenever an entity is killed. Killer could be the same as targetEntity. Called before entity is destroyed.
@@ -266,8 +237,6 @@ function NS2Gamerules:OnKill(targetEntity, damage, attacker, doer, point, direct
 
     self.team1:OnKill(targetEntity, damage, attacker, doer, point, direction)
     self.team2:OnKill(targetEntity, damage, attacker, doer, point, direction)
-    
-    self:UpdateEntityLists(targetEntity:GetId(), nil)
     
 end
 
@@ -360,73 +329,11 @@ function NS2Gamerules:GetUpgradedDamage(entity, damage, damageType)
     
 end
 
-function NS2Gamerules:GetAllPlayers()
-
-    if not self.playerList then
-        self:UpdatePlayerList()
-    end
-    
-    return self.playerList
-end
-
-function NS2Gamerules:GetAllScriptActors()
-
-    if not self.scriptActorList then
-        self:UpdateScriptActorList()
-    end
-    
-    return self.scriptActorList    
-    
-end
-
-// Call with class name, optional teamNumber (-1 or nil for all), and optional class name and origin/range to get entities in radius
-// TODO: Implement optionalXZOnly
-function NS2Gamerules:GetEntities(className, teamNumber, optionalOrigin, optionalRange, optionalXZOnly)
-
-    PROFILE("NS2GameRules:GetEntities")
-
-    if not self.scriptActorList then
-        self:UpdateScriptActorList()
-    end
-    
-    local entities = {}
-    local optionalRange2
-    
-    if optionalRange then
-        optionalRange2 = optionalRange * optionalRange
-    end
-    
-    for index, scriptActor in ipairs(self.scriptActorList) do
-        
-        if (teamNumber == -1) or (teamNumber == nil) or (scriptActor:GetTeamNumber() == teamNumber) then
-    
-            if scriptActor:isa(className) then
-        
-                if not optionalOrigin or ((scriptActor:GetOrigin() - optionalOrigin):GetLengthSquared() < optionalRange2) then
-                
-                    table.insert(entities, scriptActor)
-                    
-                end
-                
-            end
-            
-        end
-        
-    end
-    
-    return entities
-    
-end
-
 function NS2Gamerules:GetPlayers(teamNumber)
-
-    if not self.playerList then
-        self:UpdatePlayerList()
-    end
 
     local players = {}
     
-    for index, player in ipairs(self.playerList) do
+    for index, player in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
     
         if player:GetTeamNumber() == teamNumber then
         
@@ -451,8 +358,10 @@ function NS2Gamerules:ResetGame()
     
     // Reset all players, delete other not map entities that were created during 
     // the game (hives, command structures, initial resource towers, etc)
-    local entityList = GetEntitiesIsa("Entity", -1)
-    for index, entity in pairs(entityList) do
+    // We need to convert the EntityList to a table since we are destroying entities
+    // within the EntityList here.
+    local entityTable = EntityListToTable(Shared.GetEntitiesWithClassname("Entity"))
+    for index, entity in ipairs(entityTable) do
 
         // Don't reset/delete gamerules!    
         if(entity ~= self) then
@@ -474,14 +383,14 @@ function NS2Gamerules:ResetGame()
     CreateLiveMapEntities()
     
     // Build list of team locations
-    local teamLocations = GetEntitiesIsa("TeamLocation", -1)
+    local teamLocations = EntityListToTable(Shared.GetEntitiesWithClassname("TeamLocation"))
     local numTeamLocations = table.maxn(teamLocations)
     if(numTeamLocations < 2) then
         Print("Warning -- Found only %d %s entities.", numTeamLocations, TeamLocation.kMapName)
     end
     
-    local resourcePoints = GetEntitiesIsa("ResourcePoint", 0)
-    local numResourcePoints = table.maxn(resourcePoints)
+    local resourcePoints = Shared.GetEntitiesWithClassname("ResourcePoint")
+    local numResourcePoints = resourcePoints:GetSize()
     if(numResourcePoints < 2) then
         Print("Warning -- Found only %d %s entities.", numResourcePoints, ResourcePoint.kPointMapName)
     end
@@ -501,8 +410,7 @@ function NS2Gamerules:ResetGame()
     self.preventGameEnd = nil
     
     // Send scoreboard update, ignoring other scoreboard updates (clearscores resets everything)
-    local allPlayers = GetEntitiesIsa("Player")    
-    for index, player in ipairs(allPlayers) do
+    for index, player in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
         Server.SendCommand(player, "onresetgame")
         //player:SetScoreboardChanged(false)
     end
@@ -531,19 +439,23 @@ function NS2Gamerules:UpdateScores()
 
     if(self.timeToSendScores == nil or Shared.GetTime() > self.timeToSendScores) then
     
-        local allPlayers = self:GetAllPlayers()
+        local allPlayers = Shared.GetEntitiesWithClassname("Player")
 
         // If any player scoreboard info has changed, send those updates to everyone
-        for index, fromPlayer in ipairs(allPlayers) do
+        for index, fromPlayer in ientitylist(allPlayers) do
         
             // Send full update if any part of it changed
             if(fromPlayer:GetScoreboardChanged()) then
             
                 if(fromPlayer:GetName() ~= "") then
                 
-                    // Now send scoreboard info to everyone, including fromPlayer                    
-                    local scoresMessage = BuildScoresMessage(fromPlayer)
-                    Server.SendNetworkMessage("Scores", scoresMessage, true)
+                    // Now send scoreboard info to everyone, including fromPlayer     
+                    for index, sendToPlayer in ientitylist(allPlayers) do
+                        // Build the message per player as some info is not synced for players
+                        // on the other team.
+                        local scoresMessage = BuildScoresMessage(fromPlayer, sendToPlayer)
+                        Server.SendNetworkMessage(sendToPlayer, "Scores", scoresMessage, true)
+                    end
                     
                     fromPlayer:SetScoreboardChanged(false)
                     
@@ -557,16 +469,18 @@ function NS2Gamerules:UpdateScores()
         
         // When players connect to server, they send up a request for scores (as they 
         // may not have finished connecting when the scores where previously sent)    
-        for index, requestingPlayer in ipairs(allPlayers) do
+        for index, requestingPlayer in ientitylist(allPlayers) do
 
             // Check for empty name string because player isn't connected yet
             if(requestingPlayer:GetRequestsScores() and requestingPlayer:GetName() ~= "") then
             
                 // Send player all scores
-                for index, fromPlayer in ipairs(allPlayers) do
+                for index, fromPlayer in ientitylist(allPlayers) do
                 
-                    local scoresMessage = BuildScoresMessage(fromPlayer)
-                    Server.SendNetworkMessage(requestingPlayer, "Scores", scoresMessage, true)
+                    for index, sendToPlayer in ientitylist(allPlayers) do
+                        local scoresMessage = BuildScoresMessage(fromPlayer, sendToPlayer)
+                        Server.SendNetworkMessage(requestingPlayer, "Scores", scoresMessage, true)
+                    end
                     
                 end
                 
@@ -589,7 +503,7 @@ function NS2Gamerules:UpdatePings()
 
     if(self.timeToSendPings == nil or Shared.GetTime() > self.timeToSendPings) then
     
-        for index, player in ipairs(self:GetAllPlayers()) do
+        for index, player in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
         
             Server.SendNetworkMessage( "Ping", BuildPingMessage(player:GetClientIndex(), player:GetPing()), true )
 
@@ -606,9 +520,10 @@ function NS2Gamerules:UpdateMinimapBlips()
     if GetGamerules():GetGameStarted() then
         
         // MapBlips aren't script actors, so can't use GetGamerules() functions
-        local mapBlips = GetEntitiesIsa("MapBlip")
+        local mapBlips = EntityListToTable(Shared.GetEntitiesWithClassname("MapBlip"))
         
-        for entIndex, entity in ipairs(GetGamerules():GetAllScriptActors()) do
+        local allScriptActors = Shared.GetEntitiesWithClassname("ScriptActor")
+        for entIndex, entity in ientitylist(allScriptActors) do
         
             local success, blipType, blipTeam = self:GetMinimapBlipTypeAndTeam(entity)
             
@@ -705,29 +620,12 @@ function NS2Gamerules:OnMapPostLoad()
 
     Gamerules.OnMapPostLoad(self)
     
-    Server.locationList = GetEntitiesIsa("Location")
-    
     // Now allow script actors to hook post load
-    for index, scriptActor in ipairs(self:GetAllScriptActors()) do
+    local allScriptActors = Shared.GetEntitiesWithClassname("ScriptActor")
+    for index, scriptActor in ientitylist(allScriptActors) do
         scriptActor:OnMapPostLoad()
     end
     
-end
-
-// Update list of players so players can be retrieved efficiently
-function NS2Gamerules:UpdatePlayerList()
-
-    self.playerList = {}
-    
-    table.adduniquetable(self.worldTeam:GetPlayers(), self.playerList)
-    table.adduniquetable(self.team1:GetPlayers(), self.playerList)
-    table.adduniquetable(self.team2:GetPlayers(), self.playerList)
-    table.adduniquetable(self.spectatorTeam:GetPlayers(), self.playerList)    
-
-end
-
-function NS2Gamerules:UpdateScriptActorList()
-    self.scriptActorList = GetEntitiesIsa("ScriptActor", nil, true)
 end
 
 function NS2Gamerules:UpdateInfestationEffects()
@@ -736,7 +634,7 @@ function NS2Gamerules:UpdateInfestationEffects()
     
     if self.timeLastInfestationEffectsUpdate == nil or (time > self.timeLastInfestationEffectsUpdate + NS2Gamerules.kInfestationEffectsUpdateRate) then
     
-        UpdateInfestationMask( self:GetEntities("LiveScriptActor") )
+        UpdateInfestationMasks( Shared.GetEntitiesWithClassname("LiveScriptActor") )
         
         self.timeLastInfestationEffectsUpdate = time
         
@@ -806,8 +704,6 @@ function NS2Gamerules:OnUpdate(timePassed)
             self:UpdateScores()
             self:UpdatePings()
             self:UpdateMinimapBlips()
-            self:UpdatePlayerList()
-            self:UpdateScriptActorList()
             self:UpdateInfestationEffects()
             
         end

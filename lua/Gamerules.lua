@@ -54,6 +54,12 @@ end
 function Gamerules:OnLoad()
 end
 
+function Gamerules:OnDestroy()
+    if (Server) then
+        SetGamerules(nil)
+    end
+end
+
 ////////////
 // Server //
 ////////////
@@ -86,8 +92,10 @@ end
  */
 function Gamerules:ResetGame()
 
-    local entityList = GetEntitiesIsa("Entity", -1)
-    for index, entity in pairs(entityList) do
+    // Convert to a table as entities are destroyed here and the EntityList will automatically
+    // update when they are destroyed which is bad for iteration.
+    local entityTable = EntityListToTable(Shared.GetEntitiesWithClassname("Entity"))
+    for index, entity in ipairs(entityTable) do
 
         // Don't reset/delete gamerules!    
         if(entity ~= self) then
@@ -105,9 +113,8 @@ function Gamerules:ResetGame()
  
     end
     
-    // Send scoreboard update, ignoring other scoreboard updates (clearscores resets everything)
-    local allPlayers = GetEntitiesIsa("Player")    
-    for index, player in ipairs(allPlayers) do
+    // Send scoreboard update, ignoring other scoreboard updates (clearscores resets everything)  
+    for index, player in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
         Server.SendCommand(player, "onresetgame")
         //player:SetScoreboardChanged(false)
     end  

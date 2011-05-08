@@ -86,7 +86,7 @@ function GUIDamageIndicators:CreateIndicatorItem()
         return returnIndicatorItem
     end
 
-    local newIndicator = GUI.CreateGraphicsItem()
+    local newIndicator = GUIManager:CreateGraphicItem()
     newIndicator:SetSize(Vector(GUIDamageIndicators.kIndicatorSize, GUIDamageIndicators.kIndicatorSize, 0))
     newIndicator:SetAnchor(GUIItem.Middle, GUIItem.Center)
     newIndicator:SetPosition(GUIDamageIndicators.kDefaultIndicatorPosition)

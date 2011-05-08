@@ -133,7 +133,8 @@ end
 
 function Armory:ResupplyPlayers()
 
-    for index, player in ipairs(GetGamerules():GetEntities("Player", self:GetTeamNumber(), self:GetOrigin(), Armory.kResupplyUseRange)) do
+    local playersInRange = GetEntitiesForTeamWithinRange("Player", self:GetTeamNumber(), self:GetOrigin(), Armory.kResupplyUseRange)
+    for index, player in ipairs(playersInRange) do
     
         // For each, check if they are facing us and if they haven't been resupplied for awhile
         if self:GetShouldResupplyPlayer(player) then
@@ -219,7 +220,7 @@ end
 
 function Armory:UpdateLoggedIn()
 
-    local players = GetGamerules():GetEntities("Player", self:GetTeamNumber(), self:GetOrigin(), 2*Armory.kResupplyUseRange)
+    local players = GetEntitiesForTeamWithinRange("Player", self:GetTeamNumber(), self:GetOrigin(), 2 * Armory.kResupplyUseRange)
     local armoryCoords = self:GetAngles():GetCoords()
     
     for i = 1, 4 do 

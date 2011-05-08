@@ -77,9 +77,7 @@ end
 function CommandStation:KillPlayersInside()
 
     // Now kill any other players that are still inside the command station so they're not stuck!
-    local players = GetGamerules():GetAllPlayers()
-    
-    for index, player in ipairs(players) do
+    for index, player in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
     
         if not player:isa("Commander") and not player:isa("Spectator") then
         

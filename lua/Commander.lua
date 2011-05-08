@@ -234,6 +234,8 @@ function Commander:UpdatePosition(velocity, time)
 
     end    
 
+    return velocity
+    
 end
 
 function Commander:UpdateMovePhysics(input)
@@ -250,7 +252,7 @@ function Commander:UpdateMovePhysics(input)
         if(heightmap ~= nil) then
             
             // Store normalized minimap coords in yaw and pitch
-            finalPos = Vector(heightmap:GetWorldX(tonumber(input.pitch)), 0, heightmap:GetWorldZ(tonumber(input.yaw)))
+            finalPos = Vector(heightmap:GetWorldX(input.pitch), 0, heightmap:GetWorldZ(input.yaw))
             
             // Add in extra x offset to center view where we're told, not ourselves
             finalPos.x = finalPos.x - Commander.kViewOffsetXHeight

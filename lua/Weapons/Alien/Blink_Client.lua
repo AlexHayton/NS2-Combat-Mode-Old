@@ -196,9 +196,8 @@ end
 
 function Blink:SetBlinkCamera(startCoords, endCoords, cameraTransitionTime) 
 
-    self.cameraStart = CopyCoords(startCoords)
-    
-    self.cameraEnd = CopyCoords(endCoords)
+    self.cameraStart = startCoords
+    self.cameraEnd = endCoords
     
     self.blinkTransitionTime = cameraTransitionTime
     

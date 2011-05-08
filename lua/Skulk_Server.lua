@@ -18,7 +18,7 @@ function Skulk:InitWeapons()
 end
 
 // Handle carapace
-function Skulk:GetHealthPerArmor(damageType)
+function Skulk:GetHealthPerArmorOverride(damageType, currentHealthPerArmor)
 
     if ( self:GetHasUpgrade(kTechId.Carapace) ) then
     
@@ -26,6 +26,6 @@ function Skulk:GetHealthPerArmor(damageType)
     
     end
     
-    return Alien.GetHealthPerArmor(self, damageType)
+    return currentHealthPerArmor
     
 end

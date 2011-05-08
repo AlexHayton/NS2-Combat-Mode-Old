@@ -33,6 +33,8 @@ Client.ambientSoundList = {}
 Client.particlesList = {}
 Client.tracersList = {}
 
+Client.timeOfLastPowerPoints = nil
+    
 local gGUIManager = GUIManager()
 gGUIManager:Initialize()
 
@@ -327,33 +329,66 @@ function UpdateParticles(deltaTime)
     
 end
 
-function OnUpdateClient(deltaTime)
+function UpdatePowerPointLights()
 
-    if not Shared.GetIsRunningPrediction() then
+    // Only get power nodes on client every so often for performance reasons
+    local time = Shared.GetTime()
     
-        local player = Client.GetLocalPlayer()
-        if player ~= nil then
+    // Get power points that are relevant
+    local forceUpdate = false
+    
+    if (Client.timeOfLastPowerPoints == nil) or (time > Client.timeOfLastPowerPoints + 3) then
         
-            player:UpdateGUI()
+        Client.timeOfLastPowerPoints = time
         
-            UpdateAmbientSounds(deltaTime)
-            
-            UpdateDSPEffects()
-            
-            UpdateParticles(deltaTime)
-            
-            UpdateTracers(deltaTime)
-            
-            if Client.GetConnectionProblems() then
-                player:AddTooltipOncePer("Connection problems detected...", 5)
-            end
-            
-        end
-    
-        // Update the GUIManager if there is a local player entity or not.
-        gGUIManager:Update(deltaTime)
-    
+        // If a power node wasn't relevant and becomes relevant, we need to update lights
+        forceUpdate = true
+        
     end
+    
+    // Now update the lights every frame
+    local powerPoints = Shared.GetEntitiesWithClassname("PowerPoint")
+    for index, powerPoint in ientitylist(powerPoints) do
+    
+        // But only update lights when necessary for performance reasons
+        if powerPoint:GetIsAffectingLights() or forceUpdate then
+        
+            powerPoint:UpdatePoweredLights()
+        
+        end
+        
+    end
+    
+end
+
+function OnUpdateClient(deltaTime)
+    
+    local player = Client.GetLocalPlayer()
+    if player ~= nil then
+    
+        player:ComputeHUDOrderedWeaponList()
+        player:UpdateGUI()
+    
+        UpdateAmbientSounds(deltaTime)
+        
+        UpdateDSPEffects()
+        
+        UpdateParticles(deltaTime)
+        
+        UpdateTracers(deltaTime)
+        
+        if Client.GetConnectionProblems() then
+            player:AddTooltipOncePer("Connection problems detected...", 5)
+        end
+        
+    end
+
+    // Update the GUIManager if there is a local player entity or not.
+    gGUIManager:Update(deltaTime)
+    
+    GetEffectManager():OnUpdate(deltaTime)
+    
+    UpdatePowerPointLights()
 
 end
 
@@ -472,20 +507,19 @@ end
 /**
  * Called once per frame to setup the camera for rendering the scene.
  */
-function OnSetupCamera(camera)
+function OnSetupCamera()
     
     local player = Client.GetLocalPlayer()
+    local camera = Camera()
     
     // If we have a player, use them to setup the camera. 
     if (player ~= nil) then
         camera:SetCoords( player:GetCameraViewCoords() )
         camera:SetFov( player:GetRenderFov() )
-        return true
-    elseif (MenuManager.GetCinematicCamera(camera)) then
-        return true
+        return camera
+    else
+        return MenuManager.GetCinematicCamera()
     end
-    
-    return false
     
 end
 

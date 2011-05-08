@@ -46,7 +46,7 @@ end
 // Sort entities by priority (players before structures, most damaged before least)
 function Crag:GetSortedTargetList()
 
-    local ents = GetGamerules():GetEntities("LiveScriptActor", self:GetTeamNumber(), self:GetOrigin(), Crag.kHealRadius)
+    local ents = GetEntitiesForTeamWithinRange("LiveScriptActor", self:GetTeamNumber(), self:GetOrigin(), Crag.kHealRadius)
     
     local targets = {}
     

@@ -144,7 +144,7 @@ function GUIHiveBlips:CreateBlipItem()
     end
 
     local newBlip = { ScreenX = 0, ScreenY = 0, Radius = 0, Type = 0 }
-    newBlip.GraphicsItem = GUI.CreateGraphicsItem()
+    newBlip.GraphicsItem = GUIManager:CreateGraphicItem()
     newBlip.GraphicsItem:SetAnchor(GUIItem.Left, GUIItem.Top)
     newBlip.GraphicsItem:SetTexture(GUIHiveBlips.kBlipImageName)
     newBlip.GraphicsItem:SetColor(GUIHiveBlips.kBlipVisibleColor)

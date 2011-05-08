@@ -30,7 +30,7 @@ function GUIHotkeyIcons:Initialize()
     
     self.hotkeys = { }
     
-    self.background = GUI.CreateGraphicsItem()
+    self.background = GUIManager:CreateGraphicItem()
     self.background:SetSize(Vector(GUIHotkeyIcons.kBackgroundWidth, GUIHotkeyIcons.kBackgroundHeight, 0))
     // The background is an invisible container only.
     self.background:SetColor(Color(0, 0, 0, 0))
@@ -39,7 +39,7 @@ function GUIHotkeyIcons:Initialize()
     
     local currentHotkey = 0
     while currentHotkey < GUIHotkeyIcons.kMaxHotkeys do
-        local hotkeyIcon = GUI.CreateGraphicsItem()
+        local hotkeyIcon = GUIManager:CreateGraphicItem()
         hotkeyIcon:SetSize(Vector(GUIHotkeyIcons.kHotkeyIconSize, GUIHotkeyIcons.kHotkeyIconSize, 0))
         hotkeyIcon:SetAnchor(GUIItem.Left, GUIItem.Top)
         hotkeyIcon:SetPosition(Vector(currentHotkey * (GUIHotkeyIcons.kHotkeyIconSize + GUIHotkeyIcons.kHotkeyIconXOffset), 0, 0))
@@ -47,11 +47,11 @@ function GUIHotkeyIcons:Initialize()
         hotkeyIcon:SetIsVisible(false)
         self.background:AddChild(hotkeyIcon)
         
-        local hotkeyText = GUI.CreateTextItem()
+        local hotkeyText = GUIManager:CreateTextItem()
         hotkeyText:SetFontSize(GUIHotkeyIcons.kHoykeyFontSize)
         hotkeyText:SetAnchor(GUIItem.Middle, GUIItem.Top)
-        hotkeyText:SetTextAlignmentX(GUITextItem.Align_Center)
-        hotkeyText:SetTextAlignmentY(GUITextItem.Align_Max)
+        hotkeyText:SetTextAlignmentX(GUIItem.Align_Center)
+        hotkeyText:SetTextAlignmentY(GUIItem.Align_Max)
         hotkeyText:SetColor(Color(1, 1, 1, 1))
         hotkeyText:SetText(ToString(currentHotkey + 1))
         hotkeyIcon:AddChild(hotkeyText)

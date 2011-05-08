@@ -11,6 +11,14 @@ Script.Load("lua/Table.lua")
 gNetworkRandomLogData = nil
 gRandomDebugEnabled = false
   
+function EntityFilterOne(entity)
+    return function (test) return test == entity end
+end
+
+function EntityFilterTwo(entity1, entity2)
+    return function (test) return test == entity1 or test == entity2 end
+end
+  
 // Splits string into array, along whitespace boundaries. First element indexed at 1.
 function StringToArray(instring)
 
@@ -127,12 +135,12 @@ end
 // Returns nil if it doesn't hit
 function GetLinePlaneIntersection(planePoint, planeNormal, lineOrigin, lineDirection)
 
-    local p = lineDirection:DotProduct(planeNormal)
+    local p = Math.DotProduct(lineDirection, planeNormal)
     
     if p < 0  then
 
-        local d = -planePoint:DotProduct(planeNormal)
-        local t = -(planeNormal:DotProduct(lineOrigin) + d) / p
+        local d = -Math.DotProduct(planePoint, planeNormal)
+        local t = -(Math.DotProduct(planeNormal, lineOrigin) + d) / p
 
         if t >= 0 then
         
@@ -202,6 +210,8 @@ function DebugLine(startPoint, endPoint, lifetime, r, g, b, a)
     if (Client and not Shared.GetIsRunningPrediction()) then
         Client.DebugColor(r, g, b, a)
         Client.DebugLine(startPoint, endPoint, lifetime)
+    elseif Server then
+        Server.SendNetworkMessage("DebugLine", BuildDebugLineMessage(startPoint, endPoint, lifetime, r, g, b, a), true)
     end
 end
 
@@ -458,23 +468,23 @@ function LerpGeneric(startValue, targetValue, percentage)
             end
             
         end
+ 
+    elseif type(startValue) == "number" then
+        lerpedValue = startValue + ((targetValue - startValue) * percentage)
         
     // Colors
-    elseif type(startValue) == "userdata" and startValue.r and startValue.g and startValue.b and startValue.a then
+    elseif startValue:isa("Color") then
     
         lerpedValue = Color(startValue.r + (targetValue.r - startValue.r) * percentage, 
                             startValue.g + (targetValue.g - startValue.g) * percentage,
                             startValue.b + (targetValue.b - startValue.b) * percentage,
                             startValue.a + (targetValue.a - startValue.a) * percentage)
                             
-    elseif type(startValue) == "userdata" and startValue.x and startValue.y and startValue.z then
+    elseif startValue:isa("Vector") then
     
         lerpedValue = Vector(startValue.x + (targetValue.x - startValue.x) * percentage, 
                             startValue.y + (targetValue.y - startValue.y) * percentage,
-                            startValue.z + (targetValue.z - startValue.z) * percentage)
-
-    elseif type(startValue) == "number" then
-        lerpedValue = startValue + ((targetValue - startValue) * percentage)
+                            startValue.z + (targetValue.z - startValue.z) * percentage)   
     else
         Print("LerpGeneric(): Can't handle type \"%s\".", type(startValue))
     end
@@ -497,7 +507,7 @@ function ToString(t)
         return table.tostring(t)
     elseif type(t) == "userdata" then
         if t:isa("Vector") then
-            return t:tostring()
+            return tostring(t)
         elseif t:isa("Trace") then
             return string.format("trace fraction: %.2f entity: %s", t.fraction, SafeClassName(t.entity))
         elseif t:isa("Color") then            
@@ -664,7 +674,7 @@ function BuildCoordsFromDirection(zAxis, origin, scale)
     local upVector = Vector(0, 1, 0)
    
     // If zAxis is facing mostly up or down
-    if math.abs(upVector:DotProduct(zAxis)) > .9 then
+    if math.abs(zAxis.y) > .9 then
     
         // Choose arbitrary vector that should work well enough
         upVector = Vector(1, 0, 0)
@@ -710,7 +720,7 @@ function BuildCoords(yAxis, zAxis, origin, scale)
     end
     
     if origin then
-        VectorCopy(origin, coords.origin)
+        coords.origin = origin
     end
 
     return coords
@@ -718,17 +728,7 @@ function BuildCoords(yAxis, zAxis, origin, scale)
 end
 
 function CopyCoords(coords)
-
-    local newCoords = Coords()
-    
-    VectorCopy(coords.origin, newCoords.origin)
-    
-    VectorCopy(coords.xAxis, newCoords.xAxis)
-    VectorCopy(coords.yAxis, newCoords.yAxis)
-    VectorCopy(coords.zAxis, newCoords.zAxis)
-    
-    return newCoords
-    
+    return Coords(coords)
 end
 
 // Returns degrees between -360 and 360
@@ -967,9 +967,7 @@ function GetUniqueNameForPlayer(name, nameList)
     
         nameList = {}
         
-        local players = GetEntitiesIsa("Player", -1)
-        
-        for index, player in ipairs(players) do
+        for index, player in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
             local name = player:GetName()
             if(name ~= nil and name ~= "") then
                 table.insert(nameList, string.lower(name))
@@ -1091,7 +1089,17 @@ end
 
 function ValidateValue(value, logMessage)
 
-    if(value:isa("Vector")) then
+   if(type(value) == "number") then
+    
+        local valid, reason = IsValidValue(value)
+        if(not valid) then
+            if(logMessage) then
+                Print("Numeric value not valid (%s) - %s", reason, logMessage)
+            end
+            return false
+        end
+ 
+    else
     
         local valid, reason = IsValidValue(value.x)
         if(not valid) then
@@ -1117,16 +1125,6 @@ function ValidateValue(value, logMessage)
             return false
         end
                     
-    elseif(type(value) == "number") then
-    
-        local valid, reason = IsValidValue(value)
-        if(not valid) then
-            if(logMessage) then
-                Print("Numeric value not valid (%s) - %s", reason, logMessage)
-            end
-            return false
-        end
-        
     end
     
     return true

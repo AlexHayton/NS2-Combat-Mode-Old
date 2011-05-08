@@ -50,7 +50,7 @@ function Marine:AddWeapon(weapon)
     
 end
 
-function Marine:OverrideOrder(order)
+function Marine:OnOverrideOrder(order)
     
     local orderTarget = nil
     
@@ -76,10 +76,6 @@ function Marine:OverrideOrder(order)
         
         // Convert default order (right-click) to move order
         order:SetType(kTechId.SquadMove)
-        
-    else
-    
-        Player.OverrideOrder(self, order)
         
     end
     

@@ -138,7 +138,7 @@ end
 
 function ClipWeapon:OnHolster(player)
     Weapon.OnHolster(self, player)
-    self.reloadTime = 0
+    self:CancelReload()
 end
 
 function ClipWeapon:OnInit()
@@ -175,6 +175,18 @@ end
 function ClipWeapon:GetBulletDamage(target, endPoint)
     Print("%s:GetBulletDamage() - Need to override GetBulletDamage()", self:GetClassName())
     return 0
+end
+
+function ClipWeapon:GetIsReloading()
+
+    return self.reloadTime > Shared.GetTime()
+
+end
+
+function ClipWeapon:GetCanIdle()
+
+    return (Weapon.GetCanIdle(self)) and (not self:GetIsReloading())
+
 end
 
 function ClipWeapon:OnIdle()
@@ -418,6 +430,15 @@ end
 // Return true for weapons with melee as alt-fire
 function ClipWeapon:GetReloadCancellable()
     return false
+end
+
+function ClipWeapon:CancelReload()
+
+    if self:GetIsReloading() and self:GetReloadCancellable() then
+        self.reloadTime = 0
+        self:TriggerEffects("reload_cancel")
+    end
+    
 end
 
 function ClipWeapon:OnReload(player)

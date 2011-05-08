@@ -29,23 +29,23 @@ function GUIChat:Initialize()
     self.reuseMessages = { }
     
     // Input mode (Team/All) indicator text.
-    self.inputModeItem = GUI.CreateTextItem()
+    self.inputModeItem = GUIManager:CreateTextItem()
     self.inputModeItem:SetFontSize(GUIChat.kFontSize)
     self.inputModeItem:SetAnchor(GUIItem.Left, GUIItem.Bottom)
-    self.inputModeItem:SetTextAlignmentX(GUITextItem.Align_Max)
-    self.inputModeItem:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.inputModeItem:SetTextAlignmentX(GUIItem.Align_Max)
+    self.inputModeItem:SetTextAlignmentY(GUIItem.Align_Center)
     self.inputModeItem:SetIsVisible(false)
     
     // Input text item.
-    self.inputItem = GUI.CreateTextItem()
+    self.inputItem = GUIManager:CreateTextItem()
     self.inputItem:SetFontSize(GUIChat.kFontSize)
     self.inputItem:SetAnchor(GUIItem.Left, GUIItem.Bottom)
     self.inputItem:SetPosition(GUIChat.kOffset + GUIChat.kInputOffset)
-    self.inputItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    self.inputItem:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.inputItem:SetTextAlignmentX(GUIItem.Align_Min)
+    self.inputItem:SetTextAlignmentY(GUIItem.Align_Center)
     self.inputItem:SetIsVisible(false)
     
-    self.voiceChatIcon = GUI.CreateGraphicsItem()
+    self.voiceChatIcon = GUIManager:CreateGraphicItem()
     self.voiceChatIcon:SetSize(Vector(GUIChat.kVoiceChatIconSize, GUIChat.kVoiceChatIconSize, 0))
     self.voiceChatIcon:SetAnchor(GUIItem.Left, GUIItem.Center)
     self.voiceChatIcon:SetPosition(GUIChat.kVoiceChatIconOffset)
@@ -189,22 +189,22 @@ function GUIChat:AddMessage(playerColor, playerName, messageColor, messageText)
     end
     
     if insertMessage["Player"] == nil then
-        insertMessage["Player"] = GUI.CreateTextItem()
+        insertMessage["Player"] = GUIManager:CreateTextItem()
     end
     insertMessage["Player"]:SetFontSize(GUIChat.kFontSize)
     insertMessage["Player"]:SetAnchor(GUIItem.Left, GUIItem.Center)
-    insertMessage["Player"]:SetTextAlignmentX(GUITextItem.Align_Min)
-    insertMessage["Player"]:SetTextAlignmentY(GUITextItem.Align_Center)
+    insertMessage["Player"]:SetTextAlignmentX(GUIItem.Align_Min)
+    insertMessage["Player"]:SetTextAlignmentY(GUIItem.Align_Center)
     insertMessage["Player"]:SetColor(ColorIntToColor(playerColor))
     insertMessage["Player"]:SetText(playerName)
     
     if insertMessage["Message"] == nil then
-        insertMessage["Message"] = GUI.CreateTextItem()
+        insertMessage["Message"] = GUIManager:CreateTextItem()
     end
     insertMessage["Message"]:SetFontSize(GUIChat.kFontSize)
     insertMessage["Message"]:SetAnchor(GUIItem.Right, GUIItem.Center)
-    insertMessage["Message"]:SetTextAlignmentX(GUITextItem.Align_Max)
-    insertMessage["Message"]:SetTextAlignmentY(GUITextItem.Align_Center)
+    insertMessage["Message"]:SetTextAlignmentX(GUIItem.Align_Max)
+    insertMessage["Message"]:SetTextAlignmentY(GUIItem.Align_Center)
     insertMessage["Message"]:SetColor(ColorIntToColor(messageColor))
     insertMessage["Message"]:SetText(messageText)
     
@@ -213,7 +213,7 @@ function GUIChat:AddMessage(playerColor, playerName, messageColor, messageText)
     local textWidth = playerTextWidth + messageTextWidth
     
     if insertMessage["Background"] == nil then
-        insertMessage["Background"] = GUI.CreateGraphicsItem()
+        insertMessage["Background"] = GUIManager:CreateGraphicItem()
         insertMessage["Background"]:AddChild(insertMessage["Player"])
         insertMessage["Background"]:AddChild(insertMessage["Message"])
     end

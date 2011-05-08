@@ -15,12 +15,12 @@ GUIDebugText.kWorldVerticalRiseAmount = 1
 
 function GUIDebugText:Initialize()
 
-    self.debugText = GUI.CreateTextItem()
+    self.debugText = GUIManager:CreateTextItem()
     self.debugText:SetLayer(kGUILayerDebugText)
     self.debugText:SetFontSize(20)
     self.debugText:SetAnchor(GUIItem.Left, GUIItem.Top)
-    self.debugText:SetTextAlignmentX(GUITextItem.Align_Center)
-    self.debugText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.debugText:SetTextAlignmentX(GUIItem.Align_Center)
+    self.debugText:SetTextAlignmentY(GUIItem.Align_Center)
     self.debugText:SetColor(Color(1, 1, 1, 1))
     self.debugText:SetText("(call GUIDebugText:SetDebugInfo)")
     

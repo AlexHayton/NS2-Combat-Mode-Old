@@ -42,7 +42,7 @@ end
 
 function MedPack:GetPackRecipient()
 
-    local potentialRecipients = GetGamerules():GetEntities("Marine", self:GetTeamNumber(), self:GetOrigin(), 1)
+    local potentialRecipients = GetEntitiesForTeamWithinRange("Marine", self:GetTeamNumber(), self:GetOrigin(), 1)
     
     for index, player in pairs(potentialRecipients) do
     

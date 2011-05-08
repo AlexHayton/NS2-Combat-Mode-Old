@@ -91,8 +91,7 @@ function OnCommandKill(client, otherPlayer)
         
         if (otherPlayer ~= nil) then
         
-            local allPlayers = GetEntitiesIsa("Player")    
-            for index, currentPlayer in ipairs(allPlayers) do
+            for index, currentPlayer in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
                 if(currentPlayer ~= nil and currentPlayer:GetName() == otherPlayer) then
                     otherPlayer = currentPlayer
                     break
@@ -247,7 +246,6 @@ Event.Hook("Console_kill",                  OnCommandKill)
 Event.Hook("Console_darwinmode",            OnCommandDarwinMode)
 Event.Hook("Console_thirdperson",           OnCommandThirdperson)
 Event.Hook("Console_reset",                 OnCommandRoundReset)
-Event.Hook("Console_updateping",            OnCommandUpdatePing)
 Event.Hook("Console_anim_debug",            OnCommandAnimDebug)
 Event.Hook("Console_effect_debug",          OnCommandEffectDebug)
 Event.Hook("Console_grantexperience",     OnCommandGrantExperience)

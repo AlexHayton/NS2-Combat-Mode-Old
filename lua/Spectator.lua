@@ -32,6 +32,9 @@ function Spectator:OnInit()
 
     Player.OnInit(self)
     
+    // Spectator cannot have orders.
+    self:SetIgnoreOrders(true)
+    
     if (Server) then
         
         self:SetIsVisible(false)
@@ -295,25 +298,6 @@ function Spectator:SpawnPlayerOnAttack()
     
     return false
     
-end
-
-//Spectators cannot have orders.
-function Spectator:OverrideOrder(order)
-    
-end
-
-function Spectator:GiveOrder(orderType, targetId, targetOrigin, orientation, clearExisting, insertFirst)
-
-    return kTechId.None
-
-end
-
-function Spectator:SetOrder(order, clearExisting, insertFirst)
-
-end
-
-function Spectator:CopyOrders(dest)
-
 end
 
 end

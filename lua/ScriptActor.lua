@@ -15,9 +15,9 @@ class 'ScriptActor' (BlendedActor)
 ScriptActor.kMapName = "scriptactor"
 
 if (Server) then
-    Script.Load("lua/ScriptActor_Server.lua")
+    Script.Load("lua/ScriptActor_Server.lua", true)
 else
-    Script.Load("lua/ScriptActor_Client.lua")
+    Script.Load("lua/ScriptActor_Client.lua", true)
 end
 
 local networkVars = 
@@ -118,7 +118,7 @@ function ScriptActor:OnInit()
         
             self:SetModel(modelName)
 
-        // Don't emit error message if they specified no model 
+        // Don't emit error message if they specified no model a
         elseif modelName ~= "" then
         
             Print("%s:OnInit() (ScriptActor): Couldn't find model name for techId %d (%s).", self:GetClassName(), techId, EnumToString(kTechId, techId))

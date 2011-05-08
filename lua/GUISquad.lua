@@ -34,7 +34,7 @@ end
 
 function GUISquad:CreateBackground()
 
-    local background = GUI.CreateGraphicsItem()
+    local background = GUIManager:CreateGraphicItem()
     
     background:SetAnchor(GUIItem.Left, GUIItem.Bottom)
     background:SetPosition(Vector(GUISquad.kLeftInset, -GUISquad.kBottomInset, 0))
@@ -45,13 +45,13 @@ end
 
 function GUISquad:CreatePlayerNameItem()
 
-    local playerNameItem = GUI.CreateTextItem()
+    local playerNameItem = GUIManager:CreateTextItem()
     
     playerNameItem:SetFontSize(GUISquad.kPlayerNameFontSize)
     playerNameItem:SetFontIsBold(true)
     playerNameItem:SetAnchor(GUIItem.Left, GUIItem.Bottom)
-    playerNameItem:SetTextAlignmentX(GUITextItem.Align_Center)
-    playerNameItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    playerNameItem:SetTextAlignmentX(GUIItem.Align_Center)
+    playerNameItem:SetTextAlignmentY(GUIItem.Align_Min)
 
     return playerNameItem
     
@@ -111,7 +111,7 @@ function GUISquad:ComputeSquadInfo()
         self.playerNameItems[playerIndex]:SetText("")        
     end
 
-    for playerIndex, marine in ipairs( GetEntitiesIsa("Marine", player:GetTeamNumber()) ) do
+    for playerIndex, marine in ipairs( GetEntitiesForTeam("Marine", player:GetTeamNumber()) ) do
     
         if marine:GetSquad() == localSquadIndex and (marine ~= player) then
         

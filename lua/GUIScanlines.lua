@@ -28,7 +28,7 @@ GUIScanlines.kDisruptColor = Color(1, 1, 1, 1)
 
 function GUIScanlines:Initialize(settingsTable)
     
-    self.background = GUI.CreateGraphicsItem()
+    self.background = GUIManager:CreateGraphicItem()
     self.background:SetAnchor(GUIItem.Left, GUIItem.Top)
     self.background:SetSize(Vector(settingsTable.Width, settingsTable.Height + settingsTable.ExtraHeight, 0))
     self.background:SetPosition(Vector(0, -settingsTable.ExtraHeight, 0))

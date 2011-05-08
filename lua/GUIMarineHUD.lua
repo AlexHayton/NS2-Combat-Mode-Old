@@ -72,7 +72,7 @@ GUIMarineHUD.kLowHealthPercent = 0.2
 
 function GUIMarineHUD:Initialize()
 
-    self.background = GUI.CreateGraphicsItem()
+    self.background = GUIManager:CreateGraphicItem()
     self.background:SetLayer(kGUILayerPlayerHUD)
     self.background:SetSize(Vector(GUIMarineHUD.kBackgroundWidth, GUIMarineHUD.kBackgroundHeight, 0))
     self.background:SetAnchor(GUIItem.Left, GUIItem.Bottom)
@@ -91,7 +91,7 @@ end
 
 function GUIMarineHUD:CreateHealthBar()
 
-    self.healthBarBackground = GUI.CreateGraphicsItem()
+    self.healthBarBackground = GUIManager:CreateGraphicItem()
     self.healthBarBackground:SetSize(Vector(GUIMarineHUD.kHealthBarWidth, GUIMarineHUD.kHealthBarHeight, 0))
     self.healthBarBackground:SetAnchor(GUIItem.Right, GUIItem.Top)
     self.healthBarBackground:SetPosition(Vector(-GUIMarineHUD.kHealthBarWidth, 0, 0) + GUIMarineHUD.kHealthBarOffset)
@@ -100,7 +100,7 @@ function GUIMarineHUD:CreateHealthBar()
     self.healthBarBackground:SetTexturePixelCoordinates(GUIMarineHUD.kHealthBarTextureX1, GUIMarineHUD.kHealthBarTextureY1, GUIMarineHUD.kHealthBarTextureX2, GUIMarineHUD.kHealthBarTextureY2)
     self.healthBarBackgroundXCoord = GUIMarineHUD.kHealthBarTextureX2
     
-    self.healthBar = GUI.CreateGraphicsItem()
+    self.healthBar = GUIManager:CreateGraphicItem()
     self.healthBar:SetSize(Vector(GUIMarineHUD.kHealthBarWidth, GUIMarineHUD.kHealthBarHeight, 0))
     self.healthBar:SetAnchor(GUIItem.Right, GUIItem.Top)
     self.healthBar:SetPosition(Vector(-GUIMarineHUD.kHealthBarWidth, 0, 0) + GUIMarineHUD.kHealthBarOffset)
@@ -108,13 +108,13 @@ function GUIMarineHUD:CreateHealthBar()
     self.healthBar:SetTexture(GUIMarineHUD.kTextureName)
     self.healthBar:SetTexturePixelCoordinates(GUIMarineHUD.kHealthBarTextureX1, GUIMarineHUD.kHealthBarTextureY1, GUIMarineHUD.kHealthBarTextureX2, GUIMarineHUD.kHealthBarTextureY2)
     
-    self.healthText = GUI.CreateTextItem()
+    self.healthText = GUIManager:CreateTextItem()
     self.healthText:SetFontSize(GUIMarineHUD.kHealthTextFontSize)
     self.healthText:SetFontName(GUIMarineHUD.kTextFontName)
     self.healthText:SetFontIsBold(false)
     self.healthText:SetAnchor(GUIItem.Left, GUIItem.Top)
-    self.healthText:SetTextAlignmentX(GUITextItem.Align_Center)
-    self.healthText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.healthText:SetTextAlignmentX(GUIItem.Align_Center)
+    self.healthText:SetTextAlignmentY(GUIItem.Align_Center)
     self.healthText:SetPosition(GUIMarineHUD.kHealthTextOffset)
     self.healthText:SetColor(Color(1, 1, 1, 1))
     
@@ -126,7 +126,7 @@ end
 
 function GUIMarineHUD:CreateArmorBar()
 
-    self.armorBarBackground = GUI.CreateGraphicsItem()
+    self.armorBarBackground = GUIManager:CreateGraphicItem()
     self.armorBarBackground:SetSize(Vector(GUIMarineHUD.kArmorBarWidth, GUIMarineHUD.kArmorBarHeight, 0))
     self.armorBarBackground:SetAnchor(GUIItem.Right, GUIItem.Top)
     self.armorBarBackground:SetPosition(Vector(-GUIMarineHUD.kArmorBarWidth, 0, 0) + GUIMarineHUD.kArmorBarOffset)
@@ -135,7 +135,7 @@ function GUIMarineHUD:CreateArmorBar()
     self.armorBarBackground:SetTexturePixelCoordinates(GUIMarineHUD.kArmorBarTextureX1, GUIMarineHUD.kArmorBarTextureY1, GUIMarineHUD.kArmorBarTextureX2, GUIMarineHUD.kArmorBarTextureY2)
     self.armorBarBackgroundXCoord = GUIMarineHUD.kArmorBarTextureX2
     
-    self.armorBar = GUI.CreateGraphicsItem()
+    self.armorBar = GUIManager:CreateGraphicItem()
     self.armorBar:SetSize(Vector(GUIMarineHUD.kArmorBarWidth, GUIMarineHUD.kArmorBarHeight, 0))
     self.armorBar:SetAnchor(GUIItem.Right, GUIItem.Top)
     self.armorBar:SetPosition(Vector(-GUIMarineHUD.kArmorBarWidth, 0, 0) + GUIMarineHUD.kArmorBarOffset)
@@ -143,13 +143,13 @@ function GUIMarineHUD:CreateArmorBar()
     self.armorBar:SetTexture(GUIMarineHUD.kTextureName)
     self.armorBar:SetTexturePixelCoordinates(GUIMarineHUD.kArmorBarTextureX1, GUIMarineHUD.kArmorBarTextureY1, GUIMarineHUD.kArmorBarTextureX2, GUIMarineHUD.kArmorBarTextureY2)
     
-    self.armorText = GUI.CreateTextItem()
+    self.armorText = GUIManager:CreateTextItem()
     self.armorText:SetFontSize(GUIMarineHUD.kArmorTextFontSize)
     self.armorText:SetFontName(GUIMarineHUD.kTextFontName)
     self.armorText:SetFontIsBold(false)
     self.armorText:SetAnchor(GUIItem.Left, GUIItem.Top)
-    self.armorText:SetTextAlignmentX(GUITextItem.Align_Center)
-    self.armorText:SetTextAlignmentY(GUITextItem.Align_Center)
+    self.armorText:SetTextAlignmentX(GUIItem.Align_Center)
+    self.armorText:SetTextAlignmentY(GUIItem.Align_Center)
     self.armorText:SetPosition(GUIMarineHUD.kArmorTextOffset)
     self.armorText:SetColor(Color(1, 1, 1, 1))
 
@@ -161,7 +161,7 @@ end
 
 function GUIMarineHUD:CreateParasite()
 
-    self.parasite = GUI.CreateGraphicsItem()
+    self.parasite = GUIManager:CreateGraphicItem()
     self.parasite:SetSize(GUIMarineHUD.kParasiteMaxSize)
     self.parasite:SetAnchor(GUIItem.Right, GUIItem.Top)
     self.parasite:SetPosition(Vector(GUIMarineHUD.kParasiteXOffset, 0, 0))

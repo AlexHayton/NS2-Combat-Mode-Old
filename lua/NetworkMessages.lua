@@ -82,21 +82,23 @@ local kScoresMessage =
     rank = string.format("integer (0 to %d)", kMaxRank)
 }
 
-function BuildScoresMessage(player)
+function BuildScoresMessage(scorePlayer, sendToPlayer)
 
+    local isEnemy = scorePlayer:GetTeamNumber() == GetEnemyTeamNumber(sendToPlayer:GetTeamNumber())
+    
     local t = {}
 
-    t.clientId = player:GetClientIndex()
-    t.playerName = string.sub(player:GetName(), 0, kMaxNameLength)
-    t.teamNumber = player:GetTeamNumber()
-    t.score = player:GetScore()
-    t.kills = player:GetKills()
-    t.deaths = player:GetDeaths()
-    t.plasma = player:GetPlasma()
-    t.isCommander = player:isa("Commander")
-    t.status = player:GetPlayerStatusDesc()
-    t.isSpectator = player:isa("Spectator")
-    t.rank = player:GetRank()
+    t.clientId = scorePlayer:GetClientIndex()
+    t.playerName = string.sub(scorePlayer:GetName(), 0, kMaxNameLength)
+    t.teamNumber = scorePlayer:GetTeamNumber()
+    t.score = scorePlayer:GetScore()
+    t.kills = scorePlayer:GetKills()
+    t.deaths = scorePlayer:GetDeaths()
+    t.plasma = scorePlayer:GetPlasma()
+    t.isCommander = ConditionalValue(isEnemy, false, scorePlayer:isa("Commander"))
+    t.status = ConditionalValue(isEnemy, "-", scorePlayer:GetPlayerStatusDesc())
+    t.isSpectator = ConditionalValue(isEnemy, false, scorePlayer:isa("Spectator"))
+    t.rank = ConditionalValue(isEnemy, false, scorePlayer:GetRank())
     
     return t
     
@@ -191,11 +193,8 @@ function BuildMarqueeSelectCommand(pickStartVec, pickEndVec)
 
     local t = {}
     
-    t.pickStartVec = Vector()
-    VectorCopy(pickStartVec, t.pickStartVec)
-
-    t.pickEndVec = Vector()
-    VectorCopy(pickEndVec, t.pickEndVec)
+    t.pickStartVec = Vector(pickStartVec)
+    t.pickEndVec = Vector(pickEndVec)
 
     return t
     
@@ -213,10 +212,7 @@ local kClickSelectMessage =
 function BuildClickSelectCommand(pickVec)
 
     local t = {}
-    
-    t.pickVec = Vector()
-    VectorCopy(pickVec, t.pickVec)
-    
+    t.pickVec = Vector(pickVec)
     return t
     
 end
@@ -236,14 +232,9 @@ function BuildControlClickSelectCommand(pickVec, screenStartVec, screenEndVec)
 
     local t = {}
     
-    t.pickVec = Vector()
-    VectorCopy(pickVec, t.pickVec)
-
-    t.screenStartVec = Vector()
-    VectorCopy(screenStartVec, t.screenStartVec)
-
-    t.screenEndVec = Vector()
-    VectorCopy(screenEndVec, t.screenEndVec)
+    t.pickVec = Vector(pickVec)
+    t.screenStartVec = Vector(screenStartVec)
+    t.screenEndVec = Vector(screenEndVec)
     
     return t
     
@@ -387,9 +378,39 @@ function ParseExecuteTechUpgradeMessage(t)
     return t.techId
 end
 
+local kDebugLineMessage =
+{
+    startPoint = "vector",
+    endPoint = "vector",
+    lifetime = "float",
+    r = "float",
+    g = "float",
+    b = "float",
+    a = "float"
+}
+
+function BuildDebugLineMessage(startPoint, endPoint, lifetime, r, g, b, a)
+
+    local t = {}
+    
+    t.startPoint = startPoint
+    t.endPoint = endPoint
+    t.lifetime = lifetime
+    t.r = r
+    t.g = g
+    t.b = b
+    t.a = a
+    
+    return t
+    
+end
+
+function ParseDebugLineMessage(t)
+    return t.startPoint, t.endPoint, t.lifetime, t.r, t.g, t.b, t.a
+end
+
 Shared.RegisterNetworkMessage("EntityChanged", kEntityChangedMessage)
 Shared.RegisterNetworkMessage("ResetMouse", {} )
-Shared.RegisterNetworkMessage("MinimapBlipMessage", kBlipMessage)
 
 // Selection
 Shared.RegisterNetworkMessage("MarqueeSelect", kMarqueeSelectMessage)
@@ -408,3 +429,6 @@ Shared.RegisterNetworkMessage("Tracer", kTracerMessage)
 // Player actions
 Shared.RegisterNetworkMessage("ExecuteSaying", kExecuteSayingMessage)
 Shared.RegisterNetworkMessage("ExecuteTechUpgrade", kExecuteTechUpgradeMessage)
+
+// Debug messages
+Shared.RegisterNetworkMessage("DebugLine", kDebugLineMessage)

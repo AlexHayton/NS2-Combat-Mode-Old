@@ -311,7 +311,7 @@ function GetSpawnInSquad(marine, squadIndex)
             
         end
         
-        local squadEntities = GetEntitiesIsa(GetSquadClass(), marine:GetTeamNumber())
+        local squadEntities = GetEntitiesForTeam(GetSquadClass(), marine:GetTeamNumber())
         table.foreachfunctor(squadEntities, addPosition)
 
         if(numInSquad >= kSquadMinimumEntityCount) then

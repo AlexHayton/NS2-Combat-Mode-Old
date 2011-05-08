@@ -74,7 +74,7 @@ function GUIMinimap:Initialize()
     self:InitializeBackground()
     self:InitializeScanlines()
     
-    self.minimap = GUI.CreateGraphicsItem()
+    self.minimap = GUIManager:CreateGraphicItem()
     
     self:InitializeLocationNames()
     
@@ -101,7 +101,7 @@ end
 
 function GUIMinimap:InitializeBackground()
 
-    self.background = GUI.CreateGraphicsItem()
+    self.background = GUIManager:CreateGraphicItem()
     self.background:SetSize(Vector(GUIMinimap.kBackgroundWidth, GUIMinimap.kBackgroundHeight, 0))
     self.background:SetPosition(Vector(0, -GUIMinimap.kBackgroundHeight, 0))
     GUISetTextureCoordinatesTable(self.background, GUIMinimap.kBackgroundTextureCoords)
@@ -132,11 +132,11 @@ end
 
 function GUIMinimap:InitializeCameraIcon()
 
-    self.cameraIcon = GUI.CreateGraphicsItem()
+    self.cameraIcon = GUIManager:CreateGraphicItem()
     self.cameraIcon:SetUseStencil(true)
     self.cameraIcon:SetAnchor(GUIItem.Center, GUIItem.Middle)
 
-    self.cameraIconMask = GUI.CreateGraphicsItem()
+    self.cameraIconMask = GUIManager:CreateGraphicItem()
     self.cameraIconMask:SetIsStencil(true)
     self.cameraIconMask:SetAnchor(GUIItem.Left, GUIItem.Top)
     self.cameraIconMask:SetLayer(GUIMinimap.kCameraIconLayer)
@@ -148,7 +148,7 @@ end
 
 function GUIMinimap:InitializePlayerIcon()
 
-    self.playerIcon = GUI.CreateGraphicsItem()
+    self.playerIcon = GUIManager:CreateGraphicItem()
     self.playerIcon:SetSize(Vector(GUIMinimap.kIconWidth, GUIMinimap.kIconHeight, 0))
     self.playerIcon:SetAnchor(GUIItem.Left, GUIItem.Top)
     self.playerIcon:SetTexture(GUIMinimap.kIconFileName)
@@ -186,12 +186,12 @@ function GUIMinimap:InitializeLocationNames()
     end
     
     for i, location in ipairs(uniqueLocationsData) do
-        local locationItem = GUI.CreateTextItem()
+        local locationItem = GUIManager:CreateTextItem()
         locationItem:SetFontSize(GUIMinimap.kLocationFontSize)
         locationItem:SetFontIsBold(true)
         locationItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-        locationItem:SetTextAlignmentX(GUITextItem.Align_Center)
-        locationItem:SetTextAlignmentY(GUITextItem.Align_Center)
+        locationItem:SetTextAlignmentX(GUIItem.Align_Center)
+        locationItem:SetTextAlignmentY(GUIItem.Align_Center)
         local posX, posY = PlayerUI_GetMapXY(location.Origin.x, location.Origin.z)
         // Locations only supported on the big mode.
         posX = posX * GUIMinimap.kMinimapBigSize.x
@@ -398,7 +398,7 @@ end
 
 function GUIMinimap:AddStaticBlip()
 
-    addedBlip = GUI.CreateGraphicsItem()
+    addedBlip = GUIManager:CreateGraphicItem()
     addedBlip:SetAnchor(GUIItem.Left, GUIItem.Top)
     addedBlip:SetLayer(GUIMinimap.kStaticBlipsLayer)
     self.minimap:AddChild(addedBlip)
@@ -525,7 +525,7 @@ function GUIMinimap:GetFreeDynamicBlip(xPos, yPos, blipType)
     else
     
         returnBlip = { }
-        returnBlip["Item"] = GUI.CreateGraphicsItem()
+        returnBlip["Item"] = GUIManager:CreateGraphicItem()
         // Make sure these draw a layer above the minimap so they are on top.
         returnBlip["Item"]:SetLayer(GUIMinimap.kDynamicBlipsLayer)
         returnBlip["Item"]:SetTexture(GUIMinimap.kBlipTexture)

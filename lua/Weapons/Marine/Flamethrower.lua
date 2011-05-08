@@ -96,7 +96,7 @@ function Flamethrower:FirePrimary(player, bullets, range, penetration)
     if Server then
     
     local barrelPoint = self:GetBarrelPoint(player)
-    local ents = GetGamerules():GetEntities("LiveScriptActor", -1, barrelPoint, range)
+    local ents = GetEntitiesWithinRange("LiveScriptActor", barrelPoint, range)
     
     local fireDirection = player:GetViewAngles():GetCoords().zAxis
     
@@ -105,7 +105,7 @@ function Flamethrower:FirePrimary(player, bullets, range, penetration)
         if ent ~= player then
         
             local toEnemy = GetNormalizedVector(ent:GetModelOrigin() - barrelPoint)
-            local dotProduct = fireDirection:DotProduct(toEnemy)
+            local dotProduct = Math.DotProduct(fireDirection, toEnemy)
         
             // Look for enemies in cone in front of us    
             if dotProduct > .8 then

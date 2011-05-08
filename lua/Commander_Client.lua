@@ -512,10 +512,10 @@ function Commander:UpdateGhostStructureVisuals()
         elseif attachEntity then        
          
             coords = attachEntity:GetAngles():GetCoords()
-            VectorCopy(position, coords.origin)
+            coords.origin = position
             
         else
-            VectorCopy(position, coords.origin)
+            coords.origin = position
         end
         
         self.ghostStructure:SetCoords(coords)        
@@ -877,6 +877,8 @@ function Commander:OverrideInput(input)
         self.selectHotkeyGroup = 0
         
     end
+    
+    return input
 
 end
 

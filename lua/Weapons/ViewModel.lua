@@ -21,6 +21,8 @@ class 'ViewModel' (BlendedActor)
 ViewModel.mapName = "view_model"
 
 function ViewModel:OnCreate()
+    
+    self.weaponId = Entity.invalidId
 
     BlendedActor.OnCreate(self)
     
@@ -62,7 +64,7 @@ function ViewModel:ResetAnimState()
 
     BlendedActor.ResetAnimState(self)    
     
-    self.weapon                     = nil
+    self.weaponId = Entity.invalidId
 
 end
 
@@ -81,7 +83,12 @@ function ViewModel:SetModel(modelName, weapon)
     end
     
     // Save the weapon for determining idle anims
-    self.weapon = weapon
+    
+    if (weapon ~= nil) then
+        self.weaponId = weapon:GetId()
+    else
+        self.weaponId = Entity.invalidId
+    end
     
     if (Client) then
         self:UpdateRenderModel()
@@ -187,8 +194,9 @@ function ViewModel:OnTag(tagHit)
 
     BlendedActor.OnTag(self, tagHit)
     
-    if self.weapon then
-        self.weapon:OnTag(tagHit)
+    local weapon = self:GetWeapon()
+    if weapon ~= nil then
+        weapon:OnTag(tagHit)
     end
 
 end
@@ -287,18 +295,16 @@ function ViewModel:GetEffectParams(tableParams)
     tableParams[kEffectFilterClassName] = self:GetClassName()
     
     // Override classname with class of weapon we represent
-    if self.weapon ~= nil then
-    
-        tableParams[kEffectFilterClassName] = self.weapon:GetClassName()
-        
-        self.weapon:GetEffectParams(tableParams)
-        
+    local weapon = self:GetWeapon()
+    if weapon ~= nil then
+        tableParams[kEffectFilterClassName] = weapon:GetClassName()
+        weapon:GetEffectParams(tableParams)
     end
     
 end
 
 function ViewModel:GetWeapon()
-    return self.weapon
+    return Shared.GetEntity(self.weaponId)
 end
 
 Shared.LinkClassToMap( "ViewModel", ViewModel.mapName, {} )  

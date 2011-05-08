@@ -199,17 +199,17 @@ function GUITechUpgrade:CreateTechUpgradeItem()
         return returnTechUpgradeItem
     end
     
-    local textBackground = GUI.CreateGraphicsItem()
+    local textBackground = GUIManager.CreateGraphicsItem()
     textBackground:SetAnchor(GUIItem.Left, GUIItem.Top)
     textBackground:SetColor(GUITechUpgrade.kTextBackgroundColor)
     textBackground:SetInheritsParentAlpha(true)
     
-    local newTechUpgradeItem = GUI.CreateTextItem()
+    local newTechUpgradeItem = GUIManager.CreateTextItem()
     newTechUpgradeItem:SetFontSize(GUITechUpgrade.kTextFontSize)
     newTechUpgradeItem:SetAnchor(GUIItem.Left, GUIItem.Center)
     newTechUpgradeItem:SetPosition(Vector(GUITechUpgrade.kTextBackgroundWidthBuffer, 0, 0))
-    newTechUpgradeItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    newTechUpgradeItem:SetTextAlignmentY(GUITextItem.Align_Center)
+    newTechUpgradeItem:SetTextAlignmentX(GUIItem.Align_Min)
+    newTechUpgradeItem:SetTextAlignmentY(GUIItem.Align_Center)
     newTechUpgradeItem:SetColor(GUITechUpgrade.kTextColor)
     newTechUpgradeItem:SetInheritsParentAlpha(true)
     textBackground:AddChild(newTechUpgradeItem)

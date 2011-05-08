@@ -372,6 +372,8 @@ function Gorge:UpdateMove(input)
         input.move:Scale(Gorge.kBuildingModeMovementScalar)
         
     end
+    
+    return input
 
 end
 

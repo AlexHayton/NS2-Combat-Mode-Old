@@ -290,7 +290,7 @@ function CommandStructure:Logout()
     
 end
 
-function CommandStructure:OverrideOrder(order)
+function CommandStructure:OnOverrideOrder(order)
 
     // Convert default to set rally point
     if(order:GetType() == kTechId.Default) then

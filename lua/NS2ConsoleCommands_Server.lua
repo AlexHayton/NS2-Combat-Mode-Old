@@ -106,7 +106,7 @@ function OnCommandEnergy(client)
     if Shared.GetCheatsEnabled() then
     
         // Give energy to all structures on our team
-        for index, ent in ipairs(GetGamerules():GetEntities("LiveScriptActor", player:GetTeamNumber())) do
+        for index, ent in ipairs(GetEntitiesForTeam("LiveScriptActor", player:GetTeamNumber())) do
         
             ent:SetEnergy(LiveScriptActor.kMaxEnergy)
             
@@ -186,17 +186,17 @@ function OnCommandEnts(client, className)
     local player = client:GetControllingPlayer()
     if Shared.GetCheatsEnabled() then
     
-        local entityCount = table.maxn(GetEntitiesIsa("Entity", -1))
+        local entityCount = Shared.GetEntitiesWithClassname("Entity"):GetSize()
         
-        local weaponCount = table.maxn(GetEntitiesIsa("Weapon", -1))
-        local playerCount = table.maxn(GetEntitiesIsa("Player", -1))
-        local structureCount = table.maxn(GetEntitiesIsa("Structure", -1))
+        local weaponCount = Shared.GetEntitiesWithClassname("Weapon"):GetSize()
+        local playerCount = Shared.GetEntitiesWithClassname("Player"):GetSize()
+        local structureCount = Shared.GetEntitiesWithClassname("Structure"):GetSize()
         local playersOnPlayingTeams = GetGamerules():GetTeam1():GetNumPlayers() + GetGamerules():GetTeam2():GetNumPlayers()
         local commandStationsOnTeams = GetGamerules():GetTeam1():GetNumCommandStructures() + GetGamerules():GetTeam2():GetNumCommandStructures()
-        local blipCount = table.maxn(GetEntitiesIsa("Blip"))
+        local blipCount = Shared.GetEntitiesWithClassname("Blip"):GetSize()
         
         if className then
-            local numClassEnts = table.count(GetEntitiesIsa(className))
+            local numClassEnts = Shared.GetEntitiesWithClassname(className):GetSize()
             Server.Broadcast(player, Pluralize(numClassEnts, className))
         else
             Server.Broadcast(player, string.format("%d entities (%s, %d playing, %s, %s, %s, %d command structures on teams).", 
@@ -463,7 +463,7 @@ function OnCommandCommand(client)
     if(Shared.GetCheatsEnabled()) then
     
         // Find hive/command station on our team and use it
-        local ents = GetEntitiesIsa("CommandStructure", player:GetTeamNumber())
+        local ents = GetEntitiesForTeam("CommandStructure", player:GetTeamNumber())
         if(table.maxn(ents) > 0) then
             player:SetOrigin(ents[1]:GetOrigin() + Vector(0, 1, 0))
             ents[1]:OnUse(player, .1, true, ents[1]:GetModelOrigin())
@@ -498,7 +498,7 @@ end
 function OnCommandFlareDrifter(client)
 
     local player = client:GetControllingPlayer()
-    local hives = GetEntitiesIsa("CommandStructure", GetGamerules():GetTeam2():GetTeamNumber())
+    local hives = GetEntitiesForTeam("CommandStructure", GetGamerules():GetTeam2():GetTeamNumber())
     if(table.maxn(hives) > 0) then
         local drifter = CreateEntity(Drifter.kMapName, hives[1]:GetOrigin() + Vector(-3, 0.5, 0), GetGamerules():GetTeam2():GetTeamNumber())
         drifter:PerformFlare()
@@ -527,8 +527,7 @@ function OnCommandWeldDoors(client)
 
     if Shared.GetCheatsEnabled() then
     
-        local doors = GetEntitiesIsa("Door", -1)
-        for index, door in ipairs(doors) do 
+        for index, door in ientitylist(Shared.GetEntitiesWithClassname("Door")) do 
         
             if door:GetIsAlive() then
                 door:SetState(Door.kState.Welded)
@@ -612,10 +611,10 @@ function OnCommandDistressBeacon()
 
     if Shared.GetCheatsEnabled() then
     
-        local ents = GetEntitiesIsa("Observatory")
-        if table.count(ents) > 0 then
+        local ents = Shared.GetEntitiesWithClassname("Observatory")
+        if ents:Size() > 0 then
         
-            ents[1]:TriggerDistressBeacon()
+            ents:GetEntityAtIndex(0):TriggerDistressBeacon()
             
         end
         

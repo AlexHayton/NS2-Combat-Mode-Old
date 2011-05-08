@@ -35,6 +35,10 @@ function OnCommandTracer(tracerTable)
     CreateTracer(ParseTracerMessage(tracerTable))
 end
 
+function OnCommandDebugLine(debugLineMessage)
+    DebugLine(ParseDebugLineMessage(debugLineMessage))
+end
+
 Client.HookNetworkMessage("Ping",               OnCommandPing)
 Client.HookNetworkMessage("Scores",             OnCommandScores)
 Client.HookNetworkMessage("EntityChanged",      OnCommandEntityChanged)
@@ -45,3 +49,5 @@ Client.HookNetworkMessage("TechNodeUpdate",     OnCommandTechNodeUpdate)
 
 Client.HookNetworkMessage("ResetMouse",         OnCommandResetMouse)
 Client.HookNetworkMessage("Tracer",             OnCommandTracer)
+
+Client.HookNetworkMessage("DebugLine",          OnCommandDebugLine)

@@ -32,7 +32,7 @@ function Sentry:OnKill(damage, attacker, doer, point, direction)
     
 end
 
-function Sentry:OverrideOrder(order)
+function Sentry:OnOverrideOrder(order)
     
     local orderTarget = nil
     if (order:GetParam() ~= nil) then
@@ -43,32 +43,9 @@ function Sentry:OverrideOrder(order)
     if(order:GetType() == kTechId.Default and orderTarget and orderTarget:isa("LiveScriptActor") and GetEnemyTeamNumber(orderTarget:GetTeamNumber()) == self:GetTeamNumber()) then
     
         order:SetType(kTechId.Attack)
-
-    else
-    
-        LiveScriptActor.OverrideOrder(self, order)
         
     end
     
-end
-
-function Sentry:OrderChanged()
-
-    LiveScriptActor.OrderChanged(self)
-    
-    if not self:GetHasOrder() then
-        self:SetDesiredMode(Sentry.kMode.Scanning)
-    else
-    
-        local orderType = self:GetCurrentOrder():GetType()
-        if orderType == kTechId.Attack then
-            self:SetDesiredMode(Sentry.kMode.Attacking)
-        elseif orderType == kTechId.Stop then
-            self:SetDesiredMode(Sentry.kMode.Scanning)
-        end
-        
-    end
-
 end
 
 // Control looping centrally to make sure fire sound doesn't stop or start unnecessarily
@@ -239,7 +216,7 @@ end
 function Sentry:GetSortedTargetList()
 
     local sentryAttackOrigin = self:GetAttackOrigin()
-    local ents = GetGamerules():GetEntities("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), sentryAttackOrigin, Sentry.kRange)
+    local ents = GetEntitiesForTeamWithinRange("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), sentryAttackOrigin, Sentry.kRange)
     
     local targets = {}    
     for index, currentTarget in pairs(ents) do
@@ -488,17 +465,21 @@ function Sentry:UpdateSetTarget()
     
 end
 
-function Sentry:SetOrder(order, clearExisting, insertFirst)
+function Sentry:OnOrderChanged()
 
-    LiveScriptActor.SetOrder(self, order, clearExisting, insertFirst)
-
-    local order = self:GetCurrentOrder()    
-    local mode = self:GetSentryMode()
+    if not self:GetHasOrder() then
+        self:SetDesiredMode(Sentry.kMode.Scanning)
+    else
     
-    if order ~= nil and (order:GetType() == kTechId.SetTarget) then
-        self:SetDesiredMode(Sentry.kMode.SettingTarget)
-    elseif order ~= nil and (order:GetType() == kTechId.Attack) then
-        self:SetDesiredMode(Sentry.kMode.Attacking)
+        local orderType = self:GetCurrentOrder():GetType()
+        if orderType == kTechId.Attack then
+            self:SetDesiredMode(Sentry.kMode.Attacking)
+        elseif orderType == kTechId.Stop then
+            self:SetDesiredMode(Sentry.kMode.Scanning)
+        elseif orderType == kTechId.SetTarget then
+            self:SetDesiredMode(Sentry.kMode.SettingTarget)
+        end
+        
     end
     
 end

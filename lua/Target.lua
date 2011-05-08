@@ -108,7 +108,7 @@ if (Server) then
                 local nextThink = .4
                 
                 // If in range, set next think
-                for index, entity in ipairs(GetGamerules():GetAllPlayers()) do
+                for index, entity in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
                 
                     local dist = (entity:GetOrigin() - self:GetOrigin()):GetLength()
                     if dist <= self.popupRadius then
@@ -149,12 +149,18 @@ end
 
 if (Client) then
 
-    function Target:TakeDamage(damage, attacker, doer, point, direction)
+    function Target:OnTakeDamage(damage, doer, point)
      
+        LiveScriptActor.OnTakeDamage(self, damage, doer, point)
+        
         // Push the physics model around on the client when we shoot it.
         // This won't affect the model on other clients, but it's just for
         // show anyway (doesn't affect player movement).
         if (self.physicsModel ~= nil) then
+            local direction = Vector(0, 1, 0)
+            if doer and point then
+                direction = doer:GetOrigin() - point
+            end
             self.physicsModel:AddImpulse(point, direction * 0.01)
         end
         

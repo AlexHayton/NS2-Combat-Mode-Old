@@ -33,7 +33,7 @@ function GUIGrenadeDisplay:Initialize()
 
     // Create the grenade indicators.
     for i = 1, GUIGrenadeDisplay.kMaxGrenades do
-        self.grenade[i] = GUI.CreateGraphicsItem()
+        self.grenade[i] = GUIManager:CreateGraphicItem()
         self.grenade[i]:SetTexture("ui/RifleDisplay.dds")
         self.grenade[i]:SetSize( Vector(GUIGrenadeDisplay.kIndicatorWidth, GUIGrenadeDisplay.kIndicatorHeight, 0) )
         self.grenade[i]:SetPosition( Vector(GUIGrenadeDisplay.kIndicatorXOffset, GUIGrenadeDisplay.kIndicatorYBaseOffset + (GUIGrenadeDisplay.kIndicatorYExtraOffset * (i - 1)), 0 ) )

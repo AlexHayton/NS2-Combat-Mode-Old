@@ -58,7 +58,7 @@ end
 
 function AmmoPack:GetPackRecipient()
 
-    local potentialRecipients = GetEntitiesIsaInRadius("Marine", self:GetTeamNumber(), self:GetOrigin(), 1)
+    local potentialRecipients = GetEntitiesForTeamWithinRange("Marine", self:GetTeamNumber(), self:GetOrigin(), 1)
     
     for index, player in pairs(potentialRecipients) do
     

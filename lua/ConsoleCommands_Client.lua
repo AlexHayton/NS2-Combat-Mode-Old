@@ -43,7 +43,7 @@ function OnCommandEntityChanged(entityChangedTable)
 
     local newId = ConditionalValue(entityChangedTable.newEntityId == -1, nil, entityChangedTable.newEntityId)
     
-    for index, entity in ipairs(GetEntitiesIsa("ScriptActor")) do
+    for index, entity in ientitylist(Shared.GetEntitiesWithClassname("ScriptActor")) do
     
         // Allow player to update selection, etc. with entity replacement
         entity:OnEntityChange(entityChangedTable.oldEntityId, newId)
