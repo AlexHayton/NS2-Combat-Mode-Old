@@ -44,7 +44,7 @@ function Alien:Evolve(techId)
                 self:RemoveChildren()
                 
                 // Deduct cost here as player is immediately replaced and copied
-                self:AddPlasma(-LookupTechData(techId, kTechDataCostKey))
+                self:AddResources(-LookupTechData(techId, kTechDataCostKey))
                 
                 local newPlayer = self:Replace(Embryo.kMapName)
                 newPlayer:SetOrigin(position)

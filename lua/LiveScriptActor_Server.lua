@@ -92,37 +92,6 @@ function LiveScriptActor:UpdateJustKilled()
     
 end
 
-// Return the amount of health we added 
-function LiveScriptActor:AddHealth(health, playSound)
-
-    // TakeDamage should be used for negative values.
-    ASSERT( health >= 0 )
-
-    local total = 0
-    
-    if self:GetIsAlive() and ((self:GetHealth() < self:GetMaxHealth()) or (self:GetArmor() < self:GetMaxArmor())) then
-    
-        // Add health first, then armor if we're full
-        local healthAdded = math.min(health, self:GetMaxHealth() - self:GetHealth())
-        self:SetHealth(math.min(math.max(0, self:GetHealth() + healthAdded), self:GetMaxHealth()))
-
-        local healthToAddToArmor = health - healthAdded
-        if(healthToAddToArmor > 0) then
-            self:SetArmor(math.min(math.max(0, self:GetArmor() + healthToAddToArmor), self:GetMaxArmor()))
-        end
-        
-        total = healthAdded + healthToAddToArmor
-        
-        if total > 0 and playSound and (self:GetTeamType() == kAlienTeamType) then
-            self:TriggerEffects("regenerate")
-        end
-        
-    end
-    
-    return total
-    
-end
-
 function LiveScriptActor:GetDamageImpulse(damage, doer, point)
     if damage and doer and point then
         return GetNormalizedVector(doer:GetOrigin() - point) * (damage / 40) * .01

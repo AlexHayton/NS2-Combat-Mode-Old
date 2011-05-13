@@ -44,6 +44,7 @@ kInfantryPortalEngagementDistance = 2
 kArmoryEngagementDistance = 3
 kExtractorEngagementDistance = 2
 kObservatoryEngagementDistance = 1
+kPhaseGateEngagementDistance = 2
 kRoboticsFactorEngagementDistance = 5
 kARCEngagementDistance = 2
 kSentryEngagementDistance = 2

@@ -5,7 +5,7 @@
 //
 // Created by: Brian Cronin (brianc@unknownworlds.com)
 //
-// Manages displaying plasma, carbon, and number of resource towers.
+// Manages displaying resources and number of resource towers.
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 

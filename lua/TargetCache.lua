@@ -8,6 +8,129 @@
 Script.Load("lua/NS2Gamerules.lua") 
 Script.Load("lua/TargetCache_Commands.lua")
 
+//
+// These three methods belongs in Utility
+//
+// Wraps all arguments in ToString() before passing them to Print(). Very convinient.
+//
+function Log(formatString, ...)
+    local args = {}
+    for i = 1, select('#', ...) do
+        local v = select(i, ...)
+        table.insert(args, ToString(v))
+    end
+    if #args > 0 then 
+        PrintToLog(formatString, unpack(args))
+    else
+        PrintToLog(formatString)
+    end
+end
+
+// 
+// Enable a logger that can be turned on /off
+// Usage:
+// self.logTable = {}
+// self.logStats = Logger("stats", self.logTable, false)
+// self.logStats = Logger("base", self.logTable, true)
+// self.enabledLogs.stats = true
+// self.logStats("logs %s", msg)
+// 
+function Logger(name, logTable, enabled)
+    local result = function(format, ...) if logTable[name] then Log(format, ...) end end
+    logTable[name] = enabled and true or false
+    return result
+end
+
+//
+// Allow turning on/off loggers belonging to the given logTable.
+// It returns a description of changed logs and the available logs.
+//
+function LogCtrl(prefix, on, logTable)
+    local msg = nil
+    if prefix and string.len(prefix) > 0 then
+        for name,v in pairs(logTable) do
+            if prefix == "all" or prefix == "*" or string.find(name, prefix) == 1 then
+                logTable[name] = on
+                msg = (msg and msg .. ", " .. name) or "Set " .. name
+            end
+        end
+    end
+    msg = msg or "No logs changed"   
+    for name,v in pairs(logTable) do
+        msg = msg .. "\n" .. name .. " = " .. (v and "on" or "off")
+    end
+    return msg 
+end
+
+
+//
+// TargetFilters are used to check targets before presenting them to the prioritizers
+// 
+
+//
+// Removes targets that are not inside the maxPitch
+//
+function PitchTargetFilter(attacker, minPitchDegree, maxPitchDegree)
+    local lastPitch = 0
+    return function(target, targetPoint)
+        local origin = attacker:GetEyePos()   
+        local viewCoords = attacker:GetViewAngles():GetCoords() 
+        local v = targetPoint - origin
+        local distY = Math.DotProduct(viewCoords.yAxis, v)
+        local distZ = Math.DotProduct(viewCoords.zAxis, v)
+        local pitch = 180 * math.atan2(distY,distZ) / math.pi
+        result = pitch >= minPitchDegree and pitch <= maxPitchDegree
+        // Log("filter %s for %s, v %s, pitch %s, result %s (%s,%s)", target, attacker, v, pitch, result, minPitchDegree, maxPitchDegree)
+        return result
+    end    
+end
+ 
+
+//
+// Only lets through damaged targets
+//
+function HealableTargetFilter(healer)
+    return function(target, targetPoint) return target:AmountDamaged() > 0 end
+end
+
+//
+function RangeTargetFilter(origin, sqRange)
+    return function(target, targetPoint) return (targetPoint - origin):GetLengthSquared() end
+end
+
+//
+// Prioritizers are used to prioritize one kind of target over others
+// When selecting targets, the range-sorted list of targets are run against each supplied prioritizer in turn
+// before checking if the target is visible. If the prioritizer returns true for the target, the target will
+// be selected if it is visible. If not visible, the selection process continues.
+// 
+// Once all user-supplied prioritizers have run, a final run through will select the closest visible target.
+// 
+
+//
+// Selects target based on class
+//
+function IsaPrioritizer(className)
+    return function(target) return target:isa(className) end
+end
+
+//
+// Selects targets based on if they can hurt us
+//
+function HarmfulPrioritizer()
+    return function(target) return target:GetCanDoDamage() end
+end
+
+//
+// Selects everything 
+//
+function AllPrioritizer()
+    return function(target) return true end
+end
+
+
+
+
 class 'TargetCache'
 
 TargetCache.kMstl = 1 // marine static target list index
@@ -16,8 +139,6 @@ TargetCache.kAstl = 3 // alien static target list index
 TargetCache.kAmtl = 4 // alien mobile target list index
 TargetCache.kAshtl = 5 // alien static heal target list. Adds infestation to marine static target list, used by Crags when healing
 
-TargetCache.kAllLogs = "BTIRDd"
-
 TargetCache.kTargetListNames = { 
     "MarineStaticTargets",
     "MarineMobileTargets",
@@ -25,6 +146,17 @@ TargetCache.kTargetListNames = {
     "AlienMobileTargets",
     "AlienStaticHealTargets"
 }
+
+TargetCache.kTargetListNamesShort = { 
+    "MarineStat",
+    "MarineMob",
+    "AlienStat",
+    "AlienMob",
+    "AlienStatHeal"
+}
+
+// Used as final step if all other prioritizers fail
+TargetCache.allPrioritizer = AllPrioritizer()
 
 // called from NS2GameRules. This is not an Entity, so OnCreate doesn't exists. 
 
@@ -38,67 +170,32 @@ function TargetCache:Init()
     end
     self.salVersion = 0
     self.tlcSalVersion = -1   
-    // log tuning. Base, Target, Ignored, Rebuild, base (D)etail, local (d)etail 
-    self.logs = ""//TargetCache.kAllLogs
-    self.enabled = true
-    self:Log("Target cache initilized")
+    
+    self.logTable = { }
+    self.log = Logger("log", self.logTable)
+    self.logDetail = Logger("detail", self.logTable)
+    self.logTarget = Logger("target", self.logTable)
+    self.logStats = Logger("stats", self.logTable)
+    
+    self.log("TargetCache initialized")
+
+    self.stats = TcStats()
+    self.stats:Init(self.logStats, 60)
+    return self
 end
 
-
-function TargetCache:_Log(formatString, ...)
-
-    local convertedArg = {}
-
-    for i = 1, select('#', ...) do
-        local v = select(i, ...)
-        table.insert(convertedArg, ToString(v))
-    end
-
-    Shared.Message(string.format(formatString, unpack(convertedArg)))
-end
-
-
-// basic logging, used when updating the target lists
-function TargetCache:Log(format, ...)
-    if self.logs:find("B") then
-        self:_Log(format, ...)
-    end
-end 
-
-// target acquistion logging. Logs when targets are selected (or healed)
-function TargetCache:LogTarget(format, ...)
-    if self.logs:find("T") then
-        self:_Log(format, ...)
-    end
-end
-
-// logs things that are not put on any list
-function TargetCache:LogIgnored(format, ...)
-    if self.logs:find("I") then
-        self:_Log(format, ...)
-    end
-end
-
-// logs when static target lists are rebuilt
-function TargetCache:LogRebuild(format, ...)
-    if self.logs:find("R") then
-        self:_Log(format, ...)
-    end
-end
-
-function TargetCache:IsEnabled()
-    return self.enabled
-end
-
+    
 //
 // called by NS2Gamerules when it entities change
 //
 function TargetCache:OnEntityChange(oldId, newId)
     if oldId ~= nil then 
         self:_RemoveEntity(Shared.GetEntity(oldId))
+        self.stats.entityCount = self.stats.entityCount - 1;
     end
     if newId ~= nil then
         self:_InsertEntity(Shared.GetEntity(newId))
+        self.stats.entityCount = self.stats.entityCount + 1;
     end
 end
 
@@ -126,16 +223,10 @@ function TargetCache:_VerifyZombieList()
         for i = #self.zombieList, 1, -1 do
             local zombie = self.zombieList[i]
             if self:_IsPossibleTarget(zombie, self:_IsMobile(zombie)) then
-                self:Log("It's ALIVE! (%s)", zombie)
+                self.logDetail("It's ALIVE! (%s)", zombie)
                 table.remove(self.zombieList, i)
                 self:_InsertEntity(zombie)
             end
-        end
-        if #self.zombieList ~= self.lastLoggedZombieListSize then
-            if self.lastLoggedZombieListSize ~= nil then
-                self:Log("%d zombies shambling around", #self.zombieList)
-            end
-            self.lastLoggedZombieListSize = #self.zombieList
         end
     end
 end
@@ -148,10 +239,10 @@ function TargetCache:_InsertInTargetList(listIndex, entity)
     local list = self.targetListCache[listIndex]
     table.insertunique(list,  entity)
     self.tlcVersions[listIndex] = self.tlcVersions[listIndex] + 1
-    self:Log("Insert %s, added to %s, vers %d, len %d", entity,TargetCache.kTargetListNames[listIndex],self.tlcVersions[listIndex],table.maxn(list))
-    if self.logs:find("D") then
+    self.log("Insert %s, added to %s, vers %d, len %d", entity,TargetCache.kTargetListNames[listIndex],self.tlcVersions[listIndex],table.maxn(list))
+    if self.logTable.detail then
         for i,target in ipairs(list) do  
-            self:Log("%d : %s", i, target)
+            self.logDetail("%d : %s", i, target)
         end
     end
 end
@@ -171,7 +262,7 @@ function TargetCache:_InsertEntity(insertedEntity)
             self:_InsertInTargetList(TargetCache.kAshtl, insertedEntity)
         end
     else
-        self:LogIgnored("Insert ignoring %s", insertedEntity)
+        self.logDetail("Insert ignoring %s", insertedEntity)
     end
 end
 
@@ -194,21 +285,21 @@ function TargetCache:_RemoveEntity(deletedEntity)
         local index = table.find(list,deletedEntity)
         if index then
             table.remove(list,index)
+            self.stats:ChangeMainList(i)
             self.tlcVersions[i] = self.tlcVersions[i] + 1
-            self:Log("Remove %s from %s, vers %d, len %d", deletedEntity, TargetCache.kTargetListNames[i], self.tlcVersions[i], table.maxn(list))
-            if self.logs:find("D") then
+            self.log("Remove %s from %s, vers %d, len %d", deletedEntity, TargetCache.kTargetListNames[i], self.tlcVersions[i], table.maxn(list))
+            if self.logTable.detail then
                 for i,target in ipairs(list) do  
-                    self:Log("%d : %s",i,target)
+                    self.logDetail("%d : %s",i,target)
                 end
             end
             found = true
         end
     end
     if not found then
-        self:LogIgnored("Remove ignored %s", deletedEntity)
+        self.logDetail("Remove ignored %s", deletedEntity)
     end
 end
-
 
 //
 // return to which list the given target belongs, or zero if it belongs to none
@@ -312,9 +403,11 @@ function TargetCache:_UpdateTargetListCaches()
         if not cmpTable(newTable, self.targetListCache[i]) then
             self.targetListCache[i] = newTable
             self.tlcVersions[i] = self.tlcVersions[i] + 1
-            self:Log("Updating %s, vers %d, len %d",TargetCache.kTargetListNames[i], self.tlcVersions[i],table.maxn(newTable))
-            for i,t in ipairs(newTable) do
-                self:Log("%d : %s ", i, t)
+            self.log("Updating %s, vers %d, len %d",TargetCache.kTargetListNames[i], self.tlcVersions[i],table.maxn(newTable))
+            if self.logTable.detail then
+                for i,t in ipairs(newTable) do
+                    self.logDetail("%d : %s ", i, t)
+                end
             end 
        end
     end
@@ -338,74 +431,57 @@ function TargetCache:GetTargetList(listType)
     return self.targetListCache[listType]
 end
 
-// filter the targetList, returning a list of visible (target,sqRange) tuples inside the given range
-function TargetCache:RebuildStaticTargetList(attacker, range, targetList)
+//
+// filter the targetList, returning a list of (target,sqRange) tuples inside the given range.
+//  
+// If visibilityRequired is true, each target is also traced to to verify if it is visible.
+//
+function TargetCache:RebuildStaticTargetList(attacker, range, visibilityRequired, targetList)
      // static target list has changed. Rebuild it for the given entity
     local result = {}
     local sqRange = range * range
     local origin = attacker:GetEyePos()
+    local traceCount = 0
 
     for i,target in ipairs(targetList) do
         local targetPoint = target:GetEngagementPoint()
         local sqR = (origin - targetPoint):GetLengthSquared()
         if (sqR <= sqRange) then
-            // trace as a bullet, but only register hits on target
-            local trace = Shared.TraceRay(origin, targetPoint, PhysicsMask.Bullets, EntityFilterOnly(target))
-            if trace.entity == target then
+            if (visibilityRequired) then
+                traceCount = traceCount + 1
+                // trace as a bullet, but only register hits on target
+               local trace = Shared.TraceRay(origin, targetPoint, PhysicsMask.Bullets, EntityFilterOnly(target))
+                if trace.entity ~= target then
+                    target = nil
+                end
+            end
+            if target then 
                 table.insert(result, { target, sqR })
             end
         end
     end
-    return result
-end
-
-// filter the targetList, returning a list of visible (target,sqRange) tuples inside the given range
-function TargetCache:RebuildStaticHealTargetList(attacker, range, targetList)
-     // static target list has changed. Rebuild it for the given entity
-    local result = {}
-    local sqRange = range * range
-    local origin = attacker:GetModelOrigin()
-    for i,target in ipairs(targetList) do
-        local sqR = (origin - target:GetEngagementPoint()):GetLengthSquared() 
-        if (sqR <= sqRange) then
-            table.insert(result, { target, sqR })
-        end       
-    end 
+    self.stats:RebuiltStatic(attacker, traceCount, result)
     return result
 end
 
 
 function TargetCache:_logRebuild(attacker, list, listType, version)
-    self:LogRebuild("Rebuilt %s for %s, vers %d, len %d",TargetCache.kTargetListNames[listType], attacker, version , table.maxn(list))
-    if self.logs:find("d") then
+    self.logDetail("Rebuilt %s for %s, vers %d, len %d",TargetCache.kTargetListNames[listType], attacker, version , table.maxn(list))
+    if self.logTable.detail then
         for i,targetAndSqRange in ipairs(list) do 
             local target, sqRange = unpack(targetAndSqRange)      
-            self:LogRebuild("%d : %s at range %.2f", i, target, math.sqrt(sqRange))
+            self.logDetail("%d : %s at range %.2f", i, target, math.sqrt(sqRange))
         end
     end
 end
 //
 // Check and recalculate a static target list of the given type.
 //
-function TargetCache:GetStaticTargets(listType, attacker, range, list, version)
+function TargetCache:_GetStaticTargets(listType, attacker, range, visibilityRequired, list, version)
     self:VerifyTargetingListCache()
     local newVersion = self.tlcVersions[listType]
     if version ~= newVersion then        
-        list = self:RebuildStaticTargetList(attacker, range, self.targetListCache[listType])
-        version = newVersion
-        self:_logRebuild(attacker, list, listType, version)
-    end
-    return list,version
-end
-
-//
-// Check and recalculate a static target list of the given type.
-//
-function TargetCache:GetStaticHealTargets(listType, attacker, range, list, version)
-    self:VerifyTargetingListCache()
-    local newVersion = self.tlcVersions[listType]
-    if version ~= newVersion then
-        list = self:RebuildStaticHealTargetList(attacker, range, self.targetListCache[listType])
+        list = self:RebuildStaticTargetList(attacker, range, visibilityRequired, self.targetListCache[listType])
         version = newVersion
         self:_logRebuild(attacker, list, listType, version)
     end
@@ -413,28 +489,75 @@ function TargetCache:GetStaticHealTargets(listType, attacker, range, list, versi
 end
 
 
-function TargetCache:_GetRawTargetList(staticListUpdateMethod, attacker, range, mobileListType, staticListType, staticList, staticListVersion) 
+//
+// Return true if the target is acceptable to all filters
+//
+function TargetCache:_ApplyFilters(target, targetPoint, filters)
+    if filters then
+        for _, filter in ipairs(filters) do
+            if not filter(target, targetPoint) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+//
+// Check if the given targets fultills the demands to be a possible target. 
+// The standard criteria for a target to be valid is that it isn't the attacker, that it is alive, 
+// can take damage and are inside range. 
+// If these criteria is fulfilled, then the filters are applied to see if they accept the target as well.
+// 
+// if range to target is unknown, sqRange may be nil 
+function TargetCache:PossibleTarget(attacker, origin, sqMaxRange, target, sqRange, filters)
+    // use true for mobile; we know its either a mobile/struct because that hasn't changed since it was targeted
+    if target ~= nil and attacker ~= target and self:_IsPossibleTarget(target, self:_IsMobile(target)) then 
+        local targetPoint = target:GetEngagementPoint()
+        sqRange = sqRange or (origin - targetPoint):GetLengthSquared()     
+        if sqRange < sqMaxRange and self:_ApplyFilters(target, targetPoint, filters) then
+            return true, sqRange
+        end
+    end            
+    return false, -1
+end
+
+function TargetCache:ValidateTarget(attacker, origin, sqMaxRange, target, sqRange, filters)
+    local result = false
+    if self:PossibleTarget(attacker, origin, sqMaxRange, target, sqRange, filters) then
+        Server.dbgTracer.seeEntityTraceEnabled = true
+        result = attacker:GetCanSeeEntity(target)
+        Server.dbgTracer.seeEntityTraceEnabled = true
+        self.stats:ValidateTarget(attacker, target)
+    end
+    return result       
+end
+
+        
+
+function TargetCache:_GetRawTargetList(attacker, range, visibilityRequired, mobileListType, staticListType, staticList, staticListVersion, filters) 
     self:VerifyTargetingListCache() 
     local result = {}
-    local sqRange = range * range
-    local origin = attacker:GetModelOrigin()
+    local sqMaxRange = range * range
+    local origin = attacker:GetEyePos()
+
+    // filter the mobile targets
     for i,target in ipairs(self.targetListCache[mobileListType]) do
-        // skip mobile targets which we don't have any range to
-        if target:GetIsAlive() then
-            local sqR = (origin - target:GetEngagementPoint()):GetLengthSquared()     
-            if sqR < sqRange then        
-                table.insert(result, {target, sqR})
-            end
+        local valid, sqRange = self:PossibleTarget(attacker, origin, sqMaxRange, target, nil, filters)
+        if valid then
+            table.insert(result, {target, sqRange })
         end
     end
     
     // make sure the the list of static targets are uptodate
-    staticList, staticListVersion = staticListUpdateMethod(self, staticListType, attacker, range, staticList, staticListVersion)
+    staticList, staticListVersion = self:_GetStaticTargets(staticListType, attacker, range, visibilityRequired, staticList, staticListVersion)
+    self.stats:UseStatic(attacker, staticList)
     
     // add in the static targets
     for i,targetAndSqRange in ipairs(staticList) do
         local target, sqRange = unpack(targetAndSqRange)
-        if target:GetIsAlive() then
+        local valid, sqRange = self:PossibleTarget(attacker, origin, sqMaxRange, target, sqRange, filters)
+        if valid then
             table.insert(result, targetAndSqRange)
         end
     end
@@ -454,59 +577,64 @@ function TargetCache:_GetRawTargetList(staticListUpdateMethod, attacker, range, 
     return result,staticList,staticListVersion
 end 
 
+
 //
-// Prepare to acquire a target by joining a mobile and a static targeting list together. 
+// Insert valid target into the resultTable until it is full.
 // 
-// The static list only contains visible static targets.
+// Let a selector work on a target list. If a selector selects a target, a trace is made 
+// and if successful, that target and range is inserted in the resultsTable.
+// 
+// Once the resultTable size reaches maxTargets, the method returns. 
+// 
+// If the trace fails, the sqRange of that entry in the targets list is set to -1 to mark
+// is as ineligible for further selectors. 
 //
-// Arguments: 
-// - attacker - the attacker.
-// - range - the maximum range of the attack. The returned target list will all be inside this range
-// - mobileListType - a TargetCache.kXxxx value indicating the kind of list used for mobile targets
-// - staticListType - a TargetCache.kXxxx value indicating the kind of list used for static targets
-// - staticList - the current list of static targets
-// - staticListVersion - the version of the base static target list the staticList is based on
-//
-// Return a tripple:
-// - a list of (target, sqRange) tuples, sorted on sqRange
-// - a list of static targets (the given staticList if version is unchanged, else a new one)
-// - the version of the static list
-//
-function TargetCache:GetRawTargetList(staticListMethod, attacker, range, mobileListType, staticListType, staticList, staticListVersion) 
-    return self:_GetRawTargetList(self.GetStaticTargets, staticListMethod, attacker, range, mobileListType, staticListType, staticList, staticListVersion) 
+function TargetCache:_InsertTargets(resultTable, checkedTable, attacker, prioritizer, targets, maxTargets, visibilityRequired)
+    local resultTarget, resultRange
+    local traceCount = 0
+    for index, targetAndSqRange in ipairs(targets) do
+        local target, sqRange = unpack(targetAndSqRange)
+        local include = false
+        if not checkedTable[target] and prioritizer(target, sqRange) then
+            if visibilityRequired then 
+                traceCount = traceCount + 1
+                include = attacker:GetCanSeeEntity(target) 
+            else
+                include = true
+            end
+            checkedTable[target] = true
+        end            
+        if include then
+            table.insert(resultTable, target)
+            if #resultTable >= maxTargets then
+                break
+            end
+        end                       
+    end
+    return traceCount
 end
 
 //
-// Find all heal targets by joining a mobile and a static heal targeting list together. 
-// 
-// The static list contains all targets in range, including those not visible to the attacker(healer)
+// AcquireTargets with maxTarget set to 1, and returning the selected target
 //
-// Arguments: 
-// - attacker - the attacker. 
-// - range - the maximum range of the attack. The returned target list will all be inside this range
-// - mobileListType - a TargetCache.kXxxx value indicating the kind of list used for mobile targets
-// - staticListType - a TargetCache.kXxxx value indicating the kind of list used for static targets
-// - staticList - the current list of static targets
-// - staticListVersion - the version of the base static target list the staticList is based on
-//
-// Return a tripple:
-// - a list of (target, sqRange) tuples, sorted on sqRange
-// - a list of static targets (the given staticList if version is unchanged, else a new one)
-// - the version of the static list
-//
-function TargetCache:GetRawHealTargetList(staticListMethod, attacker, range, mobileListType, staticListType, staticList, staticListVersion) 
-    return self:_GetRawTargetList(self.GetStaticHealTargets, staticListMethod, attacker, range, mobileListType, staticListType, staticList, staticListVersion) 
+function TargetCache:AcquireTarget(attacker, range, visibilityRequired, mobileListType, staticListType, staticList, staticListVersion, filters, prioritizers)
+
+    local result, staticList, staticListVersion = self:AcquireTargets(attacker, 1, range, visibilityRequired, mobileListType, staticListType, staticList, staticListVersion, filters, prioritizers)
+
+    if #result > 0 then  
+        return result[1], staticList, staticListVersion
+    end
+
+    return nil, staticList, staticListVersion
+
 end
 
 //
-// Acquire a target, choosing the closest player first, then the closest non-player.
+// Acquire a certain number of targets using filters to reject targets and prioritizers to prioritize them
 //
-// Arguments: 
-// - attacker - the attacker. must have an origin
-// - range - the maximum range of the attack. The returned target list will all be inside this range
-// - mobileListType - a TargetCache.kXxxx value indicating the kind of list used for mobile targets
-// - staticListType - a TargetCache.kXxxx value indicating the kind of list used for static targets
-// - staticList - the current list of static targets
+// Arguments: See TargetCache:CreateSelector for missing argument descriptions
+// - maxTarget - maximum number of targets to acquire
+// - staticList - the current list of static targets used by the attacker
 // - staticListVersion - the version of the base static target list the staticList is based on
 //
 // Return a tripple:
@@ -514,53 +642,366 @@ end
 // - a list of static targets (the given staticList if version is unchanged, else a new one)
 // - the version of the static list
 //
-function TargetCache:AcquirePlayerPreferenceTarget(attacker, range, mobileListType, staticListType, staticList, staticListVersion) 
+function TargetCache:AcquireTargets(attacker, maxTargets, range, visibilityRequired, mobileListType, staticListType, staticList, staticListVersion, filters, prioritizers)
+    PROFILE("TargetCache:AcquireTargets")
     local targets
-    targets, staticList, staticListVersion = self:GetRawTargetList(
+    targets, staticList, staticListVersion = self:_GetRawTargetList(
             attacker,
             range, 
+            visibilityRequired,
             mobileListType, 
             staticListType, 
             staticList, 
-            staticListVersion) 
+            staticListVersion,
+            filters) 
 
-    local finalTarget = nil
+    local traceCount = 0
+    local result = {}
+    local checkedTable = {} // already checked entities
     local finalRange = nil
     
     Server.dbgTracer.seeEntityTraceEnabled = true
-    // We want to target the closest enemy player we can see, if any. 
-    // If no player is found, then just choose the closest target that we can see, if any.
-    local nonPlayers = {}
-    for index, targetAndSqRange in ipairs(targets) do
-        local target, sqRange = unpack(targetAndSqRange)
-        if target:isa("Player") then
-            if attacker:GetCanSeeEntity(target) then
-                finalTarget = target
-                finalRange = math.sqrt(sqRange)
-                break
-            end
-        else
-            table.insert(nonPlayers, targetAndSqRange)
-        end                          
-    end
-    // choose closest non-player
-    if finalTarget == nil then
-        for index,targetAndSqRange in ipairs(nonPlayers) do
-            local target, sqRange = unpack(targetAndSqRange)
-            // as everything except can see is already checked in the cached target lists, we
-            // don't need to call GetIs_ValidTarget() here
-            if attacker:GetCanSeeEntity(target) then
-                finalTarget = target
-                finalRange = math.sqrt(sqRange)
+    // go through the prioritizers until we have filled up on targets
+    if prioritizers then 
+        for _, selector in ipairs(prioritizers) do
+            traceCount = traceCount + self:_InsertTargets(result, checkedTable, attacker, selector, targets, maxTargets,visibilityRequired)
+            if #result >= maxTargets then
                 break
             end
         end
     end
+    
+    // final run through with an all-selector
+    if #result < maxTargets then
+        traceCount = traceCount + self:_InsertTargets(result, checkedTable, attacker, TargetCache.allPrioritizer, targets, maxTargets,visibilityRequired)
+    end
     Server.dbgTracer.seeEntityTraceEnabled = false
     
-    if finalTarget ~= nil then
-        self:LogTarget("%s targets %s at range %s", attacker, finalTarget, finalRange)
+    if #result > 0 and self.logTable.detail then
+        local msg = nil
+        for _,target in ipairs(result) do
+            msg = msg and (msg .. ", " .. ToString(target)) or ToString(target)
+        end
+        self.logTarget("%s targets %s", attacker, msg)
     end
-    return finalTarget,staticList,staticListVersion
+    
+    self.stats:AcqTarget(attacker, #targets, traceCount)
+    
+    return result,staticList,staticListVersion
 end
+
+//
+// Setup a target selector.
+//
+// A target selector allows one attacker to acquire and validate targets. 
+//
+// Arguments: 
+// - attacker - the attacker. Must have an GetEyePos() method
+//
+// - range - the maximum range of the attack. 
+//
+// - visibilityRequired - true if the target must be visible to the attacker
+//
+// - mobileListType - a TargetCache.kXxxx value indicating the kind of list used for mobile targets
+//
+// - staticListType - a TargetCache.kXxxx value indicating the kind of list used for static targets
+//
+// - filters - a list of filter functions (nil ok), used to remove alive and in-range targets. Each filter will
+//             be called with the target and the targeted point on that target. If any filter returnstrue, then the target is inadmissable.
+//
+// - prioritizers - a list of selector functions, used to prioritize targets. The range-sorted, filtered
+//               list of targets is run through each selector in turn, and if a selector returns true the
+//               target is then checked for visibility, and if seen, that target is selected.
+//               Finally, after all prioritizers have been run through, the closest visible target is choosen.
+//               A nil prioritizers will default to a single HarmfulPrioritizer
+//
+function TargetCache:CreateSelector(attacker, range, visibilityRequired, mobileListType, staticListType, filters, prioritizers)
+    return TargetSelector():Init(self, attacker, range, visibilityRequired, mobileListType, staticListType, filters, prioritizers)
+end
+
+//
+// ----- TargetSelector - simplifies using the TargetCache. --------------------
+//
+// It wraps the static list handling and remembers how targets are selected so you can acquire and validate
+// targets using the same rules. 
+//
+// After setting up a target selector (preferably using TargetCache:CreateSelector()) in the initialization of
+// the attacker, you only then need to call the AcquireTarget() to scan for a new target and
+// ValidateTarget(target) to validate it.
+//
+
+class "TargetSelector"
+
+//
+// Setup a target selector.AbortResearch
+//
+// A target selector allows one attacker to acquire and validate targets. It wraps the use of the
+// targetCache.
+//
+// Arguments: See TargetCache:CreateSelector for missing argument descriptions
+// - cache - the target cache
+//
+function TargetSelector:Init(cache, attacker, range, visibilityRequired, mobileListType, staticListType, filters, prioritizers)
+    self.cache = cache
+    self.attacker = attacker
+    self.range = range
+    self.visibilityRequired = visibilityRequired
+    self.mobileListType = mobileListType
+    self.staticListType = staticListType
+    self.filters = filters
+    self.prioritizers = prioritizers or { HarmfulPrioritizer() }
+    self.staticList = {}
+    self.staticListVersion = -1
+    return self
+end
+
+function TargetSelector:AcquireTarget() 
+    local target
+    target, self.staticList, self.staticListVersion = self.cache:AcquireTarget(
+            self.attacker,
+            self.range,
+            self.visibilityRequired, 
+            self.mobileListType, 
+            self.staticListType, 
+            self.staticList, 
+            self.staticListVersion,
+            self.filters,
+            self.prioritizers)
+    return target
+end
+
+
+//
+// Acquire maxTargets targets inside the given rangeOverride.
+//
+// both may be left out, in which case maxTargets defaults to 1000 and rangeOverride to standard range
+//
+// The rangeOverride, if given, must be <= the standard range for this selector
+// If originOverride is set, the range filter will filter from this point
+// Note that no targets can be selected outside the fixed target selector range.
+//
+function TargetSelector:AcquireTargets(maxTargets, rangeOverride, originOverride)
+    local filters = self.filters
+    if rangeOverride then
+        filters = {}
+        if self.filters then
+            table.copy(self.filters, filters)
+        end
+        local origin = originOverride or self.attacker:GetEyePos()
+        table.insert(filters, RangeTargetFilter(origin, rangeOverride))
+    end
+    // 1000 targets should be plenty ...
+    maxTargets = maxTargets or 1000
+
+    local targets
+    targets, self.staticList, self.staticListVersion = self.cache:AcquireTargets(
+            self.attacker,
+            maxTargets,
+            self.range,
+            self.visibilityRequired,
+            self.mobileListType, 
+            self.staticListType,
+            self.staticList, 
+            self.staticListVersion,
+            filters,
+            self.prioritizers)
+    return targets
+end
+
+//
+// Validate the target. 
+// Returns { validflag, sqRange }
+//
+function TargetSelector:ValidateTarget(target)
+    if target then
+        self.cache:VerifyTargetingListCache()
+        local sqMaxRange = self.range * self.range
+        local origin = self.attacker:GetEyePos()
+        return self.cache:ValidateTarget(self.attacker, origin, sqMaxRange, target, nil, self.filters)
+    end
+    return false, -1
+end
+
+//
+// if the location of the unit doing the target selection changes, its static target list
+// must be invalidated. 
+//
+function TargetSelector:InvalidateStaticCache()
+    self.staticListVersion = -1
+end
+
+//
+// ----- TcStats - statistics class section --------------------
+//
+
+class "TcStats"
+
+function TcStats:Init(logger, windowSize)
+    self.log = logger
+    self.windowSize = windowSize
+    self.entityCount = 0
+    self:Reset()
+end
+
+function TcStats:Reset()
+    self.time = Shared.GetTime()
+    self.startTime = Shared.GetTime()
+
+    self.mainListChangeCount = { 0, 0, 0, 0, 0 }
+    self.localListStats = {}
+    self.tickStats = {}
+    self.tick = self:NewTick()
+end
+
+function TcStats:NewTick()
+    return { acqCount = 0, validateCount = 0, rebuildTraceCount = 0,  targetTraceCount = 0, targetCount= 0 }
+end
+
+function TcStats:AcqTarget(attacker, targetCount, traceCount)
+    self.tick.acqCount = self.tick.acqCount + 1
+    self.tick.targetTraceCount = self.tick.targetTraceCount + traceCount
+    self.tick.targetCount = self.tick.targetCount + targetCount
+end
+
+function TcStats:ValidateTarget(attacker, target)
+    self.tick.validateCount = self.tick.validateCount + 1
+    self.tick.targetTraceCount = self.tick.targetTraceCount + 1
+    self.tick.targetCount = self.tick.targetCount + 1
+end
+
+function TcStats:RebuiltStatic(attacker, traceCount, list)
+    self.tick.rebuildTraceCount = self.tick.rebuildTraceCount + 1
+    local key = ToString(attacker)
+    local llStat = self.localListStats[key]
+    if not llStat then
+        llStat ={ rebuildCount = 0, length = 0 }
+        self.localListStats[key] = llStat
+    end
+    llStat.rebuildCount = llStat.rebuildCount + 1
+    llStat.length = #list 
+end
+
+function TcStats:UseStatic(attacker, list)
+    local key = ToString(attacker)
+    local llStat = self.localListStats[key]
+    if not llStat then
+        llStat ={ rebuildCount = 0, length = 0 }
+        self.localListStats[key] = llStat
+    end
+    llStat.length = #list     
+end
+
+
+
+function TcStats:ChangeMainList(listIndex)
+     self.mainListChangeCount[listIndex] = self.mainListChangeCount[listIndex] + 1
+end
+
+
+//
+// analyze statistics and dump them
+// We show how much work we did per tick
+//
+function TcStats:LogStats()
+    // first dump the total stats to the session
+    // length of each main list
+    // number of times each main list has changed 
+    // number of local static lists
+    // distribution of their lengths
+    // how many times the local lists have been rebuilt
+    // number of traces used to rebuild static lists
+    // number of traces used to acquire targets
+    // number of target acquistions made
+    // 
+    local tc = Server.targetCache
+    local nameCount = nil
+    for i,name in ipairs(TargetCache.kTargetListNamesShort) do
+        local tmp = name .. ":" .. #tc.targetListCache[i] .. "[" .. self.mainListChangeCount[i] .. "]"
+        nameCount = nameCount and nameCount .. ", " .. tmp or tmp 
+    end
+    self.log("TcStats %s:%s", string.format("%.2f(%.2f)", Shared.GetTime(), (Shared.GetTime() - self.startTime)), nameCount)
+    
+    local maxLen, totalLen, totalRebuilds, numLocals, counts = 0, 0, 0, 0, {}
+    for id, llstat in pairs(self.localListStats) do
+        totalLen = totalLen + llstat.length
+        totalRebuilds = totalRebuilds + llstat.rebuildCount
+        self:Inc(counts, "key-" .. llstat.length)     
+        maxLen = math.max(maxLen, llstat.length)
+        numLocals = numLocals + 1
+    end
+    local distrib = nil
+    for i = 0, maxLen do
+        local count = counts["key-" .. i]
+        if count then 
+            local tmp = i .. ":" .. count
+            distrib = (distrib and (distrib .. ", " .. tmp)) or tmp
+        end
+    end
+    self.log("    - Local: count %s, total len %s, rebuilds %s, distrib: %s" , numLocals, totalLen, totalRebuilds, distrib)
+    
+    // work distribution over ticks
+    local bucketSize = 5
+    local workTable = {}
+    local maxSlot = 0
+    local totalRebuildTraceCount, totalTargetTraceCount, totalTargetCount = 0,0,0
+    for i, tick in ipairs(self.tickStats) do
+        // slot 1 == 0, slot 2 == 1-5 etc
+        local slot = 1 + math.floor((tick.acqCount + bucketSize -1)/ bucketSize)
+        self:Inc(workTable, slot)
+        //Shared.Message("inc " .. slot .. " to " .. workTable[slot] .. ", acq " .. tick.acqCount)
+        maxSlot = math.max(maxSlot, slot)
+
+        totalRebuildTraceCount = totalRebuildTraceCount + tick.rebuildTraceCount
+        totalTargetTraceCount = totalTargetTraceCount + tick.targetTraceCount
+        totalTargetCount = totalTargetCount + tick.targetCount
+    end
+    
+    // total work
+    self.log("    - Traces: %s rebuild, %s targeting. Total targets checked: %s", totalRebuildTraceCount, totalTargetTraceCount, totalTargetCount)
+
+    // work distribution over ticks
+    local workMsg = string.format("0:%d", workTable[1] or 0)
+    for i = 2, maxSlot do
+        local count = workTable[i]
+        if count then
+            local tmp = ( 1 + (i-2) * bucketSize) .. "-" .. ((i-1)*bucketSize) .. ":" .. count
+            workMsg = (workMsg and (workMsg .. ", " .. tmp)) or tmp
+        end
+    end
+    self.log("    - Work (target acq, bucketsize %d): %s", bucketSize, workMsg) 
+end
+
+function TcStats:CheckTickTime()
+    if self.gameStarted then
+        local now = Shared.GetTime()
+        if now ~= self.time then
+            if now - self.startTime > self.windowSize then
+                self:LogStats()
+                self:Reset()
+            end
+            table.insert(self.tickStats, self.tick)
+            self.tick = self:NewTick()
+            self.time = now
+        end
+    end
+    if GetGamerules():GetGameStarted() ~= self.gameStarted then
+        self.gameStarted = GetGamerules():GetGameStarted()
+        self:Reset()
+    end
+end
+
+function TcStats:Add(tab, key, amount)
+    amount = amount or 1
+    tab[key] = (tab[key] and tab[key] + amount) or amount
+end
+
+function TcStats:Inc(tab, key)
+    self:Add(tab, key, 1)
+end
+
+function OnUpdateServer()
+    Server.targetCache.stats:CheckTickTime()
+end
+
+Event.Hook("UpdateServer", OnUpdateServer)
 

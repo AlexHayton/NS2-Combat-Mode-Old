@@ -202,6 +202,9 @@ function TechTree:AddEnergyBuildNode(techId, prereq1, prereq2)
     techNode:Initialize(techId, kTechType.EnergyBuild, prereq1, prereq2)
     techNode.energyBuild = true
     
+    local researchTime = LookupTechData(techId, kTechDataResearchTimeKey)
+    techNode.time = ConditionalValue(researchTime ~= nil, researchTime, 0)
+    
     self:AddNode(techNode)    
     
 end

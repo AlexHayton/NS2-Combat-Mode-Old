@@ -23,12 +23,8 @@ function Whip:AcquireTarget()
     
     if(self.timeOfLastTargetAcquisition == nil or (Shared.GetTime() > self.timeOfLastTargetAcquisition + Whip.kTargetCheckTime)) then
     
-        if GetGamerules():GetTargetCache():IsEnabled() then
-            finalTarget, self.shortestDistanceToTarget, self.targetIsaPlayer = self:_AcquireTargetUsingTargetCache()
-        else
-            finalTarget, self.shortestDistanceToTarget, self.targetIsaPlayer = self:_AcquireTarget()        
-        end
-        
+        finalTarget = self.targetSelector:AcquireTarget();
+
         if finalTarget ~= nil then
     
             self:GiveOrder(kTechId.Attack, finalTarget:GetId(), nil)
@@ -45,78 +41,6 @@ function Whip:AcquireTarget()
     
 end
 
-function Whip:_AcquireTargetUsingTargetCache()
-    local finalTarget = nil
-    local distanceToTarget = nil
-    local targetIsaPlayer = nil
-    
-    if(self.timeOfLastTargetAcquisition == nil or (Shared.GetTime() > self.timeOfLastTargetAcquisition + Whip.kTargetCheckTime)) then        
-        finalTarget, self.staticTargets, self.staticTargetsVersion = GetGamerules():GetTargetCache():AcquirePlayerPreferenceTarget(
-                self,
-                Whip.kRange, 
-                TargetCache.kAmtl,
-                TargetCache.kAstl, 
-                self.staticTargets, 
-                self.staticTargetsVersion)
-        if finalTarget then
-            distanceToTarget = (finalTarget:GetOrigin() - self:GetOrigin()):GetLength()
-            targetIsaPlayer = finalTarget:isa("Player")
-        end      
-    end
-    return finalTarget, distanceToTarget, targetIsaPlayer
-end
-
-
-function Whip:_AcquireTarget()
-    local finalTarget = nil
-    
-    self.shortestDistanceToTarget = nil
-    self.targetIsaPlayer = false
-    
-    local targets = GetEntitiesForTeamWithinXZRange("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), Whip.kRange)    
-    for index, target in pairs(targets) do
-    
-        local validTarget, distanceToTarget = self:GetIsTargetValid(target)
-        
-        if validTarget then
-        
-            local newTargetCloser = (self.shortestDistanceToTarget == nil or (distanceToTarget < self.shortestDistanceToTarget))
-            local newTargetIsaPlayer = target:isa("Player")
-    
-            // Give players priority over regular entities, but still pick closer players
-            if( (not self.targetIsaPlayer and newTargetIsaPlayer) or
-                (newTargetCloser and not (self.targetIsaPlayer and not newTargetIsaPlayer)) ) then
-        
-                // Set new target
-                finalTarget = target
-                self.shortestDistanceToTarget = distanceToTarget
-                self.targetIsaPlayer = newTargetIsaPlayer
-                
-            end           
-            
-        end
-    end
-    return finalTarget, distanceToTarget, targetIsaPlayer
-end
-
-
-function Whip:GetIsTargetValid(target)
-
-    if(target ~= nil and target ~= self and HasMixin(target, "Live") and target:GetIsAlive() and target:GetCanTakeDamage() and target:GetIsVisible()) then
-    
-        local distance = (target:GetOrigin() - self:GetOrigin()):GetLength()
-        
-        if(self:GetCanSeeEntity(target) and (distance < Whip.kRange)) then
-        
-            return true, distance
-            
-        end
-    
-    end
-
-    return false, -1
-
-end
 
 function Whip:AttackTarget()
 
@@ -146,7 +70,7 @@ function Whip:StrikeTarget()
         self:DamageTarget(target)
         
         // Try to hit other targets close by
-        local nearbyEnts = GetEntitiesForTeamWithinRangeAreVisible("LiveScriptActor", target:GetTeamNumber(), target:GetModelOrigin(), Whip.kAreaEffectRadius, true)
+        local nearbyEnts = self.targetSelector:AcquireTargets(1000, Whip.kAreaEffectRadius, target:GetModelOrigin())
         for index, ent in ipairs(nearbyEnts) do
         
             if ent ~= target then
@@ -184,8 +108,9 @@ function Whip:UpdateMode(deltaTime)
         if (self.desiredMode == Whip.kMode.UnrootedStationary) and (self.mode == Whip.kMode.Rooted) then
         
             self:SetMode(Whip.kMode.Unrooting)
-            // when we move, our static targets becomes invalid
-            self.staticTargetsVersion = -1 
+            // when we move, our static targets becomes invalid. As we can't attack until we are rooted again,
+            // we don't need to do anything further
+            self.targetSelector:InvalidateStaticCache()
             
         elseif self.desiredMode == Whip.kMode.Moving and (self.mode == Whip.kMode.UnrootedStationary) then
         
@@ -255,8 +180,8 @@ function Whip:UpdateAttack(deltaTime)
     if self:GetIsBuilt() and self:GetIsAlive() then
         
         local target = self:GetTarget()
-        
-        if self:GetIsTargetValid(target) then
+        local targetValid = self.targetSelector:ValidateTarget(target)
+        if targetValid then
 
             // Check to see if it's time to fire again
             local time = Shared.GetTime()
@@ -297,7 +222,7 @@ function Whip:UpdateAttack(deltaTime)
                 self:StrikeTarget()
             end
             
-        elseif target == nil or not self:GetIsTargetValid(target) then
+        elseif not targetValid then
         
             self:AcquireTarget()
             
@@ -355,7 +280,7 @@ function Whip:OnAnimationComplete(animName)
     
         local target = self:GetTarget()
         
-        if not target or not self:GetIsTargetValid(target) then
+        if not self.targetSelector:ValidateTarget(target) then
         
             self:CompletedCurrentOrder()
             
@@ -449,4 +374,9 @@ function Whip:PerformActivation(techId, position, normal, commander)
     
     return success
     
+end
+
+function Whip:OnDestroy()
+    self:ClearInfestation()
+    Structure.OnDestroy(self)    
 end

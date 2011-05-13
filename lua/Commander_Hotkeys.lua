@@ -10,42 +10,38 @@
 
 function Commander:HandleCommanderHotkeys(input)
 
-    if Client and not Shared.GetIsRunningPrediction() then
+    if input.hotkey ~= 0 then
     
-        if input.hotkey ~= 0 then
+        for index, hotkey in ipairs(kGridHotkeys) do
         
-            for index, hotkey in ipairs(kGridHotkeys) do
+            if (input.hotkey == hotkey) and self.menuTechButtonsAllowed and self.menuTechButtonsAllowed[index] then
             
-                if (input.hotkey == hotkey) and self.menuTechButtonsAllowed and self.menuTechButtonsAllowed[index] then
+                // Check if the last hotkey was released.
+                if hotkey ~= nil and self.lastHotkeyIndex ~= index then
                 
-                    // Check if the last hotkey was released.
-                    if hotkey ~= nil and self.lastHotkeyIndex ~= index then
+                    self.lastHotkeyIndex = nil
                     
-                        self.lastHotkeyIndex = nil
-                        
-                    end
-                    
-                    // Check if a new hotkey was pressed. Don't allow the last
-                    // key pressed unless it has been released first.
-                    if hotkey ~= nil and input.hotkey == hotkey and self.lastHotkeyIndex ~= index then
-                        
-                        self:SetHotkeyHit(index)
-                        self.lastHotkeyIndex = index
-                        
-                        break
-                        
-                    end
-                        
                 end
                 
+                // Check if a new hotkey was pressed. Don't allow the last
+                // key pressed unless it has been released first.
+                if hotkey ~= nil and input.hotkey == hotkey and self.lastHotkeyIndex ~= index then
+                    
+                    self:SetHotkeyHit(index)
+                    self.lastHotkeyIndex = index
+                    
+                    break
+                    
+                end
+                    
             end
-        
-        else
-        
-            self.lastHotkeyIndex = nil
             
         end
+        
+    else
     
+        self.lastHotkeyIndex = nil
+        
     end
     
 end

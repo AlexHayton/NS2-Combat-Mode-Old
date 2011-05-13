@@ -12,7 +12,7 @@ Script.Load("lua/Team.lua")
 
 class 'PlayingTeam' (Team)
 
-PlayingTeam.kObliterateVictoryCarbonNeeded = 500
+PlayingTeam.kObliterateVictoryTeamResourcesNeeded = 500
 PlayingTeam.kUnitMaxLOSDistance = 30
 PlayingTeam.kUnitMinLOSDistance = 8
 PlayingTeam.kTooltipHelpInterval = 1
@@ -50,11 +50,10 @@ function PlayingTeam:AddPlayer(player)
 
     Team.AddPlayer(self, player)
     
-    player.teamCarbon = self.carbon
+    player.teamResources = self.teamResources
     
-    // Reset each player to initial plasma
     // TODO: Make sure players don't leave server and come back to get resources
-    player:SetPlasma( kPlayerInitialPlasma )
+    player:SetIndividualResources( kPlayerInitialIndivRes )
     
 end
 
@@ -81,9 +80,9 @@ function PlayingTeam:OnInit()
     self.timeOfLastPlayedTeamAlert = nil
     self.alerts = {}
     
-    self.carbon = 0
-    self.totalCarbonCollected = 0
-    self:AddCarbon(kPlayingTeamInitialCarbon)
+    self.teamResources = 0
+    self.totalTeamResourcesCollected = 0
+    self:AddTeamResources(kPlayingTeamInitialTeamRes)
 
     self.alertsEnabled = false
     self:SpawnInitialStructures(self.teamLocation)
@@ -259,34 +258,34 @@ function PlayingTeam:TriggerAlert(techId, entity)
     
 end
 
-function PlayingTeam:SetCarbon(amount)
+function PlayingTeam:SetTeamResources(amount)
 
-    if(amount > self.carbon) then
+    if(amount > self.teamResources) then
     
         // Save towards victory condition
-        self.totalCarbonCollected = self.totalCarbonCollected + (amount - self.carbon)
+        self.totalTeamResourcesCollected = self.totalTeamResourcesCollected + (amount - self.teamResources)
         
     end
     
-    self.carbon = amount
+    self.teamResources = amount
     
-    function PlayerSetCarbon(player)
-        player.teamCarbon = self.carbon
+    function PlayerSetTeamResources(player)
+        player.teamResources = self.teamResources
     end
     
-    self:ForEachPlayer(PlayerSetCarbon)
+    self:ForEachPlayer(PlayerSetTeamResources)
     
 end
 
-function PlayingTeam:GetCarbon()
+function PlayingTeam:GetTeamResources()
 
-    return self.carbon
+    return self.teamResources
     
 end
 
-function PlayingTeam:AddCarbon(amount)
+function PlayingTeam:AddTeamResources(amount)
 
-    self:SetCarbon(self.carbon + amount)
+    self:SetTeamResources(self.teamResources + amount)
     
 end
 
@@ -320,7 +319,7 @@ function PlayingTeam:GetHasTeamWon()
     if(GetGamerules():GetGameStarted() /*and not Shared.GetCheatsEnabled()*/) then
         
         // If team has collected enough resources to achieve alternate victory condition
-        //if( self.totalCarbonCollected >= PlayingTeam.kObliterateVictoryCarbonNeeded) then
+        //if( self.totalTeamResourcesCollected >= PlayingTeam.kObliterateVictoryTeamResourcesNeeded) then
         //
         //    return true
         //    

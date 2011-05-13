@@ -194,11 +194,11 @@ function PurchaseTech(purchaseId)
     
         if techNode:GetAvailable() then
         
-            if techNode:GetCost() <= player:GetPlasma() then
+            if techNode:GetCost() <= player:GetResources() then
             
                 Client.ConsoleCommand("buy " .. tostring(purchaseId))
                 
-                Shared.PlayPrivateSound(player, Alien.kSpendPlasmaSoundName, player, 1.0, Vector(0, 0, 0))
+                Shared.PlayPrivateSound(player, Alien.kSpendResourcesSoundName, player, 1.0, Vector(0, 0, 0))
                 
             else
             

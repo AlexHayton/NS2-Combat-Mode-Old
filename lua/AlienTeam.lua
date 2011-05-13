@@ -468,7 +468,7 @@ function AlienTeam:InitTechTree()
     self.techTree:AddEnergyBuildNode(kTechId.Drifter,             kTechId.None,                kTechId.None)
     
     self.techTree:AddBuyNode(kTechId.Skulk,                     kTechId.None,                kTechId.None)
-    self.techTree:AddBuyNode(kTechId.Gorge,                     kTechId.None,                kTechId.None)
+    self.techTree:AddBuyNode(kTechId.Gorge,                     kTechId.Crag,                kTechId.None)
     
     self.techTree:AddBuildNode(kTechId.Crag,                      kTechId.None,                kTechId.None)
     self.techTree:AddUpgradeNode(kTechId.UpgradeCrag,            kTechId.Crag,                kTechId.None)
@@ -488,7 +488,7 @@ function AlienTeam:InitTechTree()
     self.techTree:AddActivation(kTechId.WhipFury,                 kTechId.None,          kTechId.None)
     
     // Drifter tech
-    self.techTree:AddResearchNode(kTechId.DrifterFlareTech,       kTechId.TwoHives,                kTechId.None)
+    self.techTree:AddResearchNode(kTechId.DrifterFlareTech,       kTechId.HiveMass,                kTechId.None)
     self.techTree:AddActivation(kTechId.DrifterFlare,                 kTechId.DrifterFlareTech)
     
     self.techTree:AddResearchNode(kTechId.DrifterParasiteTech,    kTechId.None,                kTechId.None)
@@ -498,10 +498,9 @@ function AlienTeam:InitTechTree()
     self.techTree:AddResearchNode(kTechId.AlienArmor1Tech,        kTechId.Crag,                kTechId.None)
     
     // Tier 2
-    self.techTree:AddSpecial(kTechId.TwoHives)
-    self.techTree:AddBuildNode(kTechId.HiveMass,                kTechId.None,                kTechId.None)
-    self.techTree:AddUpgradeNode(kTechId.HiveMassUpgrade,      kTechId.TwoHives,            kTechId.None)
-    self.techTree:AddBuyNode(kTechId.Lerk,                      kTechId.None,              kTechId.None)
+    self.techTree:AddBuildNode(kTechId.HiveMass,                kTechId.None,              kTechId.None)
+    self.techTree:AddUpgradeNode(kTechId.HiveMassUpgrade,      kTechId.None,               kTechId.None)
+    self.techTree:AddBuyNode(kTechId.Lerk,                      kTechId.Whip,              kTechId.None)
     self.techTree:AddBuyNode(kTechId.Fade,                      kTechId.HiveMass,          kTechId.None)
     
     // Tier 2 structures
@@ -519,21 +518,20 @@ function AlienTeam:InitTechTree()
     self.techTree:AddActivation(kTechId.ShadeCloak,                   kTechId.None,         kTechId.None)
 
     // Crag targeted ability    
-    self.techTree:AddResearchNode(kTechId.BabblerTech,            kTechId.MatureCrag,          kTechId.TwoHives)
+    self.techTree:AddResearchNode(kTechId.BabblerTech,            kTechId.MatureCrag,          kTechId.None)
     self.techTree:AddTargetedActivation(kTechId.CragBabblers,     kTechId.BabblerTech,         kTechId.MatureCrag)
 
     // Whip targeted ability
-    self.techTree:AddUpgradeNode(kTechId.LobTech,                kTechId.MatureWhip,          kTechId.TwoHives)
+    self.techTree:AddUpgradeNode(kTechId.LobTech,                kTechId.MatureWhip,          kTechId.None)
     self.techTree:AddTargetedActivation(kTechId.WhipBombard,                  kTechId.LobTech,             kTechId.MatureWhip)
     
     self.techTree:AddResearchNode(kTechId.Melee2Tech,             kTechId.Melee1Tech,                kTechId.HiveMass)
     self.techTree:AddResearchNode(kTechId.AlienArmor2Tech,        kTechId.AlienArmor1Tech,          kTechId.HiveMass)
         
     // Tier 3
-    self.techTree:AddSpecial(kTechId.ThreeHives)
     self.techTree:AddBuildNode(kTechId.HiveColony,                kTechId.None,                kTechId.None)
-    self.techTree:AddUpgradeNode(kTechId.HiveColonyUpgrade,      kTechId.ThreeHives,           kTechId.None)
-    self.techTree:AddBuyNode(kTechId.Onos,                      kTechId.HiveColony,           kTechId.ThreeHives)
+    self.techTree:AddUpgradeNode(kTechId.HiveColonyUpgrade,      kTechId.HiveMass,           kTechId.None)
+    self.techTree:AddBuyNode(kTechId.Onos,                      kTechId.HiveColony,           kTechId.None)
     
     self.techTree:AddResearchNode(kTechId.Melee3Tech,             kTechId.Melee2Tech,                kTechId.HiveColony)
     self.techTree:AddResearchNode(kTechId.AlienArmor3Tech,        kTechId.AlienArmor2Tech,          kTechId.HiveColony)

@@ -285,6 +285,20 @@ function Commander:SetHotkeyHit(index)
     self.hotkeyIndexHit = index
 end
 
+function Commander:HandleCommanderESC(input)
+
+    // Handle ESC
+    if input.hotkey == Move.ESC then
+        Print("ESC hit")
+        //self.commanderCancel = true
+        //self.currentTechId = kTechId.None
+        //self.specifyingOrientation = false
+        //self:SetCurrentTech(kTechId.None)
+
+    end
+
+end
+
 function Commander:OnDestroy()
 
     Player.OnDestroy(self)
@@ -316,7 +330,7 @@ function Commander:OnDestroy()
         
         Client.DestroyRenderModel(self.unitUnderCursorRenderModel)
         
-        Client.DestroyRenderModel(self.sentryOrientationRenderModel)
+        Client.DestroyRenderModel(self.orientationRenderModel)
         
         Client.DestroyRenderModel(self.sentryRangeRenderModel)
         
@@ -623,7 +637,7 @@ function CommanderUI_TargetedAction(index, x, y, button)
         end
 
         // Don't destroy ghost when they first place the sentry - allow commander to specify orientation
-        if techId ~= kTechId.Sentry or player.specifyingOrientation then
+        if not LookupTechData(techId, kTechDataSpecifyOrientation, false) or player.specifyingOrientation then
         
             player:SendTargetedAction(techId, normalizedPickRay)
             player:SetCurrentTech(kTechId.None)
@@ -722,8 +736,11 @@ function Commander:AddAlert(techId, worldX, worldZ, entityId, entityTechId)
         
         // Create alert message => {text, icon x offset, icon y offset, -1, entity id}
         local alertText = LookupTechData(techId, kTechDataAlertText, "")
+        ASSERT(type(alertText) == "string")
         table.insert(self.alertMessages, alertText)
+        ASSERT(type(xOffset) == "number")
         table.insert(self.alertMessages, xOffset)
+        ASSERT(type(yOffset) == "number")
         table.insert(self.alertMessages, yOffset)
         table.insert(self.alertMessages, entityId)
         table.insert(self.alertMessages, worldX)
@@ -934,9 +951,9 @@ function Commander:SetupHud()
     self.entityIdUnderCursor = Entity.invalidId
     
     // Create sentry orientation indicator
-    self.sentryOrientationRenderModel = Client.CreateRenderModel(RenderScene.Zone_Default)
-    self.sentryOrientationRenderModel:SetModel(Commander.kSentryOrientationModelName)
-    self.sentryOrientationRenderModel:SetIsVisible(false)
+    self.orientationRenderModel = Client.CreateRenderModel(RenderScene.Zone_Default)
+    self.orientationRenderModel:SetModel(Commander.kSentryOrientationModelName)
+    self.orientationRenderModel:SetIsVisible(false)
 
     self.sentryRangeRenderModel = Client.CreateRenderModel(RenderScene.Zone_Default)
     self.sentryRangeRenderModel:SetModel(Commander.kSentryRangeModelName)
@@ -1095,11 +1112,14 @@ function Commander:UpdateOrientationAngle(x, y)
         
             local normToMouse = GetNormalizedVector(vecDiff)
             
-            self.sentryOrientationRenderModel:SetCoords(BuildCoordsFromDirection(-normToMouse, self.specifyingOrientationPosition, Commander.kSentryArcScale))
-            self.sentryOrientationRenderModel:SetIsVisible(true)
+            self.orientationRenderModel:SetCoords(BuildCoordsFromDirection(-normToMouse, self.specifyingOrientationPosition, Commander.kSentryArcScale))
+            self.orientationRenderModel:SetIsVisible(true)
             
-            self.sentryRangeRenderModel:SetCoords(BuildCoordsFromDirection(-normToMouse, self.specifyingOrientationPosition, Vector(1, 1, Sentry.kRange)))
-            self.sentryRangeRenderModel:SetIsVisible(true)
+            // Only for sentries
+            if self.currentTechId == kTechId.Sentry then
+                self.sentryRangeRenderModel:SetCoords(BuildCoordsFromDirection(-normToMouse, self.specifyingOrientationPosition, Vector(1, 1, Sentry.kRange)))
+                self.sentryRangeRenderModel:SetIsVisible(true)
+            end
             
             self.orientationAngle = GetYawFromVector(normToMouse)
             
@@ -1107,7 +1127,7 @@ function Commander:UpdateOrientationAngle(x, y)
         
     else
         self.orientationAngle = 0
-        self.sentryOrientationRenderModel:SetIsVisible(false)
+        self.orientationRenderModel:SetIsVisible(false)
         self.sentryRangeRenderModel:SetIsVisible(false)
     end
     
@@ -1415,14 +1435,14 @@ function Commander:ClientOnMouseRelease(mouseButton, x, y)
 
     local displayConfirmationEffect = false
     
-    local normalizedPickRay = CreatePickRay(self, x, y)	
+    local normalizedPickRay = CreatePickRay(self, x, y)    
     if(mouseButton == 0) then
-		
+        
         // Don't do anything if we're ghost structure is at invalid place
-        if self.ghostStructure ~= nil or self.ghostStructureValid == true then
+        if self.ghostStructure == nil or self.ghostStructureValid == true then
 
             // See if we have indicated an orientation for the structure yet (sentries only right now)
-            if((self.currentTechId == kTechId.Sentry) and not self.specifyingOrientation) then
+            if(LookupTechData(self.currentTechId, kTechDataSpecifyOrientation, false) and not self.specifyingOrientation) then
             
                 // Compute world position where we will place this entity
                 local trace = GetCommanderPickTarget(self, normalizedPickRay, false, true)
@@ -1449,7 +1469,7 @@ function Commander:ClientOnMouseRelease(mouseButton, x, y)
                             orientationAngle = 0
                         end
                                 
-                        if self.currentTechId == kTechId.Sentry then
+                        if LookupTechData(self.currentTechId, kTechDataSpecifyOrientation, false) then
             
                             // Send world coords of sentry placement instead of normalized pick ray.
                             // Because the player may have moved since dropping the sentry and orienting it.

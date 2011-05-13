@@ -187,7 +187,7 @@ function PlayerUI_GetInactiveAbilities()
     
     local player = Client.GetLocalPlayer()
 
-    if player:isa("Alien") then    
+    if player and player:isa("Alien") then    
     
         local inactiveAbilities = player:GetHUDOrderedWeaponList()
         

@@ -48,6 +48,7 @@ function Blink:OnUpdate(deltaTime)
                 // Create ghost Fade in random dramatic attack pose
                 self.fadeGhostAnimModel = CreateAnimatedModel(Fade.kModelName)
                 self.fadeGhostAnimModel:SetAnimation(Fade.kBlinkInAnim)
+                self.fadeGhostAnimModel:SetCastsShadows(false)
                 
             end
             

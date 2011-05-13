@@ -100,9 +100,9 @@ function Player:MakeSpecialEdition()
     self:SetModel(Player.kSpecialModelName)
 end
 
-// Not authoritative, only visual and information. Carbon is stored in the team.
-function Player:SetCarbon(carbon)
-    self.teamCarbon = math.max(math.min(carbon, 1000), 0)
+// Not authoritative, only visual and information. TeamResources is stored in the team.
+function Player:SetTeamResources(teamResources)
+    self.teamResources = math.max(math.min(teamResources, 1000), 0)
 end
 
 function Player:GetSendTechTreeBase()
@@ -260,9 +260,9 @@ function Player:SetControllingPlayer(client)
     
 end
 
-function Player:SetPlasma(amount)
+function Player:SetIndividualResources(amount)
 
-    self.plasma = math.max(math.min(amount, kMaxResources), 0)
+    self.resources = math.max(math.min(amount, kMaxResources), 0)
     
 end
 
@@ -363,8 +363,8 @@ function Player:CopyPlayerDataFrom(player)
     table.copy(player.hotkeyGroups, self.hotkeyGroups)
     
     // Copy network data over because it won't be necessarily be resent
-    self.plasma = player.plasma
-    self.teamCarbon = player.teamCarbon
+    self.resources = player.resources
+    self.teamResources = player.teamResources
     self.gameStarted = player.gameStarted
     self.countingDown = player.countingDown
     self.frozen = player.frozen
@@ -511,12 +511,12 @@ function Player:ProcessBuyAction(techId)
         
         if(cost ~= nil) then
         
-            if( cost <= self:GetPlasma() ) then
+            if( cost <= self:GetResources() ) then
                 
                 // buy it
                 if self:AttemptToBuy(techId) then
                 
-                    self:AddPlasma(-cost)
+                    self:AddResources(-cost)
                     
                     return true
                 

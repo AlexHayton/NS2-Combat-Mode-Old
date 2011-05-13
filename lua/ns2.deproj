@@ -876,4 +876,10 @@
   <file>
     <filename>InfestationMixin.lua</filename>
   </file>
+  <file>
+    <filename>ScenarioHandler.lua</filename>
+  </file>
+  <file>
+    <filename>ScenarioHandler_Commands.lua</filename>
+  </file>
 </project>

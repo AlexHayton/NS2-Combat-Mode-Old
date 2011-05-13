@@ -96,7 +96,7 @@ function Marine:AttemptToBuy(techId)
                 
             self:SetActiveWeapon(mapName)
                         
-            Shared.PlayPrivateSound(self, Marine.kSpendPlasmaSoundName, nil, 1.0, self:GetOrigin())
+            Shared.PlayPrivateSound(self, Marine.kSpendResourcesSoundName, nil, 1.0, self:GetOrigin())
             
             if techId == kTechId.Jetpack then
                 Shared.PlayWorldSound(nil, Marine.kJetpackPickupSound, nil, self:GetOrigin())
@@ -252,3 +252,10 @@ function Marine:ApplyCatPack()
     
 end
 
+function Marine:GetCanPhase()
+    return self:GetIsAlive() and (not self.timeOfLastPhase or (Shared.GetTime() > (self.timeOfLastPhase + Marine.kPlayerPhaseDelay)))
+end
+
+function Marine:SetTimeOfLastPhase(time)
+    self.timeOfLastPhase = time
+end

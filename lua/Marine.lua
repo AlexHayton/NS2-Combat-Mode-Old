@@ -25,7 +25,7 @@ Marine.kDieSoundName = PrecacheAsset("sound/ns2.fev/marine/common/death")
 Marine.kFlashlightSoundName = PrecacheAsset("sound/ns2.fev/common/light")
 Marine.kGunPickupSound = PrecacheAsset("sound/ns2.fev/marine/common/pickup_gun")
 Marine.kJetpackPickupSound = PrecacheAsset("sound/ns2.fev/marine/common/pickup_jetpack")
-Marine.kSpendPlasmaSoundName = PrecacheAsset("sound/ns2.fev/marine/common/player_spend_nanites")
+Marine.kSpendResourcesSoundName = PrecacheAsset("sound/ns2.fev/marine/common/player_spend_nanites")
 Marine.kCatalystSound = PrecacheAsset("sound/ns2.fev/marine/common/catalyst")
 Marine.kSquadSpawnSound = PrecacheAsset("sound/ns2.fev/marine/common/squad_spawn")
 Marine.kChatSound = PrecacheAsset("sound/ns2.fev/marine/common/chat")
@@ -49,6 +49,8 @@ Marine.kBaseArmor = kMarineArmor
 Marine.kArmorPerUpgradeLevel = kArmorPerUpgradeLevel
 Marine.kMaxSprintFov = 95
 Marine.kWeaponLiftDelay = .2
+// Player phase delay - players can only teleport this often
+Marine.kPlayerPhaseDelay = 2
 
 // Overlay animations translate to "weaponname_overlayname" for marines.
 // So "fire" translates to "rifle_fire" for marines but "bite" is just "bite" for aliens.
@@ -147,6 +149,7 @@ function Marine:OnInit()
     self.weaponLiftInactiveTime = 0
     self.weaponShouldLiftDuration = 0
     self.nextWeaponLiftCheckTime = 0
+    self.timeOfLastPhase = nil
     
     local viewAngles = self:GetViewAngles()
     self.lastYaw = viewAngles.yaw

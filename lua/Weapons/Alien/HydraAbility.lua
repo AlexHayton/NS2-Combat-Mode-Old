@@ -60,7 +60,7 @@ function HydraAbility:OnPrimaryAttack(player)
     if valid then
         // Ensure they have enough resources.
         local cost = LookupTechData(kTechId.Hydra, kTechDataCostKey)
-        if player:GetPlasma() >= cost then
+        if player:GetResources() >= cost then
             Ability.OnPrimaryAttack(self, player)
         else
             player:AddTooltip("Not enough resources to create Hydra.")
@@ -89,13 +89,13 @@ end
 
 function HydraAbility:CreateHydra(player)
 
-    // If we have enough plasma
+    // If we have enough resources
     if Server then
     
         local coords, valid = self:GetPositionForHydra(player)
     
         local cost = LookupTechData(kTechId.Hydra, kTechDataCostKey)
-        if valid and (player:GetPlasma() >= cost) then
+        if valid and (player:GetResources() >= cost) then
         
             // Create structure
             local hydra = CreateEntity( Hydra.kMapName, coords.origin, player:GetTeamNumber() )
@@ -110,7 +110,7 @@ function HydraAbility:CreateHydra(player)
                 
                 player:TriggerEffects("create_hydra")
                 
-                player:AddPlasma( -cost )
+                player:AddResources( -cost )
                 
                 player:SetActivityEnd(.5)
                 
@@ -229,8 +229,8 @@ function HydraAbility:OnUpdate(deltaTime)
                 end
                 self.ghostHydra:SetIsVisible(valid)
                 
-                // Check plasma
-                if player:GetPlasma() < LookupTechData(kTechId.Hydra, kTechDataCostKey) then
+                // Check resources
+                if player:GetResources() < LookupTechData(kTechId.Hydra, kTechDataCostKey) then
                 
                     valid = false
                     

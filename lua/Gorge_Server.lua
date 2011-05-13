@@ -56,7 +56,7 @@ function Gorge:AttemptToBuy(techId)
         
             hydra:SetOwner(self)
 
-            self:AddPlasma(-LookupTechData(techId, kTechDataCostKey))
+            self:AddResources(-LookupTechData(techId, kTechDataCostKey))
                     
             self:TriggerEffects("gorge_create")
             

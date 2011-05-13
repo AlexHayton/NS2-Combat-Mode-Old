@@ -134,6 +134,8 @@ function LiveScriptActor:OnInit()
     // Ability to turn off pathing for testing
     self.pathingEnabled = true
     
+    self:SetPathingFlag(kPathingFlags.UnBuildable)   
+    
 end
 
 // All children should override this
@@ -304,6 +306,8 @@ end
 
 function LiveScriptActor:OnUpdate(deltaTime)
 
+    PROFILE("LiveScriptActor:OnUpdate")
+    
     ScriptActor.OnUpdate(self, deltaTime)
     
     // Process outside of OnProcessMove() because animations can't be set there
@@ -399,10 +403,6 @@ end
 
 function LiveScriptActor:GetSendDeathMessage()
     return self:GetIsAlive()
-end
-
-function LiveScriptActor:GetHasBuildFootPrint()
-    return true
 end
 
 Shared.LinkClassToMap("LiveScriptActor", LiveScriptActor.kMapName, LiveScriptActor.networkVars )

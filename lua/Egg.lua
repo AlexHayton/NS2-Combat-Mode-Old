@@ -201,6 +201,12 @@ function Egg:OnConstructionComplete()
     
     self:SpawnInfestation()
 end
+
+function Egg:OnDestroy()
+    self:ClearInfestation()
+    
+    Structure.OnDestroy(self)        
+end
 end
 
 Shared.LinkClassToMap("Egg", Egg.kMapName, {})

@@ -25,9 +25,16 @@ Script.Load("lua/NetworkMessages_Server.lua")
 
 Script.Load("lua/dkjson.lua")
 
-Script.Load("lua/DbgTracer_Server.lua") 
+Script.Load("lua/DbgTracer_Server.lua")
+Script.Load("lua/TargetCache.lua")
+Script.Load("lua/InfestationMap.lua")
+ 
 Server.dbgTracer = DbgTracer()
 Server.dbgTracer:Init()
+
+Server.targetCache = TargetCache():Init()
+
+Server.infestationMap = InfestationMap():Init()
 
 Server.readyRoomSpawnList = {}
 Server.playerSpawnList = {}
@@ -495,8 +502,8 @@ function getWebApi(datatype, command, kickedId)
 		players = playerRecords:GetSize(),
 		playersMarine = GetGamerules():GetTeam1():GetNumPlayers(),
 		playersAlien = GetGamerules():GetTeam2():GetNumPlayers(),
-		marineCarbon = nil,
-		alienCarbon = nil
+		marineTeamResources = nil,
+		alienTeamResources = nil
 	}
 	local result = ''
 	if datatype == 'json' then
@@ -522,7 +529,7 @@ function getWebApi(datatype, command, kickedId)
                     score	= player:GetScore(),
                     kills	= player:GetKills(),
                     deaths	= player:GetDeaths(),
-                    plasma	= player:GetPlasma(),
+                    resources	= player:GetResources(),
                     ping	= entity:GetPing(),
                     dlc		= playerDlc
                 }
@@ -584,7 +591,7 @@ function getWebApi(datatype, command, kickedId)
 			.. '<td align="center"><b>Score</b></td>'
 			.. '<td align="center"><b>Kills</b></td>'
 			.. '<td align="center"><b>Deaths</b></td>'
-			.. '<td align="center"><b>Plasma</b></td>'
+			.. '<td align="center"><b>Resources</b></td>'
 			.. '<td><b>Steam ID</b></td>'
 			.. '<td align="center"><b>Ping</b></td>'
 			.. '<td></td>'
@@ -620,7 +627,7 @@ function getWebApi(datatype, command, kickedId)
                                 .. '<td valign="middle" align="center" class="bb">' .. player:GetScore() .. '</td>'
                                 .. '<td valign="middle" align="center" class="bb">' .. player:GetKills() .. '</td>'
                                 .. '<td valign="middle" align="center" class="bb">' .. player:GetDeaths() .. '</td>'
-                                .. '<td valign="middle" align="center" class="bb">' .. player:GetPlasma() .. '</td>'
+                                .. '<td valign="middle" align="center" class="bb">' .. player:GetResources() .. '</td>'
                                 .. '<td valign="middle" class="bb">' .. steamid .. '</td>'
                                 .. '<td valign="middle" align="center" class="bb">' .. entity:GetPing() .. '</td>'
                                 .. '<td valign="middle"><form name="' .. steamid .. '_playerlist" action="http://localhost:[[webport]]/" method="post" style="display:inline;"><input type="hidden" name="steamid" value="' .. steamid .. '" /><input type="submit" name="kick" value="' .. kickbtext .. '" ' .. kickbutton .. ' /> <input type="submit" name="ban" value="Ban" ' .. kickbutton .. ' /><input type="submit" name="kickban" value="Kick &amp; Ban" ' .. kickbutton .. ' /> <b>Duration:</b> <select name="ban_duration" ' .. kickbutton .. '><option value="-1" disabled="disabled">Forever (TODO)</option><option value="0" selected>This server session</option><option value="30">30 Minuets</option><option value="120">2 Hours</option><option value="480">8 Hours</option><option value="960">16 hours</option><option value="1440">1 Day</option><option value="2880">2 Days</option><option value="5760">4 Days</option></select></form></td>'

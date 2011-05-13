@@ -217,86 +217,6 @@ function Sentry:GetDamagedAlertId()
     return kTechId.MarineAlertSentryUnderAttack
 end
 
-// Sort entities by priority (players before structures, entity that hit us recently before others)
-function Sentry:GetSortedTargetList()
-
-    local sentryAttackOrigin = self:GetAttackOrigin()
-    local ents = GetEntitiesForTeamWithinRange("LiveScriptActor", GetEnemyTeamNumber(self:GetTeamNumber()), sentryAttackOrigin, Sentry.kRange)
-    
-    local targets = {}    
-    for index, currentTarget in pairs(ents) do
-        
-        local validTarget, distanceToTarget = self:GetIsTargetValid(currentTarget)
-        if validTarget then
-            table.insertunique(targets, currentTarget)
-        end
-        
-    end    
-    
-    function sortSentryTargets(ent1, ent2)
-    
-        // Prioritize damage-dealing targets
-        if ent1:GetCanDoDamage() ~= ent2:GetCanDoDamage() then
-        
-            // But don't pick out players over structures unless closer
-            if ent1:isa("Player") == ent2:isa("Player") then
-                return ent1:GetCanDoDamage()
-            end
-            
-        end
-
-        // Shoot closer targets
-        local dist1 = (sentryAttackOrigin - ent1:GetEngagementPoint()):GetLength()
-        local dist2 = (sentryAttackOrigin - ent2:GetEngagementPoint()):GetLength()        
-        if dist1 ~= dist2 then
-            return dist1 < dist2
-        end
-        
-        // Make deterministic in case that distances are equal
-        return ent1:GetId() < ent2:GetId()
-
-    end
-    
-    table.sort(targets, sortSentryTargets)
-    
-    return targets
-    
-end
-
-function Sentry:_FindTargetUsingTargetCache()
-    local targetAcquired = nil
-
-    targetAcquired, self.staticTargets, self.staticTargetsVersion = GetGamerules():GetTargetCache():AcquirePlayerPreferenceTarget(
-            self,
-            Sentry.kRange, 
-            TargetCache.kMmtl, 
-            TargetCache.kMstl, 
-            self.staticTargets, 
-            self.staticTargetsVersion)
-               
-    return targetAcquired
-end
-
-
-
-function Sentry:_FindTarget()
-    local targetAcquired = nil
-
-    local targets = self:GetSortedTargetList()
-    if table.count(targets) > 0 then
-        targetAcquired = targets[1]
-    end
-               
-    return targetAcquired
-end
-
-function Sentry:FindTarget()
-    if GetGamerules():GetTargetCache():IsEnabled() then
-        return self:_FindTargetUsingTargetCache()
-    end
-    return self:_FindTarget()
-end
-
 function Sentry:AcquireTarget(deltaTime)
 
     local targetAcquired = nil
@@ -304,12 +224,14 @@ function Sentry:AcquireTarget(deltaTime)
 
     if currentTime > (self.timeOfLastTargetAcquisition + Sentry.kTargetCheckTime) then
 
-        targetAcquired = self:FindTarget()
-        
+        targetAcquired = self.targetSelector:AcquireTarget()
+ 
         self.timeOfLastTargetAcquisition = currentTime
         
     end
     
+    // should really check if we are targeting the same unit; then we don't need to
+    // generate 10 orders/sec attacking the same target.
     if targetAcquired ~= nil then
         self:GiveOrder(kTechId.Attack, targetAcquired:GetId(), nil)
     end
@@ -327,10 +249,11 @@ function Sentry:UpdateAttackTarget(deltaTime)
         orderLocation = order:GetLocation()
     
         local target = self:GetTarget()    
-        local attackEntValid = (target ~= nil and GetCanSeeEntity(self, target) and (target:GetOrigin() - self:GetOrigin()):GetLength() < Sentry.kRange)
+        local attackEntValid = self.targetSelector:ValidateTarget(target)
         local attackLocationValid = (order:GetType() == kTechId.Attack and orderLocation ~= nil)
+        attackLocationValid = false
         local currentTime = self.timeOfLastUpdate + deltaTime
-        
+   
         if (attackEntValid or attackLocationValid) and (self.timeNextAttack == nil or (currentTime > self.timeNextAttack)) then
         
             local currentAnim = self:GetAnimation()
@@ -535,7 +458,7 @@ function Sentry:UpdateTargetState()
         // We have a target if we attacking an entity that's still valid or attacking ground
         local orderParam = order:GetParam()
         hasTarget = (order:GetType() == kTechId.Attack or order:GetType() == kTechId.SetTarget) and 
-                    ((orderParam ~= Entity.invalidId and self:GetIsTargetValid(Shared.GetEntity(orderParam)) or (orderParam == Entity.invalidId)) )
+                    ((orderParam ~= Entity.invalidId and self.targetSelector:ValidateTarget(Shared.GetEntity(orderParam)) or (orderParam == Entity.invalidId)) )
     end
     
     if hasTarget then
@@ -554,7 +477,8 @@ function Sentry:UpdateTargetState()
             self:CompletedCurrentOrder()
             
             // Give new attack order
-            local target = self:FindTarget()
+            local target = self.targetSelector:AcquireTarget()
+
             if target then
                 self:GiveOrder(kTechId.Attack, target:GetId(), nil)
             end

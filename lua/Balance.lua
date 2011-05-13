@@ -12,8 +12,8 @@ Script.Load("lua/BalanceMisc.lua")
 
 // MARINE COSTS
 kCommandStationCost = 20
-kCommandFacilityUpgradeCost = 15
-kCommandCenterUpgradeCost = 20
+kCommandFacilityUpgradeCost = 30
+kCommandCenterUpgradeCost = 40
 
 kExtractorCost = 15
 kResourceUpgradeResearchCost = 5
@@ -80,13 +80,14 @@ kCatPackTechResearchCost = 10
 kRifleUpgradeTechResearchCost = 10
 
 kObservatoryCost = 10
-kPhaseTechResearchCost = 10
+kPhaseGateCost = 15
+kPhaseTechResearchCost = 15
 
 
 
-kHiveCost = 20
-kHiveMassUpgradeCost = 20
-kHiveColonyUpgradeCost = 20
+kHiveCost = 25
+kHiveMassUpgradeCost = 30
+kHiveColonyUpgradeCost = 40
 
 kMetabolizeTechCost = 25
 
@@ -152,12 +153,11 @@ kAlienArmor2ResearchCost = 25
 kAlienArmor3ResearchCost = 35
 
 
-kPlayingTeamInitialCarbon = 50
+kPlayingTeamInitialTeamRes = 50
 
-kPlayerInitialPlasma = 10
+kPlayerInitialIndivRes = 10
 
 kResourceTowerResourceInterval = 12
-
 
 // MARINE DAMAGE
 kRifleDamage = 10
@@ -254,7 +254,7 @@ kSpitEnergyCost = 7
 kHealsprayDamage = 13
 kHealsprayDamageType = kDamageType.Light
 kHealsprayFireDelay = 0.8
-kHealsprayEnergyCost = 20
+kHealsprayEnergyCost = 15
 
 kSpikeMaxDamage = 20
 kSpikeMinDamage = 10
@@ -314,8 +314,8 @@ kAlienRespawnTime = 9
 
 // BUILD/RESEARCH TIMES
 kArmoryBuildTime = 15
-kAdvancedArmoryResearchTime = 120
-kWeaponsModuleAddonTime = 120
+kAdvancedArmoryResearchTime = 60
+kWeaponsModuleAddonTime = 40
 kPrototypeLabBuildTime = 20
 
 kMACBuildTime = 5
@@ -335,8 +335,8 @@ kDualMinigunTechResearchTime = 20
 kGrenadeLauncherTechResearchTime = 20
 
 kCommandStationBuildTime = 15
-kCommandFacilityUpgradeTime = 120
-kCommandCenterUpgradeTime = 180
+kCommandFacilityUpgradeTime = 100
+kCommandCenterUpgradeTime = 120
 
 kPowerPointBuildTime = 15
 kPowerPackBuildTime = 13
@@ -369,6 +369,9 @@ kDualMinigunTechResearchTime = 60
 kCatPackTechResearchTime = 15
 
 kObservatoryBuildTime = 15
+kPhaseTechResearchCost = 15
+kPhaseTechResearchTime = 45
+kPhaseGateBuildTime = 12
 
 kWeapons1ResearchTime = 60
 kWeapons2ResearchTime = 90
@@ -379,7 +382,7 @@ kArmor3ResearchTime = 120
 
 
 kHiveBuildTime = 30
-kHiveMassUpgradeTime = 120
+kHiveMassUpgradeTime = 180
 kHiveColonyUpgradeTime = 180
 
 kDrifterBuildTime = 4
@@ -430,8 +433,12 @@ kSapResearchTime = 15
 kBoneShieldResearchTime = 20
 kStompResearchTime = 20
 
-
-
+kMelee1ResearchTime = 20
+kMelee2ResearchTime = 30
+kMelee3ResearchTime = 40
+kAlienArmor1ResearchTime = 20
+kAlienArmor2ResearchTime = 30
+kAlienArmor3ResearchTime = 40
 
 
 // ENERGY COSTS
@@ -445,7 +452,7 @@ kMACCost = 50
 kHiveInitialEnergy = 100  kHiveMaxEnergy = 200
 kHiveMassMaxEnergy = 250
 kHiveColonyMaxEnergy = 300
-kGrowCost = 25
+kGrowCost = 25  
 kMetabolizeCost = 25  
 
 kObservatoryInitialEnergy = 25  kObservatoryMaxEnergy = 100

@@ -187,7 +187,7 @@ kAlienWeaponEffects =
             {player_cinematic = "cinematics/alien/gorge/healthspray.cinematic"},
             {viewmodel_cinematic = "cinematics/alien/gorge/healthspray_view.cinematic", attach_point = "gorge_view_root"},
             {sound = "sound/ns2.fev/alien/gorge/heal_spray"},            
-            {viewmodel_animation = "spray_attack"},         
+            {viewmodel_animation = "spray_attack", force = true},         
             {overlay_animation = "healthspray", force = true},        
         },
     },

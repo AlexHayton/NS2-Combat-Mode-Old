@@ -168,7 +168,7 @@ function Commander:AttemptToBuild(techId, origin, normal, orientation, pickVec, 
             
 end
 
-// TODO: Add parameters for energy, carbon or plasma
+// TODO: Add parameters for energy or resources
 function Commander:TriggerNotEnoughResourcesAlert()
 
     local team = self:GetTeam()
@@ -193,7 +193,7 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pi
         return success, keepProcessing
     end
     
-    // Cost is in carbon, energy or plasma, depending on tech node type        
+    // Cost is in team resources, energy or individual resources, depending on tech node type        
     local cost = LookupTechData(techId, kTechDataCostKey, 0)
     local team = self:GetTeam()
     
@@ -203,15 +203,15 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pi
         return success, keepProcessing
     end        
     
-    // Handle tech tree actions that cost carbon    
+    // Handle tech tree actions that cost team resources    
     if(techNode:GetIsResearch() or techNode:GetIsUpgrade() or techNode:GetIsBuild() or techNode:GetIsEnergyBuild()) then
 
         local costsEnergy = techNode:GetIsEnergyBuild()
 
-        local teamCarbon = team:GetCarbon()
+        local teamResources = team:GetTeamResources()
         local energy = entity:GetEnergy()
         
-        if (not costsEnergy and cost <= teamCarbon) or (costsEnergy and cost <= energy) then
+        if (not costsEnergy and cost <= teamResources) or (costsEnergy and cost <= energy) then
         
             if(techNode:GetIsResearch() or techNode:GetIsUpgrade() or techNode:GetIsEnergyBuild()) then
             
@@ -234,10 +234,10 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pi
                 if costsEnergy then            
                     entity:SetEnergy(entity:GetEnergy() - cost)                
                 else                
-                    team:AddCarbon(-cost)                    
+                    team:AddTeamResources(-cost)                    
                 end
                 
-                Shared.PlayPrivateSound(self, Commander.kSpendCarbonSoundName, nil, 1.0, self:GetOrigin())
+                Shared.PlayPrivateSound(self, Commander.kSpendTeamResourcesSoundName, nil, 1.0, self:GetOrigin())
                 
             end
             
@@ -247,11 +247,11 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pi
             
         end
                         
-    // Handle plasma-based abilities
+    // Handle resources-based abilities
     elseif(techNode:GetIsAction() or techNode:GetIsBuy()) then
     
-        local playerPlasma = self:GetPlasma()
-        if(cost == nil or cost <= playerPlasma) then
+        local playerResources = self:GetResources()
+        if(cost == nil or cost <= playerResources) then
         
             if(techNode:GetIsAction()) then
             
@@ -265,8 +265,8 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pi
             
             if(success and cost ~= nil) then
             
-                self:AddPlasma(-cost)
-                Shared.PlayPrivateSound(self, Commander.kSpendPlasmaSoundName, nil, 1.0, self:GetOrigin())
+                self:AddResources(-cost)
+                Shared.PlayPrivateSound(self, Commander.kSpendResourcesSoundName, nil, 1.0, self:GetOrigin())
                 
             end
             

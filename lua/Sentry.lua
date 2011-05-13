@@ -119,6 +119,19 @@ end
 function Sentry:OnInit()
     Structure.OnInit(self)
     self:SetUpdates(true)
+    
+    if Server then 
+        // configure how targets are selected and validated
+        self.targetSelector = Server.targetCache:CreateSelector(
+            self,
+            Sentry.kRange, 
+            true,
+            TargetCache.kMmtl, 
+            TargetCache.kMstl, 
+            { PitchTargetFilter(self,  -Sentry.kMaxPitch + 1, Sentry.kMaxPitch - 1) })
+        // The +-1 is a fudge; we constrain the eye a bit to ensure that if it sees a target, the barrel will
+        // be able to hit it even after the barrel moves.
+    end
 end
 
 function Sentry:GetSentryMode()
@@ -136,13 +149,15 @@ function Sentry:GetEyePos()
     // sometimes not. An alien placing itself at the edge of the fov would be a valid 
     // target when the barrel faces in the middle, but become invalid when it faces
     // the alien. To solve it would reqire the introduction of a field-of-fire for the
-    // gun iteself, while the field-of-view belonged to the sensor.
+    // gun itself, while the field-of-view belonged to the sensor.
     // Too much work, and the simple fix is to move the eye to the center of rotation. 
     // return self:GetAttachPointOrigin(Sentry.kEyeNode)
-    local sensorPoint = self:GetAttachPointOrigin(Sentry.kEyeNode)
-    local modelPoint = self:GetOrigin()
-    modelPoint.y = sensorPoint.y
-    return modelPoint
+    // ... and this doesn't work either ... the height of the eyenode drops down when the barrel elevates, thus
+    // lowering the sentry eyepos.
+    // lets go for a hack: manually measusured; height of muzzle when at zero pitch is at 1.0162.
+    // note: the caching here assumes that you don't change the origin of the sentry
+    self.eyePos = self.eyePos or (self:GetOrigin() + Vector(0, 1.0162, 0))
+    return self.eyePos
 end
 
 function Sentry:GetDeathIconIndex()
@@ -171,25 +186,6 @@ function Sentry:GetTechButtons(techId)
     
 end
 
-function Sentry:GetIsTargetValid(target)
-
-    if(target ~= nil and target:GetIsAlive() and target ~= self and target:GetCanTakeDamage() and target:GetIsVisible() and not target:isa("Infestation") ) then
-    
-        local distance = (target:GetModelOrigin() - self:GetModelOrigin()):GetLength()
-        local canSee = self:GetCanSeeEntity(target)
-        local inRange = distance < Sentry.kRange
-        
-        if(canSee and inRange) then
-        
-            return true, distance
-            
-        end
-        
-    end
-    
-    return false, Entity.invalidId
-
-end
 
 function Sentry:GetTargetDirection()
     return self.targetDirection

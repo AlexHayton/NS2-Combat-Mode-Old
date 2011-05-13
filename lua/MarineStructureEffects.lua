@@ -78,6 +78,7 @@ kMarineStructureEffects =
         {
             {sound = "sound/ns2.fev/marine/structures/power_down"},
             {stop_sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor"},
+            {stop_sound = "sound/ns2.fev/marine/structures/phase_gate_active", classname = "PhaseGate"},
             // Structure power down animations handled in code ("power_down")
         },
     },
@@ -86,6 +87,7 @@ kMarineStructureEffects =
     {
         powerUpEffects =
         {
+            {sound = "sound/ns2.fev/marine/structures/phase_gate_active", classname = "PhaseGate", done = true},
             {sound = "sound/ns2.fev/marine/structures/power_up"},
             // Structure power down animations handled in code ("power_down")
         },
@@ -172,14 +174,16 @@ kMarineStructureEffects =
     {
         arcDeployEffects =
         {
-            {animation = "deploy", blend_time = .3},
+            {animation = "spawn"},
+            {cinematic = "cinematics/marine/structures/spawn_building.cinematic"},
         },
     },    
     
     arc_undeployedstationary =
     {
         arcUndeployedStationaryEffects =
-        {        
+        {
+           {animation = {{1, "idle_undeployed"}, {1, "idle_undeployed2"}, {1, "idle_undeployed3"}, {.3, "idle_undeployed4"}} },
         },
     },
     
@@ -189,7 +193,7 @@ kMarineStructureEffects =
         arcDeployEffects =
         {
             {sound = "sound/ns2.fev/marine/structure/arc/deploy"},
-            {animation = "deploy", blend_time = .3},
+            {animation = "deploy"},
         },
     },    
     
@@ -200,7 +204,7 @@ kMarineStructureEffects =
         {
             {stop_sound = "sound/ns2.fev/marine/structures/arc/fire"},
             {sound = "sound/ns2.fev/marine/structures/arc/undeploy"},
-            {animation = "undeploy", blend_time = .3},
+            {animation = "undeploy"},
         },
     },  
     
@@ -209,7 +213,7 @@ kMarineStructureEffects =
     {
         arcMoveEffects =
         {
-            {animation = "move", blend_time = .3},
+            {animation = "move"},
         },
     },
     
@@ -217,8 +221,9 @@ kMarineStructureEffects =
     {
         arcTargetEffects = 
         {
-            {animation = "shoot"},
-            {cinematic = "cinematics/marine/arc/fire.cinematic", attach_point = "fxnode_arcmuzzle"},
+            {animation = "target", force = true},
+            {sound = "sound/ns2.fev/marine/structures/arc/fire"},
+            {cinematic = "cinematics/marine/arc/target.cinematic", attach_point = "fxnode_arcmuzzle"},
         },
     },
     
@@ -227,14 +232,13 @@ kMarineStructureEffects =
         arcFireEffects =
         {
             // "trail" like a tracer
-            {sound = "sound/ns2.fev/marine/structures/arc/fire"},
-            {cinematic = "cinematics/marine/arc/fire_shell.cinematic", attach_point = "fxnode_arcmuzzle"},
+            {animation = "fire", force = true},
+            //{sound = "sound/ns2.fev/marine/structures/arc/fire"},
+            {cinematic = "cinematics/marine/arc/fire.cinematic", attach_point = "fxnode_arcmuzzle"},
         },
     },
     
-    arc_deployed =
-    {
-    },
+
     
     // Center of ARC blast
     arc_hit_primary =
@@ -367,7 +371,27 @@ kMarineStructureEffects =
             {sound = "sound/ns2.fev/marine/structures/infantry_portal_player_spawn"},
         },
     },    
-       
+
+    // Played when a player enters a phase gate (at the source)
+    phase_gate_player_enter = 
+    {
+        pgSpawnEffect =
+        {
+            {cinematic = "cinematics/marine/infantryportal/player_spawn.cinematic"},
+            {sound = "sound/ns2.fev/marine/structures/phase_gate_teleport"},
+        },
+    }, 
+
+    // Played when a player goes through a phase gate (at the destination)
+    phase_gate_player_exit = 
+    {
+        pgSpawnEffect =
+        {
+            {cinematic = "cinematics/marine/infantryportal/player_spawn.cinematic"},
+            {sound = "sound/ns2.fev/marine/structures/phase_gate_teleport"},
+        },
+    }, 
+    
     distress_beacon = 
     {
         playerSpawnEffect =

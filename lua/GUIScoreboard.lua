@@ -115,7 +115,7 @@ function GUIScoreboard:CreateTeamBackground(color)
     teamNameItem:SetColor(color)
     teamItem:AddChild(teamNameItem)
     
-    // Add team info (carbon and number of players)
+    // Add team info (team resources and number of players)
     local teamInfoItem = GUIManager:CreateTextItem()
     teamInfoItem:SetFontName(GUIScoreboard.kFontName)
     teamInfoItem:SetFontSize(GUIScoreboard.kTeamInfoFontSize)
@@ -284,9 +284,9 @@ function GUIScoreboard:UpdateTeam(updateTeam)
     // Update the team name text.
     teamNameGUIItem:SetText(string.format("%s (%s)", teamNameText, Pluralize(numPlayers, "Player")))
     
-    // Update carbon display
-    local carbonString = ConditionalValue(isLocalTeam, string.format("%d team resources", player:GetTeamCarbon()), "")
-    teamInfoGUIItem:SetText(string.format("%s", carbonString))
+    // Update team resource display
+    local teamResourcesString = ConditionalValue(isLocalTeam, string.format("%d team resources", player:GetTeamResources()), "")
+    teamInfoGUIItem:SetText(string.format("%s", teamResourcesString))
     
     // Make sure there is enough room for all players on this team GUI.
     teamGUIItem:SetSize(Vector(GUIScoreboard.kTeamItemWidth, (GUIScoreboard.kTeamItemHeight) + ((GUIScoreboard.kPlayerItemHeight + GUIScoreboard.kPlayerSpacing) * numPlayers), 0))

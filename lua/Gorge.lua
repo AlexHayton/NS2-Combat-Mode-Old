@@ -535,7 +535,7 @@ function Gorge:UpdateHelp()
         return true       
     elseif activeWeaponName ~= "HydraAbility" and self:AddTooltipOnce("Switch to weapon #3 to build hydras that attack enemies.") then
         return true       
-    elseif activeWeaponName == "HydraAbility" and self:AddTooltipOnce("Building a Hydra costs you plasma, but you can build as many as you like.") then
+    elseif activeWeaponName == "HydraAbility" and self:AddTooltipOnce("Building a Hydra costs you resources, but you can build as many as you like.") then
         return true       
     elseif activeWeaponName == "HydraAbility" and self:AddTooltipOnce("Hydras can even be built on walls and ceilings!") then
         return true       

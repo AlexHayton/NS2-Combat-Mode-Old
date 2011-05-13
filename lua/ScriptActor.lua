@@ -42,7 +42,10 @@ local networkVars =
     owner                       = "entityid",
     
     // Id used to look up precached string representing room location ("Marine Start")
-    locationId                  = "integer"
+    locationId                  = "integer",
+    
+    // pathing flags
+    pathingFlags                = "integer"
     
 }
 
@@ -69,6 +72,8 @@ function ScriptActor:OnCreate()
     self.ownedEntities = { }
     
     self.locationId = 0
+    
+    self.pathingFlags = 0
     
     if(Server) then
     
@@ -219,7 +224,7 @@ function ScriptActor:GetTechAllowed(techId, techNode, player)
     if techNode:GetIsUpgrade() then
     
         // Let child override this
-        return self:GetUpgradeTechAllowed(techId) and (techNode:GetCost() <= player:GetTeamCarbon())
+        return self:GetUpgradeTechAllowed(techId) and (techNode:GetCost() <= player:GetTeamResources())
         
     elseif techNode:GetIsEnergyBuild() then
         
@@ -229,13 +234,13 @@ function ScriptActor:GetTechAllowed(techId, techNode, player)
     elseif(techNode:GetIsResearch()) then
     
         // Return false if we're researching, or if tech is being researched
-        return self:GetResearchTechAllowed(techNode) and (techNode:GetCost() <= player:GetTeamCarbon())
+        return self:GetResearchTechAllowed(techNode) and (techNode:GetCost() <= player:GetTeamResources())
 
     // If tech is action or buy action
     elseif(techNode:GetIsAction() or techNode:GetIsBuy()) then
     
-        // Return false if we don't have enough plasma
-        if(player:GetPlasma() < techNode:GetCost()) then
+        // Return false if we don't have enough resources
+        if(player:GetResources() < techNode:GetCost()) then
             return false
         end
         
@@ -252,8 +257,8 @@ function ScriptActor:GetTechAllowed(techId, techNode, player)
     // If tech is build
     elseif(techNode:GetIsBuild()) then
     
-        // return false if we don't have enough carbon
-        return (player:GetTeamCarbon() >= techNode:GetCost())
+        // return false if we don't have enough team resources
+        return (player:GetTeamResources() >= techNode:GetCost())
         
     end
     
@@ -470,11 +475,16 @@ function ScriptActor:GetEffectParams(tableParams)
     
 end
 
-// If a Actor has a Build Footprint it will prevent other actors
-// from being able to build on top of it. 
-// This allows us to override the build behavior
-function ScriptActor:GetHasBuildFootPrint ()
-    return false
+function ScriptActor:SetPathingFlag (flag)  
+  self.pathingFlags = bit.bor(self.pathingFlags, bit.lshift(1, flag))
+end
+
+function ScriptActor:GetHasPathingFlag (flag)
+    return (bit.band(self.pathingFlags, bit.lshift(1, flag)) ~= 0)
+end
+
+function ScriptActor:ClearPathingFlag (flag)
+  self.pathingFlags = bit.band(self.pathingFlags, bit.bnot(bit.lshift(1, flag)))
 end
 
 Shared.LinkClassToMap("ScriptActor", ScriptActor.kMapName, networkVars )

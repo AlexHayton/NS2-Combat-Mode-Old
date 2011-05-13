@@ -681,10 +681,8 @@ function GUICommanderButtons:MousePressed(key, mouseX, mouseY)
         elseif self.targetedButton ~= nil then
             if CommanderUI_IsValid(self.targetedButton, mouseX, mouseY) then
                 CommanderUI_TargetedAction(self.targetedButton, mouseX, mouseY, 1)
-            else
-                CommanderUI_ActionCancelled()
-            end
-            self:SetTargetedButton(nil)
+                self:SetTargetedButton(nil)
+            end            
         else
             for i, buttonItem in ipairs(self.buttons) do
                 local buttonStatus = CommanderUI_MenuButtonStatus(i)

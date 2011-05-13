@@ -62,9 +62,12 @@ function BiteLeap:PerformPrimaryAttack(player)
     // Play random animation, speeding it up if we're under effects of fury
     player:SetActivityEnd( player:AdjustFuryFireDelay(kBiteFireDelay) )
 
-    // Trace melee attack
-    local didHit, trace = self:AttackMeleeCapsule(player, kBiteDamage, BiteLeap.kRange)
-    
+    // Trace melee attack below first, if that fails, try one above (to try to prevent biting the ground or ceiling.
+    local didHit, trace = self:AttackMeleeCapsule(player, kBiteDamage, BiteLeap.kRange, Vector(0, -0.2, 0))
+    if not trace or not trace.entity then
+        didHit, trace = self:AttackMeleeCapsule(player, kBiteDamage, BiteLeap.kRange, Vector(0, 0.2, 0))
+    end
+
     self.lastBittenEntityId = Entity.invalidId
     if didHit and trace and trace.entity then
         self.lastBittenEntityId = trace.entity:GetId()
@@ -123,11 +126,12 @@ end
 
 /**
  * Allow weapons to have different capsules
- * Skulks are so low to the groun, they need a slimmer box in the vertical range
- * to avoid biting into the ground so easily.
+ * Skulks are low to the ground so they cast 2 attacks, one above and one below
+ * to help them not hit the ground. Each cast should be half the height of the desired
+ * cast (which is the y component here).
  */
 function BiteLeap:GetMeleeCapsule()
-    return Vector(0.4, 0.1, 0.01)
+    return Vector(0.4, 0.2, 0.01)
 end
 
 /**

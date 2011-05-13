@@ -9,6 +9,8 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+Script.Load("lua/ScenarioHandler_Commands.lua")
+
 function JoinTeamOne(player, force)
     // Team balance
     if GetGamerules():GetCanJoinTeamNumber(kTeam1Index) or force or Shared.GetCheatsEnabled() then
@@ -71,22 +73,22 @@ function OnCommandEndGame(client)
     
 end
 
-function OnCommandCarbon(client)
+function OnCommandTeamResources(client)
 
     local player = client:GetControllingPlayer()
     
     if Shared.GetCheatsEnabled() then
-        player:GetTeam():AddCarbon(100)
+        player:GetTeam():AddTeamResources(100)
     end
     
 end
 
-function OnCommandPlasma(client)
+function OnCommandResources(client)
 
     local player = client:GetControllingPlayer()
     
     if Shared.GetCheatsEnabled() then
-        player:AddPlasma(100)
+        player:AddResources(100)
     end
     
 end
@@ -195,13 +197,14 @@ function OnCommandEnts(client, className)
         local playersOnPlayingTeams = GetGamerules():GetTeam1():GetNumPlayers() + GetGamerules():GetTeam2():GetNumPlayers()
         local commandStationsOnTeams = GetGamerules():GetTeam1():GetNumCommandStructures() + GetGamerules():GetTeam2():GetNumCommandStructures()
         local blipCount = Shared.GetEntitiesWithClassname("Blip"):GetSize()
+        local infestCount = Shared.GetEntitiesWithClassname("Infestation"):GetSize()
         
         if className then
             local numClassEnts = Shared.GetEntitiesWithClassname(className):GetSize()
             Server.Broadcast(player, Pluralize(numClassEnts, className))
         else
-            Server.Broadcast(player, string.format("%d entities (%s, %d playing, %s, %s, %s, %d command structures on teams).", 
-                                                    entityCount, Pluralize(playerCount, "player"), playersOnPlayingTeams, Pluralize(weaponCount, "weapon"), Pluralize(structureCount, "structure"), Pluralize(blipCount, "blip"), commandStationsOnTeams))
+            Server.Broadcast(player, string.format("%d entities (%s, %d playing, %s, %s, %s, %s, %d command structures on teams).", 
+                                                    entityCount, Pluralize(playerCount, "player"), playersOnPlayingTeams, Pluralize(weaponCount, "weapon"), Pluralize(structureCount, "structure"), Pluralize(blipCount, "blip"), Pluralize(infestCount, "infest"), commandStationsOnTeams))
         end
     end
     
@@ -229,6 +232,16 @@ function OnCommandSwitch(client)
         newPlayer:SetOrigin(playerOrigin)
         newPlayer:SetViewAngles(playerViewAngles)
         
+    end
+    
+end
+
+function OnCommandDamage(client,multiplier)
+
+    if(Shared.GetCheatsEnabled()) then
+        local m = multiplier and tonumber(multiplier) or 1
+        GetGamerules():SetDamageMultiplier(m)
+        Shared.Message("Damage multipler set to " .. m)
     end
     
 end
@@ -712,8 +725,8 @@ Event.Hook("Console_gotoplayeralert",       OnCommandGotoPlayerAlert)
 Event.Hook("Console_selectallplayers",      OnCommandSelectAllPlayers)
 
 // Cheats
-Event.Hook("Console_carbon",                OnCommandCarbon)
-Event.Hook("Console_plasma",                OnCommandPlasma)
+Event.Hook("Console_teamresources",         OnCommandTeamResources)
+Event.Hook("Console_resources",             OnCommandResources)
 Event.Hook("Console_autobuild",             OnCommandAutobuild)
 Event.Hook("Console_energy",                OnCommandEnergy)
 Event.Hook("Console_takedamage",            OnCommandTakeDamage)
@@ -723,6 +736,7 @@ Event.Hook("Console_spawn",                 OnCommandSpawn)
 Event.Hook("Console_ents",                  OnCommandEnts)
 
 Event.Hook("Console_switch",                OnCommandSwitch)
+Event.Hook("Console_damage",                OnCommandDamage)
 Event.Hook("Console_highdamage",            OnCommandHighDamage)
 Event.Hook("Console_give",                  OnCommandGive)
 Event.Hook("Console_giveupgrade",           OnCommandGiveUpgrade)

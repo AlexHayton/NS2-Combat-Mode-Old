@@ -73,9 +73,9 @@ function HarvesterAbility:PerformPrimaryAttack(player)
         
         if valid then
         
-            // If we have enough plasma
+            // If we have enough resources
             local cost = LookupTechData(kTechId.Harvester, kTechDataCostKey)
-            if player:GetPlasma() >= cost then
+            if player:GetResources() >= cost then
         
                 Shared.PlaySound(player, HarvesterAbility.kCreateStartSound)
                 
@@ -110,14 +110,14 @@ end
 
 function HarvesterAbility:CreateHarvester(player)
 
-    // If team has enough carbon
+    // If team has enough resources
     if Server then
     
         local coords, valid = self:GetPositionForHarvester(player)
     
         local team = self:GetTeam()
         local cost = LookupTechData(kTechId.Harvester, kTechDataCostKey)
-        if valid and (team:GetCarbon() >= cost) then
+        if valid and (team:GetTeamResources() >= cost) then
         
             // Get resource point
             local origin, resourcePoint = self:GetResourcePoint(player)
@@ -134,7 +134,7 @@ function HarvesterAbility:CreateHarvester(player)
                     // Attach to resource point
                     harvester:SetAttached(resourcePoint)
                     
-                    team:AddCarbon( -cost )
+                    team:AddTeamResources( -cost )
                     
                     // Trigger alert for Commander 
                     team:TriggerAlert(kTechId.AlienAlertGorgeBuiltHarvester, harvester)
@@ -237,8 +237,8 @@ function HarvesterAbility:OnUpdate(deltaTime)
                 
                 self.ghostHarvester:SetCoords(coords)
                 
-                // Check plasma
-                if player:GetPlasma() < LookupTechData(kTechId.Harvester, kTechDataCostKey) then
+                // Check resources
+                if player:GetResources() < LookupTechData(kTechId.Harvester, kTechDataCostKey) then
                 
                     valid = false
                     

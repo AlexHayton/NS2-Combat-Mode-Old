@@ -471,7 +471,7 @@ end
 function PlayerUI_GetTeamResources()
     local player = Client.GetLocalPlayer()
     if player then
-        return player:GetDisplayTeamCarbon()
+        return player:GetDisplayTeamResources()
     end
     return 0
 end
@@ -488,7 +488,7 @@ function PlayerUI_GetPlayerResources()
     
     local player = Client.GetLocalPlayer()
     if player then
-        return player:GetDisplayPlasma()
+        return player:GetDisplayResources()
     end
     return 0
 
@@ -591,102 +591,37 @@ function Player:UpdateCrossHairText()
     // Show players and important structures
     if trace.fraction < 1 and entity ~= nil then
     
+        local text = nil
         local updatedText = false
         
         if self.traceReticle then
             
-            self.crossHairText = string.format("%s (id: %d) origin: %s, %.2f dist", SafeClassName(trace.entity), trace.entity:GetId(), trace.entity:GetOrigin():tostring(), (trace.endPoint - startPoint):GetLength())
+            text = string.format("%s (id: %d) origin: %s, %.2f dist", SafeClassName(entity), entity:GetId(), entity:GetOrigin():tostring(), (trace.endPoint - startPoint):GetLength())
 
-            if trace.entity.GetExtents then
-                self.crossHairText = string.format("%s extents: %s", self.crossHairText, trace.entity:GetExtents():tostring())
+            if entity.GetExtents then
+                text = string.format("%s extents: %s", self.crossHairText, entity:GetExtents():tostring())
             end
             
-            if trace.entity.GetTeamNumber then
-                self.crossHairText = string.format("%s teamNum: %d", self.crossHairText, trace.entity:GetTeamNumber())
+            if entity.GetTeamNumber then
+                text = string.format("%s teamNum: %d", self.crossHairText, entity:GetTeamNumber())
             end
             
             updatedText = true
     
-        elseif entity:isa("Player") and entity:GetIsAlive() then
-        
-            // If the target is an Embryo and is on the enemy team, we should mask their name
-            if entity:isa("Embryo") and entity:GetTeamNumber() == GetEnemyTeamNumber(self:GetTeamNumber()) then
-            
-                local statusText = string.format("(%.0f%%)", Clamp(math.ceil(trace.entity:GetHealthScalar() * 100), 0, 100))
-                self.crossHairText = string.format("%s %s", LookupTechData(kTechId.Egg, kTechDataDisplayName), statusText)
-                
-                updatedText = true
-                
-            else
-                
-                local playerName = Scoreboard_GetPlayerData(entity:GetClientIndex(), kScoreboardDataIndexName)
-                        
-                if playerName ~= nil then
-                
-                    self.crossHairText = playerName
-                
-                end
-            
-                if entity:GetTeamNumber() == self:GetTeamNumber() then
-                
-                    // Add health scalar
-                    self.crossHairText = string.format("%s (%d%%)", self.crossHairText, math.ceil(entity:GetHealthScalar()*100))
-                    
-                end
-                
-                updatedText = true
-                
-            end
-            
-        // Add quickie damage feedback and structure status
-        elseif (entity:isa("Structure") or entity:isa("MAC") or entity:isa("Drifter") or entity:isa("ARC")) and entity:GetIsAlive() then
-        
-            local techId = trace.entity:GetTechId()
-            local statusText = string.format("(%.0f%%)", Clamp(math.ceil(trace.entity:GetHealthScalar() * 100), 0, 100))
-            if entity:isa("Structure") and not entity:GetIsBuilt() then
-                statusText = string.format("(%.0f%%)", Clamp(math.ceil(trace.entity:GetBuiltFraction() * 100), 0, 100))
-            end
-
-            local secondaryText = ""
-            if entity:isa("Structure") then
-            
-                // Display location name for power point so we know what it affects
-                if entity:isa("PowerPoint") then
-                
-                    if not entity:GetIsPowered() then
-                        secondaryText = "Destroyed " .. entity:GetLocationName() .. " "
-                        statusText = ""
-                    else
-                        secondaryText = entity:GetLocationName() .. " "
-                    end
-                    
-                elseif not entity:GetIsBuilt() then
-                    secondaryText = "Unbuilt "
-                elseif entity:GetRequiresPower() and not entity:GetIsPowered() then
-                    secondaryText = "Unpowered "
-                    
-                elseif entity:isa("Whip") then
-                
-                    if not entity:GetIsRooted() then
-                        secondaryText = "Unrooted "
-                    end
-                end
-                
-            end
-            
-            self.crossHairText = string.format("%s%s %s", secondaryText, LookupTechData(techId, kTechDataDisplayName), statusText)
-
-            updatedText = true
-            
+        else
+            text = GetCrosshairText(entity, self:GetTeamNumber())
+            updatedText = (text ~= "")
         end
-        
+   
         if updatedText then
         
-            if GetEnemyTeamNumber(self:GetTeamNumber()) == trace.entity:GetTeamNumber() then
+            self.crossHairText = text
+            
+            if GetEnemyTeamNumber(self:GetTeamNumber()) == entity:GetTeamNumber() then
     
                 self.crossHairTextColor = kEnemyColor
                 
-            elseif trace.entity:GetGameEffectMask(kGameEffect.Parasite) then
+            elseif entity:GetGameEffectMask(kGameEffect.Parasite) then
             
                 self.crossHairTextColor = kParasitedTextColor
                 

@@ -186,14 +186,15 @@ end
  * Checks if a melee capsule would hit anything. Does not actually carry
  * out any attack or inflict any damage.
  */
-function Weapon:CheckMeleeCapsule(player, damage, range)
+function Weapon:CheckMeleeCapsule(player, damage, range, optionalOffset)
     // Trace using a box so that unlike bullet attacks we don't require precise targeting
     local extents = self:GetMeleeCapsule()
-    // to compensate for any thinning out from standard depth (remove once melee ranges have been adjusted)
-    range = range + 0.4 - extents.z
    
     local attackOffset = self:GetMeleeOffset()
     local eyePoint = player:GetOrigin() + player:GetViewOffset()
+    if optionalOffset then
+        eyePoint = eyePoint + optionalOffset
+    end
     local startPoint = eyePoint + player:GetViewAngles():GetCoords().zAxis * attackOffset
     local endPoint   = eyePoint + player:GetViewAngles():GetCoords().zAxis * range
 
@@ -232,9 +233,9 @@ end
 /**
  * Does an attack with a melee capsule.
  */
-function Weapon:AttackMeleeCapsule(player, damage, range)
+function Weapon:AttackMeleeCapsule(player, damage, range, optionalOffset)
     self.traceRealAttack = true // enable tracing on this capsule check
-    local didHit, trace, direction = self:CheckMeleeCapsule(player, damage, range)
+    local didHit, trace, direction = self:CheckMeleeCapsule(player, damage, range, optionalOffset)
     self.traceRealAttack = false
     
     if trace.fraction < 1 then

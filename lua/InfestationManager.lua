@@ -9,15 +9,18 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+
 function SetAsConnected(infestation)
 
+    PROFILE("InfestationManager:SetAsConnected")
+    
     if not infestation:GetConnectedToHive() then
     
         infestation:SetConnectedToHive(true)
         
-        for index, connectedInfestation in ipairs(infestation:GetConnections()) do
+        for peer, _ in pairs(infestation:GetConnections()) do
         
-            SetAsConnected(connectedInfestation)
+            SetAsConnected(peer)
             
         end
         
@@ -27,36 +30,26 @@ end
 
 function UpdateInfestationConnections(infestations)
 
+    PROFILE("InfestationManager:UpdateInfestationConnections")
+    
+    // Reconnect them according to how close they are
     for index, infestation in ipairs(infestations) do        
     
         // Not connected to hive
         infestation:SetConnectedToHive(false)
-    
-        // Update connections
-        local connections = {}
         
-        for index, infestation2 in ipairs(infestations) do        
-        
-            if infestation ~= infestation2 then
-            
-                local dist = infestation:GetOrigin():GetDistanceTo(infestation2:GetOrigin())
-
-                local connected = (dist < (infestation:GetRadius() + infestation2:GetRadius()))
-                if connected then
-                
-                    table.insert(connections, infestation2)
-                    
-                end
-                
-            end    
-            
-        end
-        
-        infestation:SetConnections(connections)
+        infestation.connections = Server.infestationMap:GetConnections(infestation)
         
     end
     
-    // Reconnect them according to how close they are
+    // run through all connections and make sure that they connect to each other properly
+    //  (the 20m connections need to be reverse connected)
+    for index, infestation in ipairs(infestations) do
+        for peer, _ in pairs(infestation.connections) do
+            peer.connections[infestation] = true
+        end
+    end
+
     for index, infestation in ipairs(infestations) do
     
         // Recursively set nodes as connected
@@ -68,17 +61,12 @@ function UpdateInfestationConnections(infestations)
 
     end
     
-    local totalConnected = 0
-    for index, infestation in ipairs(infestations) do
-        if infestation:GetConnectedToHive() then
-            totalConnected = totalConnected + 1
-        end
-    end
-    
 end
 
 function UpdateInfestation(teamNumber)
 
+    PROFILE("InfestationManager:UpdateInfestation")
+    
     // Get all infestation nodes
     local infestations = GetEntitiesForTeam("Infestation", teamNumber)
     
@@ -88,30 +76,23 @@ end
 
 function UpdateInfestationMasks(entityList)
 
+    PROFILE("InfestationManager:UpdateInfestationMasks")
+
     for index, entity in ientitylist(entityList) do
-        UpdateInfestationMask(entity)
+        // Don't do this for infestations.
+        if not entity:isa("Infestation") then
+            UpdateInfestationMask(entity)
+        end
     end
     
 end
 
 // Clear OnInfestation game effect mask on all entities, unless they are standing on infestation
 function UpdateInfestationMask(forEntity)
+    
+    // See if entity is on infestation.
+    local onInfestation = Server.infestationMap:GetIsOnInfestation(forEntity:GetOrigin())
 
-    local onInfestation = false
-    local entOrigin = forEntity:GetOrigin()            
-    
-    // See if entity is on infestation
-    for infestationIndex, infestation in ientitylist(Shared.GetEntitiesWithClassname("Infestation")) do
-    
-        if infestation:GetIsPointOnInfestation(entOrigin) then
-        
-            onInfestation = true
-            break
-            
-        end
-        
-    end
-    
     // Set the mask
     if forEntity.GetGameEffectMask and (forEntity:GetGameEffectMask(kGameEffect.OnInfestation) ~= onInfestation) then
         forEntity:SetGameEffectMask(kGameEffect.OnInfestation, onInfestation)
