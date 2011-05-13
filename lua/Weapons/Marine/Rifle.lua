@@ -154,8 +154,10 @@ function Rifle:GetCanIdle()
 
 end
 
-function Rifle:OnEntityChanged(oldId, newId)
+function Rifle:OnEntityChange(oldId, newId)
 
+    ClipWeapon.OnEntityChange(self, oldId, newId)
+    
     // In case the parent is destroyed.
     if oldId == self.playingLoopingOnEntityId then
         self:StopLoopingEffects()
@@ -171,7 +173,8 @@ function Rifle:GetIsShooting()
     local startedAttack = self.timeStartedAttack ~= 0
     local notReloading = not self:GetIsReloading()
     local hasAmmo = self:GetClip() > 0
-    return hasParent and isNotHolstered and startedAttack and notReloading and hasAmmo
+    local visible = self:GetIsVisible()
+    return hasParent and isNotHolstered and startedAttack and notReloading and hasAmmo and visible
     
 end
 
@@ -184,6 +187,8 @@ function Rifle:PlayLoopingEffects()
         
             // Fire off a single shot on the first shot. Pew.
             Shared.PlaySound(parent, Rifle.kSingleShotSounds[self.soundType])
+            // Start the looping sound for the rest of the shooting. Pew pew pew...
+            Shared.PlaySound(parent, Rifle.kLoopingSounds[self.soundType])
             local animationLength = parent:SetViewAnimation(Rifle.kAttackInViewModelAnimation, true, true)
             self.playingLoopingOnEntityId = parent:GetId()
             self.animationStateDoneTime = Shared.GetTime() + animationLength
@@ -191,8 +196,6 @@ function Rifle:PlayLoopingEffects()
             
         elseif self.viewAnimationState == Rifle.kViewAnimationStates.AttackIn and Shared.GetTime() >= self.animationStateDoneTime then
         
-            // Start the looping sound for the rest of the shooting. Pew pew pew...
-            Shared.PlaySound(parent, Rifle.kLoopingSounds[self.soundType])
             parent:SetViewAnimation(Rifle.kAttackViewModelAnimation, true, true)
             self.playingLoopingOnEntityId = parent:GetId()
             // Looping animation has no predefined done time.
@@ -218,7 +221,9 @@ function Rifle:StopLoopingEffects()
             Shared.PlaySound(parent, Rifle.kRifleEndSound)
             // If reloading, do not trigger the attack out view animation since the
             // reload animation is already triggered.
-            if not self:GetIsReloading() then
+            // If holstered, do not trigger the attach out view animation since another
+            // weapon is active and probably wants to control the view model.
+            if (not self:GetIsReloading()) and (not self:GetIsHolstered()) then
                 local animationLength = parent:SetViewAnimation(Rifle.kAttackOutViewModelAnimation, true, true)
                 self.animationStateDoneTime = Shared.GetTime() + animationLength
                 self.viewAnimationState = Rifle.kViewAnimationStates.AttackOut
@@ -270,6 +275,8 @@ end
 function Rifle:OnHolster(player)
     
     ClipWeapon.OnHolster(self, player)
+    
+    self.timeStartedAttack = 0
     
 end
 

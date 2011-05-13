@@ -32,6 +32,7 @@ MarineCommander.kAttackOrderSoundName = PrecacheAsset("sound/ns2.fev/marine/voic
 MarineCommander.kStructureUnderAttackSound = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/base_under_attack")
 MarineCommander.kBuildStructureSound = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/build")
 MarineCommander.kDefendTargetSound = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/defend")
+MarineCommander.kCommanderEjectedSoundName = PrecacheAsset("sound/ns2.fev/marine/voiceovers/commander/commander_ejected")
 
 MarineCommander.kOrderClickedEffect = PrecacheAsset("cinematics/marine/order.cinematic")
 MarineCommander.kSelectSound = PrecacheAsset("sound/ns2.fev/marine/commander/select")

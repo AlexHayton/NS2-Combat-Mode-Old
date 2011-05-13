@@ -864,4 +864,22 @@
   <file>
     <filename>GUIShotgunDisplay.lua</filename>
   </file>
+  <file>
+    <filename>TargetCache.lua</filename>
+  </file>
+  <file>
+    <filename>TargetCache_Commands.lua</filename>
+  </file>
+  <file>
+    <filename>DbgTracer.lua</filename>
+  </file>
+  <file>
+    <filename>DbgTracer_Commands.lua</filename>
+  </file>
+  <file>
+    <filename>DbgTracer_Server.lua</filename>
+  </file>
+  <file>
+    <filename>InfestationMixin.lua</filename>
+  </file>
 </project>

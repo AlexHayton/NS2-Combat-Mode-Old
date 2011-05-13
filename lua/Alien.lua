@@ -172,6 +172,40 @@ function Alien:OnUpdate(deltaTime)
     
 end
 
+function Alien:GetBaseArmor()
+    // Must override.
+    ASSERT(false)
+    return 0
+end
+
+function Alien:GetArmorFullyUpgradedAmount()
+    // Must override.
+    ASSERT(false)
+    return 0
+end
+
+function Alien:GetArmorAmount()
+
+    local extraUpgradedArmor = 0
+    
+    if(GetTechSupported(self, kTechId.AlienArmor3Tech, true)) then
+    
+        extraUpgradedArmor = self:GetArmorFullyUpgradedAmount()
+    
+    elseif(GetTechSupported(self, kTechId.AlienArmor2Tech, true)) then
+    
+        extraUpgradedArmor = (self:GetArmorFullyUpgradedAmount() / 3) * 2
+    
+    elseif(GetTechSupported(self, kTechId.AlienArmor1Tech, true)) then
+    
+        extraUpgradedArmor = self:GetArmorFullyUpgradedAmount() / 3
+    
+    end
+
+    return self:GetBaseArmor() + extraUpgradedArmor
+   
+end
+
 function Alien:GetRecuperationRate()
     local scalar = ConditionalValue(self:GetGameEffectMask(kGameEffect.OnFire), kOnFireEnergyRecuperationScalar, 1)
     return scalar * Alien.kEnergyRecuperationRate
@@ -187,7 +221,14 @@ end
 function Alien:GetSayings()
 
     if(self.showSayings) then
-        return alienGroupSayingsText    
+        if(self.showSayingsMenu == 1) then
+            return alienGroupSayingsText    
+        end
+        if(self.showSayingsMenu == 2) then
+            return GetVoteActionsText(self:GetTeamNumber())
+        end
+
+        return 
     end
     
     return nil
@@ -199,16 +240,23 @@ function Alien:ExecuteSaying(index, menu)
     Player.ExecuteSaying(self, index, menu)
 
     if(Server) then
+    
+        // Handle voting
+        if self.showSayingsMenu == 2 then
+            GetGamerules():CastVoteByPlayer( voteActionsActions[index], self )
+        else
 
-        self:PlaySound(alienGroupSayingsSounds[index])
-        
-        local techId = alienRequestActions[index]
-        if techId ~= kTechId.None then
-            self:GetTeam():TriggerAlert(techId, self)
+            self:PlaySound(alienGroupSayingsSounds[index])
+            
+            local techId = alienRequestActions[index]
+            if techId ~= kTechId.None then
+                self:GetTeam():TriggerAlert(techId, self)
+            end
+            
         end
         
     end
-    
+        
 end
 
 function Alien:GetChatSound()

@@ -153,7 +153,8 @@ function LiveScriptActor:CreateController(physicsGroup, capsuleHeight, capsuleRa
         self.controller:SetGroup( physicsGroup )
         self.controller:SetTriggeringEnabled( true )
         
-        self.controller:SetupCapsule( capsuleRadius, capsuleHeight, self.controller:GetCoords() )
+        local success = self.controller:SetupCapsule( capsuleRadius, capsuleHeight, self.controller:GetCoords() )
+        ASSERT(success)
         
         // Make the controller kinematic so physically simulated objects will
         // interact/collide with it.
@@ -374,6 +375,8 @@ end
 
 function LiveScriptActor:OnEntityChange(entityId, newEntityId)
 
+    ScriptActor.OnEntityChange(self, entityId, newEntityId)
+    
     if entityId == self.fireAttackerId then
         self.fireAttackerId = newEntityId
     end
@@ -400,6 +403,10 @@ end
 
 function LiveScriptActor:GetSendDeathMessage()
     return self:GetIsAlive()
+end
+
+function LiveScriptActor:GetHasBuildFootPrint()
+    return true
 end
 
 Shared.LinkClassToMap("LiveScriptActor", LiveScriptActor.kMapName, LiveScriptActor.networkVars )

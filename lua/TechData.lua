@@ -102,7 +102,7 @@ function BuildTechData()
         { [kTechDataId] = kTechId.Build,                 [kTechDataDisplayName] = "Build", [kTechDataTooltipInfo] = "Build new team structure"},
         { [kTechDataId] = kTechId.Construct,             [kTechDataDisplayName] = "Construct", [kTechDataOrderSound] = MarineCommander.kBuildStructureSound},
         { [kTechDataId] = kTechId.Cancel,                [kTechDataDisplayName] = "Cancel", [kTechDataHotkey] = Move.ESC},
-        { [kTechDataId] = kTechId.Recycle,               [kTechDataDisplayName] = "Recycle", [kTechDataHotkey] = Move.R, [kTechDataTooltipInfo] = string.format("Destroy structure to recover %d%% of cost (less when damaged)", Structure.kRecyclePaybackScalar * 100) },
+        { [kTechDataId] = kTechId.Recycle,               [kTechDataDisplayName] = "Recycle", [kTechDataHotkey] = Move.R, [kTechDataTooltipInfo] = string.format("Destroy structure to recover %d%% of cost", kRecyclePaybackScalar * 100) },
         { [kTechDataId] = kTechId.Weld,                  [kTechDataDisplayName] = "Weld", [kTechDataHotkey] = Move.W, [kTechDataTooltipInfo] = "Weld door shut or repair target"},
         { [kTechDataId] = kTechId.Stop,                  [kTechDataDisplayName] = "Stop", [kTechDataHotkey] = Move.S, [kTechDataTooltipInfo] = "Stop moving and cancel all orders"},
         { [kTechDataId] = kTechId.SetRally,              [kTechDataDisplayName] = "Set rally point", [kTechDataHotkey] = Move.L, [kTechDataTooltipInfo] = "New helper units automatically move here"},
@@ -197,7 +197,7 @@ function BuildTechData()
         // Marine advanced structures
         { [kTechDataId] = kTechId.AdvancedArmory,        [kTechDataMapName] = AdvancedArmory.kMapName,                   [kTechDataDisplayName] = "Advanced Armory",     [kTechDataCostKey] = kAdvancedArmoryUpgradeCost,  [kTechDataModel] = Armory.kModelName,                     [kTechDataMaxHealth] = kAdvancedArmoryHealth,   [kTechDataMaxArmor] = kAdvancedArmoryArmor,  [kTechDataEngagementDistance] = kArmoryEngagementDistance,  [kTechDataUpgradeTech] = kTechId.Armory, [kTechDataPointValue] = kAdvancedArmoryPointValue},
         { [kTechDataId] = kTechId.Observatory,           [kTechDataMapName] = Observatory.kMapName,    [kTechDataNew] = "New 10/14",  [kTechDataDisplayName] = "Observatory",  [kTechDataCostKey] = kObservatoryCost,       [kTechDataModel] = Observatory.kModelName,            [kTechDataBuildTime] = kObservatoryBuildTime, [kTechDataMaxHealth] = kObservatoryHealth,   [kTechDataEngagementDistance] = kObservatoryEngagementDistance, [kTechDataMaxArmor] = kObservatoryArmor,   [kTechDataInitialEnergy] = kObservatoryInitialEnergy,      [kTechDataMaxEnergy] = kObservatoryMaxEnergy, [kTechDataPointValue] = kObservatoryPointValue, [kTechDataHotkey] = Move.O, [kTechDataNotOnInfestation] = true, [kTechDataTooltipInfo] = "Gives marines information about nearby enemies"},
-        { [kTechDataId] = kTechId.Scan,                  [kTechDataDisplayName] = "Scan",     [kTechDataNew] = "New 10/14", [kTechDataHotkey] = Move.S,   [kTechDataCostKey] = kObservatoryScanCost, [kTechDataTooltipInfo] = "Reveals cloaked units and gives line of sight to any area" },
+        { [kTechDataId] = kTechId.Scan,                  [kTechDataMapName] = Scan.kMapName,     [kTechDataModel] = "", [kTechDataDisplayName] = "Scan",      [kTechDataHotkey] = Move.S,   [kTechDataCostKey] = kObservatoryScanCost, [kTechDataTooltipInfo] = "Reveals cloaked units and gives line of sight to any area" },
         { [kTechDataId] = kTechId.DistressBeacon,        [kTechDataDisplayName] = "Distress beacon", [kTechDataImplemented] = false, [kTechDataHotkey] = Move.B, [kTechDataCostKey] = kObservatoryDistressBeaconCost, [kTechDataTooltipInfo] = "Quickly transports a squad back to observatory" },
         { [kTechDataId] = kTechId.RoboticsFactory,       [kTechDataDisplayName] = "Robotics Factory",         [kTechDataMapName] = RoboticsFactory.kMapName,          [kTechDataDisplayName] = "Robotics Factory", [kTechDataImplemented] = false,    [kTechDataCostKey] = kRoboticsFactoryCost,       [kTechDataModel] = RoboticsFactory.kModelName,    [kTechDataEngagementDistance] = kRoboticsFactorEngagementDistance,        [kTechDataBuildTime] = kRoboticsFactoryBuildTime, [kTechDataMaxHealth] = kRoboticsFactoryHealth,    [kTechDataMaxArmor] = kRoboticsFactoryArmor, [kTechDataPointValue] = kRoboticsFactoryPointValue, [kTechDataHotkey] = Move.R, [kTechDataNotOnInfestation] = true, [kTechDataTooltipInfo] = "Allows production of mobile siege cannons"},        
         { [kTechDataId] = kTechId.ARC,                  [kTechDataMapName] = ARC.kMapName,                     [kTechDataDisplayName] = "ARC", [kTechDataImplemented] = false,        [kTechDataCostKey] = kARCCost,       [kTechDataDamageType] = kARCDamageType,  [kTechDataBuildTime] = kARCBuildTime, [kTechDataMaxHealth] = kARCHealth, [kTechDataEngagementDistance] = kARCEngagementDistance, [kTechDataMaxArmor] = kARCArmor, [kTechDataModel] = ARC.kModelName,            [kTechDataMaxHealth] = kARCHealth, [kTechDataPointValue] = kARCPointValue, [kTechDataHotkey] = Move.T},
@@ -209,11 +209,8 @@ function BuildTechData()
         { [kTechDataId] = kTechId.InfantryPortalTransponderTech, [kTechDataCostKey] = kInfantryPortalTransponderTechResearchCost,            [kTechDataResearchTimeKey] = kInfantryPortalTransponderTechResearchTime, [kTechDataDisplayName] = "Transponder technology", [kTechDataTooltipInfo] = "Allows squad spawning from infantry portals", [kTechDataHotkey] = Move.T },
         { [kTechDataId] = kTechId.InfantryPortalTransponderUpgrade, [kTechDataCostKey] = kInfantryPortalTransponderUpgradeCost,            [kTechDataResearchTimeKey] = kInfantryPortalTransponderUpgradeTime, [kTechDataDisplayName] = "Add transponder", [kTechDataTooltipInfo] = "Allows marines to spawn with their squad", [kTechDataHotkey] = Move.T },
         { [kTechDataId] = kTechId.PhaseTech,             [kTechDataCostKey] = kPhaseTechResearchCost,                [kTechDataResearchTimeKey] = kPhaseTechResearchTime },
-        
-        // Note: The model name should not be specified for the armory upgrades due to how the parent/child relationship works
-        // and how a model is loaded in ScriptActor:OnInit()
         { [kTechDataId] = kTechId.AdvancedArmoryUpgrade, [kTechDataCostKey] = kAdvancedArmoryUpgradeCost,            [kTechDataResearchTimeKey] = kAdvancedArmoryResearchTime,  [kTechDataHotkey] = Move.U, [kTechDataDisplayName] = "Upgrade to Advanced Armory", [kTechDataTooltipInfo] = "Gives access to weapon and prototype modules" },
-        { [kTechDataId] = kTechId.WeaponsModule,         [kTechDataCostKey] = kWeaponsModuleAddonCost,               [kTechDataResearchTimeKey] = kWeaponsModuleAddonTime,      [kTechDataDisplayName] = "Armory with Weapons module", [kTechDataMaxHealth] = kAdvancedArmoryHealth, [kTechDataUpgradeTech] = kTechId.AdvancedArmory, [kTechDataHotkey] = Move.W, [kTechDataTooltipInfo] = "Allows access to advanced weaponry"},
+        { [kTechDataId] = kTechId.WeaponsModule,         [kTechDataCostKey] = kWeaponsModuleAddonCost,               [kTechDataResearchTimeKey] = kWeaponsModuleAddonTime,      [kTechDataDisplayName] = "Armory with Weapons module", [kTechDataMaxHealth] = kAdvancedArmoryHealth, [kTechDataUpgradeTech] = kTechId.AdvancedArmory, [kTechDataHotkey] = Move.W, [kTechDataTooltipInfo] = "Allows access to advanced weaponry", [kTechDataModel] = Armory.kModelName},
         { [kTechDataId] = kTechId.PrototypeLab,          [kTechDataCostKey] = kPrototypeLabCost,                     [kTechDataResearchTimeKey] = kPrototypeLabBuildTime,       [kTechDataDisplayName] = "Prototype lab", [kTechDataModel] = PrototypeLab.kModelName, [kTechDataMaxHealth] = kPrototypeLabHealth, [kTechDataPointValue] = kPrototypeLabPointValue, [kTechDataImplemented] = false, [kTechDataHotkey] = Move.P, [kTechDataTooltipInfo] = "Allows access advanced TSA prototype tech"},
        
         // Weapons
@@ -304,11 +301,11 @@ function BuildTechData()
         // Upgrade structures and research
         { [kTechDataId] = kTechId.Crag,                  [kTechDataMapName] = Crag.kMapName,                         [kTechDataDisplayName] = "Crag",  [kTechDataCostKey] = kCragCost,     [kTechDataRequiresInfestation] = true, [kTechDataHotkey] = Move.C,       [kTechDataBuildTime] = kCragBuildTime, [kTechDataModel] = Crag.kModelName,           [kTechDataMaxHealth] = kCragHealth, [kTechDataMaxArmor] = kCragArmor,   [kTechDataInitialEnergy] = kCragInitialEnergy,      [kTechDataMaxEnergy] = kCragMaxEnergy, [kTechDataPointValue] = kCragPointValue, [kStructureVisualRange] = Crag.kHealRadius, [kTechDataTooltipInfo] = "Heals friendly units and allows defensive upgrades (automatic)", [kTechDataGrows] = true},
         { [kTechDataId] = kTechId.UpgradeCrag,           [kTechDataMapName] = Crag.kMapName,                         [kTechDataDisplayName] = "Upgrade to Mature Crag",  [kTechDataCostKey] = kMatureCragCost, [kTechDataResearchTimeKey] = kMatureCragResearchTime, [kTechDataHotkey] = Move.U, [kTechDataModel] = Crag.kModelName,  [kTechDataMaxHealth] = kMatureCragHealth, [kTechDataMaxArmor] = kMatureCragArmor,[kTechDataTooltipInfo] = "Increase Crag health and gain Babbler ability", [kTechDataGrows] = true },
-        { [kTechDataId] = kTechId.MatureCrag,            [kTechDataMapName] = MatureCrag.kMapName,                   [kTechDataDisplayName] = "Mature Crag",             [kTechDataModel] = Crag.kModelName, [kTechDataCostKey] = kMatureCragCost, [kTechDataBuildTime] = kMatureCragBuildTime, [kTechDataMaxHealth] = kMatureCragHealth, [kTechDataInitialEnergy] = kCragInitialEnergy, [kTechDataMaxEnergy] = kMatureCragMaxEnergy, [kTechDataPointValue] = kMatureCragPointValue, [kStructureVisualRange] = Crag.kHealRadius, [kTechDataTooltipInfo] = "Defensive healing structure with babbler capabilities", [kTechDataGrows] = true, [kTechDataUpgradeTech] = kTechId.Crag},         
+        { [kTechDataId] = kTechId.MatureCrag,            [kTechDataMapName] = MatureCrag.kMapName,                   [kTechDataDisplayName] = "Mature Crag",             [kTechDataModel] = Crag.kModelName, [kTechDataCostKey] = kMatureCragCost, [kTechDataRequiresInfestation] = true, [kTechDataBuildTime] = kMatureCragBuildTime, [kTechDataMaxHealth] = kMatureCragHealth, [kTechDataInitialEnergy] = kCragInitialEnergy, [kTechDataMaxEnergy] = kMatureCragMaxEnergy, [kTechDataPointValue] = kMatureCragPointValue, [kStructureVisualRange] = Crag.kHealRadius, [kTechDataTooltipInfo] = "Defensive healing structure with babbler capabilities", [kTechDataGrows] = true, [kTechDataUpgradeTech] = kTechId.Crag},         
          
         { [kTechDataId] = kTechId.Whip,                  [kTechDataMapName] = Whip.kMapName,                         [kTechDataDisplayName] = "Whip",  [kTechDataCostKey] = kWhipCost,    [kTechDataRequiresInfestation] = true, [kTechDataHotkey] = Move.W,        [kTechDataBuildTime] = kWhipBuildTime, [kTechDataModel] = Whip.kModelName,           [kTechDataMaxHealth] = kWhipHealth, [kTechDataMaxArmor] = kWhipArmor,   [kTechDataDamageType] = kDamageType.Light, [kTechDataInitialEnergy] = kWhipInitialEnergy,      [kTechDataMaxEnergy] = kWhipMaxEnergy, [kStructureVisualRange] = Whip.kRange, [kTechDataPointValue] = kWhipPointValue, [kTechDataTooltipInfo] = "Attacks nearby enemies and allows offensive upgrades", [kTechDataGrows] = true},
         { [kTechDataId] = kTechId.UpgradeWhip,           [kTechDataMapName] = Whip.kMapName,                         [kTechDataDisplayName] = "Upgrade to Mature Whip",  [kTechDataCostKey] = kMatureWhipCost, [kTechDataResearchTimeKey] = kMatureWhipResearchTime, [kTechDataHotkey] = Move.U, [kTechDataModel] = Whip.kModelName, [kTechDataTooltipInfo] = "Increase Whip health and gain Bombard ability", [kTechDataGrows] = true },
-        { [kTechDataId] = kTechId.MatureWhip,            [kTechDataMapName] = MatureWhip.kMapName,                   [kTechDataDisplayName] = "Mature Whip",  [kTechDataModel] = Whip.kModelName, [kTechDataCostKey] = kMatureWhipCost, [kTechDataBuildTime] = kMatureWhipBuildTime,       [kTechDataMaxHealth] = kMatureWhipHealth,  [kTechDataMaxArmor] = kMatureWhipArmor,  [kTechDataInitialEnergy] = kMatureWhipInitialEnergy,      [kTechDataMaxEnergy] = kMatureWhipMaxEnergy, [kTechDataPointValue] = kMatureWhipPointValue, [kStructureVisualRange] = Whip.kRange, [kTechDataTooltipInfo] = "Offensive structure with Bombard ability", [kTechDataGrows] = true, [kTechDataUpgradeTech] = kTechId.Whip },
+        { [kTechDataId] = kTechId.MatureWhip,            [kTechDataMapName] = MatureWhip.kMapName,                   [kTechDataDisplayName] = "Mature Whip",  [kTechDataModel] = Whip.kModelName, [kTechDataCostKey] = kMatureWhipCost, [kTechDataRequiresInfestation] = true, [kTechDataBuildTime] = kMatureWhipBuildTime,       [kTechDataMaxHealth] = kMatureWhipHealth,  [kTechDataMaxArmor] = kMatureWhipArmor,  [kTechDataInitialEnergy] = kMatureWhipInitialEnergy,      [kTechDataMaxEnergy] = kMatureWhipMaxEnergy, [kTechDataPointValue] = kMatureWhipPointValue, [kStructureVisualRange] = Whip.kRange, [kTechDataTooltipInfo] = "Offensive structure with Bombard ability", [kTechDataGrows] = true, [kTechDataUpgradeTech] = kTechId.Whip },
         
         { [kTechDataId] = kTechId.Shift,                 [kTechDataMapName] = Shift.kMapName,                        [kTechDataDisplayName] = "Shift", [kTechDataImplemented] = false,   [kTechDataRequiresInfestation] = true, [kTechDataCostKey] = kShiftCost,    [kTechDataHotkey] = Move.S,        [kTechDataBuildTime] = kShiftBuildTime, [kTechDataModel] = Shift.kModelName,           [kTechDataMaxHealth] = kShiftHealth,  [kTechDataMaxArmor] = kShiftArmor,  [kTechDataInitialEnergy] = kShiftInitialEnergy,      [kTechDataMaxEnergy] = kShiftMaxEnergy, [kTechDataPointValue] = kShiftPointValue, [kStructureVisualRange] = kEnergizeRange, [kTechDataTooltipInfo] = "Speeds energy recovery for units and shift units around map", [kTechDataGrows] = true },
         { [kTechDataId] = kTechId.UpgradeShift,          [kTechDataMapName] = Shift.kMapName,                        [kTechDataDisplayName] = "Upgrade to Mature Shift", [kTechDataImplemented] = false, [kTechDataCostKey] = kMatureShiftCost, [kTechDataResearchTimeKey] = kMatureShiftResearchTime, [kTechDataHotkey] = Move.U, [kTechDataTooltipInfo] = "Increase Shift health and gain Echo ability", [kTechDataGrows] = true },
@@ -352,12 +349,12 @@ function BuildTechData()
         { [kTechDataId] = kTechId.AlienCommander,        [kTechDataMapName] = AlienCommander.kMapName, [kTechDataDisplayName] = "Alien Commander", [kTechDataModel] = ""},
         
         // General alien upgrades
-        { [kTechDataId] = kTechId.Melee1Tech,                  [kTechDataDisplayName] = "Attack #1 (Leads to Lerk/Fade)", [kTechDataHotkey] = Move.M, [kTechDataCostKey] = kMelee1ResearchCost, [kTechDataResearchTimeKey] = kMelee1ResearchTime},        
-        { [kTechDataId] = kTechId.Melee2Tech,                  [kTechDataDisplayName] = "Attack #2 (Unlocks Lerk/Fade)", [kTechDataCostKey] = kMelee2ResearchCost, [kTechDataResearchTimeKey] =  kMelee2ResearchTime},        
-        { [kTechDataId] = kTechId.Melee3Tech,                  [kTechDataDisplayName] = "Attack #3", [kTechDataHotkey] = Move.M, [kTechDataCostKey] = kMelee3ResearchCost, [kTechDataResearchTimeKey] =  kMelee3ResearchTime},        
-        { [kTechDataId] = kTechId.AlienArmor1Tech,             [kTechDataDisplayName] = "Armor #1 (Unlocks Gorge)", [kTechDataHotkey] = Move.A, [kTechDataCostKey] = kAlienArmor1ResearchCost, [kTechDataResearchTimeKey] = kAlienArmor1ResearchTime},        
-        { [kTechDataId] = kTechId.AlienArmor2Tech,             [kTechDataDisplayName] = "Armor #2", [kTechDataHotkey] = Move.A, [kTechDataCostKey] = kAlienArmor2ResearchCost, [kTechDataResearchTimeKey] =  kAlienArmor2ResearchTime},        
-        { [kTechDataId] = kTechId.AlienArmor3Tech,             [kTechDataDisplayName] = "Armor #3", [kTechDataHotkey] = Move.A, [kTechDataCostKey] = kAlienArmor3ResearchCost, [kTechDataResearchTimeKey] =  kAlienArmor3ResearchTime},
+        { [kTechDataId] = kTechId.Melee1Tech,                  [kTechDataDisplayName] = string.format("Melee #1 (+%.2f%%)", math.floor((kMelee1DamageScalar - 1)*100)), [kTechDataHotkey] = Move.M, [kTechDataCostKey] = kMelee1ResearchCost, [kTechDataResearchTimeKey] = kMelee1ResearchTime},        
+        { [kTechDataId] = kTechId.Melee2Tech,                  [kTechDataDisplayName] = string.format("Melee #2 (+%.2f%%)", math.floor((kMelee2DamageScalar - 1)*100)), [kTechDataCostKey] = kMelee2ResearchCost, [kTechDataResearchTimeKey] =  kMelee2ResearchTime},        
+        { [kTechDataId] = kTechId.Melee3Tech,                  [kTechDataDisplayName] = string.format("Melee #3 (+%.2f%%)", math.floor((kMelee3DamageScalar - 1)*100)), [kTechDataHotkey] = Move.M, [kTechDataCostKey] = kMelee3ResearchCost, [kTechDataResearchTimeKey] =  kMelee3ResearchTime},        
+        { [kTechDataId] = kTechId.AlienArmor1Tech,             [kTechDataDisplayName] = string.format("Armor #1 (additional alien armor)"), [kTechDataHotkey] = Move.A, [kTechDataCostKey] = kAlienArmor1ResearchCost, [kTechDataResearchTimeKey] = kAlienArmor1ResearchTime},        
+        { [kTechDataId] = kTechId.AlienArmor2Tech,             [kTechDataDisplayName] = string.format("Armor #2 (additional alien armor)"), [kTechDataHotkey] = Move.A, [kTechDataCostKey] = kAlienArmor2ResearchCost, [kTechDataResearchTimeKey] =  kAlienArmor2ResearchTime},        
+        { [kTechDataId] = kTechId.AlienArmor3Tech,             [kTechDataDisplayName] = string.format("Armor #3 (additional alien armor)"), [kTechDataHotkey] = Move.A, [kTechDataCostKey] = kAlienArmor3ResearchCost, [kTechDataResearchTimeKey] =  kAlienArmor3ResearchTime},
 
         // Lifeform research
         { [kTechDataId] = kTechId.BloodThirstTech,              [kTechDataDisplayName] = "Bloodthirst", [kTechDataImplemented] = false,  [kTechDataCostKey] = kBloodThirstResearchCost, [kTechDataResearchTimeKey] = kBloodThirstResearchTime },        
@@ -421,6 +418,7 @@ function BuildTechData()
         { [kTechDataId] = kTechId.MarineAlertConstructionComplete,              [kTechDataAlertSound] = MarineCommander.kObjectiveCompletedSoundName,       [kTechDataAlertType] = kAlertType.Info,     [kTechDataAlertText] = "Construction complete"},        
         { [kTechDataId] = kTechId.MarineAlertCommandStationUnderAttack,         [kTechDataAlertSound] = CommandStation.kUnderAttackSound,                   [kTechDataAlertType] = kAlertType.Attack,   [kTechDataAlertText] = "Command Station under attack",  [kTechDataAlertTeam] = true},        
         { [kTechDataId] = kTechId.MarineAlertInfantryPortalUnderAttack,         [kTechDataAlertSound] = InfantryPortal.kUnderAttackSound,                   [kTechDataAlertType] = kAlertType.Attack,   [kTechDataAlertText] = "Infantry Portal under attack",  [kTechDataAlertTeam] = true},        
+        { [kTechDataId] = kTechId.MarineCommanderEjected,                       [kTechDataAlertSound] = MarineCommander.kCommanderEjectedSoundName,         [kTechDataAlertType] = kAlertType.Info,     [kTechDataAlertText] = "Commander has been ejected",  [kTechDataAlertTeam] = true},        
                 
         { [kTechDataId] = kTechId.AlienAlertHiveUnderAttack,                    [kTechDataAlertSound] = Hive.kUnderAttackSound,                             [kTechDataAlertType] = kAlertType.Attack,   [kTechDataAlertText] = "Hive under attack",       [kTechDataAlertTeam] = true},        
         { [kTechDataId] = kTechId.AlienAlertHiveDying,                          [kTechDataAlertSound] = Hive.kDyingSound,                                   [kTechDataAlertType] = kAlertType.Attack,   [kTechDataAlertText] = "Hive is dying",      [kTechDataAlertTeam] = true},        
@@ -432,6 +430,8 @@ function BuildTechData()
         { [kTechDataId] = kTechId.AlienAlertLifeformUnderAttack,                [kTechDataAlertSound] = AlienCommander.kLifeformUnderAttackSound,           [kTechDataAlertType] = kAlertType.Attack,   [kTechDataAlertText] = "Lifeform under attack",       [kTechDataAlertTeam] = true},
         { [kTechDataId] = kTechId.AlienAlertGorgeBuiltHarvester,                [kTechDataAlertType] = kAlertType.Info,                                     [kTechDataAlertText] = "Gorge building Harvester"},
         { [kTechDataId] = kTechId.AlienAlertNotEnoughResources,                 [kTechDataAlertSound] = Alien.kNotEnoughResourcesSound,                     [kTechDataAlertType] = kAlertType.Info,     [kTechDataAlertText] = "Not enough resources"},
+        { [kTechDataId] = kTechId.AlienCommanderEjected,                        [kTechDataAlertSound] = AlienCommander.kCommanderEjectedSoundName,          [kTechDataAlertType] = kAlertType.Info,     [kTechDataAlertText] = "Commander has been ejected",  [kTechDataAlertTeam] = true},        
+
 		
 		// "Combat Mode" skills
 		// Aliens
@@ -595,4 +595,37 @@ end
 // Returns true if specified class name is used to attach objects to
 function GetIsAttachment(className)
     return (className == "TechPoint") or (className == "ResourcePoint")
+end
+
+function GetRecycleAmount(techId, upgradeLevel)
+
+    local amount = GetCachedTechData(techId, kTechDataCostKey)
+    if upgradeLevel == nil then
+        upgradeLevel = 0
+    end
+    
+    if techId == kTechId.Extractor then
+        amount = GetCachedTechData(kTechId.Extractor, kTechDataCostKey) + upgradeLevel * GetCachedTechData(kTechId.ExtractorUpgrade, kTechDataCostKey)
+    elseif techId == kTechId.Harvester then
+        amount = GetCachedTechData(kTechId.Harvester, kTechDataCostKey) + upgradeLevel * GetCachedTechData(kTechId.HarvesterUpgrade, kTechDataCostKey)
+        
+    elseif techId == kTechId.AdvancedArmory then
+        amount = GetCachedTechData(kTechId.Armory, kTechDataCostKey) + GetCachedTechData(kTechId.AdvancedArmoryUpgrade, kTechDataCostKey)
+        
+    elseif techId == kTechId.WeaponsModule then
+        amount = GetCachedTechData(kTechId.Armory, kTechDataCostKey) + GetCachedTechData(kTechId.AdvancedArmoryUpgrade, kTechDataCostKey) + GetCachedTechData(kTechId.WeaponsModule, kTechDataCostKey)
+        
+    elseif techId == kTechId.HiveMass then
+        amount = GetCachedTechData(kTechId.Hive, kTechDataCostKey) + GetCachedTechData(kTechId.HiveMassUpgrade, kTechDataCostKey)
+    elseif techId == kTechId.HiveColony then
+        amount = GetCachedTechData(kTechId.Hive, kTechDataCostKey) + GetCachedTechData(kTechId.HiveMassUpgrade, kTechDataCostKey) + GetCachedTechData(kTechId.HiveColonyUpgrade, kTechDataCostKey)
+        
+    elseif techId == kTechId.CommandFacility then
+        amount = GetCachedTechData(kTechId.CommandStation, kTechDataCostKey) + GetCachedTechData(kTechId.CommandFacilityUpgrade, kTechDataCostKey)
+    elseif techId == kTechId.CommandCenter then
+        amount = GetCachedTechData(kTechId.CommandStation, kTechDataCostKey) + GetCachedTechData(kTechId.CommandFacilityUpgrade, kTechDataCostKey) + GetCachedTechData(kTechId.CommandCenterUpgrade, kTechDataCostKey)
+    end
+
+    return amount
+    
 end

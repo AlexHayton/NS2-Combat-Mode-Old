@@ -64,7 +64,7 @@ function ScriptActor:OnCreate()
     
     self.attachedId = Entity.invalidId
     
-    self.ownerServerClient = nil
+    self.ownerPlayerId = Entity.invalidId
     // Stores all the entities that are owned by this ScriptActor.
     self.ownedEntities = { }
     
@@ -95,7 +95,7 @@ function ScriptActor:OnLoad()
 
     BlendedActor.OnLoad(self)
     
-    local teamNumber = GetAndCheckValue(self.teamNumber, 0, 2, "teamNumber", 0)
+    local teamNumber = GetAndCheckValue(self.teamNumber, 0, 3, "teamNumber", 0)
     
     // Set to nil to prevent OnTeamChange() from being called before it's set for the first time
     self.teamNumber = -1
@@ -328,6 +328,7 @@ end
 
 // Used by player. Returns true if entity was affected by use, false otherwise.
 function ScriptActor:OnUse(player, elapsedTime, useAttachPoint, usePoint)
+    return false
 end
 
 function ScriptActor:OnTouch(player)
@@ -399,6 +400,19 @@ end
 // when an entity is destroyed. See GetEntityChange(). When an entity is destroyed,
 // newId will be nil.
 function ScriptActor:OnEntityChange(oldId, newId)
+
+    if Server then
+        // Update our owner if it has changed.
+        if self.ownerPlayerId == oldId then
+            if newId then
+                self:SetOwner(nil)
+                self:SetOwner(Shared.GetEntity(newId))
+            else
+                self:SetOwner(nil)
+            end
+        end
+    end
+
 end
 
 // Create a particle effect parented to this object and positioned and oriented with us, using 
@@ -454,6 +468,13 @@ function ScriptActor:GetEffectParams(tableParams)
         tableParams[kEffectFilterFromAnimation] = self:GetAnimation()
     end
     
+end
+
+// If a Actor has a Build Footprint it will prevent other actors
+// from being able to build on top of it. 
+// This allows us to override the build behavior
+function ScriptActor:GetHasBuildFootPrint ()
+    return false
 end
 
 Shared.LinkClassToMap("ScriptActor", ScriptActor.kMapName, networkVars )

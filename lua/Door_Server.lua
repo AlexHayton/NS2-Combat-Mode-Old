@@ -48,7 +48,7 @@ function Door:OnWeld(entity, elapsedTime)
     
         // Do nothing yet
         
-    elseif (self.state == Door.kState.Closed) then
+    elseif (self.state == Door.kState.Closed or self.state == Door.kState.Welding) then
 
         // Add weld time by using door
         self.time = self.time + elapsedTime
@@ -59,10 +59,12 @@ function Door:OnWeld(entity, elapsedTime)
             self:SetState(Door.kState.Welded)
             
             entity:AddScoreForOwner(Door.kWeldPointValue)
-        
+        else
+            self:SetState(Door.kState.Welding)
+            performedWelding = true
         end
-        
-        performedWelding = true
+
+    
     
     elseif(self.state ~= Door.kState.Welded) then
     
@@ -86,6 +88,12 @@ function Door:OnWeld(entity, elapsedTime)
     
     return performedWelding
     
+end
+
+function Door:OnWeldCanceled(entity)
+	if (self.state == Door.kState.Welding) then
+        self:SetState(Door.kState.Open)
+	end
 end
 
 function Door:ComputeDamageOverride(damage, damageType)
@@ -148,6 +156,14 @@ function Door:OnThink()
                 self:SetState(Door.kState.Open)
             elseif not desiredOpenState and (self:GetState() == Door.kState.Opened) then
                 self:SetState(Door.kState.Close)
+            elseif (self.overrideUnlockTime ~= 0) and (Shared.GetTime() > self.overrideUnlockTime + 3) then
+                // Close door if open
+                if (self:GetState() == Door.kState.Open) then
+                    self:SetState(Door.kState.Close)    
+                // Lock door if closed
+                elseif self:GetState() == Door.kState.Closed then
+                    self:SetState(Door.kState.Lock)                      
+                end
             end
             
         end

@@ -98,6 +98,14 @@ function Gorge:OnInit()
 
 end
 
+function Gorge:GetBaseArmor()
+    return Gorge.kArmor
+end
+
+function Gorge:GetArmorFullyUpgradedAmount()
+    return kGorgeArmorFullyUpgradedAmount
+end
+
 function Gorge:GetMaxViewOffsetHeight()
     return Gorge.kViewOffsetHeight
 end

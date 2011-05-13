@@ -56,7 +56,7 @@ function SporeCloud:OnThink()
 
     // Expire after a time
     local time = Shared.GetTime()
-    local enemies = GetGamerules():GetPlayers( GetEnemyTeamNumber(self:GetTeamNumber()) )
+    local enemies = GetEntitiesForTeam("Player", GetEnemyTeamNumber(self:GetTeamNumber()))
     
     for index, entity in ipairs(enemies) do
     

@@ -7,8 +7,10 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/CommandStructure.lua")
+Script.Load("lua/InfestationMixin.lua")
 
 class 'Hive' (CommandStructure)
+PrepareClassForMixin(Hive, InfestationMixin)
 
 Hive.kMapName        = "hive"
 
@@ -71,9 +73,9 @@ function Hive:GetTechButtons(techId)
         local upgradeIndex = table.maxn(techButtons) + 1
 
         if(self:GetTechId() == kTechId.Hive) then
-            techButtons[upgradeIndex] = self:GetLevelTechId(2)
+            techButtons[upgradeIndex] = kTechId.HiveMassUpgrade
         elseif(self:GetTechId() == kTechId.HiveMass) then
-            techButtons[upgradeIndex] = self:GetLevelTechId(3)
+            techButtons[upgradeIndex] = kTechId.HiveColonyUpgrade
         end        
        
     elseif(techId == kTechId.MarkersMenu) then 
@@ -125,6 +127,22 @@ function Hive:PerformActivation(techId, position, normal, commander)
     
     return success
     
+end
+
+function Hive:OnInit()
+    InitMixin(self, InfestationMixin)
+    
+    CommandStructure.OnInit(self)
+    
+    if (Client) then
+        // Create glowy "plankton" swimming around hive, along with mist and glow
+        local coords = self:GetCoords()
+        self:AttachEffect(Hive.kSpecksEffect, coords)
+        self:AttachEffect(Hive.kGlowEffect, coords, Cinematic.Repeat_Loop)
+    
+        // For mist creation
+        self:SetUpdates(true)
+    end        
 end
 
 Shared.LinkClassToMap("Hive",    Hive.kLevel1MapName, {})

@@ -155,8 +155,29 @@ function Armory:AddChildModel(modelName)
     scriptActor:SetParent(self)
     scriptActor:SetAttachPoint(Armory.kAttachPoint)
     scriptActor:SetAnimation("spawn")
-    scriptActor:SetPoseParam("spawn", 0)
+    scriptActor:SetPoseParam("spawn", self.researchProgress)
     
+end
+
+function Armory:TriggerChildDeployAnimation(modelName)
+
+    local children = GetChildEntities(self, "ScriptActor")
+    
+    for index, child in ipairs(children) do
+    
+        if child:GetModelName() == modelName then
+            child:SetAnimation("deploy")
+            
+            function TriggerChildIdleAnimation()
+                child:SetAnimation("idle")
+                // Cancel the timed callback.
+                return false
+            end
+            self:AddTimedCallback(TriggerChildIdleAnimation, child:GetAnimationLength("deploy"))
+        end
+        
+    end
+
 end
 
 function Armory:OnResearch(researchId)
@@ -164,7 +185,7 @@ function Armory:OnResearch(researchId)
     if(researchId == kTechId.AdvancedArmoryUpgrade) then
 
         // Create visual add-on
-        self:AddChildModel(Armory.kAdvancedArmoryChildModel)            
+        self:AddChildModel(Armory.kAdvancedArmoryChildModel)
         
     elseif(researchId == kTechId.WeaponsModule) then
     
@@ -185,11 +206,15 @@ function Armory:OnResearchComplete(structure, researchId)
         if(researchId == kTechId.AdvancedArmoryUpgrade) then
 
             // Transform into Advanced Armory
-            success = self:SetTechId(kTechId.AdvancedArmory)            
+            success = self:SetTechId(kTechId.AdvancedArmory)
+            
+            self:TriggerChildDeployAnimation(Armory.kAdvancedArmoryChildModel)
         
         elseif(researchId == kTechId.WeaponsModule) then
         
             success = self:SetTechId(kTechId.WeaponsModule)
+            
+            self:TriggerChildDeployAnimation(Armory.kWeaponsModuleChildModel)
     
         end
         

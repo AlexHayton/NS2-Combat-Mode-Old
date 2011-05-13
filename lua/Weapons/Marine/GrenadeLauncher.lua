@@ -175,7 +175,7 @@ end
 
 function GrenadeLauncher:OnProcessMove(player, input)
 
-    ClipWeapon.OnProcessMove(self, player, input)
+    Rifle.OnProcessMove(self, player, input)
     
     self:ReloadGrenade(player)
     

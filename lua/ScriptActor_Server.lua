@@ -11,19 +11,22 @@ function ScriptActor:SetOwner(player)
 
     local success = false
     
-    if player ~= nil and self.ownerServerClient ~= nil then
-        Shared.Message("Warning: A ScriptActor cannot have more than one owner!")
+    if player ~= nil and self.ownerPlayerId ~= Entity.invalidId then
+        Shared.Message("Warning: A ScriptActor cannot have more than one owner! Player: " .. player:GetName() .. " ScriptActor: " .. self:GetName())
+        ASSERT(false)
         return false
     end
     
+    local ownerPlayerEntity = Shared.GetEntity(self.ownerPlayerId)
+    
     if player == nil then
-        if self.ownerServerClient and self.ownerServerClient:GetControllingPlayer() then
-            self.ownerServerClient:GetControllingPlayer():SetIsOwner(self, false)
+        if ownerPlayerEntity then
+            ownerPlayerEntity:SetIsOwner(self, false)
         end
-        self.ownerServerClient = nil
+        self.ownerPlayerId = Entity.invalidId
         success = true
     elseif player:isa("Player") then
-        self.ownerServerClient = player:GetClient()
+        self.ownerPlayerId = player:GetId()
         player:SetIsOwner(self, true)
         success = true
     else
@@ -31,6 +34,13 @@ function ScriptActor:SetOwner(player)
     end
     
     return success
+    
+end
+
+function ScriptActor:GetOwner()
+
+    // Shared.GetEntity() will return nil if the ownerPlayerId is invalid.
+    return Shared.GetEntity(self.ownerPlayerId)
     
 end
 
@@ -46,18 +56,6 @@ function ScriptActor:SetIsOwner(ofEntity, isOwner)
         table.removevalue(self.ownedEntities, ofEntity)
     end
 
-end
-
-function ScriptActor:GetOwner()
-
-    if self.ownerServerClient ~= nil then
-    
-        return self.ownerServerClient:GetControllingPlayer()
-        
-    end
-    
-    return nil
-    
 end
 
 function ScriptActor:AddScoreForOwner(score)
@@ -129,12 +127,7 @@ function ScriptActor:OnDestroy()
     
     // Remove all owned entities.
     function RemoveOwnedEntityFunctor(entity)
-        // I am not sure why entity is nil here,
-        // it shouldn't be happening as far as I can tell but
-        // definitely is in some cases.
-        if entity then
-            entity:SetOwner(nil)
-        end
+        entity:SetOwner(nil)
     end
     table.foreachfunctor(self.ownedEntities, RemoveOwnedEntityFunctor)
     table.clear(self.ownedEntities)

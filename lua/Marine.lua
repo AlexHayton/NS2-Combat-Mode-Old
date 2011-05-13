@@ -768,6 +768,9 @@ function Marine:GetSayings()
         if(self.showSayingsMenu == 2) then
             return marineGroupSayingsText
         end
+        if(self.showSayingsMenu == 3) then
+            return GetVoteActionsText(self:GetTeamNumber())
+        end
         
     end
     
@@ -777,23 +780,31 @@ end
 
 function Marine:ExecuteSaying(index, menu)
 
-    Player.ExecuteSaying(self, index, menu)
+    if not Player.ExecuteSaying(self, index, menu) then
 
-    if(Server) then
-    
-        local sayings = marineRequestSayingsSounds
-        local sayingActions = marineRequestActions
+        if(Server) then
         
-        if(menu == 2) then
-            sayings = marineGroupSayingsSounds
-            sayingActions = marineGroupRequestActions
-        end
+            if menu == 3 then
+                GetGamerules():CastVoteByPlayer( voteActionsActions[index], self )
+            else
+            
+                local sayings = marineRequestSayingsSounds
+                local sayingActions = marineRequestActions
+                
+                if(menu == 2) then
+                    sayings = marineGroupSayingsSounds
+                    sayingActions = marineGroupRequestActions
+                end
 
-        self:PlaySound(sayings[index])
-        
-        local techId = sayingActions[index]
-        if techId ~= kTechId.None then
-            self:GetTeam():TriggerAlert(techId, self)
+                self:PlaySound(sayings[index])
+                
+                local techId = sayingActions[index]
+                if techId ~= kTechId.None then
+                    self:GetTeam():TriggerAlert(techId, self)
+                end
+                
+            end
+            
         end
         
     end

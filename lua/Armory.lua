@@ -167,21 +167,22 @@ function Armory:UpdateArmoryAnim(extension, loggedIn, scanTime, timePassed)
     
 end
 
-function Armory:SetPoseParamForResearch(researchId, childModel, children)
+function Armory:UpdatePoseParams(childModels)
 
-    if self.researchingId == researchId then
+    local researching = self.researchingId ~= kTechId.None
     
-        local children = GetChildEntities(self, "ScriptActor")
+    local children = GetChildEntities(self, "ScriptActor")
+    
+    // Get child model and set "spawn" progress according to research time
+    for index, child in ipairs(children) do
+    
+        if table.contains(childModels, child:GetModelName()) then
         
-        // Get child model and set "spawn" progress according to research time
-        for index, child in ipairs(children) do
-        
-            if child:GetModelName() == childModel then
-            
-                child:SetPoseParam("spawn", self.researchProgress)
-                break
-                
+            local spawnValue = 1
+            if researching then
+                spawnValue = self.researchProgress
             end
+            child:SetPoseParam("spawn", spawnValue)
             
         end
         
@@ -193,9 +194,8 @@ function Armory:OnUpdate(deltaTime)
 
     if self:GetIsBuilt() then
     
-        // Update animation for add-on modules as they're being built
-        self:SetPoseParamForResearch(kTechId.AdvancedArmoryUpgrade, Armory.kAdvancedArmoryChildModel, children)
-        self:SetPoseParamForResearch(kTechId.WeaponsModule, Armory.kWeaponsModuleChildModel, children)
+        // Update animation for add-on modules as they're being built.
+        self:UpdatePoseParams({ Armory.kAdvancedArmoryChildModel, Armory.kWeaponsModuleChildModel })
         
         // Set pose parameters according to if we're logged in or not
         if self.timeLastUpdate ~= nil then

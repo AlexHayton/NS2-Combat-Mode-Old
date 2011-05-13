@@ -11,12 +11,14 @@
 
 function OnCommandSetName(client, name)
 
-    if (client ~= nil) then
+    if client ~= nil and name ~= nil then
 
         local player = client:GetControllingPlayer()
 
-        // Treat "NsPlayer" as special    
-        if (name ~= player:GetName()) and (name ~= kDefaultPlayerName) then
+        name = StringTrim(name)
+        
+        // Treat "NsPlayer" as special
+        if (name ~= player:GetName()) and (name ~= kDefaultPlayerName) and string.len(name) > 0 then
         
             local prevName = player:GetName()
             player:SetName(name)
@@ -67,7 +69,7 @@ function OnCommandTeamSay(client, chatMessage)
         
             // Broadcast a chat message to all players. Assumes incoming chatMessage
             // is a quoted string if it has spaces in it.
-            local players = GetGamerules():GetPlayers( player:GetTeamNumber() )
+            local players = GetEntitiesForTeam("Player", player:GetTeamNumber())
 
             local command = string.format("chat 1 %s %d %d %s", EncodeStringForNetwork(player:GetName()), player.locationId, player:GetTeamNumber(), chatMessage)
             

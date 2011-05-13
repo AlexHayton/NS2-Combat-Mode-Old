@@ -219,7 +219,7 @@ function LiveScriptActor:OnKill(damage, attacker, doer, point, direction)
 		end
 	end
 
-    self.alive = false
+    self:SetIsAlive(false)
     
     if point then
         self.deathImpulse = self:GetDamageImpulse(damage, doer, point)
@@ -227,6 +227,7 @@ function LiveScriptActor:OnKill(damage, attacker, doer, point, direction)
     end
 
     self:ResetUpgrades()
+	self:ClearOrders()
 
     ScriptActor.OnKill(self, damage, attacker, doer, point, direction)
 
@@ -311,20 +312,39 @@ function LiveScriptActor:GetIsFlying()
     return false
 end
 
-// For non-flying units, snap new movement position to ground. Assumes actor
-// origin at feet of unit.
-function LiveScriptActor:SnapToGround(origin, physicsGroupMask)
+/**
+ * Return the passed in position casted down to the ground.
+ */
+function LiveScriptActor:GetGroundAt(position, physicsGroupMask)
 
-    if not self:GetIsFlying() then
-    
-        // Avoid boundary case where model goes through floor
-        local startOrigin = origin + Vector(0, .2, 0)
-        local endOrigin = origin - Vector(0, 100, 0)
-        local trace = Shared.TraceRay(startOrigin, endOrigin, physicsGroupMask, EntityFilterOne(self))
-        origin = trace.endPoint
-        
+    local topOffset = self:GetExtents().y
+    local startPosition = position + Vector(0, topOffset, 0)
+    local endPosition = position - Vector(0, 100, 0)
+    local trace = Shared.TraceRay(startPosition, endPosition, physicsGroupMask, EntityFilterOne(self))
+    return trace.endPoint
+
+end
+
+function LiveScriptActor:GetHoverAt(position)
+
+    local ground = self:GetGroundAt(position, PhysicsMask.AIMovement)
+    local resultY = position.y
+    // if we have a hover height, use it to find our minimum height above ground, otherwise use zero
+    local minHeightAboveGround = self.GetHoverHeight and self:GetHoverHeight() or 0
+
+    local heightAboveGround = position.y - resultY
+
+    // always snap "up", snap "down" only if not flying
+    if heightAboveGround < minHeightAboveGround or not self:GetIsFlying() then
+        resultY = resultY + minHeightAboveGround - heightAboveGround
     end
-    
+
+    if resultY ~= position.y then
+        return Vector(position.x, resultY, position.z)
+    end
+
+    return position
+
 end
 
 function LiveScriptActor:GetWaypointGroupName()
@@ -367,9 +387,12 @@ function LiveScriptActor:MoveToTarget(physicsGroupMask, location, movespeed, tim
         end
 
     end
-    
-    self:SnapToGround(newOrigin, physicsGroupMask)
+
+    if not self:GetIsFlying() then
+        newOrigin = self:GetGroundAt(newOrigin, physicsGroupMask)
+    end
     self:SetOrigin(newOrigin)
+    
     return distance
     
 end

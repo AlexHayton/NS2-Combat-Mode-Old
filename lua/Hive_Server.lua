@@ -21,8 +21,8 @@ function Hive:OnCreate()
     CommandStructure.OnCreate(self)
     
     self:SetLevelTechId(1, kTechId.Hive)
-    self:SetLevelTechId(2, kTechId.HiveMassUpgrade)
-    self:SetLevelTechId(3, kTechId.HiveColonyUpgrade)
+    self:SetLevelTechId(2, kTechId.HiveMass)
+    self:SetLevelTechId(3, kTechId.HiveColony)
     
     self:SetTechId(kTechId.Hive)
     
@@ -30,18 +30,11 @@ function Hive:OnCreate()
     self.health = kHiveHealth
     
     self:SetModel(Hive.kModelName)
-
-    self.hiveInfestationId = Entity.invalidId
-    
 end
 
 function Hive:OnDestroy()
     
-    local infestation = Shared.GetEntity(self.hiveInfestationId)
-    if infestation and infestation:isa("Infestation") then
-        Server.DestroyEntity(infestation)
-        self.hiveInfestationId = Entity.invalidId
-    end
+    self:ClearInfestation()
     
     CommandStructure.OnDestroy(self)
 
@@ -162,43 +155,15 @@ function Hive:SpawnEggs()
     
 end
 
-function Hive:SpawnInfestation()
-
-    if self.hiveInfestationId == Entity.invalidId then
-        // Create initial clump and set to nearly grown (gives a little starting motion)
-        local attached = self:GetAttached()
-        local origin = attached:GetOrigin()
-        local infestation = CreateStructureInfestation(origin, self:GetTeamNumber(), kHiveInfestationRadius)    
-        infestation:SetGeneratorState(true)
-            
-        self.hiveInfestationId = infestation:GetId()
-        self.timeLastHadInfestation = Shared.GetTime()
-    end
-    
+function Hive:OnOverrideSpawnInfestation(infestation)
+    infestation:SetGeneratorState(true)
+    infestation:SetMaxRadius(kHiveInfestationRadius)
 end
 
 // Spawn initial eggs and infestation
 function Hive:SpawnInitial()
     self:SpawnEggs()
-    local infestation = Shared.GetEntity(self.hiveInfestationId)
-    ASSERT(infestation ~= nil)
-    infestation:SetRadiusPercent(1)
-end
-
-function Hive:UpdateInfestation()
-
-    // If we have no infestation connected to us and we haven't tried creating one for a bit, create one
-    local hiveInfestation = Shared.GetEntity(self.hiveInfestationId)
-    if (self.hiveInfestationId == Entity.invalidId) or (hiveInfestation == nil) or (not hiveInfestation:isa("Infestation")) then
-    
-        if self.timeLastHadInfestation == nil or (Shared.GetTime() > self.timeLastHadInfestation + 5) then
-            self:SpawnInfestation(.1)
-        end
-
-    else 
-        self.timeLastHadInfestation = Shared.GetTime()
-    end    
-    
+    self:SpawnInitialInfestation()
 end
 
 // Spawn a new egg around the hive if needed. Returns true if it did.
@@ -226,7 +191,7 @@ function Hive:UpdateHealing()
 
     if self.timeOfLastHeal == nil or Shared.GetTime() > (self.timeOfLastHeal + Hive.kHealthUpdateTime) then
         
-        local players = GetGamerules():GetPlayers(self:GetTeamNumber())
+        local players = GetEntitiesForTeam("Player", self:GetTeamNumber())
         
         for index, player in ipairs(players) do
         
@@ -293,6 +258,7 @@ function Hive:OnConstructionComplete()
     
     self:GetTeam():TriggerAlert(kTechId.AlienAlertHiveComplete, self)    
     
+    self:SpawnInfestation()
 end
 
 function Hive:OnResearchComplete(structure, researchId)

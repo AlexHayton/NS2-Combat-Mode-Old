@@ -47,11 +47,7 @@ end
  */
 function Player:OnDestroy()
 
-
     LiveScriptActor.OnDestroy(self)
-    
-    Shared.DestroyCollisionObject(self.controller)
-    self.controller = nil
    
     local team = self:GetTeam()
     if(team ~= nil) then
@@ -309,7 +305,7 @@ function Player:OnKill(damage, killer, doer, point, direction)
     self:AddDeaths()
     
     // Don't allow us to do anything
-    self.alive = false
+    self:SetIsAlive(false)
 
     // On fire, in umbra, etc.
     self:ClearGameEffects()
@@ -364,7 +360,7 @@ function Player:OnUpdate(deltaTime)
     
     self:UpdateOrderWaypoint()
 
-    if (not self.alive and not self:isa("Spectator")) then
+    if (not self:GetIsAlive() and not self:isa("Spectator")) then
     
         local time = Shared.GetTime()
         
@@ -525,7 +521,7 @@ function Player:CopyPlayerDataFrom(player)
     
     self.waypointType = player.waypointType
     
-    player:CopyOrders(self)
+    player:TransferOrders(self)
         
 end
 

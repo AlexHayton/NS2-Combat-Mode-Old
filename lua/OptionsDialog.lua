@@ -44,6 +44,10 @@ function OptionsDialogUI_GetMouseSensitivity()
     return Client.GetMouseSensitivity() * kMouseSensitivityScalar
 end
 
+function OptionsDialogUI_SetMouseSensitivity(sensitivity)
+    Client.SetMouseSensitivity( sensitivity / kMouseSensitivityScalar )
+end
+
 /**
  * Get linear array of screen resolutions (strings)
  */
@@ -124,6 +128,11 @@ function OptionsDialogUI_GetSoundVolume()
     return Client.GetOptionInteger( kSoundVolumeOptionsKey, 90 )
 end
 
+function OptionsDialogUI_SetSoundVolume(volume)
+    Client.SetOptionInteger( kSoundVolumeOptionsKey, volume )
+    Client.SetSoundVolume( volume / 100 )
+end
+
 /**
  * Get music volume
  * 0 = min volume
@@ -132,6 +141,12 @@ end
 function OptionsDialogUI_GetMusicVolume()
     return Client.GetOptionInteger( kMusicVolumeOptionsKey, 90 )
 end
+
+function OptionsDialogUI_SetMusicVolume(volume)
+    Client.SetOptionInteger( kMusicVolumeOptionsKey, volume )
+    Client.SetMusicVolume( volume / 100 )
+end
+
 
 /**
  * Get all the values from the form
@@ -148,7 +163,7 @@ function OptionsDialogUI_SetValues(nickname, mouseSens, screenResIdx, visualDeta
 
     Client.SetOptionString( kNicknameOptionsKey, nickname )
     
-    Client.SetMouseSensitivity( mouseSens / kMouseSensitivityScalar )
+    OptionsDialogUI_SetMouseSensitivity( mouseSens )
     
     // Save screen res and visual detail
     Client.SetOptionInteger( kGraphicsXResolutionOptionsKey, displayModes[screenResIdx].xResolution )
@@ -156,12 +171,8 @@ function OptionsDialogUI_SetValues(nickname, mouseSens, screenResIdx, visualDeta
     Client.SetOptionInteger( kDisplayQualityOptionsKey, visualDetailIdx - 1 )     // set the value as 0-based index
 
     // Save sound and music options 
-    Client.SetOptionInteger( kSoundVolumeOptionsKey, soundVol )
-    Client.SetOptionInteger( kMusicVolumeOptionsKey, musicVol )
-    
-    // Set current levels (0-1)
-    Client.SetSoundVolume( soundVol/100 )
-    Client.SetMusicVolume( musicVol/100 )
+    OptionsDialogUI_SetSoundVolume( soundVol )
+    OptionsDialogUI_SetMusicVolume( musicVol )
     
     Client.SetOptionBoolean ( kFullscreenOptionsKey, not windowed )
     

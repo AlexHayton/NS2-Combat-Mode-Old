@@ -16,13 +16,26 @@ Hydra.kMapName = "hydra"
 
 Hydra.kModelName = PrecacheAsset("models/alien/hydra/hydra.model")
 
-Hydra.kRange = 17.78        // From NS1 (also "alert" range)
-Hydra.kDamage = 20          // From NS1
+Hydra.kSpikeSpeed = 50
+Hydra.kTargetVelocityFactor = 0.7 // Don't always hit very fast moving targets (jetpackers).
+Hydra.kRange = 17.78              // From NS1 (also "alert" range)
+Hydra.kDamage = 20                // From NS1
 Hydra.kAlertCheckInterval = 2
+
+Hydra.kFov = 360
 
 if Server then
     Script.Load("lua/Hydra_Server.lua")
     Script.Load("lua/HydraSpike.lua")
+end
+
+function Hydra:GetFov()
+    return Hydra.kFov
+end
+
+// put the eye up roughly 90 cm
+function Hydra:GetEyePos()
+    return self:GetOrigin() + self:GetCoords().yAxis * 0.9
 end
 
 function Hydra:GetIsAlienStructure()

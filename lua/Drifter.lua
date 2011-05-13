@@ -41,7 +41,8 @@ local networkVars = {
     // 0-1 scalar used to set move_speed model parameter according to how fast we recently moved
     moveSpeed               = "float",
     timeOfLastUpdate        = "float",
-    moveSpeedParam          = "compensated float"
+    moveSpeedParam          = "compensated float",
+    landed                  = "boolean"
 }
 
 function Drifter:OnCreate()
@@ -70,6 +71,7 @@ function Drifter:OnInit()
     self.moveSpeed = 0
     self.timeOfLastUpdate = 0
     self.moveSpeedParam = 0
+    self.landed = false
 
     if(Server) then
     
@@ -104,6 +106,10 @@ function Drifter:GetDeathIconIndex()
     return kDeathMessageIcon.Drifter
 end
 
+function Drifter:GetCanTakeDamage()
+    return not self.landed
+end
+
 function Drifter:OnOrderChanged()
 
     self:SetNextThink(Drifter.kMoveThinkInterval)
@@ -124,13 +130,8 @@ function Drifter:OverrideTechTreeAction(techNode, position, orientation, command
     
     // Convert build tech actions into build orders
     if(techNode:GetIsBuild()) then
-    
-        local order = CreateOrder(kTechId.Build, techNode:GetTechId(), position, orientation)
-                
-        // Converts default orders into something more appropriate for unit
-        self:OverrideOrder(order)
-                
-        self:SetOrder(order, not commander.queuingOrders, false)
+        
+        self:GiveOrder(kTechId.Build, techNode:GetTechId(), position, orientation, not commander.queuingOrders, false)
         
         // If Drifter was orphaned by commander that has left chair or server, take control
         if self:GetOwner() == nil then
@@ -226,94 +227,13 @@ function Drifter:OnThink()
         local currentOrigin = Vector(self:GetOrigin())
         
         if(currentOrder:GetType() == kTechId.Move) then
-
-            local distToTarget = self:MoveToTarget(PhysicsMask.AIMovement, currentOrder:GetLocation(), drifterMoveSpeed, Drifter.kMoveThinkInterval)
-            if(distToTarget < kEpsilon) then
-                self:CompletedCurrentOrder()
-            end
-            
+            self:ProcessMoveOrder(drifterMoveSpeed)
         elseif(currentOrder:GetType() == kTechId.Attack) then
         
             self:ProcessAttackOrder(5, drifterMoveSpeed, Drifter.kMoveThinkInterval)
                         
         elseif(currentOrder:GetType() == kTechId.Build) then 
-        
-            local distToTarget = (currentOrder:GetLocation() - self:GetOrigin()):GetLengthXZ()
-            if(distToTarget < (drifterMoveSpeed * Drifter.kMoveThinkInterval)) then
-            
-                // Play land_build animation, then build it
-                if not self.landed then
-                
-                    self:SetOrigin(currentOrder:GetLocation())
-                    self:SetAnimationWithBlending(Drifter.kAnimLandBuild, nil, true)
-                    local length = self:GetAnimationLength(Drifter.kAnimLandBuild)
-                    self:SetActivityEnd(length)
-                    self.landed = true
-                
-                elseif self:GetCanNewActivityStart() then
-                   
-                    // Create structure here
-                    local commander = self:GetOwner()
-                    if(commander and commander:isa("Commander")) then
-                    
-                        local techId = currentOrder:GetParam()
-                        local techNode = commander:GetTechTree():GetTechNode(techId)
-                        
-                        if techNode == nil then
-                            Print("Drifter:OnThink(): Couldn't find tech node for build id %s (%s)", EnumToString(kTechId, techId), ToString(techId))
-                        else
-                        
-                            local cost = techNode:GetCost()
-                            local team = commander:GetTeam()
-
-                            if(team:GetCarbon() >= cost) then
-                            
-                                local success = false
-                                local createdStructureId = -1
-                                success, createdStructureId = commander:AttemptToBuild(techId, currentOrder:GetLocation(), Vector(0, 1, 0), currentOrder:GetOrientation(), nil, nil, self)
-                                    
-                                if(success) then
-                                
-                                    team:AddCarbon(-cost)
-                                    
-                                    self:CompletedCurrentOrder()
-                                    
-                                    self:SendEntityChanged(createdStructureId)
-                                    
-                                    // Now remove Drifter - we're morphing into structure
-                                    DestroyEntity(self)
-                                    
-                                else
-                                
-                                    // TODO: Issue alert to commander that way was blocked?
-                                    self:ClearOrders()
-                                    
-                                end
-                                
-                            else
-                                
-                                // Play more resources required
-                                self:GetTeam():TriggerAlert(kTechId.AlienAlertNotEnoughResources, self)
-                                    
-                                // Cancel build bots orders so he doesn't move away
-                                self:ClearOrders()
-                                    
-                            end 
-                            
-                        end
-                        
-                    else
-                        self:ClearOrders()    
-                    end                
-                    
-                end
-                
-            else
-            
-                self:MoveToTarget(PhysicsMask.AIMovement, currentOrder:GetLocation(), drifterMoveSpeed, Drifter.kMoveThinkInterval)
-                
-            end
-            
+            self:ProcessBuildOrder(drifterMoveSpeed)
         end
         
         // Check difference in location to set moveSpeed
@@ -335,6 +255,109 @@ function Drifter:OnThink()
 
     end
     
+end
+
+function Drifter:ProcessBuildOrder(moveSpeed)
+    local currentOrder = self:GetCurrentOrder()
+    local distToTarget = (currentOrder:GetLocation() - self:GetOrigin()):GetLengthXZ()
+    
+    if(distToTarget < (moveSpeed * Drifter.kMoveThinkInterval)) then
+           
+        // the location we move to is always at the correct height to move to.
+        // the place we are going to build on is located on the ground though, so
+        // drop the order location to the ground location
+
+        // The current order location is already snapped to the ground.
+        local groundLocation = currentOrder:GetLocation()
+        local techId = currentOrder:GetParam()
+        
+        // Create structure here
+        local commander = self:GetOwner()
+        if (not commander or not commander:isa("Commander")) then
+          self:ClearOrders()
+          return
+        end
+        
+        local legalBuildPosition = false
+        local position = nil
+        local attachEntity = nil
+        
+        // We want to Eval the build even before we do this animation it seems wasteful to do the animation if we already
+        // know its going to fail and to be honest we should never get to this point anyways
+        legalBuildPosition, position, attachEntity = commander:EvalBuildIsLegal(techId, groundLocation, self, Vector(0, 1, 0))
+        if (not legalBuildPosition) then
+            self:ClearOrders()
+            return
+        end
+             
+        // Play land_build animation, then build it
+        if not self.landed then
+            self:SetOrigin(groundLocation)
+            self:SetAnimationWithBlending(Drifter.kAnimLandBuild, nil, true)
+            local length = self:GetAnimationLength(Drifter.kAnimLandBuild)
+            self:SetActivityEnd(length)
+            self.landed = true  
+            
+            self:SetIgnoreOrders(true)
+               
+        elseif self:GetCanNewActivityStart() then
+
+            // whatever else happens, we reset our landed state
+            self.landed = false
+            
+            local techNode = commander:GetTechTree():GetTechNode(techId)
+            
+            if techNode == nil then
+                Print("Drifter:OnThink(): Couldn't find tech node for build id %s (%s)", EnumToString(kTechId, techId), ToString(techId))
+            else
+                        
+                local cost = techNode:GetCost()
+                local team = commander:GetTeam()
+
+                if(team:GetCarbon() >= cost) then
+                            
+                    local success = false
+                    local createdStructureId = -1
+                    success, createdStructureId = commander:AttemptToBuild(techId, groundLocation, Vector(0, 1, 0), currentOrder:GetOrientation(), nil, nil, self)
+                                    
+                    if(success) then
+                        team:AddCarbon(-cost)
+                        self:CompletedCurrentOrder()
+                        self:SendEntityChanged(createdStructureId)
+                                    
+                        // Now remove Drifter - we're morphing into structure
+                        DestroyEntity(self)
+                                    
+                    else
+                        // TODO: Issue alert to commander that way was blocked?
+                        self:ClearOrders()
+                    end
+                                
+                else
+                    // Play more resources required
+                    self:GetTeam():TriggerAlert(kTechId.AlienAlertNotEnoughResources, self)
+                                    
+                    // Cancel build bots orders so he doesn't move away
+                    self:ClearOrders()
+                                    
+                end 
+            end                    
+        end
+    else
+        self:ProcessMoveOrder(moveSpeed)
+    end
+    
+end
+
+function Drifter:ProcessMoveOrder(moveSpeed)
+    local currentOrder = self:GetCurrentOrder()
+    if (currentOrder ~= nil) then
+        local hoverAdjustedLocation = self:GetHoverAt(currentOrder:GetLocation())
+        local distToTarget = self:MoveToTarget(PhysicsMask.AIMovement, hoverAdjustedLocation, moveSpeed, Drifter.kMoveThinkInterval)
+        if(distToTarget < kEpsilon) then
+            self:CompletedCurrentOrder()
+        end
+    end
 end
 
 function Drifter:OnUpdate(deltaTime)

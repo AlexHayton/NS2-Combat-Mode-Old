@@ -34,6 +34,12 @@ function CommandStructure:OnInit()
     
     self.occupied = false
     
+    self:SetNextThink(kCommandStructureThinkInterval)
+    
+end
+
+function CommandStructure:FindAndMakeAttachment()
+
     // Attach self to nearest tech point
     local position = Vector(self:GetOrigin())
     
@@ -53,9 +59,7 @@ function CommandStructure:OnInit()
     end
     
     self:SetOrigin(position)
-    
-    self:SetNextThink(kCommandStructureThinkInterval)
-    
+
 end
 
 function CommandStructure:OnDestroy()
@@ -197,23 +201,31 @@ function CommandStructure:OnUse(player, elapsedTime, useAttachPoint, usePoint)
     
         if(not Structure.OnUse(self, player, elapsedTime, useAttachPoint, usePoint)) then
         
-            // Must use attach point if specified (Command Station)
-            /*if self:GetIsBuilt() and (not self.occupied) and (useAttachPoint or (self:GetUseAttachPoint() == "")) then
+            // Make sure player wasn't ejected early in the game from either team's command
+            local playerSteamId = Server.GetOwner(player):GetUserId()
+            if not GetGamerules():GetPlayerBannedFromCommand(playerSteamId) then
+        
+                // Must use attach point if specified (Command Station)            
+                /*if self:GetIsBuilt() and (not self.occupied) and (useAttachPoint or (self:GetUseAttachPoint() == "")) then
 
-                self.timeStartedLogin = Shared.GetTime()
-                
-                self.playerStartedLogin = player:GetId()
-                
-                self.occupied = true
-           
-                if not self:GetIsAlienStructure() then
-                    self:TriggerEffects("commmand_station_login")
-                else
-                    self:TriggerEffects("hive_login")
-                end
-                
-                return true
+                    self.timeStartedLogin = Shared.GetTime()
                     
+                    self.playerStartedLogin = player:GetId()
+                    
+                    self.occupied = true
+               
+                    if not self:GetIsAlienStructure() then
+                        self:TriggerEffects("commmand_station_login")
+                    else
+                        self:TriggerEffects("hive_login")
+                    end
+                    
+                    return true
+                        
+                end
+
+            else
+                player:AddTooltip("You were ejected as Commander so you won't be able to command again this game.")
             end*/
             
         else

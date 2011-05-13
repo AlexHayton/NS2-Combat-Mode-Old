@@ -39,7 +39,7 @@ function Spectator:OnInit()
         
         self:SetIsVisible(false)
         
-        self.alive = false
+        self:SetIsAlive(false)
         
         self.smoothCamera = false
  

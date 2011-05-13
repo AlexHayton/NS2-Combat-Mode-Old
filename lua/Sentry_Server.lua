@@ -94,6 +94,11 @@ function Sentry:SetMode(mode)
         
         elseif mode == Sentry.kMode.Scanning then
         
+            local v = Shared.GetRandomInt(1,3)
+            local animName = "idle" .. ((v == 1 and "") or v)
+            
+            self:SetAnimation(animName)
+      
         elseif mode == Sentry.kMode.SpinningUp then
         
             local anim = Sentry.kAttackStartAnim
@@ -258,6 +263,40 @@ function Sentry:GetSortedTargetList()
     
 end
 
+function Sentry:_FindTargetUsingTargetCache()
+    local targetAcquired = nil
+
+    targetAcquired, self.staticTargets, self.staticTargetsVersion = GetGamerules():GetTargetCache():AcquirePlayerPreferenceTarget(
+            self,
+            Sentry.kRange, 
+            TargetCache.kMmtl, 
+            TargetCache.kMstl, 
+            self.staticTargets, 
+            self.staticTargetsVersion)
+               
+    return targetAcquired
+end
+
+
+
+function Sentry:_FindTarget()
+    local targetAcquired = nil
+
+    local targets = self:GetSortedTargetList()
+    if table.count(targets) > 0 then
+        targetAcquired = targets[1]
+    end
+               
+    return targetAcquired
+end
+
+function Sentry:FindTarget()
+    if GetGamerules():GetTargetCache():IsEnabled() then
+        return self:_FindTargetUsingTargetCache()
+    end
+    return self:_FindTarget()
+end
+
 function Sentry:AcquireTarget(deltaTime)
 
     local targetAcquired = nil
@@ -265,10 +304,7 @@ function Sentry:AcquireTarget(deltaTime)
 
     if currentTime > (self.timeOfLastTargetAcquisition + Sentry.kTargetCheckTime) then
 
-        local targets = self:GetSortedTargetList()
-        if table.count(targets) > 0 then
-            targetAcquired = targets[1]
-        end
+        targetAcquired = self:FindTarget()
         
         self.timeOfLastTargetAcquisition = currentTime
         
@@ -379,6 +415,9 @@ function Sentry:FireBullets()
         
         local trace = Shared.TraceRay(startPoint, endPoint, PhysicsMask.AllButPCs, EntityFilterOne(self))
         
+        if Server then
+            Server.dbgTracer:TraceBullet(self, startPoint, trace)
+        end
         if (trace.fraction < 1) then
         
             if not GetBlockedByUmbra(trace.entity) then
@@ -515,9 +554,9 @@ function Sentry:UpdateTargetState()
             self:CompletedCurrentOrder()
             
             // Give new attack order
-            local targets = self:GetSortedTargetList()
-            if table.count(targets) > 0 then
-                self:GiveOrder(kTechId.Attack, targets[1]:GetId(), nil)
+            local target = self:FindTarget()
+            if target then
+                self:GiveOrder(kTechId.Attack, target:GetId(), nil)
             end
             
         end

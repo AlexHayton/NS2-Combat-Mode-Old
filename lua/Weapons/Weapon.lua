@@ -6,6 +6,7 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/ScriptActor.lua")
+Script.Load("lua/DbgTracer.lua")
 
 class 'Weapon' (ScriptActor)
 
@@ -168,20 +169,56 @@ function Weapon:OnDraw(player, previousWeaponMapName)
 end
 
 /**
+ * Allow weapons to have different capsules
+ */
+function Weapon:GetMeleeCapsule()
+    return Vector(0.4, 0.4, 0.01)
+end
+
+/**
+ * Offset the start of the melee capsule with this much from the viewpoint
+ */
+function Weapon:GetMeleeOffset()
+    return 0.2
+end
+
+/**
  * Checks if a melee capsule would hit anything. Does not actually carry
  * out any attack or inflict any damage.
  */
 function Weapon:CheckMeleeCapsule(player, damage, range)
-
-    local viewOffset = player:GetViewOffset()
-    local startPoint = viewOffset + player:GetOrigin()
-    local endPoint   = startPoint + player:GetViewAngles():GetCoords().zAxis * range
-
     // Trace using a box so that unlike bullet attacks we don't require precise targeting
-    local extents = Vector(0.4, 0.4, 0.4)
-    
+    local extents = self:GetMeleeCapsule()
+    // to compensate for any thinning out from standard depth (remove once melee ranges have been adjusted)
+    range = range + 0.4 - extents.z
+   
+    local attackOffset = self:GetMeleeOffset()
+    local eyePoint = player:GetOrigin() + player:GetViewOffset()
+    local startPoint = eyePoint + player:GetViewAngles():GetCoords().zAxis * attackOffset
+    local endPoint   = eyePoint + player:GetViewAngles():GetCoords().zAxis * range
+
     local filter = EntityFilterTwo(player, self)
-    local trace  = Shared.TraceBox(extents, startPoint, endPoint, PhysicsMask.Melee, filter)
+   
+    if attackOffset > 0 then
+        // Make sure that nothing comes between us and the offset point; no biting through walls/railings!
+        local trace = Shared.TraceRay(eyePoint, startPoint, PhysicsMask.Melee, filter)
+        if trace.fraction < 1 then 
+              // Do a full trace from the eye
+             startPoint = eyePoint
+        end
+    end
+        
+    trace = Shared.TraceBox(extents, startPoint, endPoint, PhysicsMask.Melee, filter)
+
+    if self.traceRealAttack then
+        if Client then
+            DbgTracer.MarkClientFire(player, startPoint)
+        end
+
+        if Server then
+            Server.dbgTracer:TraceMelee(player, startPoint, trace, extents)
+        end
+    end
     
     local direction = nil
     if trace.fraction < 1 then
@@ -196,9 +233,10 @@ end
  * Does an attack with a melee capsule.
  */
 function Weapon:AttackMeleeCapsule(player, damage, range)
-
+    self.traceRealAttack = true // enable tracing on this capsule check
     local didHit, trace, direction = self:CheckMeleeCapsule(player, damage, range)
-
+    self.traceRealAttack = false
+    
     if trace.fraction < 1 then
     
         if Server then

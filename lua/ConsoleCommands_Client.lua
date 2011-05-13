@@ -35,7 +35,7 @@ function OnCommandOnClientDisconnect(clientIndexString)
 end
 
 function OnCommandScores(scoreTable)
-    Scoreboard_SetPlayerData(scoreTable.clientId, scoreTable.playerName, scoreTable.teamNumber, scoreTable.score, scoreTable.kills, scoreTable.deaths, scoreTable.plasma, scoreTable.isCommander, scoreTable.status, scoreTable.isSpectator, scoreTable.rank)
+    Scoreboard_SetPlayerData(scoreTable.clientId, scoreTable.entityId, scoreTable.playerName, scoreTable.teamNumber, scoreTable.score, scoreTable.kills, scoreTable.deaths, scoreTable.plasma, scoreTable.isCommander, scoreTable.status, scoreTable.isSpectator, scoreTable.rank)
 end
 
 // Notify scoreboard and anything else when a player changes into a new player
@@ -168,6 +168,30 @@ function OnCommandLocate()
 
 end
 
+function OnCommandSetSoundVolume(volume)
+    if(volume == nil) then
+        Print("Sound volume is (0-100): %s",  OptionsDialogUI_GetSoundVolume())
+    else
+        OptionsDialogUI_SetSoundVolume( tonumber(volume) )
+    end
+end
+
+function OnCommandSetMusicVolume(volume)
+    if(volume == nil) then
+        Print("Music volume is (0-100): %s",  OptionsDialogUI_GetMusicVolume())
+    else
+        OptionsDialogUI_SetMusicVolume( tonumber(volume) )
+    end
+end
+
+function OnCommandSetMouseSensitivity(sensitivity)
+    if(sensitivity == nil) then
+        Print("Mouse sensitivity is (0-100): %s",  OptionsDialogUI_GetMouseSensitivity())
+    else
+        OptionsDialogUI_SetMouseSensitivity( tonumber(sensitivity) )
+    end
+end
+
 Event.Hook("Console_tooltip",                   OnCommandTooltip)
 Event.Hook("Console_reset",                     OnCommandRoundReset)
 Event.Hook("Console_deathmsg",                  OnCommandDeathMsg)
@@ -181,6 +205,11 @@ Event.Hook("Console_onanimdebug",               OnCommandAnimDebug)
 Event.Hook("Console_oneffectdebug",             OnCommandEffectDebug)
 Event.Hook("Console_debugtext",                 OnCommandDebugText)
 Event.Hook("Console_locate",                    OnCommandLocate)
+
+// Options Console Commands
+Event.Hook("Console_setsoundvolume",            OnCommandSetSoundVolume)
+Event.Hook("Console_setmusicvolume",            OnCommandSetMusicVolume)
+Event.Hook("Console_setsensitivity",            OnCommandSetMouseSensitivity)
 
 Client.HookNetworkMessage("Ping",               OnCommandPing)
 Client.HookNetworkMessage("Scores",             OnCommandScores)

@@ -26,6 +26,7 @@ if(Server) then
 Script.Load("lua/PlayingTeam.lua")
 Script.Load("lua/ReadyRoomTeam.lua")
 Script.Load("lua/SpectatingTeam.lua")
+Script.Load("lua/TargetCache.lua")
 
 NS2Gamerules.kMarineStartSound   = PrecacheAsset("sound/ns2.fev/marine/voiceovers/game_start")
 NS2Gamerules.kAlienStartSound    = PrecacheAsset("sound/ns2.fev/alien/voiceovers/game_start")
@@ -98,6 +99,12 @@ function NS2Gamerules:OnCreate()
     
     self.justCreated = true
     
+    self.targetCache = TargetCache()
+    self.targetCache:Init()
+end
+
+function NS2Gamerules:GetTargetCache() 
+    return self.targetCache
 end
 
 function NS2Gamerules:GetFriendlyFire()
@@ -207,6 +214,7 @@ function NS2Gamerules:OnEntityChange(oldId, newId)
     self.team1:OnEntityChange(oldId, newId)
     self.team2:OnEntityChange(oldId, newId)
     self.spectatorTeam:OnEntityChange(oldId, newId)
+    self.targetCache:OnEntityChange(oldId, newId)
 
     // Keep server map entities up to date    
     local index = table.find(Server.mapLoadLiveEntityValues, oldId)
@@ -237,6 +245,8 @@ function NS2Gamerules:OnKill(targetEntity, damage, attacker, doer, point, direct
 
     self.team1:OnKill(targetEntity, damage, attacker, doer, point, direction)
     self.team2:OnKill(targetEntity, damage, attacker, doer, point, direction)
+    
+    self.targetCache:OnKill(targetEntity)
     
 end
 
@@ -328,24 +338,6 @@ function NS2Gamerules:GetUpgradedDamage(entity, damage, damageType)
     return damage * damageScalar
     
 end
-
-function NS2Gamerules:GetPlayers(teamNumber)
-
-    local players = {}
-    
-    for index, player in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
-    
-        if player:GetTeamNumber() == teamNumber then
-        
-            table.insert(players, player)
-            
-        end
-        
-    end
-    
-    return players
-    
-end
  
 /**
  * Starts a new game by resetting the map and all of the players. Keep everyone on current teams (readyroom, playing teams, etc.) but 
@@ -408,6 +400,8 @@ function NS2Gamerules:ResetGame()
     self.forceGameStart = false
     self.losingTeam = nil
     self.preventGameEnd = nil
+    // Reset banned players for new game
+    self.bannedPlayers = {}
     
     // Send scoreboard update, ignoring other scoreboard updates (clearscores resets everything)
     for index, player in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
@@ -519,7 +513,6 @@ function NS2Gamerules:UpdateMinimapBlips()
     
     if GetGamerules():GetGameStarted() then
         
-        // MapBlips aren't script actors, so can't use GetGamerules() functions
         local mapBlips = EntityListToTable(Shared.GetEntitiesWithClassname("MapBlip"))
         
         local allScriptActors = Shared.GetEntitiesWithClassname("ScriptActor")
@@ -534,8 +527,7 @@ function NS2Gamerules:UpdateMinimapBlips()
             end        
             
         end
-        
-        // Now sync the sighted entities with the blip entities, creating or deleting them
+
         self:DeleteOldMapBlips(mapBlips)
         
     end
@@ -613,6 +605,31 @@ function NS2Gamerules:GetMinimapBlipTypeAndTeam(entity)
     end
 
     return success, blipType, blipTeam
+    
+end
+
+// Commander ejection functionality
+function NS2Gamerules:CastVoteByPlayer( voteTechId, player )
+
+    if voteTechId == kTechId.VoteDownCommander1 or voteTechId == kTechId.VoteDownCommander2 or voteTechId == kTechId.VoteDownCommander3 then
+
+        // Get the 1st, 2nd or 3rd commander by entity order (does this on client as well)    
+        local playerIndex = (voteTechId - kTechId.VoteDownCommander1 + 1)
+        // TODO: Change to "Commander"
+        local commanders = GetEntitiesForTeam("Player", player:GetTeamNumber())
+        
+        if playerIndex <= table.count(commanders) then
+        
+            local targetCommander = commanders[playerIndex]
+            local team = player:GetTeam()
+            
+            if player and team.VoteToEjectCommander then
+                team:VoteToEjectCommander(player, targetCommander)
+            end
+            
+        end
+        
+    end
     
 end
 
@@ -1099,20 +1116,6 @@ function NS2Gamerules:GetIsRelevant(player, entity, noRecurse)
                     relevant = self:GetIsRelevant(player, parent, true)
                     
                 end
-
-            else
-            
-                local children = GetChildEntities(entity, "ScriptActor")
-                for index, child in ipairs(children) do
-                
-                    if self:GetIsRelevant(player, child, true) then
-                    
-                        relevant = true
-                        break
-                        
-                    end
-                    
-                end
                 
             end
             
@@ -1190,6 +1193,17 @@ function NS2Gamerules:RespawnPlayer(player)
     local team = player:GetTeam()
     team:RespawnPlayer(player, nil, nil)
     
+end
+
+// Add SteamId of player to list of players that can't command again until next game
+function NS2Gamerules:BanPlayerFromCommand(playerId)
+    ASSERT(type(playerId) == "number")
+    table.insertunique(self.bannedPlayers, playerId)
+end
+
+function NS2Gamerules:GetPlayerBannedFromCommand(playerId)
+    ASSERT(type(playerId) == "number")
+    return (table.find(self.bannedPlayers, playerId) ~= nil)
 end
 
 ////////////////    

@@ -76,6 +76,10 @@ function AmmoPack:GetPackRecipient()
     
 end
 
+function AmmoPack:GetHasBuildFootPrint()
+    return true
+end
+
 if(Server) then
 function AmmoPack:OnThink()
 

@@ -69,9 +69,9 @@ function CommandStation:GetTechButtons(techId)
 
         // Allow command station to be upgraded, but you'll never upgrade it to Level1 so don't show it
         if(self:GetTechId() == kTechId.CommandStation) then
-            techButtons[kMarineUpgradeButtonIndex] = self:GetLevelTechId(2)
+            techButtons[kMarineUpgradeButtonIndex] = kTechId.CommandFacilityUpgrade
         elseif(self:GetTechId() == kTechId.CommandFacility) then
-            techButtons[kMarineUpgradeButtonIndex] = self:GetLevelTechId(3)
+            techButtons[kMarineUpgradeButtonIndex] = kTechId.CommandCenterUpgrade
         end
 
         // Don't allow recycling of structure when occupied!

@@ -334,7 +334,11 @@ function ClipWeapon:FireBullets(player, bulletsToShoot, range, penetration)
         
     // Filter ourself out of the trace so that we don't hit ourselves.
     local filter = EntityFilterTwo(player, self)
-    
+       
+    if Client then
+        DbgTracer.MarkClientFire(player, startPoint)
+    end
+   
     for bullet = 1, bulletsToShoot do
     
         // Calculate spread for each shot, in case they differ
@@ -349,6 +353,10 @@ function ClipWeapon:FireBullets(player, bulletsToShoot, range, penetration)
         local endPoint = startPoint + fireDirection * range
         
         local trace = Shared.TraceRay(startPoint, endPoint, PhysicsMask.Bullets, filter)
+        
+        if Server then
+            Server.dbgTracer:TraceBullet(player, startPoint, trace)  
+        end
         
         if (trace.fraction < 1) then
         
@@ -385,7 +393,7 @@ function ClipWeapon:FireBullets(player, bulletsToShoot, range, penetration)
             
                 local impactPoint = trace.endPoint - GetNormalizedVector(endPoint - startPoint) * Weapon.kHitEffectOffset
                 local surfaceName = trace.surface
-                TriggerHitEffects(self, trace.entity, impactPoint, surfaceName)                
+                TriggerHitEffects(self, trace.entity, impactPoint, surfaceName)
                 
                 // If we are far away from our target, trigger a private sound so we can hear we hit something
                 if (trace.endPoint - player:GetOrigin()):GetLength() > 5 then

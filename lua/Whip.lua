@@ -11,8 +11,11 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Structure.lua")
 Script.Load("lua/DoorMixin.lua")
+Script.Load("lua/InfestationMixin.lua")
 
 class 'Whip' (Structure)
+
+PrepareClassForMixin(Whip, InfestationMixin)
 
 Whip.kMapName = "whip"
 
@@ -62,6 +65,7 @@ end
 function Whip:OnInit()
 
     InitMixin(self, DoorMixin)
+    InitMixin(self, InfestationMixin)   
     
     Structure.OnInit(self)
     self:SetUpdates(true)

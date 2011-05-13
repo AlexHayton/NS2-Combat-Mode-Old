@@ -54,6 +54,14 @@ Lerk.kAnimRun = "run"
 Lerk.kAnimFly = "fly"
 Lerk.kAnimLand = "land"
 
+function Lerk:GetBaseArmor()
+    return Lerk.kArmor
+end
+
+function Lerk:GetArmorFullyUpgradedAmount()
+    return kLerkArmorFullyUpgradedAmount
+end
+
 function Lerk:GetMaxViewOffsetHeight()
     return Lerk.kViewOffsetHeight
 end

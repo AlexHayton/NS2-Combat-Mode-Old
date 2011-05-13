@@ -93,6 +93,14 @@ function Skulk:OnDestroy()
     
 end
 
+function Skulk:GetBaseArmor()
+    return Skulk.kArmor
+end
+
+function Skulk:GetArmorFullyUpgradedAmount()
+    return kSkulkArmorFullyUpgradedAmount
+end
+
 function Skulk:GetMaxViewOffsetHeight()
     return Skulk.kViewOffsetHeight
 end
@@ -279,7 +287,10 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
     end
     
     self.wallWalkingNormalCurrent = self.wallWalkingNormalCurrent + (normalDiff * (input.time * Skulk.kWallWalkNormalSmoothRate * smoothMultiplier))
-    self.wallWalkingNormalCurrent:Normalize()
+
+    if self.wallWalkingNormalCurrent:Normalize() < 0.01 then
+        self.wallWalkingNormalCurrent = Vector(0, 1, 0)  
+    end
     
     // Build out the orientation.
     
@@ -292,7 +303,7 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
     coords.zAxis = viewCoords.zAxis
 
     coords.xAxis = coords.yAxis:CrossProduct( coords.zAxis )
-    if (coords.xAxis:Normalize() == 0) then
+    if (coords.xAxis:Normalize() < 0.01) then
         // We have to choose the x-axis arbitrarily since we're
         // looking along the normal direction.
         coords.xAxis = coords.yAxis:GetPerpendicular()
@@ -311,11 +322,6 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
 end
 
 function Skulk:UpdatePosition(velocity, time)
-
-    return Alien.UpdatePosition(self, velocity, time)
-
-/*
-    Print("velocity = %s on ground = %s, leaping = %s", tostring(velocity), tostring(self:GetIsOnGround()), tostring(self.leaping) )
 
     // Fallback on default behavior when on the ground.
     if self:GetIsOnGround() then
@@ -358,7 +364,7 @@ function Skulk:UpdatePosition(velocity, time)
     end
     
     return velocity
-*/    
+
 end
 
 
@@ -678,7 +684,7 @@ function Skulk:GetPlayFootsteps()
     local velocityLength = velocity:GetLength() 
     
     // Don't play footsteps when we're walking
-    return (self:GetIsOnGround() or self:GetIsWallWalking()) and velocityLength > .75 and not self.crouching and not self.movementModiferState
+    return (self:GetIsOnGround() or self:GetIsWallWalking()) and velocityLength > .75 and not self.movementModiferState
     
 end
 

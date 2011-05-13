@@ -78,7 +78,7 @@ function SwipeBlink:PerformPrimaryAttack(player)
     player:SetActivityEnd( player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay() ))
     
     // Check if the swipe may hit an entity. Don't actually do any damage yet.
-    local didHit, trace = self:CheckMeleeCapsule(player, StabBlink.kDamage, StabBlink.kRange)
+    local didHit, trace = self:CheckMeleeCapsule(player, SwipeBlink.kDamage, SwipeBlink.kRange)
     self.lastSwipedEntityId = Entity.invalidId
     if didHit and trace and trace.entity then
         self.lastSwipedEntityId = trace.entity:GetId()

@@ -19,10 +19,14 @@ SpitSpray.kSpitDelay = kSpitFireDelay
 SpitSpray.kSpitSpeed = 40
 
 SpitSpray.kHealthSprayEnergyCost = kHealsprayEnergyCost
-SpitSpray.kMinHeal = 5
 SpitSpray.kHealRadius = 3.5
-SpitSpray.kBaseHealAmount = 13      // Heal by base amount + percentage of max health
-SpitSpray.kHealthPercent = 0.05
+
+// Players heal by base amount + percentage of max health
+SpitSpray.kHealPlayerPercent = 4
+
+// Structures heal by base x this multiplier (same as NS1)
+SpitSpray.kHealStructuresMultiplier = 5
+
 SpitSpray.kHealingSprayDamage = kHealsprayDamage
 SpitSpray.kHealthSprayDelay = kHealsprayFireDelay
 
@@ -118,15 +122,21 @@ function SpitSpray:HealEntities(player)
 
         if( targetEntity ~= player ) then
             
-            local isHurtPlayer = (GetEnemyTeamNumber(player:GetTeamNumber()) == targetEntity:GetTeamNumber()) and targetEntity:isa("Player")
+            local isEnemyPlayer = (GetEnemyTeamNumber(player:GetTeamNumber()) == targetEntity:GetTeamNumber()) and targetEntity:isa("Player")
             local isHealTarget = (player:GetTeamNumber() == targetEntity:GetTeamNumber())
             
             // TODO: Traceline to target to make sure we don't go through objects (or check line of sight because of area effect?)
             // GetHealthScalar() factors in health and armor.
             if isHealTarget and targetEntity:GetHealthScalar() < 1 then
 
-                // Heal entities by base amount plus a scaleable amount so it is helpful vs. weak targets yet doesn't take forever to heal hives (NS1)
-                local health = SpitSpray.kBaseHealAmount + math.max(SpitSpray.kMinHeal, targetEntity:GetMaxHealth() * SpitSpray.kHealthPercent)
+                // Heal players by base amount plus a scaleable amount so it's effective vs. small and large targets
+                local health = SpitSpray.kHealingSprayDamage + targetEntity:GetMaxHealth() * SpitSpray.kHealPlayerPercent/100.0
+                
+                // Heal structures by multiple of damage(so it doesn't take forever to heal hives, ala NS1)
+                if targetEntity:isa("Structure") then
+                    health = SpitSpray.kHealingSprayDamage * SpitSpray.kHealStructuresMultiplier
+                end
+                
                 targetEntity:AddHealth( health )
 				
 				// Grant experience too
@@ -143,7 +153,7 @@ function SpitSpray:HealEntities(player)
                 
                 success = true
                 
-            elseif isHurtPlayer then
+            elseif isEnemyPlayer then
             
                 targetEntity:TakeDamage( SpitSpray.kHealingSprayDamage, player, self, self:GetOrigin(), nil)
                 targetEntity:TriggerEffects("sprayed")

@@ -18,14 +18,12 @@ kDefaultStructureCost = 10
 kStructureCircleRange = 4
 kInfantryPortalUpgradeCost = 10
 kInfantryPortalAttachRange = 10
-// Allow marines to redeploy to other bases easier
-kInfantryPortalRecycleScalar = .8
-// Maximum distance from a command station that IPs can be built
-kInfantryPortalBuildDistance = 8
 // Minimum distance that initial IP spawns away from team location
 kInfantryPortalMinSpawnDistance = 4
 kWeaponStayTime = 30    // NS1
 kInfestCost = 10
+// For power points
+kMarineRepairHealthPerSecond = 100
 // The base weapons need to cost a small amount otherwise they can
 // be spammed.
 kRifleCost = 10

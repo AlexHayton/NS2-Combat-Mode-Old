@@ -180,6 +180,10 @@ function PowerPoint:ProcessEntityHelp(player)
     
 end
 
+function PowerPoint:GetCanBeUsed(player)
+    return true
+end
+
 /**
  * Power points never die, which is what allows them to be repaired even
  * when they have 0 health.

@@ -83,6 +83,14 @@ function Onos:OnInit()
     
 end
 
+function Onos:GetBaseArmor()
+    return Onos.kArmor
+end
+
+function Onos:GetArmorFullyUpgradedAmount()
+    return kOnosArmorFullyUpgradedAmount
+end
+
 function Onos:GetViewModelName()
     return Onos.kViewModelName
 end

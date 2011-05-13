@@ -54,8 +54,6 @@ function Trigger:GetIsPointInside(point)
     
     if self.physicsBody then
         inside = self.physicsBody:GetContainsPoint(point)        
-    else
-        Print("%s:GetIsPointInside(): No physics body, returning false.", self:GetClassName())
     end
     
     return inside

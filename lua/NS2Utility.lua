@@ -148,7 +148,9 @@ function CheckBuildEntityRequirements(techId, position, player, ignoreEntity)
     
         local trace = Shared.TraceBox(GetExtents(techId), position + Vector(0, 1, 0), position - Vector(0, 3, 0), PhysicsMask.AllButPCs, EntityFilterOne(ignoreEntity))
         
-        if trace.entity and trace.entity:isa("LiveScriptActor") then
+        // $AS - We special case Drop Packs as they are not LiveScriptActors but you should not be
+        // able to build on top of them
+        if trace.entity and trace.entity:GetHasBuildFootPrint() then
             legalBuild = false
         end
         
@@ -808,7 +810,7 @@ function GetCanSeeEntity(seeingEntity, targetEntity)
             toEntity.z = toEntity.z / toEntityLength
         end
         
-        local normViewVec = seeingEntity:GetViewAngles():GetCoords().zAxis       
+        local normViewVec = seeingEntity:GetViewAngles():GetCoords().zAxis
         local dotProduct = Math.DotProduct(toEntity, normViewVec)
         local halfFov = math.rad(seeingEntity:GetFov()/2)
         local s = math.acos(dotProduct)
@@ -821,8 +823,12 @@ function GetCanSeeEntity(seeingEntity, targetEntity)
                 Print("Warning - GetCanSeeEntity(%s, %s): Trace line blocked by source entity.", seeingEntity:GetClassName(), targetEntity:GetClassName())
             end
             
-            if(trace.fraction == 1 or trace.entity == targetEntity) then                
+            if(trace.fraction == 1 or trace.entity == targetEntity) then
                 seen = true
+            end
+            
+            if Server and Server.dbgTracer.seeEntityTraceEnabled then
+                Server.dbgTracer:TraceTargeting(seeingEntity,targetEntity,eyePos, trace)
             end
             
         end
@@ -1172,4 +1178,19 @@ function GetActivationTarget(teamNumber, position)
     
     return nearestTarget
     
+end
+
+// Translate from SteamId to player (returns nil if not found)
+if Server then
+function GetPlayerFromUserId(userId)
+
+    for index, currentPlayer in ipairs(GetGamerules():GetEntitiesWithName("Player") ) do
+        if currentPlayer:GetUserId() == userId then
+            return currentPlayer
+        end
+    end
+    
+    return nil
+    
+end
 end

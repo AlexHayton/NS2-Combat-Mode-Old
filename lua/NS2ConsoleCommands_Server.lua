@@ -13,7 +13,7 @@ function JoinTeamOne(player, force)
     // Team balance
     if GetGamerules():GetCanJoinTeamNumber(kTeam1Index) or force or Shared.GetCheatsEnabled() then
         return GetGamerules():JoinTeam(player, kTeam1Index, force)
-    else
+    elseif (player:GetTeamNumber() ~= 1) then
         player:AddTooltipOncePer("This team has too many players.", 5)
     end
     
@@ -23,9 +23,10 @@ end
 function JoinTeamTwo(player, force)
     if GetGamerules():GetCanJoinTeamNumber(kTeam2Index) or force or Shared.GetCheatsEnabled() then
         return GetGamerules():JoinTeam(player, kTeam2Index, force)
-    else
+    elseif (player:GetTeamNumber() ~= 2) then        
         player:AddTooltipOncePer("This team has too many players.", 5)
     end
+    
     return false
 end
 
@@ -673,6 +674,21 @@ function OnCommandChangeGCSettingServer(client, settingName, newValue)
     
 end
 
+function OnCommandEject(client)
+
+    if Shared.GetCheatsEnabled() then
+    
+        local player = client:GetControllingPlayer()          
+        if player and player.Eject then
+        
+            player:Eject()        
+            
+        end
+        
+    end
+    
+end
+
 // GC commands
 Event.Hook("Console_changegcsettingserver", OnCommandChangeGCSettingServer)
 
@@ -740,3 +756,5 @@ Event.Hook("Console_random_debug",          OnCommandRandomDebug)
 Event.Hook("Console_bacon",                 OnCommandDistressBeacon)
 Event.Hook("Console_givegameeffect",        OnCommandGiveGameEffect)
 Event.Hook("Console_setgameeffect",         OnCommandSetGameEffect)
+
+Event.Hook("Console_eject",                 OnCommandEject)

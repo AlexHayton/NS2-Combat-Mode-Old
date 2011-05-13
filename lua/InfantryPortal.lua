@@ -51,10 +51,6 @@ function InfantryPortal:GetUseAttachPoint()
     return InfantryPortal.kLoginAttachPoint
 end
 
-function InfantryPortal:GetRecycleScalar()
-    return kInfantryPortalRecycleScalar
-end
-
 function InfantryPortal:QueueWaitingPlayer()
 
     if(self:GetIsAlive() and self.queuedPlayerId == nil) then
@@ -271,6 +267,8 @@ end
 
 if Server then
 function InfantryPortal:OnEntityChange(entityId, newEntityId)
+    
+    Structure.OnEntityChange(self, entityId, newEntityId)
     
     if(self.queuedPlayerId == entityId) then
     

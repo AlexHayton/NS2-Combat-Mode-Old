@@ -79,6 +79,8 @@ function Projectile:OnUpdate(deltaTime)
     // Update the position/orientation of the entity based on the current
     // position/orientation of the physics object.
     self:SetCoords( self.physicsBody:GetCoords() )
+    
+    Server.dbgTracer:TraceProjectile(self)
 
 end
 
@@ -102,7 +104,7 @@ function Projectile:SetOwner(player)
 
     local success = ScriptActor.SetOwner(self, player)
     
-    if (player ~= nil and self.physicsBody and player:GetController()) then
+    if success and player ~= nil and self.physicsBody and player:GetController() then
     
         // Make sure the owner cannot collide with the projectile
         Shared.SetPhysicsObjectCollisionsEnabled(self.physicsBody, player:GetController(), false)

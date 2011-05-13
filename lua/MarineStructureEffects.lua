@@ -113,6 +113,16 @@ kMarineStructureEffects =
         },
     },
     
+    // When players weld power points
+    player_weld = 
+    {
+        macWeldEffects =
+        {
+            {sound = "sound/ns2.fev/marine/structures/mac/weld"},
+            {cinematic = "cinematics/marine/mac/weld.cinematic", attach_point = "fxnode_welder"},
+        },
+    },
+    
     mac_move_complete =
     {
         macMoveCompleteEffects = 

@@ -108,10 +108,35 @@ function PowerPoint:OnConstructionComplete()
     
 end
 
-// Repaired by MAC
+// Can be repaired by friendly players
+function PowerPoint:OnUse(player, elapsedTime, useAttachPoint, usePoint)
+
+    if self:GetCanBeWelded(player) then
+        return self:OnWeld(player, elapsedTime)
+    end
+    
+    return false
+    
+end
+
+// Repaired by marine or MAC 
 function PowerPoint:OnWeld(entity, elapsedTime)
 
-    local welded = Structure.OnWeld(self, entity, elapsedTime)
+    local welded = false
+    
+    // Marines can repair power points
+    if entity:isa("Marine") then
+    
+        welded = (self:AddHealth(kMarineRepairHealthPerSecond * elapsedTime) > 0)        
+        
+        if welded then
+            // Play puff of sparks
+            self:TriggerEffects("player_weld")
+        end
+        
+    else    
+        welded = Structure.OnWeld(self, entity, elapsedTime)    
+    end
     
     if self:GetHealthScalar() > PowerPoint.kDamagedPercentage then
 

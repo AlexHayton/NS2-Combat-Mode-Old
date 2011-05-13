@@ -21,6 +21,28 @@ alienGroupSayingsText  = {"1. Need healing", "2. Follow me", "3. Chuckle"}
 alienGroupSayingsSounds = {"sound/ns2.fev/alien/voiceovers/need_healing", "sound/ns2.fev/alien/voiceovers/follow_me", "sound/ns2.fev/alien/voiceovers/chuckle"}
 alienRequestActions = {kTechId.AlienAlertNeedHealing, kTechId.None, kTechId.None}
 
+// Populate dynamically via ScoreboardUI_GetOrderedCommanderNames() (for voting down commander)
+voteActionsText = {}
+voteActionsSounds = {}
+voteActionsActions = {kTechId.VoteDownCommander1, kTechId.VoteDownCommander2, kTechId.VoteDownCommander3}
+
+function GetVoteActionsText(teamNumber)
+
+    voteActionsText = {}
+    
+    local sortedCommanderNames = ScoreboardUI_GetOrderedCommanderNames(teamNumber)
+    
+    // Only support three simultaneous commanders (else need to add more VoteDownCommander enums)
+    for index, commanderName in ipairs(sortedCommanderNames) do
+        if table.count(voteActionsText) < 3 then
+            table.insert(voteActionsText, string.format("%d. Eject commander \"%s\"", index, commanderName))
+        end
+    end
+    
+    return voteActionsText
+    
+end
+
 // Precache all sayings
 function precacheSayingsTable(sayings)
     for index, saying in ipairs(sayings) do

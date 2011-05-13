@@ -7,20 +7,6 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-function Hive:OnInit()
-
-    CommandStructure.OnInit(self)
-    
-    // Create glowy "plankton" swimming around hive, along with mist and glow
-    local coords = self:GetCoords()
-    self:AttachEffect(Hive.kSpecksEffect, coords)
-    self:AttachEffect(Hive.kGlowEffect, coords, Cinematic.Repeat_Loop)
-    
-    // For mist creation
-    self:SetUpdates(true)
-        
-end
-
 function Hive:OnUpdate(deltaTime)
 
     CommandStructure.OnUpdate(self, deltaTime)

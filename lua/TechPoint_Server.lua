@@ -32,6 +32,8 @@ end
 
 function TechPoint:OnMapPostLoad()
 
+    ScriptActor.OnMapPostLoad(self)
+
     local locationName = GetLocationForPoint(self:GetOrigin())
     local success, spawn = GetRandomFreeEggSpawn(locationName)
     if not success then
