@@ -276,7 +276,7 @@ function Player:OnKill(damage, killer, doer, point, direction)
         pointOwner:AddScore(self:GetPointValue())
 		
 		// Give experience for the kill
-		local experience = Experience_ComputeExperience(self, self:GetPointValue()*100)
+		/*local experience = Experience_ComputeExperience(self, self:GetPointValue()*100)
 		local assistExperience = Experience_ComputeExperience(self, self:GetPointValue()*10)
 		
 		pointOwner:AddExperience(experience)
@@ -287,7 +287,7 @@ function Player:OnKill(damage, killer, doer, point, direction)
 		for damager, damageInflicted in ipairs(self.damageList) do
 			damager:AddExperience(assistExperience * damageInflicted / self.totalDamage)
 		end
-        
+        */
     end        
 
     // Save death to server log

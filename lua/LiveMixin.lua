@@ -44,6 +44,10 @@ function LiveMixin:__initmixin()
 
     self.armor = LookupTechData(self:GetTechId(), kTechDataMaxArmor, self.__mixindata.kArmor)
     self.maxArmor = self.armor
+	
+	// List of people who have damaged me.
+	self.damageList = { }
+	self.totalDamage = 0
     
 end
 

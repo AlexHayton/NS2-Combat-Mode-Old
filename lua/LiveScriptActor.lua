@@ -85,10 +85,6 @@ end
 function LiveScriptActor:OnCreate()
 
     ScriptActor.OnCreate(self)
-	
-	// List of people who have damaged me.
-	self.damageList = {}
-	self.totalDamage = 0
     
 end
 
