@@ -76,7 +76,7 @@ local kScoresMessage =
     score = string.format("integer (0 to %d)", kMaxScore),
     kills = string.format("integer (0 to %d)", kMaxKills),
     deaths = string.format("integer (0 to %d)", kMaxDeaths),
-    plasma = string.format("integer (0 to %d)", kMaxResources),
+    resources = string.format("integer (0 to %d)", kMaxResources),
     isCommander = "boolean",
     status = string.format("string (%d)", 32),
     isSpectator = "boolean",
@@ -96,7 +96,7 @@ function BuildScoresMessage(scorePlayer, sendToPlayer)
     t.score = scorePlayer:GetScore()
     t.kills = scorePlayer:GetKills()
     t.deaths = scorePlayer:GetDeaths()
-    t.plasma = scorePlayer:GetPlasma()
+    t.resources = scorePlayer:GetResources()
     t.isCommander = ConditionalValue(isEnemy, false, scorePlayer:isa("Commander"))
     t.status = ConditionalValue(isEnemy, "-", scorePlayer:GetPlayerStatusDesc())
     t.isSpectator = ConditionalValue(isEnemy, false, scorePlayer:isa("Spectator"))

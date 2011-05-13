@@ -23,6 +23,22 @@ function CreateGroupsFilterMask(...)
     
 end
 
+/**
+ * Returns a bit mask with everything but the specified groups filtered out.
+ */
+function CreateGroupsAllowedMask(...)
+
+    local mask = 0x0
+    local args = {...}
+    
+    for i,v in ipairs(args) do
+        mask = bit.bor( mask, bit.lshift(1,v) )
+    end
+  
+    return mask
+
+end
+
 // Different groups that physics objects can be assigned to.
 // Physics models and controllers can only be in ONE group (SetGroup()).
 PhysicsGroup = enum
@@ -72,6 +88,9 @@ PhysicsMask = enum
         
         // When Onos charges, players don't stop our movement
         Charge = CreateGroupsFilterMask(PhysicsGroup.RagdollGroup, PhysicsGroup.PlayerGroup, PhysicsGroup.PlayerControllersGroup),
+        
+        // Exclude everything except infestation
+        OnlyInfestation = CreateGroupsAllowedMask(PhysicsGroup.InfestationGroup)
     }
 
 

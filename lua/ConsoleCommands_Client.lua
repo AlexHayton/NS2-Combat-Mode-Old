@@ -35,7 +35,7 @@ function OnCommandOnClientDisconnect(clientIndexString)
 end
 
 function OnCommandScores(scoreTable)
-    Scoreboard_SetPlayerData(scoreTable.clientId, scoreTable.entityId, scoreTable.playerName, scoreTable.teamNumber, scoreTable.score, scoreTable.kills, scoreTable.deaths, scoreTable.plasma, scoreTable.isCommander, scoreTable.status, scoreTable.isSpectator, scoreTable.rank)
+    Scoreboard_SetPlayerData(scoreTable.clientId, scoreTable.entityId, scoreTable.playerName, scoreTable.teamNumber, scoreTable.score, scoreTable.kills, scoreTable.deaths, scoreTable.resources, scoreTable.isCommander, scoreTable.status, scoreTable.isSpectator, scoreTable.rank)
 end
 
 // Notify scoreboard and anything else when a player changes into a new player
@@ -192,6 +192,24 @@ function OnCommandSetMouseSensitivity(sensitivity)
     end
 end
 
+// Save this setting if we set it via a console command
+function OnCommandSetName(nickname)
+    local player = Client.GetLocalPlayer()
+    nickname = StringTrim(nickname)
+    
+    if (nickname == nil) then
+        return
+    end
+    
+    if (player ~= nil) then        
+        if (nickname == player:GetName()) or (nickname == kDefaultPlayerName) or string.len(nickname) < 0 then                    
+            return
+        end      
+    end
+    
+    Client.SetOptionString( kNicknameOptionsKey, nickname )     
+end
+
 Event.Hook("Console_tooltip",                   OnCommandTooltip)
 Event.Hook("Console_reset",                     OnCommandRoundReset)
 Event.Hook("Console_deathmsg",                  OnCommandDeathMsg)
@@ -205,6 +223,7 @@ Event.Hook("Console_onanimdebug",               OnCommandAnimDebug)
 Event.Hook("Console_oneffectdebug",             OnCommandEffectDebug)
 Event.Hook("Console_debugtext",                 OnCommandDebugText)
 Event.Hook("Console_locate",                    OnCommandLocate)
+Event.Hook("Console_name",                      OnCommandSetName)
 
 // Options Console Commands
 Event.Hook("Console_setsoundvolume",            OnCommandSetSoundVolume)

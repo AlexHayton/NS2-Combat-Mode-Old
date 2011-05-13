@@ -144,8 +144,8 @@ local networkVars =
 
     viewModelId             = "entityid",
 
-    plasma                  = string.format("integer (0 to %d)", kMaxResources),
-    teamCarbon              = string.format("integer (0 to %d)", kMaxResources),
+    resources               = string.format("integer (0 to %d)", kMaxResources),
+    teamResources           = string.format("integer (0 to %d)", kMaxResources),
     gameStarted             = "boolean",
     countingDown            = "boolean",
     frozen                  = "boolean",       
@@ -328,7 +328,7 @@ function Player:OnCreate()
     self.flareStartTime = 0
     self.flareStopTime = 0
     self.flareScalar = 1
-    self.plasma = 0
+    self.resources = 0
     
     self.stepStartTime = 0
     self.stepAmount    = 0
@@ -1152,8 +1152,8 @@ function Player:GetCanSeeEntity(targetEntity)
 end
 
 // Individual resources
-function Player:GetPlasma()
-    return self.plasma
+function Player:GetResources()
+    return self.resources
 end
 
 // Returns player mass in kg
@@ -1161,42 +1161,42 @@ function Player:GetMass()
     return Player.kMass
 end
 
-function Player:AddPlasma(amount)
-    local newPlasma = math.max(math.min(self.plasma + amount, kMaxResources), 0)
-    if newPlasma ~= self.plasma then
-        self.plasma = newPlasma
+function Player:AddResources(amount)
+    local newResources = math.max(math.min(self.resources + amount, kMaxResources), 0)
+    if newResources ~= self.resources then
+        self.resources = newResources
         self:SetScoreboardChanged(true)
     end
     
 end
 
-function Player:AddCarbon(amount)
-    self.teamCarbon = math.max(math.min(self.teamCarbon + amount, kMaxResources), 0)
+function Player:AddTeamResources(amount)
+    self.teamResources = math.max(math.min(self.teamResources + amount, kMaxResources), 0)
 end
 
-function Player:GetDisplayPlasma()
+function Player:GetDisplayResources()
 
-    local displayPlasma = self.plasma
+    local displayResources = self.resources
     if(Client and self.resourceDisplay) then
-        displayPlasma = self.animatedPlasmaDisplay:GetDisplayValue()
+        displayResources = self.animatedResourcesDisplay:GetDisplayValue()
     end
-    return displayPlasma
+    return displayResources
     
 end
 
-function Player:GetDisplayTeamCarbon()
+function Player:GetDisplayTeamResources()
 
-    local displayTeamCarbon = self.teamCarbon
+    local displayTeamResources = self.teamResources
     if(Client and self.resourceDisplay) then
-        displayTeamCarbon = self.animatedCarbonDisplay:GetDisplayValue()
+        displayTeamResources = self.animatedTeamResourcesDisplay:GetDisplayValue()
     end
-    return displayTeamCarbon
+    return displayTeamResources
     
 end
 
 // Team resources
-function Player:GetTeamCarbon()
-    return self.teamCarbon
+function Player:GetTeamResources()
+    return self.teamResources
 end
 
 function Player:GetMoveDirection(moveVelocity)

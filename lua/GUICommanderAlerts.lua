@@ -136,6 +136,9 @@ end
 
 function GUICommanderAlerts:AddMessage(text, iconXOffset, iconYOffset, entityId, mapX, mapZ)
     
+    ASSERT(type(text) == "string")
+    ASSERT(type(iconXOffset) == "number")
+    ASSERT(type(iconYOffset) == "number")
     ASSERT(mapX ~= nil, "mapX passed in is nil")
     ASSERT(mapZ ~= nil, "mapZ passed in is nil")
     

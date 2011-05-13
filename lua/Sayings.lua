@@ -39,6 +39,10 @@ function GetVoteActionsText(teamNumber)
         end
     end
     
+    if table.count(voteActionsText) == 0 then
+        table.insert(voteActionsText, "Nothing to vote on.")
+    end
+    
     return voteActionsText
     
 end

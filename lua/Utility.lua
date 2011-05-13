@@ -509,6 +509,8 @@ function ToString(t)
         return t
     elseif type(t) == "table" then
         return table.tostring(t)
+    elseif type(t) == "function" then
+        return tostring(t)
     elseif type(t) == "userdata" then
         if t:isa("Vector") then
             return tostring(t)

@@ -97,8 +97,8 @@ function MarineCommander:GetSelectionRowsTechButtons(techId)
                         
     elseif(techId == kTechId.AdvancedMenu) then 
     
-        techButtons = { kTechId.PowerPack, kTechId.Observatory, kTechId.RoboticsFactory, kTechId.PrototypeLab,
-                        kTechId.None, kTechId.None, kTechId.None, kTechId.RootMenu}
+        techButtons = { kTechId.PowerPack, kTechId.Observatory, kTechId.PhaseGate, kTechId.RoboticsFactory,
+                        kTechId.PrototypeLab, kTechId.None, kTechId.None, kTechId.RootMenu}
         
     elseif(techId == kTechId.AssistMenu) then 
     

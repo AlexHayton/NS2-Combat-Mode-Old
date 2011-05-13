@@ -69,7 +69,16 @@ function Whip:OnInit()
     
     Structure.OnInit(self)
     self:SetUpdates(true)
-    
+ 
+    if Server then    
+        self.targetSelector = Server.targetCache:CreateSelector(
+                self,
+                Whip.kRange,
+                true, 
+                TargetCache.kAmtl, 
+                TargetCache.kAstl)
+    end
+   
 end
 
 // Used for targeting

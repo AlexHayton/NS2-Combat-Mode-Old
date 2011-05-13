@@ -6,13 +6,13 @@
 // Tech nodes are of the following types:
 //
 //   Order (Move, Default) - No cost, requires positional
-//   Research (eg, research siege) - Costs carbon, queued from a structure, non-positional
+//   Research (eg, research siege) - Costs team resources, queued from a structure, non-positional
 //   Upgrade (eg, upgrade command station) - Like research but can be performed more than once
 //   Action (eg, medpack, drifter flare) - Optionally costs energy, optional position, optionally must be researched
-//   Buy (eg, create siege cannon from factory, player buy weapon) - Costs plasma, position implied from buyer or originating structure (unless targeted). Requires target for commander.
-//   Build (eg, build structure from drifter) - Costs carbon, requires position
+//   Buy (eg, create siege cannon from factory, player buy weapon) - Costs resources, position implied from buyer or originating structure (unless targeted). Requires target for commander.
+//   Build (eg, build structure from drifter) - Costs team resources, requires position
 //   EnergyBuild (add to manufacture queue, create unit when done) - Costs energy, takes time to complete, no position (MACs, Drifters). Only use for AI units that don't need a position.
-//   Manufacture (add to manufacture queue, create unit when done) - Costs plasma, takes time to complete, no position (ARCs)
+//   Manufacture (add to manufacture queue, create unit when done) - Costs resources, takes time to complete, no position (ARCs)
 //   Activation (eg, deploy/undeploy siege) - Optionally costs energy, optional position
 //   Menu - No cost, no position
 //
@@ -43,7 +43,7 @@ TechNode.kTechNodeVars =
     // ammo upgrade for a weapon
     addOnTechId         = string.format("integer (0 to %d)", kTechIdMax),
 
-    // Resource costs (carbon, plasma or energy depending on type)
+    // Resource costs (team resources, individual resources or energy depending on type)
     cost                = "integer (0 to 125)",
 
     // If tech node can be built/researched/used. Requires prereqs to be met and for 
@@ -135,13 +135,13 @@ function TechNode:GetIsUpgrade()
     return self.techType == kTechType.Upgrade
 end
 
-// Returns: 0 = carbon, 1 = plasma, 2 = energy (from CommanderUI_MenuButtonTooltip). Returns nil if none required.
+// Returns: 0 = team resources, 1 = individual resources, 2 = energy (from CommanderUI_MenuButtonTooltip). Returns nil if none required.
 function TechNode:GetResourceType()
 
-    // Carbon
+    // TeamResources
     if self.techType == kTechType.Research or self.techType == kTechType.Upgrade or self.techType == kTechType.Build then
         return 0
-    // Plasma
+    // Resources
     elseif self.techType == kTechType.Buy or self.techType == kTechType.Manufacture then
         return 1
     // Energy

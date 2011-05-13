@@ -17,6 +17,8 @@ function MedPack:OnInit()
     
     Shared.CreateEffect(nil, DropPack.kPackDropEffect, self)
     
+    self:SetPathingFlag(kPathingFlags.UnBuildable)
+    
 end
 
 function MedPack:OnTouch(player)

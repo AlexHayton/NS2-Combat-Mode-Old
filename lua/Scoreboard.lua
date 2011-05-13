@@ -28,6 +28,45 @@ function Scoreboard_Clear()
     
 end
 
+// Score > Kills > Deaths > Resources
+function Scoreboard_Sort()
+
+    function sortByScore(player1, player2)
+    
+        if player1[kScoreboardDataIndexScore] == player2[kScoreboardDataIndexScore] then
+        
+            if player1[kScoreboardDataIndexKills] == player2[kScoreboardDataIndexKills] then
+            
+                if player1[kScoreboardDataIndexDeaths] == player2[kScoreboardDataIndexDeaths] then    
+                
+                    if player1[kScoreboardDataIndexResources] == player2[kScoreboardDataIndexResources] then    
+                    
+                        // Somewhat arbitrary but keeps more coherence and adds players to bottom in case of ties
+                        return player1[kScoreboardDataIndexClientIndex] > player2[kScoreboardDataIndexClientIndex]
+                        
+                    else
+                        return player1[kScoreboardDataIndexResources] > player2[kScoreboardDataIndexResources]
+                    end
+                    
+                else
+                    return player1[kScoreboardDataIndexDeaths] < player2[kScoreboardDataIndexDeaths]
+                end
+                
+            else
+                return player1[kScoreboardDataIndexKills] > player2[kScoreboardDataIndexKills]
+            end
+            
+        else
+            return player1[kScoreboardDataIndexScore] > player2[kScoreboardDataIndexScore]    
+        end        
+        
+    end
+    
+    // Sort it by entity id
+    table.sort(playerData, sortByScore)
+
+end
+
 // Hooks from console commands coming from server
 function Scoreboard_OnResetGame()
 
@@ -94,6 +133,8 @@ function Scoreboard_SetPlayerData(clientIndex, entityId, playerName, teamNumber,
             playerRecord[kScoreboardDataIndexIsSpectator] = isSpectator
             playerRecord[kScoreboardDataIndexRank] = rank
             
+            Scoreboard_Sort()
+            
             return
             
         end
@@ -117,6 +158,8 @@ function Scoreboard_SetPlayerData(clientIndex, entityId, playerName, teamNumber,
     playerRecord[kScoreboardDataIndexRank] = rank
     
     table.insert(playerData, playerRecord )
+    
+    Scoreboard_Sort()
     
 end
 
@@ -297,8 +340,7 @@ function ScoreboardUI_GetOrderedCommanderNames(teamNumber)
     
         local playerRecord = playerData[i]
         
-        // TODO: Remove "not" once done testing
-        if (playerRecord[kScoreboardDataIndexEntityTeamNumber] == teamNumber) and not playerRecord[kScoreboardDataIndexIsCommander] then
+        if (playerRecord[kScoreboardDataIndexEntityTeamNumber] == teamNumber) and playerRecord[kScoreboardDataIndexIsCommander] then
             table.insert( commanders, {playerRecord[kScoreboardDataIndexEntityId], playerRecord[kScoreboardDataIndexName]} )
         end
         

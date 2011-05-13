@@ -21,6 +21,8 @@ Infestation.kVerticalSize = 1.0
 
 Infestation.kInitialRadius = .05
 
+Infestation.kThinkTime = 3
+
 if Server then
     Script.Load("lua/Infestation_Server.lua")
 end
@@ -57,14 +59,20 @@ function Infestation:OnCreate()
     // Start visible
     self.radius = Infestation.kInitialRadius
     
+    // track when we last thought
+    self.lastThinkTime = Shared.GetTime()
+    
+    // our personal thinktime; avoid clumping
+    self.thinkTime = Infestation.kThinkTime + 0.001 * self:GetId() % 100
+    
     if (Client) then
         self.decal = Client.CreateRenderDecal()
         self.decal:SetMaterial("materials/infestation/infestation_decal.material")
+    else 
+        self.lastUpdateThinkTime = self.lastThinkTime
     end
     
     self:SetPhysicsGroup(PhysicsGroup.InfestationGroup)
-    
-    self:SetUpdates(true)
     
 end
 
@@ -75,6 +83,8 @@ function Infestation:OnDestroy()
     if Client then
         Client.DestroyRenderDecal( self.decal )
         self.decal = nil
+    else
+        Server.infestationMap:RemoveInfestation(self)
     end
 
 end
@@ -88,6 +98,8 @@ function Infestation:OnInit()
     if Server then    
         self:TriggerEffects("spawn")
     end
+    
+    self:SetNextThink(0.01)
     
 end
 
@@ -136,16 +148,35 @@ function Infestation:GetIsSelectable()
     return false
 end
 
-function Infestation:OnUpdate(deltaTime)
+function Infestation:OnThink()
+    PROFILE("Infestation:OnThink")
 
-    LiveScriptActor.OnUpdate(self, deltaTime)
+    local now = Shared.GetTime()
+
+    local deltaTime = now - self.lastThinkTime
     
-    // Update radius based on lifetime and health
-    if Server then
+     if Server then
         self:UpdateInfestation(deltaTime)
     end
-    
-    self:SetPoseParam("scale", self.radius * 2)
+       
+    if self.radius ~= self.maxRadius then
+        LiveScriptActor.OnUpdate(self, deltaTime)
+        self:SetNextThink(0.01) // update on every tick while we are changing the radius
+        self.lastThinkTime = now
+    else
+        LiveScriptActor.OnThink(self)
+        // avoid clumping and vary the thinkTime individually for each infestation patch (with 0-100ms)
+        self.lastThinkTime = self.lastThinkTime + self.thinkTime
+        // lastThinktime is now "now". Add in another does of delta to find when we want to run next
+        local nextThinkTime = self.lastThinkTime + self.thinkTime
+        
+        self:SetNextThink(nextThinkTime - now)
+    end   
+
+    if self.lastRadius ~= self.radius then
+        self:SetPoseParam("scale", self.radius * 2)
+        self.lastRadius = self.radius
+    end
 
 end
 

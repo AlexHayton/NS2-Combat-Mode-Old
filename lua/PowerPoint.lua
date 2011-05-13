@@ -88,6 +88,12 @@ function PowerPoint:OnInit()
         
         self:SetNextThink(.1)
 
+    else 
+    
+        self.unchangingLights = {}
+        
+        self.lightFlickers = {}
+        
     end
     
 end
@@ -112,25 +118,6 @@ function PowerPoint:GetIsPowered()
     return self.powered
 end
 
-// Used for efficiency, so we don't have iterate over lights unnecessarily
-function PowerPoint:GetIsAffectingLights()
-
-    local time = Shared.GetTime()
-    
-    // Add in some extra time to account for network latency
-    local kBufferTime = .5
-    
-    if ((self.lightMode == kLightMode.Normal) or (self.lightMode == kLightMode.Damaged)) and (time < (self.timeOfLightModeChange + PowerPoint.kDamagedCycleTime*2 + kBufferTime)) then
-        return true
-    elseif self.lightMode == kLightMode.LowPower then
-        return true
-    elseif (self.lightMode == kLightMode.NoPower) then
-        return true
-    end
-    
-    return false
-    
-end
 
 function PowerPoint:SetLightMode(lightMode)
 

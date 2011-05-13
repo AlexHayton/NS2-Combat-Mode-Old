@@ -48,147 +48,21 @@ function Crag:GetIsAlienStructure()
     return true
 end
 
-// Sort entities by priority (players before structures, most damaged before least)
-function Crag:GetSortedTargetList()
-
-    local ents = GetEntitiesForTeamWithinRange("LiveScriptActor", self:GetTeamNumber(), self:GetOrigin(), Crag.kHealRadius)
-    
-    local targets = {}
-    
-    // Only include hurt entities
-    for index, entity in ipairs(ents) do
-
-        if (entity:GetHealth() < entity:GetMaxHealth()) or (entity:GetArmor() < entity:GetMaxArmor()) then
-            
-            // Crags don't heal self
-            if entity ~= self then
-    
-                table.insert(targets, entity)
-                
-            end
-            
-        end
-        
-    end
-    
-    // The comparison function must return a boolean value specifying whether the first argument should 
-    // be before the second argument in the sequence (he default behavior is <).
-    // All table.sort functions need to be deterministic.
-    // For example, if ent1 < ent2 than later the same ent2 cannot be < ent1.
-    function sortCragTargets(ent1, ent2)
-    
-        local p1 = ent1:isa("Player")
-        local p2 = ent2:isa("Player")
-    
-        // Heal players before structures
-        if p1 and not p2 then
-            return true
-        end
-        
-        if not p1 and p2 then
-            return false
-        end
-
-        // Healing ourself takes priority after players
-        if ent1 == self then
-            return true
-        end
-        
-        // Heal most hurt entities first (looks at total percentage of health)
-        // ent2 ~= self is required so this function is deterministic.
-        if ent2 ~= self and ent1:GetHealthScalar() <= ent2:GetHealthScalar() then
-            return true
-        end
-                
-        return false
-        
-    end
-    
-    table.sort(targets, sortCragTargets)
-    
-    return targets
-    
-end
-
 function Crag:PerformHealing()
 
-    local ents = self:GetSortedTargetList()
-    
+    // acquire up to kMaxTargets healable targets inside range, players first
+    local targets = self.targetSelector:AcquireTargets(Crag.kMaxTargets)
     local entsHealed = 0
     
-    for index, entity in ipairs(ents) do
-    
-        if (entity:AddHealth(Crag.kHealAmount) > 0) then
-        
-            entity:TriggerEffects("crag_target_healed")
-            
-            entsHealed = entsHealed + 1
-            
-        end
-        
-        // Can only heal a certain number of targets
-        if (entsHealed >= Crag.kMaxTargets) then
-        
-            break
-            
-        end
-    
+    for _,target in ipairs(targets) do
+        local healAmount = self:TryHeal(target, sqRange) 
+        // Log("%s healed %s for %s", self, target, healAmount)
+        entsHealed = entsHealed + ((healAmount > 0 and 1) or 0)
     end
     
-    if entsHealed > 0 then
-    
-        local energyCost = LookupTechData(kTechId.CragHeal, kTechDataCostKey, 0)
-    
-        self:AddEnergy(-energyCost)
-        
-        self:TriggerEffects("crag_heal")
-        
-    end
-    
-end
-
-function Crag:PerformHealingUsingTargetCache()
-
-    // a crag uses the marine static and mobile targeting list ... 
-    // note that we use the HealTarget list - it will ignore los. If crags shouldn't heal through
-    // walls, just replace the RawHealTargetList with RawTargetList. Then it will function more like
-    // a sentry gun.
-    local targets = nil
-    targets, self.staticTargets, self.staticTargetsVersion = GetGamerules():GetTargetCache():GetRawHealTargetList(
-            self,
-            Crag.kHealRadius, 
-            TargetCache.kMmtl, 
-            TargetCache.kAshtl, 
-            self.staticTargets, 
-            self.staticTargetsVersion)
-
-    // Can only heal a certain number of targets                 
-    local entsHealed = 0
-    
-    // first heal players
-    for index, targetAndSqRange in ipairs(targets) do 
-        local target, sqRange = unpack(targetAndSqRange)
-               
-        if (entsHealed >= Crag.kMaxTargets) then      
-            break           
-        end
-        
-        if target:isa("Player") then
-            entsHealed = entsHealed + self:TryHeal(target, sqRange)
-        end
-    end
-    
-    // then heal non-players (except self)
-    for index, targetAndSqRange in ipairs(targets) do
-        local target, sqRange = unpack(targetAndSqRange)
-
-        if (entsHealed >= Crag.kMaxTargets) then      
-            break           
-        end
-        
-        if not target:isa("Player") and target ~= self then     
-            entsHealed = entsHealed + self:TryHeal(target, sqRange)
-         end
+    if entsHealed ~= #targets then
+        // should never happen
+        Log("WARNING! UNHEALABLE TARGETS FOUND! %s", targets)
     end
 
     if entsHealed > 0 then   
@@ -203,7 +77,6 @@ function Crag:TryHeal(target, sqRange)
     local amountHealed = target:AddHealth(Crag.kHealAmount)
     if (amountHealed > 0) then
         target:TriggerEffects("crag_target_healed")           
-        GetGamerules():GetTargetCache():LogTarget("%s healed %s at range %.2f for %d", self, target,math.sqrt(sqRange), amountHealed)       
     end
     return amountHealed
 end
@@ -219,11 +92,8 @@ function Crag:UpdateHealing()
         
         if self:GetEnergy() >= energyCost then
     
-            if GetGamerules():GetTargetCache():IsEnabled() then
-                self:PerformHealingUsingTargetCache()
-            else  
-                self:PerformHealing()
-            end
+            self:PerformHealing()
+
             self.timeOfLastHeal = time
             
         end
@@ -332,7 +202,25 @@ end
 
 function Crag:OnInit()
     InitMixin(self, InfestationMixin)    
-    Structure.OnInit(self)   
+    Structure.OnInit(self) 
+
+    if Server then 
+        self.targetSelector = Server.targetCache:CreateSelector(
+                self,
+                Crag.kHealRadius, 
+                false, // we heal targets we don't have a los to
+                TargetCache.kMmtl, // yea, we heal what the marines wants to hurt
+                TargetCache.kAshtl,// marine static targets + infestations
+                { HealableTargetFilter() }, // filter away unhurt targets
+                { IsaPrioritizer("Player") }) // and prioritize players
+    end
+end
+
+if Server then
+ function Crag:OnDestroy()
+    self:ClearInfestation()
+    Structure.OnDestroy(self)
+ end
 end
 
 Shared.LinkClassToMap("Crag", Crag.kMapName, {})

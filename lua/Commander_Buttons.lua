@@ -41,7 +41,7 @@ end
     tooltipRequires (String) - optional, specify "" or nil if not used
     tooltipEnables (String) - optional, specify "" or nil if not used
     tooltipInfo (String)
-    tooltipType (Number) - 0 = carbon, 1 = plasma, 2 = energy
+    tooltipType (Number) - 0 = team resources, 1 = individual resources, 2 = energy
 */
 function CommanderUI_MenuButtonTooltip(index)
 
@@ -112,7 +112,7 @@ function CommanderUI_MenuButtonStatus(index)
                 elseif not techNode:GetAvailable() then
                     // Greyed out
                     buttonStatus = 3
-                // menuTechButtonsAllowed[] contains results of appropriate carbon, plasma or energy check
+                // menuTechButtonsAllowed[] contains results of appropriate team resources, individual resources or energy check
                 elseif not player.menuTechButtonsAllowed[index] then
                     // Red
                     buttonStatus = 2
@@ -415,8 +415,10 @@ function Commander:InitTechTreeMaterialOffsets()
     self.kMarineTechIdToMaterialOffset[kTechId.AdvancedArmory] = 65
     self.kMarineTechIdToMaterialOffset[kTechId.AdvancedArmoryUpgrade] = 65
     self.kMarineTechIdToMaterialOffset[kTechId.RifleUpgradeTech] = 66
-    self.kMarineTechIdToMaterialOffset[kTechId.ARCSplashTech] = 67
-    self.kMarineTechIdToMaterialOffset[kTechId.ARCArmorTech] = 68
+    self.kMarineTechIdToMaterialOffset[kTechId.PhaseGate] = 67
+    self.kMarineTechIdToMaterialOffset[kTechId.PhaseTech] = 68
+    self.kMarineTechIdToMaterialOffset[kTechId.ARCSplashTech] = 69
+    self.kMarineTechIdToMaterialOffset[kTechId.ARCArmorTech] = 70
 
     self.kMarineTechIdToMaterialOffset[kTechId.GrenadeLauncherTech] = 72
     self.kMarineTechIdToMaterialOffset[kTechId.JetpackFuelTech] = 73      

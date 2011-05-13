@@ -20,7 +20,7 @@ end
 Alien.kNotEnoughResourcesSound = PrecacheAsset("sound/ns2.fev/alien/voiceovers/more")
 Alien.kRegenerationSound = PrecacheAsset("sound/ns2.fev/alien/common/regeneration")
 Alien.kChatSound = PrecacheAsset("sound/ns2.fev/alien/common/chat")
-Alien.kSpendPlasmaSoundName = PrecacheAsset("sound/ns2.fev/marine/common/player_spend_nanites")
+Alien.kSpendResourcesSoundName = PrecacheAsset("sound/ns2.fev/marine/common/player_spend_nanites")
 
 // Representative portrait of selected units in the middle of the build button cluster
 Alien.kPortraitIconsTexture = "ui/alien_portraiticons.dds"

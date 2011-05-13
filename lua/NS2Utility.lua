@@ -150,7 +150,7 @@ function CheckBuildEntityRequirements(techId, position, player, ignoreEntity)
         
         // $AS - We special case Drop Packs as they are not LiveScriptActors but you should not be
         // able to build on top of them
-        if trace.entity and trace.entity:GetHasBuildFootPrint() then
+        if trace.entity and trace.entity:GetHasPathingFlag(kPathingFlags.UnBuildable) then
             legalBuild = false
         end
         
@@ -1193,4 +1193,82 @@ function GetPlayerFromUserId(userId)
     return nil
     
 end
+end
+
+// Get information about entity when looking at it. 
+function GetCrosshairText(entity, teamNumber)
+
+    local text = ""
+    
+    if entity:isa("Player") and entity:GetIsAlive() then
+    
+        // If the target is an Embryo and is on the enemy team, we should mask their name
+        if entity:isa("Embryo") and entity:GetTeamNumber() == GetEnemyTeamNumber(teamNumber) then
+        
+            local statusText = string.format("(%.0f%%)", Clamp(math.ceil(entity:GetHealthScalar() * 100), 0, 100))
+            text = string.format("%s %s", LookupTechData(kTechId.Egg, kTechDataDisplayName), statusText)
+            
+        else
+            
+            local playerName = Scoreboard_GetPlayerData(entity:GetClientIndex(), kScoreboardDataIndexName)
+                    
+            if playerName ~= nil then
+            
+                text = playerName
+            
+            end
+        
+            if entity:GetTeamNumber() == teamNumber then
+            
+                // Add health scalar
+                text = string.format("%s (%d%%)", text, math.ceil(entity:GetHealthScalar()*100))
+                
+            end
+            
+        end
+        
+    // Add quickie damage feedback and structure status
+    elseif (entity:isa("Structure") or entity:isa("MAC") or entity:isa("Drifter") or entity:isa("ARC")) and entity:GetIsAlive() then
+    
+        // Don't show built % for enemies, show health instead
+        local enemyTeam = (GetEnemyTeamNumber(entity:GetTeamNumber()) == teamNumber)
+        local techId = entity:GetTechId()
+        local statusText = string.format("(%.0f%%)", Clamp(math.ceil(entity:GetHealthScalar() * 100), 0, 100))        
+        if entity:isa("Structure") and not entity:GetIsBuilt() and not enemyTeam then
+            statusText = string.format("(%.0f%%)", Clamp(math.ceil(entity:GetBuiltFraction() * 100), 0, 100))
+        end
+
+        local secondaryText = ""
+        if entity:isa("Structure") then
+        
+            // Display location name for power point so we know what it affects
+            if entity:isa("PowerPoint") then
+            
+                if not entity:GetIsPowered() then
+                    secondaryText = "Destroyed " .. entity:GetLocationName() .. " "
+                    statusText = ""
+                else
+                    secondaryText = entity:GetLocationName() .. " "
+                end
+                
+            elseif not entity:GetIsBuilt() then
+                secondaryText = "Unbuilt "
+            elseif entity:GetRequiresPower() and not entity:GetIsPowered() then
+                secondaryText = "Unpowered "
+                
+            elseif entity:isa("Whip") then
+            
+                if not entity:GetIsRooted() then
+                    secondaryText = "Unrooted "
+                end
+            end
+            
+        end
+        
+        text = string.format("%s%s %s", secondaryText, LookupTechData(techId, kTechDataDisplayName), statusText)
+
+    end
+    
+    return text    
+    
 end

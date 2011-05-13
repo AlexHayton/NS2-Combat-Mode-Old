@@ -32,6 +32,8 @@ function AmmoPack:OnInit()
     
     Shared.CreateEffect(nil, DropPack.kPackDropEffect, self)
     
+    self:SetPathingFlag(kPathingFlags.UnBuildable)
+    
 end
 
 function AmmoPack:OnTouch(player)
@@ -74,10 +76,6 @@ function AmmoPack:GetPackRecipient()
 
     return nil
     
-end
-
-function AmmoPack:GetHasBuildFootPrint()
-    return true
 end
 
 if(Server) then

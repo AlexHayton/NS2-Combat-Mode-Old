@@ -13,8 +13,8 @@ class 'ResourceTower' (Structure)
 
 ResourceTower.kMapName = "resourcetower"
 
-ResourceTower.kPlasmaInjection = 1
-ResourceTower.kCarbonInjection = 1
+ResourceTower.kResourcesInjection = 1
+ResourceTower.kTeamResourcesInjection = 1
 ResourceTower.kMaxUpgradeLevel = 3
 
 // Don't start generating resources right away, wait a short time
@@ -51,8 +51,8 @@ end
 
 function ResourceTower:GiveResourcesToTeam(player)
 
-    local plasma = ResourceTower.kPlasmaInjection * (1 + self:GetUpgradeLevel() * kResourceUpgradeAmount)
-    player:AddPlasma(plasma, true)
+    local resources = ResourceTower.kResourcesInjection * (1 + self:GetUpgradeLevel() * kResourceUpgradeAmount)
+    player:AddResources(resources, true)
 
 end
 

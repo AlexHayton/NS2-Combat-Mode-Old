@@ -62,6 +62,9 @@ function InfestationMixin:SpawnInitialInfestation()
 end
 
 function InfestationMixin:UpdateInfestation()
+
+    PROFILE("InfestationMixin:UpdateInfestation")
+    
     // No update if we are not built!
     if not self:GetIsBuilt() then
         return

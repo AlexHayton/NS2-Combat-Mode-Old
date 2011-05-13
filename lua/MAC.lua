@@ -442,7 +442,7 @@ function MAC:ProcessBuildConstruct()
                     
                 end
                 
-                if(team:GetCarbon() >= cost) then
+                if(team:GetTeamResources() >= cost) then
               
                     local success, createdStructureId = commander:AttemptToBuild(techId, currentOrder:GetLocation(), Vector(0, 1, 0), currentOrder:GetOrientation(), nil, nil, self)
                     
@@ -451,7 +451,7 @@ function MAC:ProcessBuildConstruct()
                     
                         self:CompletedCurrentOrder()
                     
-                        team:AddCarbon(-cost)                                
+                        team:AddTeamResources(-cost)                                
                         
                         self:GiveOrder(kTechId.Construct, createdStructureId, nil, nil, false, true)
                         

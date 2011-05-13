@@ -375,3 +375,43 @@ function LiveMixin:TakeDamageServer(damage, attacker, doer, point, direction)
     return (self.justKilled == true)
     
 end
+
+//
+// How damaged this entity is, ie how much healing it can receive.
+//
+function LiveMixin:AmountDamaged() 
+    return (self:GetMaxHealth() - self:GetHealth()) + (self:GetMaxArmor() - self:GetArmor())
+end
+
+// Return the amount of health we added 
+function LiveMixin:AddHealth(health, playSound)
+
+    // TakeDamage should be used for negative values.
+    ASSERT( health >= 0 )
+
+    local total = 0
+    
+    if self:GetIsAlive() and self:AmountDamaged() > 0 then
+    
+        // Add health first, then armor if we're full
+        local healthAdded = math.min(health, self:GetMaxHealth() - self:GetHealth())
+        self:SetHealth(math.min(math.max(0, self:GetHealth() + healthAdded), self:GetMaxHealth()))
+
+        local healthToAddToArmor = health - healthAdded
+        if(healthToAddToArmor > 0) then
+            local armorMultiplier = self:GetHealthPerArmor(kDamageType.Normal)
+            local armorPoints = healthToAddToArmor / armorMultiplier            
+            self:SetArmor(math.min(math.max(0, self:GetArmor() + armorPoints), self:GetMaxArmor()))
+        end
+        
+        total = healthAdded + healthToAddToArmor
+        
+        if total > 0 and playSound and (self:GetTeamType() == kAlienTeamType) then
+            self:TriggerEffects("regenerate")
+        end
+        
+    end
+    
+    return total
+    
+end

@@ -26,7 +26,6 @@ if(Server) then
 Script.Load("lua/PlayingTeam.lua")
 Script.Load("lua/ReadyRoomTeam.lua")
 Script.Load("lua/SpectatingTeam.lua")
-Script.Load("lua/TargetCache.lua")
 
 NS2Gamerules.kMarineStartSound   = PrecacheAsset("sound/ns2.fev/marine/voiceovers/game_start")
 NS2Gamerules.kAlienStartSound    = PrecacheAsset("sound/ns2.fev/alien/voiceovers/game_start")
@@ -98,14 +97,8 @@ function NS2Gamerules:OnCreate()
     self:SetPropagate(Entity.Propagate_Always)
     
     self.justCreated = true
-    
-    self.targetCache = TargetCache()
-    self.targetCache:Init()
 end
 
-function NS2Gamerules:GetTargetCache() 
-    return self.targetCache
-end
 
 function NS2Gamerules:GetFriendlyFire()
     return false
@@ -214,7 +207,7 @@ function NS2Gamerules:OnEntityChange(oldId, newId)
     self.team1:OnEntityChange(oldId, newId)
     self.team2:OnEntityChange(oldId, newId)
     self.spectatorTeam:OnEntityChange(oldId, newId)
-    self.targetCache:OnEntityChange(oldId, newId)
+    Server.targetCache:OnEntityChange(oldId, newId)
 
     // Keep server map entities up to date    
     local index = table.find(Server.mapLoadLiveEntityValues, oldId)
@@ -246,7 +239,7 @@ function NS2Gamerules:OnKill(targetEntity, damage, attacker, doer, point, direct
     self.team1:OnKill(targetEntity, damage, attacker, doer, point, direction)
     self.team2:OnKill(targetEntity, damage, attacker, doer, point, direction)
     
-    self.targetCache:OnKill(targetEntity)
+    Server.targetCache:OnKill(targetEntity)
     
 end
 
@@ -338,6 +331,16 @@ function NS2Gamerules:GetUpgradedDamage(entity, damage, damageType)
     return damage * damageScalar
     
 end
+
+// logs out any players currently as the commander
+function NS2Gamerules:LogoutCommanders()
+    local entityTable = EntityListToTable(Shared.GetEntitiesWithClassname("CommandStructure"))
+    for index, entity in ipairs(entityTable) do
+        if (entity:isa("CommandStructure")) then
+            entity:Logout()
+        end
+    end
+end
  
 /**
  * Starts a new game by resetting the map and all of the players. Keep everyone on current teams (readyroom, playing teams, etc.) but 
@@ -345,6 +348,10 @@ end
  */
 function NS2Gamerules:ResetGame()
 
+    // Cleanup any peeps currently in the commander seat by logging them out
+    // have to do this before we start destroying stuff.
+    self:LogoutCommanders()
+    
     // Destroy any map entities that are still around
     DestroyLiveMapEntities()    
     
@@ -688,6 +695,8 @@ end
 
 function NS2Gamerules:OnUpdate(timePassed)
 
+    PROFILE("NS2Gamerules:OnUpdate")
+    
     GetEffectManager():OnUpdate(timePassed)
 
     if Server then

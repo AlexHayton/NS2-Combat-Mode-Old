@@ -232,4 +232,6 @@ kGraphicsYResolutionOptionsKey = "graphics/display/y-resolution"
 
 kMouseSensitivityScalar         = 50
 
+// Pathing flags
+kPathingFlags = enum ({'UnBuildable', 'UnPathable', 'Blockable'})
 

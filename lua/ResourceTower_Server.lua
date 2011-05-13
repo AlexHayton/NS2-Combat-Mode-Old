@@ -14,14 +14,14 @@ end
 
 function ResourceTower:UpdateOnThink()
 
-    // Give plasma to all players on team
+    // Give resources to all players on team
     local team = self:GetTeam()
     team:ForEachPlayer( function (player) self:GiveResourcesToTeam(player) end )
 
-    // Give carbon to team (upgrades don't add to carbon amount)
+    // Give resources to team (upgrades don't add to amount)
     local team = self:GetTeam()
     if(team ~= nil) then
-        team:AddCarbon(ResourceTower.kCarbonInjection)        
+        team:AddTeamResources(ResourceTower.kTeamResourcesInjection)        
     end
     
     if self:isa("Extractor") then

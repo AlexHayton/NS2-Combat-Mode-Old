@@ -702,7 +702,7 @@ function Structure:PerformAction(techNode, position)
         local amount = GetRecycleAmount(self:GetTechId(), upgradeLevel)
         local scalar = self:GetRecycleScalar()
         
-        self:GetTeam():AddCarbon(amount * scalar)
+        self:GetTeam():AddTeamResources(amount * scalar)
         
         self:SafeDestroy()   
         

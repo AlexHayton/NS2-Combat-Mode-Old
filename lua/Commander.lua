@@ -15,8 +15,8 @@ Commander.kMapName = "commander"
 
 Script.Load("lua/Commander_Hotkeys.lua")
 
-Commander.kSpendCarbonSoundName = PrecacheAsset("sound/ns2.fev/marine/common/comm_spend_metal")
-Commander.kSpendPlasmaSoundName = PrecacheAsset("sound/ns2.fev/marine/common/player_spend_nanites")
+Commander.kSpendTeamResourcesSoundName = PrecacheAsset("sound/ns2.fev/marine/common/comm_spend_metal")
+Commander.kSpendResourcesSoundName = PrecacheAsset("sound/ns2.fev/marine/common/player_spend_nanites")
 
 Commander.kSelectionCircleModelName = PrecacheAsset("models/misc/marine-build/marine-build.model")
 Commander.kSentryOrientationModelName = PrecacheAsset("models/misc/sentry_arc/sentry_arc.model")
@@ -168,8 +168,13 @@ function Commander:HandleButtons(input)
         //ShowInGameMenu()
         self.commanderCancel = true
     end
+
+    if Client and not Shared.GetIsRunningPrediction() then    
     
-    self:HandleCommanderHotkeys(input)
+        self:HandleCommanderESC(input)
+        self:HandleCommanderHotkeys(input)
+        
+    end
     
     self:HandleScoreboardSubgroups(input)
     

@@ -42,7 +42,9 @@ function Skulk:PlayerCameraCoordsAdjustment(cameraCoords)
             wallWalkingRoll = wallWalkingRoll.roll
             self.goalCameraRoll = (wallWalkingRoll * Skulk.kCameraRollTiltModifier)
         end
-        viewModelTiltAngles.roll = viewModelTiltAngles.roll + self.currentCameraRoll
+        if self.currentCameraRoll then
+            viewModelTiltAngles.roll = viewModelTiltAngles.roll + self.currentCameraRoll
+        end
         local viewModelTiltCoords = viewModelTiltAngles:GetCoords()
         viewModelTiltCoords.origin = cameraCoords.origin
         return viewModelTiltCoords

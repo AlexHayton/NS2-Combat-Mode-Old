@@ -257,11 +257,19 @@ function Drifter:OnThink()
     
 end
 
+function Drifter:ResetOrders()
+     self.landed = false
+     self:SetIgnoreOrders(false)    
+     self:ClearOrders()
+     self:SetAnimationWithBlending(Drifter.kAnimFly, nil, true)          
+     self:SetOrigin(self:GetOrigin() + Vector(0, self:GetHoverHeight(), 0))     
+end
+
 function Drifter:ProcessBuildOrder(moveSpeed)
     local currentOrder = self:GetCurrentOrder()
     local distToTarget = (currentOrder:GetLocation() - self:GetOrigin()):GetLengthXZ()
     
-    if(distToTarget < (moveSpeed * Drifter.kMoveThinkInterval)) then
+    if(distToTarget < (moveSpeed * Drifter.kMoveThinkInterval) and currentOrder) then
            
         // the location we move to is always at the correct height to move to.
         // the place we are going to build on is located on the ground though, so
@@ -274,8 +282,8 @@ function Drifter:ProcessBuildOrder(moveSpeed)
         // Create structure here
         local commander = self:GetOwner()
         if (not commander or not commander:isa("Commander")) then
-          self:ClearOrders()
-          return
+            self:ResetOrders()            
+            return
         end
         
         local legalBuildPosition = false
@@ -286,7 +294,7 @@ function Drifter:ProcessBuildOrder(moveSpeed)
         // know its going to fail and to be honest we should never get to this point anyways
         legalBuildPosition, position, attachEntity = commander:EvalBuildIsLegal(techId, groundLocation, self, Vector(0, 1, 0))
         if (not legalBuildPosition) then
-            self:ClearOrders()
+            self:ResetOrders()
             return
         end
              
@@ -314,14 +322,14 @@ function Drifter:ProcessBuildOrder(moveSpeed)
                 local cost = techNode:GetCost()
                 local team = commander:GetTeam()
 
-                if(team:GetCarbon() >= cost) then
+                if(team:GetTeamResources() >= cost) then
                             
                     local success = false
                     local createdStructureId = -1
                     success, createdStructureId = commander:AttemptToBuild(techId, groundLocation, Vector(0, 1, 0), currentOrder:GetOrientation(), nil, nil, self)
                                     
                     if(success) then
-                        team:AddCarbon(-cost)
+                        team:AddTeamResources(-cost)
                         self:CompletedCurrentOrder()
                         self:SendEntityChanged(createdStructureId)
                                     
@@ -330,7 +338,7 @@ function Drifter:ProcessBuildOrder(moveSpeed)
                                     
                     else
                         // TODO: Issue alert to commander that way was blocked?
-                        self:ClearOrders()
+                        self:ResetOrders()
                     end
                                 
                 else
@@ -338,7 +346,7 @@ function Drifter:ProcessBuildOrder(moveSpeed)
                     self:GetTeam():TriggerAlert(kTechId.AlienAlertNotEnoughResources, self)
                                     
                     // Cancel build bots orders so he doesn't move away
-                    self:ClearOrders()
+                    self:ResetOrders()
                                     
                 end 
             end                    
