@@ -42,7 +42,7 @@ GUITechUpgrade.kTextNotificationMessage = "Upgrades available"
 
 function GUITechUpgrade:Initialize()
     
-    self.background = GUI.CreateGraphicsItem()
+    self.background = GUIManager.CreateGraphicItem()
     self.background:SetAnchor(GUIItem.Left, GUIItem.Top)
     // Start off-screen.
     self.background:SetPosition(Vector(GUITechUpgrade.kBackgroundXOffset, GUITechUpgrade.kBackgroundYOffset, 0))
@@ -51,13 +51,13 @@ function GUITechUpgrade:Initialize()
     self.background:SetIsVisible(false)
 	
 	// Create the notification when a new upgrade is available
-	self.textNotification = GUI.CreateTextItem()
+	self.textNotification = GUIManager.CreateTextItem()
 	self.textNotification:SetFontName(GUITechUpgrade.kTextNotificationFontName)
 	self.textNotification:SetFontSize(GUITechUpgrade.kTextNotificationFontSize)
 	self.textNotification:SetAnchor(GUIItem.Left, GUIItem.Top)
 	self.textNotification:SetPosition(GUITechUpgrade.kTextNotificationOffset)
-	self.textNotification:SetTextAlignmentX(GUITextItem.Align_Min)
-	self.textNotification:SetTextAlignmentY(GUITextItem.Align_Center)
+	self.textNotification:SetTextAlignmentX(GUIItem.Align_Min)
+	self.textNotification:SetTextAlignmentY(GUIItem.Align_Center)
 	self.textNotification:SetColor(GUITechUpgrade.kTextColor)
 	self.textNotification:SetText(GUITechUpgrade.kTextNotificationMessage)
     
@@ -199,7 +199,7 @@ function GUITechUpgrade:CreateTechUpgradeItem()
         return returnTechUpgradeItem
     end
     
-    local textBackground = GUIManager.CreateGraphicsItem()
+    local textBackground = GUIManager.CreateGraphicItem()
     textBackground:SetAnchor(GUIItem.Left, GUIItem.Top)
     textBackground:SetColor(GUITechUpgrade.kTextBackgroundColor)
     textBackground:SetInheritsParentAlpha(true)

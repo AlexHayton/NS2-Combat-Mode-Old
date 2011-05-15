@@ -490,7 +490,7 @@ function Player:CopyPlayerDataFrom(player)
 	end
 	
 	// Update the owner of any hydras etc
-	local hydras = GetEntitiesIsa("Hydra", self:GetTeamNumber())
+	local hydras = EntityListToTable(Shared.GetEntitiesWithClassname("Hydra"))
 	
 	for index, entity in pairs(hydras) do
 		if (entity:GetOwner() == player) then

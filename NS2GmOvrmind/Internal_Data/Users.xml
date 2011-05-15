@@ -1,0 +1,15 @@
+<NS2GmOvrmind>
+	<User Name="user name here">
+		<Login>
+			<IP-Address></IP-Address>
+			<Steam-ID>STEAM_0:1:43563625</Steam-ID>
+			<Name></Name>
+			<Password></Password>
+		</Login>
+		<Priviliges Base="All">
+			<Omit>ConsoleCommand_HELP</Omit>
+			<Omit>ConsoleCommand_KICK</Omit>
+			<Include>ConsoleCommand_HELP</Include>
+		</Priviliges>
+	</User>
+</NS2GmOvrmind>

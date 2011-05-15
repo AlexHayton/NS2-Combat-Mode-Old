@@ -1,0 +1,107 @@
+<!DOCTYPE NS2GmOvrmind>
+<NS2GmOvrmind>
+    <Ban Name="Average Bob">
+        <IP-Address></IP-Address>
+        <Steam-ID>STEAM_0:0:12455678</Steam-ID>
+        <Start>
+            <Date>13.03.2011</Date>
+            <Time>10:20:19:697</Time>
+        </Start>
+        <Duration>
+            <Date></Date>
+            <Time></Time>
+        </Duration>
+        <Reason>Griefing</Reason>
+    </Ban>
+    <Ban Name="Average Bob2">
+        <IP-Address></IP-Address>
+        <Steam-ID>STEAM_0:0:12345678</Steam-ID>
+        <Start>
+            <Date>13.03.2011</Date>
+            <Time>10:20:19:701</Time>
+        </Start>
+        <Duration>
+            <Date></Date>
+            <Time></Time>
+        </Duration>
+        <Reason>Griefing2</Reason>
+    </Ban>
+	<Ban Name="Average Bob2">
+		<IP-Address></IP-Address>
+		<Steam-ID>STEAM_0:0:12345678</Steam-ID>
+		<Start>
+			<Date>13.03.2011</Date>
+			<Time>10:20:19:701</Time>
+		</Start>
+		<Duration>
+			<Date></Date>
+			<Time></Time>
+		</Duration>
+		<Reason>Griefing2</Reason>
+	</Ban>
+	<Ban Name="Average Bob2">
+		<IP-Address></IP-Address>
+		<Steam-ID>STEAM_0:0:12345678</Steam-ID>
+		<Start>
+			<Date>13.03.2011</Date>
+			<Time>10:20:19:701</Time>
+		</Start>
+		<Duration>
+			<Date></Date>
+			<Time></Time>
+		</Duration>
+		<Reason>Griefing2</Reason>
+	</Ban>
+	<Ban Name="Average Bob2">
+		<IP-Address></IP-Address>
+		<Steam-ID>STEAM_0:0:12345678</Steam-ID>
+		<Start>
+			<Date>13.03.2011</Date>
+			<Time>10:20:19:701</Time>
+		</Start>
+		<Duration>
+			<Date></Date>
+			<Time></Time>
+		</Duration>
+		<Reason>Griefing2</Reason>
+	</Ban>
+	<Ban Name="Average Bob2">
+		<IP-Address></IP-Address>
+		<Steam-ID>STEAM_0:0:12345678</Steam-ID>
+		<Start>
+			<Date>13.03.2011</Date>
+			<Time>10:20:19:701</Time>
+		</Start>
+		<Duration>
+			<Date></Date>
+			<Time></Time>
+		</Duration>
+		<Reason>Griefing2</Reason>
+	</Ban>
+	<Ban Name="Average Bob2">
+		<IP-Address></IP-Address>
+		<Steam-ID>STEAM_0:0:12345678</Steam-ID>
+		<Start>
+			<Date>13.03.2011</Date>
+			<Time>10:20:19:701</Time>
+		</Start>
+		<Duration>
+			<Date></Date>
+			<Time></Time>
+		</Duration>
+		<Reason>Griefing2</Reason>
+	</Ban>
+	<Ban Name="Average Bob2">
+		<IP-Address></IP-Address>
+		<Steam-ID>STEAM_0:0:12345678</Steam-ID>
+		<Start>
+			<Date>13.03.2011</Date>
+			<Time>10:20:19:701</Time>
+		</Start>
+		<Duration>
+			<Date></Date>
+			<Time></Time>
+		</Duration>
+		<Reason>Griefing2</Reason>
+	</Ban>
+</NS2GmOvrmind>

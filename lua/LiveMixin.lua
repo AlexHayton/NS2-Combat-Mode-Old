@@ -392,6 +392,12 @@ function LiveMixin:AddHealth(health, playSound)
 
     // TakeDamage should be used for negative values.
     ASSERT( health >= 0 )
+	
+	// For powerpoints, simulate a MAC healing the structure
+	// In combat mode this can never happen so it should work ok!
+	if (self:isa("PowerPoint")) then
+		self:OnWeld(self, self, 1.0)
+	end
 
     local total = 0
     

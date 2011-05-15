@@ -72,20 +72,23 @@ end
 
 
 function Experience_GrantNearbyExperience(pointOwner, points)
-    local friendlies = GetGamerules():GetEntities("Player", pointOwner:GetTeamNumber(), pointOwner:GetOrigin(), kExperienceRadius)
+    local friendlies = GetEntitiesForTeam("Player", pointOwner:GetTeamNumber())
     
     for index, entity in ipairs(friendlies) do
         if not entity == pointOwner then
-
-            // Make sure player can "see" nearby friend
-            local trace = Shared.TraceRay(pointOwner:GetOrigin(), entity:GetOrigin(), PhysicsMask.Bullets)
-            if trace.fraction == 1.0 or trace.entity == entity then
-            
-                // Add the experience with reduction by a factor
-                entity:AddExperience(points * kExperienceAssistModifier)
-                
-            end
-            
+			// Teammate must be in experience range.
+			if ((entity:GetOrigin() - pointOwner:GetOrigin()):GetLength() < kExperienceRadius) then
+			
+				// Make sure player can "see" nearby friend
+				local trace = Shared.TraceRay(pointOwner:GetOrigin(), entity:GetOrigin(), PhysicsMask.Bullets)
+				if trace.fraction == 1.0 or trace.entity == entity then
+				
+					// Add the experience with reduction by a factor
+					entity:AddExperience(points * kExperienceAssistModifier)
+					
+				end
+				
+			end
         end        
     end
 end

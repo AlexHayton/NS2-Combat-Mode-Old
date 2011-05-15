@@ -157,12 +157,12 @@ function GUIScoreboard:CreateTeamBackground(color)
     currentColumnX = currentColumnX + GUIScoreboard.kTeamColumnSpacingX
     
     // Rank text item.
-    local rankItem = GUI.CreateTextItem()
+    local rankItem = GUIManager.CreateTextItem()
     rankItem:SetFontName(GUIScoreboard.kFontName)
     rankItem:SetFontSize(GUIScoreboard.kPlayerStatsFontSize)
     rankItem:SetAnchor(GUIItem.Left, GUIItem.Top)
-    rankItem:SetTextAlignmentX(GUITextItem.Align_Min)
-    rankItem:SetTextAlignmentY(GUITextItem.Align_Min)
+    rankItem:SetTextAlignmentX(GUIItem.Align_Min)
+    rankItem:SetTextAlignmentY(GUIItem.Align_Min)
     rankItem:SetPosition(Vector(currentColumnX, 5, 0))
     rankItem:SetColor(color)
     rankItem:SetText("Rank")

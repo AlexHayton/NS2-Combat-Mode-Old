@@ -203,10 +203,10 @@ function CommandStructure:OnUse(player, elapsedTime, useAttachPoint, usePoint)
         
             // Make sure player wasn't ejected early in the game from either team's command
             local playerSteamId = Server.GetOwner(player):GetUserId()
-            if not GetGamerules():GetPlayerBannedFromCommand(playerSteamId) then
+            /*if not GetGamerules():GetPlayerBannedFromCommand(playerSteamId) then
         
                 // Must use attach point if specified (Command Station)            
-                /*if self:GetIsBuilt() and (not self.occupied) and (useAttachPoint or (self:GetUseAttachPoint() == "")) then
+                if self:GetIsBuilt() and (not self.occupied) and (useAttachPoint or (self:GetUseAttachPoint() == "")) then
 
                     self.timeStartedLogin = Shared.GetTime()
                     

@@ -1,6 +1,6 @@
 <game>
 	<name>ns2</name>
-	<description>Natural Selection 2 (using NS2-GmOvrmind(v7))</description>
+	<description>Natural Selection 2 (using NS2-GmOvrmind(v10))</description>
 	<client>Lua\\NS2GmOvrmind_Client.lua</client>
 	<server>Lua\\NS2GmOvrmind_Server.lua</server>
 </game>

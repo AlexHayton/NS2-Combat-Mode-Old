@@ -1,0 +1,14 @@
+<NS2GmOvrmindLaunchPlatform>
+	<Server Name="My NS2-server">
+		<IP></IP>
+		<Port>27015</Port>
+		<LAN>0</LAN>
+		<Password></Password>
+		<WebAdmin>0</WebAdmin>
+		<WebDomain>127.0.0.1</WebDomain>
+		<WebDir></WebDir>
+		<WebPort>8080</WebPort>
+		<Map>ns2_rockdown</Map>
+		<MaxSlots>11<MaxSlots>
+	</Server>
+</NS2GmOvrmindLaunchPlatform>

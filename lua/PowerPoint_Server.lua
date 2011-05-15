@@ -182,14 +182,6 @@ function PowerPoint:OnWeld(entity, elapsedTime)
     
 end
 
-function PowerPoint:AddHealth(health)
-	// Simulate a MAC healing the structure
-	// In combat mode this can never happen so it should work ok!
-	self:OnWeld(self, self, 1.0)
-	// Delegate down the line too
-	return Structure.AddHealth(self, health)
-end
-
 function PowerPoint:StopDamagedSound()
 
     if self.playingLoopedDamaged then

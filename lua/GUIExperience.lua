@@ -63,7 +63,7 @@ function GUIExperience:Initialize()
 end
 
 function GUIExperience:CreateExperienceBar()
-    self.experienceBarBackground = GUIManager.CreateGraphicsItem()
+    self.experienceBarBackground = GUIManager.CreateGraphicItem()
     self.experienceBarBackground:SetSize(Vector(GUIExperience.kExperienceBackgroundWidth, GUIExperience.kExperienceBackgroundMinimisedHeight, 0))
     self.experienceBarBackground:SetAnchor(GUIItem.Center, GUIItem.Bottom)
     self.experienceBarBackground:SetPosition(GUIExperience.kExperienceBackgroundOffset)
@@ -72,7 +72,7 @@ function GUIExperience:CreateExperienceBar()
     self.experienceBarBackground:SetTexturePixelCoordinates(GUIExperience.kExperienceBackgroundTextureX1, GUIExperience.kExperienceBackgroundTextureY1, GUIExperience.kExperienceBackgroundTextureX2, GUIExperience.kExperienceBackgroundTextureY2)
     self.experienceBarBackground:SetIsVisible(false)
     
-    self.experienceBar = GUIManager.CreateGraphicsItem()
+    self.experienceBar = GUIManager.CreateGraphicItem()
     self.experienceBar:SetSize(Vector(GUIExperience.kExperienceBarWidth, GUIExperience.kExperienceBarHeight, 0))
     self.experienceBar:SetAnchor(GUIItem.Left, GUIItem.Top)
     self.experienceBar:SetPosition(GUIExperience.kExperienceBarOffset)
