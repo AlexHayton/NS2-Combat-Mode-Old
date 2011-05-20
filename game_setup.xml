@@ -1,6 +1,6 @@
 <game>
 	<name>Combat</name>
-	<description>Natural Selection 2 (Combat Mode) using NS2-GmOvrmind(v5)</description>
+	<description>Natural Selection 2 (Combat Mode) using NS2-GmOvrmind(v10)</description>
 	<client>..\\NS2GmOvrMind\\Lua\\NS2GmOvrmind_Client.lua</client>
 	<server>..\\NS2GmOvrMind\\Lua\\NS2GmOvrmind_Server.lua</server>
 </game>
