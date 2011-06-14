@@ -35,7 +35,7 @@ function OnCommandOnClientDisconnect(clientIndexString)
 end
 
 function OnCommandScores(scoreTable)
-    Scoreboard_SetPlayerData(scoreTable.clientId, scoreTable.entityId, scoreTable.playerName, scoreTable.teamNumber, scoreTable.score, scoreTable.kills, scoreTable.deaths, scoreTable.resources, scoreTable.isCommander, scoreTable.status, scoreTable.isSpectator, scoreTable.rank)
+    Scoreboard_SetPlayerData(scoreTable.clientId, scoreTable.entityId, scoreTable.playerName, scoreTable.teamNumber, scoreTable.score, scoreTable.kills, scoreTable.deaths, math.floor(scoreTable.resources), scoreTable.isCommander, scoreTable.status, scoreTable.isSpectator, scoreTable.rank)
 end
 
 // Notify scoreboard and anything else when a player changes into a new player
@@ -53,9 +53,10 @@ function OnCommandEntityChanged(entityChangedTable)
 end
 
 // Called when player receives points from an action
-function OnCommandPoints(pointsString)
+function OnCommandPoints(pointsString, resString)
     local points = tonumber(pointsString)
-    ScoreDisplayUI_SetNewScore(points)
+    local res = tonumber(resString)
+    ScoreDisplayUI_SetNewScore(points, res)
 end
 
 function OnCommandTeamHarvesterCount(numResourceTowersString)

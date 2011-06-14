@@ -58,32 +58,13 @@ function CommandStation:OnAnimationComplete(animName)
 
 end
 
-function CommandStation:GetTechButtons(techId)
-
-    local techButtons = nil
-    
-    if(techId == kTechId.RootMenu) then 
-    
-        techButtons = { kTechId.MAC, kTechId.None, kTechId.None, kTechId.None, 
-                        kTechId.None, kTechId.None, kTechId.None, kTechId.None }
-
-        // Allow command station to be upgraded, but you'll never upgrade it to Level1 so don't show it
-        if(self:GetTechId() == kTechId.CommandStation) then
-            techButtons[kMarineUpgradeButtonIndex] = kTechId.CommandFacilityUpgrade
-        elseif(self:GetTechId() == kTechId.CommandFacility) then
-            techButtons[kMarineUpgradeButtonIndex] = kTechId.CommandCenterUpgrade
-        end
-
-        // Don't allow recycling of structure when occupied!
-        if not self:GetIsOccupied() then
-            techButtons[kRecycleButtonIndex] = kTechId.Recycle
-        end
-        
+function CommandStation:GetTechAllowed(techId, techNode, player)
+    if techId == kTechId.Recycle then
+        return not self:GetIsOccupied()
     end
-    
-    return techButtons
- 
+    return Structure.GetTechAllowed(self, techId, techNode, player)
 end
+
 
 Shared.LinkClassToMap("CommandStation",    CommandStation.kLevel1MapName, networkVars)
 

@@ -19,6 +19,9 @@ function Player:GetClient()
     return self.client
 end
 
+function Player:SetEthereal(ethereal)
+end
+
 // Returns true if this player is a bot
 function Player:GetIsVirtual()
 
@@ -102,7 +105,7 @@ end
 
 // Not authoritative, only visual and information. TeamResources is stored in the team.
 function Player:SetTeamResources(teamResources)
-    self.teamResources = math.max(math.min(teamResources, 1000), 0)
+    self.teamResources = math.max(math.min(teamResources, kMaxResources), 0)
 end
 
 // Unlike vanilla ns2, tech tree resides on the player object. Copy from the team.
@@ -254,6 +257,30 @@ function Player:OnTakeDamage(damage, doer, point)
     
 end
 
+// Add resources for kills and play sound
+function Player:AwardResForKill(target)
+
+    local resAwarded = 0
+    
+    if target and target:isa("Player") then
+    
+        // Give random amount of res
+        resAwarded = math.random(kKillRewardMin, kKillRewardMax) 
+        self:SetResources( self:GetResources() + resAwarded ) 
+        
+        //self:GetTeam():SetTeamResources(self:GetTeam():GetTeamResources() + kKillTeamReward)
+        
+        // Play sound for player and also our commanders
+        local resReceivedSoundName = ConditionalValue(self:GetTeamType() == kAlienTeamType, Player.kAlienResReceivedSound, Player.kMarineResReceivedSound)
+        
+        Server.PlayPrivateSound(self, resReceivedSoundName, self, 1.0, Vector(0, 0, 0))
+        self:GetTeam():PlayPrivateTeamSound(resReceivedSoundName, nil, true, self)
+        
+    end
+    
+    return resAwarded
+    
+end
 
 /**
  * Called when the player is killed. Point and direction specify the world
@@ -273,6 +300,7 @@ function Player:OnKill(damage, killer, doer, point, direction)
    
         killerName = pointOwner:GetName()
         pointOwner:AddKill()        
+<<<<<<< HEAD
         pointOwner:AddScore(self:GetPointValue())
 		
 		// Give experience for the kill
@@ -288,6 +316,12 @@ function Player:OnKill(damage, killer, doer, point, direction)
 			damager:AddExperience(assistExperience * damageInflicted / self.totalDamage)
 		end
         */
+=======
+        
+        local resAwarded = pointOwner:AwardResForKill(self)        
+        pointOwner:AddScore(self:GetPointValue(), resAwarded)
+        
+>>>>>>> remotes/origin/ns2
     end        
 
     // Save death to server log
@@ -306,6 +340,8 @@ function Player:OnKill(damage, killer, doer, point, direction)
     
     // Don't allow us to do anything
     self:SetIsAlive(false)
+    
+    self:ResetUpgrades()
 
     // On fire, in umbra, etc.
     self:ClearGameEffects()
@@ -340,10 +376,8 @@ function Player:SetControllingPlayer(client)
     
 end
 
-function Player:SetIndividualResources(amount)
-
-    self.resources = math.max(math.min(amount, kMaxResources), 0)
-    
+function Player:SetResources(amount)
+    self.resources = math.max(math.min(amount, kMaxResources), 0)    
 end
 
 function Player:GetDeathMapName()
@@ -410,6 +444,12 @@ function Player:CanDoDamageTo(entity)
 
     return CanEntityDoDamageTo(self, entity)
     
+end
+
+// For children classes to override if they need to adjust data
+// before the copy happens.
+function Player:PreCopyPlayerDataFrom()
+
 end
 
 function Player:CopyPlayerDataFrom(player)
@@ -550,8 +590,15 @@ function Player:Replace(mapName, newTeamNumber, preserveChildren)
 
     local player = CreateEntity(mapName, Vector(self:GetOrigin()), teamNumber)
     
+    // The class may need to adjust values before copying to the new player (such as gravity).
+    self:PreCopyPlayerDataFrom()
+    
     // Copy over the relevant fields to the new player, before we delete it
     player:CopyPlayerDataFrom(self)
+    
+    if not player:GetTeam():GetSupportsOrders() then
+        player:ClearOrders()
+    end
     
     // Remove newly spawned weapons and reparent originals
     if preserveChildren then
@@ -598,37 +645,49 @@ function Player:Replace(mapName, newTeamNumber, preserveChildren)
 
 end
 
-function Player:ProcessBuyAction(techId)
+/**
+ * A table of tech Ids is passed in.
+ */
+function Player:ProcessBuyAction(techIds)
 
-    // Make sure tech is available
+    ASSERT(type(techIds) == "table")
+    ASSERT(table.count(techIds) > 0)
+    
     local techTree = self:GetTechTree()
+    local buyAllowed = true
+    local totalCost = 0
+    local validBuyIds = { }
     
-    local techNode = techTree:GetTechNode(techId)
-    if(techNode ~= nil and techNode.available) then
+    for i, techId in ipairs(techIds) do
     
-        // Make sure we have enough resources
-        local cost = LookupTechData(techId, kTechDataCostKey)
+        local techNode = techTree:GetTechNode(techId)
+        if(techNode ~= nil and techNode.available) then
         
-        if(cost ~= nil) then
-        
-            if( cost <= self:GetResources() ) then
-                
-                // buy it
-                if self:AttemptToBuy(techId) then
-                
-                    self:AddResources(-cost)
-                    
-                    return true
-                
-                end                
-                
-            else
-            
-                self:PlaySound(self:GetNotEnoughResourcesSound())
-                
+            local cost = LookupTechData(techId, kTechDataCostKey)
+            if cost ~= nil then
+                totalCost = totalCost + cost
+                table.insert(validBuyIds, techId)
             end
-            
+        
+        else
+        
+            buyAllowed = false
+            break
+        
         end
+        
+    end
+    
+    if totalCost <= self:GetResources() then
+    
+        if self:AttemptToBuy(validBuyIds) then
+            self:AddResources(-totalCost)
+            return true
+        end
+        
+    else
+    
+        self:PlaySound(self:GetNotEnoughResourcesSound())
         
     end
 
@@ -801,11 +860,12 @@ function Player:GetScore()
     return self.score
 end
 
-function Player:AddScore(points)
+function Player:AddScore(points, res)
     
     // Tell client to display cool effect
     if(points ~= nil and points ~= 0) then
-        Server.SendCommand(self, "points " .. tostring(points))
+        local displayRes = ConditionalValue(type(res) == "number", res, 0)
+        Server.SendCommand(self, string.format("points %s %s", tostring(points), tostring(displayRes)))
         self.score = Clamp(self.score + points, 0, kMaxScore)
         self:SetScoreboardChanged(true)        
     end
@@ -870,7 +930,7 @@ function Player:GetPing()
 end
 
 // To be overridden by children
-function Player:AttemptToBuy(techId)
+function Player:AttemptToBuy(techIds)
     return false
 end
 
@@ -935,60 +995,6 @@ function Player:GetTechTree()
     
     return self.techTree
 
-end
-
-function Player:UpdateOrder()
-
-    local currentOrder = self:GetCurrentOrder()
-    
-    if(currentOrder ~= nil) then
-    
-        local orderType = currentOrder:GetType()
-        
-        if orderType == kTechId.Move then
-        
-            if (currentOrder:GetLocation() - self:GetOrigin()):GetLength() < 1.5 then
-                
-                self:GetTeam():TriggerAlert(kTechId.MarineAlertOrderComplete, self)
-                
-                self:CompletedCurrentOrder()
-                
-            end
-        
-        elseif orderType == kTechId.Construct then
-        
-            local orderTarget = Shared.GetEntity(currentOrder:GetParam())
-            
-            if orderTarget == nil or not orderTarget:GetIsAlive() or orderTarget:GetIsBuilt() then
-                self:CompletedCurrentOrder()
-            end
-            
-            if orderTarget ~= nil and orderTarget:GetIsBuilt() then
-            
-                self:GetTeam():TriggerAlert(kTechId.MarineAlertOrderComplete, self)
-                
-            end
-
-        elseif orderType == kTechId.Attack then
-
-            local orderTarget = Shared.GetEntity(currentOrder:GetParam())
-
-            if not orderTarget or orderTarget:GetId() == Entity.invalidId then
-            
-                self:ClearOrders()
-                
-            elseif not orderTarget:GetIsAlive() then
-            
-                self:GetTeam():TriggerAlert(kTechId.MarineAlertOrderComplete, self)
-                
-                self:CompletedCurrentOrder()
-                
-            end
-            
-        end
-        
-    end
-    
 end
 
 function Player:UpdateOrderWaypoint()

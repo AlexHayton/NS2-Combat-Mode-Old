@@ -9,10 +9,16 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
 kGUILayerDebugText = 0
-kGUILayerPlayerHUD = 1
-kGUILayerCommanderAlerts = 2
-kGUILayerCommanderHUD = 3
-kGUILayerMinimap = 4
+kGUILayerPlayerHUDBackground = 1
+kGUILayerPlayerHUD = 2
+kGUILayerPlayerHUDForeground1 = 3
+kGUILayerPlayerHUDForeground2 = 4
+kGUILayerPlayerHUDForeground3 = 5
+kGUILayerPlayerHUDForeground4 = 6
+kGUILayerCommanderAlerts = 7
+kGUILayerCommanderHUD = 8
+kGUILayerLocationText = 9
+kGUILayerMinimap = 10
 
 Script.Load("lua/GUIScript.lua")
 Script.Load("lua/GUIUtility.lua")

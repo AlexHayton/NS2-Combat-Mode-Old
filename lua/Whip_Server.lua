@@ -377,6 +377,6 @@ function Whip:PerformActivation(techId, position, normal, commander)
 end
 
 function Whip:OnDestroy()
-    self:ClearInfestation()
     Structure.OnDestroy(self)    
+    self:ClearInfestation()    
 end

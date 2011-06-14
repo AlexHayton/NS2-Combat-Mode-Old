@@ -12,6 +12,7 @@
 Script.Load("lua/ScriptActor.lua")
 Script.Load("lua/LiveMixin.lua")
 Script.Load("lua/OrdersMixin.lua")
+Script.Load("lua/FireMixin.lua")
 
 class 'LiveScriptActor' (ScriptActor)
 
@@ -31,7 +32,6 @@ LiveScriptActor.kAnimFlinchBig = "flinch_big"
 LiveScriptActor.kFlinchIntensityReduceRate = .4
 
 LiveScriptActor.kDefaultPointValue = 10
-LiveScriptActor.kMaxEnergy = 300
 
 LiveScriptActor.kMoveToDistance = 1
 
@@ -43,10 +43,6 @@ end
 
 LiveScriptActor.networkVars = 
 {
-    // Used for limiting frequency of abilities
-    energy                  = "float",
-    maxEnergy               = string.format("integer (0 to %s)", LiveScriptActor.kMaxEnergy),
-
     // 0 to 1 value indicating how much pain we're in
     flinchIntensity         = "float",
     
@@ -72,6 +68,7 @@ LiveScriptActor.networkVars =
 // This should be moved out to classes that derive from LiveScriptActor soon.
 PrepareClassForMixin(LiveScriptActor, LiveMixin)
 PrepareClassForMixin(LiveScriptActor, OrdersMixin)
+PrepareClassForMixin(LiveScriptActor, FireMixin)
 
 function LiveScriptActor:DestroyPhysicsController()
 
@@ -101,12 +98,9 @@ function LiveScriptActor:OnInit()
 
     InitMixin(self, LiveMixin, { kHealth = LiveScriptActor.kHealth, kArmor = LiveScriptActor.kArmor })
     InitMixin(self, OrdersMixin, { kMoveToDistance = LiveScriptActor.kMoveToDistance })
+    InitMixin(self, FireMixin, {})
     
     ScriptActor.OnInit(self)
-    
-    // Initialize energy
-    self.energy = LookupTechData(self:GetTechId(), kTechDataInitialEnergy, 0)
-    self.maxEnergy = LookupTechData(self:GetTechId(), kTechDataMaxEnergy, 0)
     
     self.timeLastUpdate = nil
     self.flinchIntensity = 0
@@ -127,10 +121,7 @@ function LiveScriptActor:OnInit()
     self.activityEnd = 0
     
     self.timeOfLastAttack = 0
-    
-    self.fireAttackerId = Entity.invalidId
-    self.fireDoerId = Entity.invalidId
-    
+     
     // Ability to turn off pathing for testing
     self.pathingEnabled = true
     
@@ -285,23 +276,6 @@ end
 // Returns text and 0-1 scalar for status bar on commander HUD when selected. Return nil to display nothing.
 function LiveScriptActor:GetStatusDescription()
     return nil, nil
-end
-
-function LiveScriptActor:GetEnergy()
-    return self.energy
-end
-
-function LiveScriptActor:SetEnergy(newEnergy)
-    self.energy = math.max(math.min(newEnergy, self:GetMaxEnergy()), 0)
-end
-
-function LiveScriptActor:AddEnergy(amount)
-    self.energy = self.energy + amount
-    self.energy = math.max(math.min(self.energy, self.maxEnergy), 0)
-end
-
-function LiveScriptActor:GetMaxEnergy()
-    return self.maxEnergy
 end
 
 function LiveScriptActor:OnUpdate(deltaTime)

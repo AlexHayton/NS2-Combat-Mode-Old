@@ -12,15 +12,10 @@ local kUpgradeIconRowSize = 6
 
 // The order of icons in Alien.kUpgradeIconsTexture
 local kIconIndexToUpgradeId = {
-    kTechId.AlienArmor1Tech, kTechId.AlienArmor2Tech, kTechId.AlienArmor3Tech,
-    kTechId.Melee1Tech, kTechId.Melee2Tech, kTechId.Melee3Tech, 
-    kTechId.DrifterFlareTech, kTechId.DrifterParasiteTech,
-    kTechId.Feed, kTechId.BloodThirst, kTechId.Carapace,
-    kTechId.Bacteria, kTechId.HydraAbility, kTechId.Corpulence,
-    kTechId.Adrenaline, kTechId.Piercing,
-    kTechId.Feint, kTechId.Sap, 
-    kTechId.Stomp, kTechId.BoneShield, kTechId.HarvesterAbility,
-    kTechId.Leap
+    kTechId.AlienArmor1Tech, kTechId.AlienArmor2Tech, kTechId.AlienArmor3Tech, kTechId.Melee1Tech, kTechId.Melee2Tech, kTechId.Melee3Tech, 
+    kTechId.DrifterFlareTech, kTechId.DrifterParasiteTech, kTechId.Swarm, kTechId.Frenzy, kTechId.Carapace, kTechId.Regeneration,
+    kTechId.HydraAbility, kTechId.None, kTechId.Adrenaline, kTechId.Piercing, kTechId.Feint, kTechId.Sap, 
+    kTechId.Stomp, kTechId.BoneShield, kTechId.Leap, kTechId.None, kTechId.None, kTechId.None, 
 }
 
 function GetAlienUpgradeIconXY(techId)
@@ -35,7 +30,7 @@ function GetAlienUpgradeIconXY(techId)
         
     end
     
-    Print("GetUpgradeIconXY(%d): Invalid techId passed. (%s)", techId, table.tostring(kIconIndexToUpgradeId))
+    Print("GetUpgradeIconXY(%s): Invalid techId passed.", EnumToString(kTechId, techId))
     return false, 0, 0
     
 end

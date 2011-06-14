@@ -362,3 +362,17 @@ function ScoreboardUI_GetOrderedCommanderNames(teamNumber)
     return commanderNames
     
 end
+
+function ScoreboardUI_GetNumberOfAliensByType(alienType)
+
+    local numberOfAliens = 0
+    
+    for index, playerRecord in ipairs(playerData) do
+        if alienType == playerRecord[kScoreboardDataIndexStatus] then
+            numberOfAliens = numberOfAliens + 1
+        end
+    end
+    
+    return numberOfAliens
+
+end

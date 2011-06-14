@@ -41,7 +41,7 @@ function CommanderUI_GetHotkeyIconOffset(idx)
         local entity = Shared.GetEntity(entId)
         if entity ~= nil then
         
-            local xOffset, yOffset = player:GetMaterialXYOffset(entity:GetTechId(), player:isa("MarineCommander"))
+            local xOffset, yOffset = GetMaterialXYOffset(entity:GetTechId(), player:isa("MarineCommander"))
             return {xOffset, yOffset}
             
         end

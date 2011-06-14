@@ -25,6 +25,9 @@ class 'Player' (LiveScriptActor)
 Player.kTooltipSound    = PrecacheAsset("sound/ns2.fev/common/tooltip")
 Player.kToolTipInterval = 18
 
+Player.kMarineResReceivedSound      = PrecacheAsset("sound/ns2.fev/marine/common/res_received")
+Player.kAlienResReceivedSound       = PrecacheAsset("sound/ns2.fev/alien/common/res_received")
+
 if (Server) then
     Script.Load("lua/Player_Server.lua")
     Script.Load("lua/Bot_Player.lua")
@@ -144,8 +147,8 @@ local networkVars =
 
     viewModelId             = "entityid",
 
-    resources               = string.format("integer (0 to %d)", kMaxResources),
-    teamResources           = string.format("integer (0 to %d)", kMaxResources),
+    resources               = "float",
+    teamResources           = "float",
     gameStarted             = "boolean",
     countingDown            = "boolean",
     frozen                  = "boolean",       
@@ -1180,7 +1183,7 @@ function Player:GetDisplayResources()
     if(Client and self.resourceDisplay) then
         displayResources = self.animatedResourcesDisplay:GetDisplayValue()
     end
-    return displayResources
+    return math.floor(displayResources)
     
 end
 
@@ -1263,9 +1266,11 @@ function Player:EndUse(deltaTime)
     end        
     
     // Pull out weapon again if we haven't built for a bit
-    if self:GetWeaponHolstered() and self:isa("Marine") and ((Shared.GetTime() - self.timeOfLastUse) > (Structure.kUseInterval + .1)) then    
-        self:Draw()
-        self:SetIsUsing(false)
+    if self:GetWeaponHolstered() and self:isa("Marine") and ((Shared.GetTime() - self.timeOfLastUse) > (Structure.kUseInterval + .1)) then
+        // $AS - So its possible that when this code gets his there might be an activity going 
+        if (self:Draw()) then
+            self:SetIsUsing(false)
+        end
     elseif self:isa("Alien") then
         self:SetIsUsing(false)
     end

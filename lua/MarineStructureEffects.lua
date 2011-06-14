@@ -29,11 +29,18 @@ kMarineStructureEffects =
         },
     },
     
-    recycle =
+    recycle_start =
     {
-        recycleEffects =
+        recycleStartEffects =
         {
             {sound = "sound/ns2.fev/marine/structures/recycle"},
+        },        
+    },
+
+    recycle_end =
+    {
+        recycleEndEffects =
+        {
             {cinematic = "cinematics/marine/structures/recycle.cinematic"},
         },        
     },
@@ -93,13 +100,14 @@ kMarineStructureEffects =
         },
     },    
     
+
     mac_construct =
     {
         macConstructEffects =
         {
             {animation = "construct", blend_time = .2},
             {sound = "sound/ns2.fev/marine/structures/mac/weld"},
-            {cinematic = "cinematics/marine/mac/build.cinematic", attach_point = "fxnode_welder"},
+            {parented_cinematic = "cinematics/marine/mac/build.cinematic", attach_point = "fxnode_welder"},
         },
     },
     
@@ -111,7 +119,7 @@ kMarineStructureEffects =
         {
             {animation = "construct_weld", blend_time = .2},
             {sound = "sound/ns2.fev/marine/structures/mac/weld"},
-            {cinematic = "cinematics/marine/mac/weld.cinematic", attach_point = "fxnode_welder"},
+            {parented_cinematic = "cinematics/marine/mac/weld.cinematic", attach_point = "fxnode_welder"},
         },
     },
     
@@ -177,22 +185,14 @@ kMarineStructureEffects =
             {animation = "spawn"},
             {cinematic = "cinematics/marine/structures/spawn_building.cinematic"},
         },
-    },    
-    
-    arc_undeployedstationary =
-    {
-        arcUndeployedStationaryEffects =
-        {
-           {animation = {{1, "idle_undeployed"}, {1, "idle_undeployed2"}, {1, "idle_undeployed3"}, {.3, "idle_undeployed4"}} },
-        },
-    },
+    },            
     
     // Switching into siege mode
     arc_deploying =
     {
         arcDeployEffects =
         {
-            {sound = "sound/ns2.fev/marine/structure/arc/deploy"},
+            {sound = "sound/ns2.fev/marine/structures/arc/deploy"},
             {animation = "deploy"},
         },
     },    
@@ -223,7 +223,7 @@ kMarineStructureEffects =
         {
             {animation = "target", force = true},
             {sound = "sound/ns2.fev/marine/structures/arc/fire"},
-            {cinematic = "cinematics/marine/arc/target.cinematic", attach_point = "fxnode_arcmuzzle"},
+            {parented_cinematic = "cinematics/marine/arc/target.cinematic", attach_point = "fxnode_arcmuzzle"},
         },
     },
     
@@ -234,7 +234,7 @@ kMarineStructureEffects =
             // "trail" like a tracer
             {animation = "fire", force = true},
             //{sound = "sound/ns2.fev/marine/structures/arc/fire"},
-            {cinematic = "cinematics/marine/arc/fire.cinematic", attach_point = "fxnode_arcmuzzle"},
+            {parented_cinematic = "cinematics/marine/arc/fire.cinematic", attach_point = "fxnode_arcmuzzle"},
         },
     },
     
@@ -377,8 +377,8 @@ kMarineStructureEffects =
     {
         pgSpawnEffect =
         {
-            {cinematic = "cinematics/marine/infantryportal/player_spawn.cinematic"},
             {sound = "sound/ns2.fev/marine/structures/phase_gate_teleport"},
+            {cinematic = "cinematics/marine/infantryportal/player_spawn.cinematic"},            
         },
     }, 
 
@@ -387,10 +387,56 @@ kMarineStructureEffects =
     {
         pgSpawnEffect =
         {
-            {cinematic = "cinematics/marine/infantryportal/player_spawn.cinematic"},
             {sound = "sound/ns2.fev/marine/structures/phase_gate_teleport"},
+            {cinematic = "cinematics/marine/infantryportal/player_spawn.cinematic"},            
         },
-    }, 
+    },
+    
+    // Looping cinematic played when going through phase gate will teleport you somewhere
+    phase_gate_linked =
+    {
+        pgLinkedEffects = 
+        {
+            // Play spin for spinning infantry portal
+            {looping_cinematic = "cinematics/marine/phasegate/phasegate.cinematic"},
+            {sound = "sound/ns2.fev/marine/structures/phase_gate_active"},
+        },
+    },
+    
+    phase_gate_unlinked =
+    {
+        pgLinkedEffects = 
+        {
+            // Destroy it if not spinning
+            {stop_cinematic = "cinematics/marine/phasegate/phasegate.cinematic", done = true},
+            {stop_sound = "sound/ns2.fev/marine/structures/phase_gate_active"},
+        },
+    },
+    
+    robo_factory_open = 
+    {
+        roboOpenEffect =
+        {
+            {animation = "open", done = true},            
+        },
+    },
+    
+    robo_factory_close = 
+    {
+        roboCloseEffect =
+        {
+            {animation = "close", done = true},            
+        },
+    },
+    
+    robo_factory_building = 
+    {
+        roboBuildingEffect =
+        {
+            {animation = "active", done = true},
+            {cinematic = "cinematics/marine/roboticsfactory/collective_effect.cinematic"},          
+        },
+    },
     
     distress_beacon = 
     {

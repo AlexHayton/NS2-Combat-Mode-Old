@@ -9,7 +9,6 @@
 Script.Load("lua/MarineCommander_SquadSelection.lua")
 
 MarineCommander.kMenuFlash = "ui/commander-mark2.swf"
-MarineCommander.kBuildMenuTexture = "ui/marine_buildmenu.dds"
 
 function MarineCommander:OnInitLocalClient()
 

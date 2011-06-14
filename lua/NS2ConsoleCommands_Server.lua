@@ -299,10 +299,16 @@ function OnCommandLogout(client)
 
 end
 
-function OnCommandBuy(client, techId)
+function OnCommandBuy(client, ...)
     
     local player = client:GetControllingPlayer()
-    player:ProcessBuyAction( tonumber(techId) )
+    
+    local purchaseTechIds = { }
+    for _, purchaseTechId in ipairs(arg) do
+        table.insert(purchaseTechIds, tonumber(purchaseTechId))
+    end
+    
+    player:ProcessBuyAction(purchaseTechIds)
 
 end
 

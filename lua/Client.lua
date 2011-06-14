@@ -201,6 +201,11 @@ function OnMapLoadEntity(className, groupName, values)
         Client.SetZoneFogDepthScale(RenderScene.Zone_Default, 1.0 / values.default_zone_scale)
         Client.SetZoneFogColor(RenderScene.Zone_Default, values.default_zone_color)
         
+	elseif (className == "minimap_extents") then
+
+		Client.minimapExtentScale = Vector(values.scale.x/4, values.scale.y/4, values.scale.z/4)
+		Client.minimapExtentOrigin = values.origin
+
     elseif (className == "skybox" or className == "cinematic") then
             
         local coords = values.angles:GetCoords(values.origin)

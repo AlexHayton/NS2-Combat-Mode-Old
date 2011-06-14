@@ -73,6 +73,15 @@ kPlayerEffectData =
 			{sound = "sound/combat.fev/combat/combat/levelup_marine", classname = "Marine", done = true},
 		},
 	},
+    // Played for on alien when frenzy kicks in
+    frenzy =
+    {
+        frenzyEffects =
+        {
+            {sound = "sound/ns2.fev/alien/skulk/land"},
+        }
+    }
+        
 }
 
 GetEffectManager():AddEffectData("PlayerEffectData", kPlayerEffectData)

@@ -24,3 +24,7 @@ function SpectatingTeam:ReplaceRespawnPlayer(player, origin, angles)
     return true, spectatorPlayer
 
 end
+
+function SpectatingTeam:GetSupportsOrders()
+    return false
+end

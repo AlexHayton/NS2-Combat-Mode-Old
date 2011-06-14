@@ -11,6 +11,15 @@ MenuManager = { }
 MenuManager.menuFlashPlayer = nil
 MenuManager.menuCinematic   = nil
 
+MenuManager.ScreenScaleAspect = 1280
+function MenuManager.ScreenSmallAspect()
+
+	local screenWidth = Client.GetScreenWidth()
+	local screenHeight = Client.GetScreenHeight()
+	return ConditionalValue(screenWidth > screenHeight, screenHeight, screenWidth)
+
+end
+
 /**
  * Sets a Flash movie as the main menu.
  */

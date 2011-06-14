@@ -10,6 +10,8 @@
 //
 // TODO: Hold shift for "rebound" type ability. Shift while looking at enemy lets you blink above, behind or off of a wall.
 //
+// 
+//
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Weapons/Alien/Ability.lua")
 
@@ -32,9 +34,21 @@ Blink.kSecondaryAttackDelay = 0
 Blink.kBlinkEnergyCost = kBlinkEnergyCost
 Blink.kBlinkDistance = 20
 Blink.kOrientationScanRadius = 2.5
+Blink.kStartEtherealForce = 20
+// The amount of time that must pass before the player can enter the ether again.
+Blink.kMinEnterEtherealTime = 0.5
 
-local networkVars = {
+Blink.networkVars =
+{
     showingGhost        = "boolean",
+    
+    // True when we're moving quickly "through the ether"
+    ethereal           = "boolean",
+    
+    etherealStartTime = "float",
+    
+    // True when blink started and button not yet released
+    blinkButtonDown    = "boolean",
 }
 
 kBlinkType = enum( {'Unknown', 'OnObject', 'InAir', 'Attack'} )
@@ -43,6 +57,8 @@ function Blink:OnInit()
 
     Ability.OnInit(self)
     self.showingGhost = false
+    self.ethereal = false
+    self.blinkButtonDown = false
     
 end
 
@@ -256,6 +272,36 @@ function Blink:GetBlinkPosition(player)
     
 end
 
+function Blink:TriggerBlinkOutEffects(player)
+
+    // Play particle effect at vanishing position
+    if not Shared.GetIsRunningPrediction() then
+        self:TriggerEffects("blink_out", {effecthostcoords = Coords.GetTranslation(player:GetOrigin())})
+        if Client and Client.GetLocalPlayer():GetId() == player:GetId() then
+            self:TriggerEffects("blink_out_local", {effecthostcoords = Coords.GetTranslation(player:GetOrigin())})
+        end
+    end
+    
+    // Ghostly fade blink-out
+    //if Client then
+    //    self:CreateBlinkOutEffect(player)
+    //end
+    
+    player:SetAnimAndMode(Fade.kBlinkOutAnim, kPlayerMode.FadeBlinkOut)
+
+end
+
+function Blink:TriggerBlinkInEffects(player)
+
+    if not Shared.GetIsRunningPrediction() then
+        self:TriggerEffects("blink_in", {effecthostcoords = Coords.GetTranslation(player:GetOrigin())})
+    end
+    
+    player:SetAnimAndMode(Fade.kBlinkInAnim, kPlayerMode.FadeBlinkIn)
+    
+end
+
+/*
 function Blink:PerformBlink(player)
 
     local coords, valid = self:GetBlinkPosition(player)
@@ -265,12 +311,7 @@ function Blink:PerformBlink(player)
         // Local/view model effects    
         self.showingGhost = false
 
-        self:TriggerEffects("blink_out", {effecthostcoords = Coords.GetTranslation(player:GetOrigin())})
-        
-        // Play world effects. Play particle effect at vanishing position, along with ghostly fade blink-out
-        if Client then
-            self:CreateBlinkOutEffect(player)
-        end
+        self:TriggerBlinkOutEffects(player)
             
         // Animate camera extremely quickly
         local blinkDistance = (coords.origin - self:GetOrigin()):GetLength()
@@ -292,9 +333,7 @@ function Blink:PerformBlink(player)
         angles:BuildFromCoords(coords)
         player:SetOffsetAngles(angles)        
         
-        self:TriggerEffects("blink_in", {effecthostcoords = Coords.GetTranslation(player:GetOrigin())})
-        
-        player:SetAnimAndMode(Fade.kBlinkInAnim, kPlayerMode.FadeBlinkIn)
+        self:TriggerBlinkInEffects(player)
         
         // Blink time dependent on blink out and blink in animations        
         player:SetActivityEnd(blinkTime)
@@ -303,10 +342,15 @@ function Blink:PerformBlink(player)
     
     return valid
     
-end
+end*/
 
 function Blink:GetIsBlinking()
-    return (self.blinkEndTime ~= nil) and (Shared.GetTime() < (self.blinkEndTime + kEpsilon))
+    return self:GetEthereal() or ((self.blinkEndTime ~= nil) and (Shared.GetTime() < (self.blinkEndTime + kEpsilon)))
+end
+
+// Cannot attack while blinking.
+function Blink:GetPrimaryAttackAllowed()
+    return not self:GetIsBlinking()
 end
 
 function Blink:PerformPrimaryAttack(player)
@@ -315,13 +359,88 @@ function Blink:PerformPrimaryAttack(player)
     
 end
 
-// Create ghost or cancel ghost
-function Blink:PerformSecondaryAttack(player)
+function Blink:OnSecondaryAttack(player)
+
+    if not self.etherealStartTime or Shared.GetTime() - self.etherealStartTime >= Blink.kMinEnterEtherealTime then
+    
+        // Enter "ether" fast movement mode
+        if player.GetBlinkModifier and player:GetBlinkModifier() then
+            // Blink instantly
+            self:ToggleGhostMode(player)
+        // Don't keep going ethereal when button still held down after running out of energy
+        elseif not self.blinkButtonDown then
+            self:SetEthereal(player, true)
+            self.blinkButtonDown = true
+        end
+        
+    end
+    
+    Ability.OnSecondaryAttack(self, player)
+    
+end
+
+function Blink:OnSecondaryAttackEnd(player)
+
+    if self.ethereal then
+        self:SetEthereal(player, false)
+    end
+    
+    Ability.OnSecondaryAttackEnd(self, player)
+    
+    self.blinkButtonDown = false
+    
+end
+
+function Blink:GetEthereal()
+    return self.ethereal
+end
+
+function Blink:SetEthereal(player, state)
+
+    // Enter or leave invulnerable invisible fast-moving mode
+    if self.ethereal ~= state then
+    
+        if state then
+            self.etherealStartTime = Shared.GetTime()
+            self:TriggerBlinkOutEffects(player)
+        else
+            self:TriggerBlinkInEffects(player)            
+        end
+        
+        self.ethereal = state
+        
+        // Set player visibility state
+        player:SetIsVisible(not self.ethereal)
+        player:SetGravityEnabled(not self.ethereal)
+        player:SetVelocity(Vector(0, 0, 0))
+        
+        player:SetEthereal(state)
+        
+        // Give player velocity boost
+        if self.ethereal then
+        
+            local velocity = player:GetVelocity()
+
+            local forwardVec = player:GetViewAngles():GetCoords().zAxis
+            local newVelocity = velocity + forwardVec * Blink.kStartEtherealForce
+            
+            player:SetVelocity(newVelocity)
+
+        else
+            player:SetVelocity(Vector(0, 0, 0))
+        end
+        
+    end
+    
+end
+
+// Create ghost or cancel ghost (not currently used)
+function Blink:ToggleGhostMode(player)
 
     // If we've already got a ghost, blink to it
     if self.showingGhost then
     
-        self:PerformBlink(player)    
+        //self:PerformBlink(player)    
         return true
 
     else    
@@ -330,15 +449,31 @@ function Blink:PerformSecondaryAttack(player)
         self.showingGhost = not self.showingGhost
 
         if Client then
-            self:TriggerEffects("blink_ghost")
+            //self:TriggerEffects("blink_ghost")
         end
         
     end
-    
-    Ability.PerformSecondaryAttack(self, player)
     
     return true
     
 end
 
-Shared.LinkClassToMap("Blink", Blink.kMapName, networkVars )
+function Blink:OnProcessMove(player, input)
+
+    if self:GetIsActive() and self.ethereal then
+    
+        // Decrease energy while in blink mode
+        player:DeductAbilityEnergy(input.time * Fade.kBlinkContinuousEnergyCost)
+        
+    end
+    
+    // End blink mode if out of energy
+    if player:isa("Alien") and player:GetEnergy() == 0 and self.ethereal then
+        self:SetEthereal(player, false)
+    end
+        
+    Ability.OnProcessMove(self, player, input)
+    
+end
+
+Shared.LinkClassToMap("Blink", Blink.kMapName, Blink.networkVars )

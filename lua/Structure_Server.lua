@@ -9,6 +9,7 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Balance.lua")
 Script.Load("lua/Gamerules_Global.lua")
+Script.Load("lua/EnergyMixin.lua")
 
 function Structure:SetEffectsActive(state)
     self.effectsActive = state
@@ -44,14 +45,17 @@ function Structure:OnUse(player, elapsedTime, useAttachPoint, usePoint)
     
         // Always build by set amount of time, for AV reasons
         // Calling code will put weapon away we return true
-        if self:Construct(Structure.kUseInterval) then
+        local success, playAV = self:Construct(Structure.kUseInterval, player)
+        if success then
         
             // Give points for building structures
             if self:GetIsBuilt() and not self:isa("Hydra") then                
                 player:AddScore(kBuildPointValue)
             end
             
-            self:TriggerEffects("construct", {effecthostcoords = BuildCoordsFromDirection(player:GetViewCoords().zAxis, usePoint), isalien = self:GetIsAlienStructure()})
+            if playAV then
+                self:TriggerEffects("construct", {effecthostcoords = BuildCoordsFromDirection(player:GetViewCoords().zAxis, usePoint), isalien = self:GetIsAlienStructure()})
+            end
             
             used = true
             
@@ -63,7 +67,7 @@ function Structure:OnUse(player, elapsedTime, useAttachPoint, usePoint)
     
 end
 
-function Structure:UpdateResearch()
+function Structure:UpdateResearch(timePassed)
 
     if (self:GetIsBuilt() and (self.researchingId ~= kTechId.None)) then
     
@@ -92,13 +96,70 @@ function Structure:GetResearchProgress()
     
 end
 
-function Structure:AbortResearch()
-    if(self.researchProgress > 0) then
-        local researchNode = self:GetTeam():GetTechTree():GetTechNode(self.researchingId)
-        if researchNode ~= nil then
-            researchNode.researching = false
-        end
+function Structure:UpdateRecycle(timePassed)
+    // TODO: 
+end
+
+function Structure:Upgrade(newTechId)
+
+    if self:GetTechId() ~= newTechId then
+
+        // Preserve health and armor scalars but potentially change maxHealth and maxArmor
+        local energyScalar = self.energy / self.maxEnergy
+        
+        self.maxEnergy = LookupTechData(newTechId, kTechDataMaxEnergy, self.maxEnergy)
+        
+        self.energy = energyScalar * self.maxEnergy
+        
+        return LiveScriptActor.Upgrade(self, newTechId)
+        
     end
+    
+    return false
+    
+end
+
+function Structure:UpdateStructure(timePassed)
+
+    if self:GetIsBuilt() then
+    
+        self:UpdateResearch(timePassed)
+
+        self:UpdateEnergy(timePassed)
+        
+    end
+    
+    self:UpdateRecycle(timePassed)
+
+end
+
+function Structure:AbortResearch(refundCost)
+    
+    if(self.researchProgress > 0) then
+    
+        local team = self:GetTeam()
+        ASSERT(team ~= nil)
+        
+        local researchNode = team:GetTechTree():GetTechNode(self.researchingId)
+        if researchNode ~= nil then
+
+            // Give money back if refundCost is true
+            if refundCost then
+                team:SetTeamResources( team:GetTeamResources() + researchNode:GetCost() )
+            end
+        
+            ASSERT(researchNode:GetResearching() or researchNode:GetIsUpgrade())
+            
+            researchNode:ClearResearching()
+            
+            self:ClearResearch()
+            
+            team:GetTechTree():SetTechChanged()
+            
+        end
+        
+    end
+    
 end
 
 function Structure:GetDamagedAlertId()
@@ -163,6 +224,17 @@ function Structure:SetResearchProgress(progress)
     
 end
 
+function Structure:ClearResearch()
+
+    self.researchingId = kTechId.None
+    self.researchingPlayerId = Entity.invalidId
+    self.researchTime = 0
+    self.timeResearchStarted = 0
+    self.timeResearchComplete = 0
+    self.researchProgress = 0
+
+end
+
 function Structure:OnEntityChange(oldId, newId)
 
     LiveScriptActor.OnEntityChange(self, oldId, newId)
@@ -190,14 +262,31 @@ function Structure:OnResearchComplete(structure, researchId)
             local owner = Shared.GetEntity(self.researchingPlayerId)
             energyBuildEntity:SetOwner(owner)
             
+        elseif researchId == kTechId.Recycle then
+        
+            self:TriggerEffects("recycle_end")
+        
+            local team = self:GetTeam()
+            if(team ~= nil) then
+                team:TechRemoved(self)
+            end
+            
+            // Amount to get back, accounting for upgraded structures too
+            local upgradeLevel = 0
+            if self.GetUpgradeLevel then
+                upgradeLevel = self:GetUpgradeLevel()
+            end
+            
+            local amount = GetRecycleAmount(self:GetTechId(), upgradeLevel)
+            local scalar = self:GetRecycleScalar()
+            
+            self:GetTeam():AddTeamResources(amount * scalar)
+            
+            self:SafeDestroy()  
+        
         end
     
-        self.researchingId = kTechId.None
-        self.researchingPlayerId = Entity.invalidId
-        self.researchTime = 0
-        self.timeResearchStarted = 0
-        self.timeResearchComplete = 0
-        self.researchProgress = 0
+        self:ClearResearch()
         
         return true
         
@@ -224,6 +313,8 @@ end
 
 function Structure:OnInit()    
 
+    InitMixin(self, EnergyMixin)
+
     LiveScriptActor.OnInit(self)
     
     self.researchingId = kTechId.None
@@ -245,7 +336,7 @@ function Structure:OnInit()
 
     // Server-only data    
     self.timeResearchStarted = 0
-    self.timeOfNextBuildEffects = 0
+    self.timeOfNextBuildWeldEffects = 0
     self.deployed = false
     
     self:SetIsVisible(true)
@@ -448,6 +539,11 @@ function Structure:OnConstructionComplete()
         
         self:TriggerEffects("deploy")
         
+        local team = self:GetTeam()
+        if team then
+            team:TechAdded(self)
+        end
+        
     end
     
 end
@@ -566,10 +662,14 @@ end
 
 /**
  * Build structure by elapsedTime amount and play construction sounds. Pass custom construction sound if desired, 
- * otherwise use Gorge build sound or Marine sparking build sounds.
+ * otherwise use Gorge build sound or Marine sparking build sounds. Returns two values - whether the construct
+ * action was successful and if enough time has elapsed so a construction AV effect should be played.
  */
-function Structure:Construct(elapsedTime)
+function Structure:Construct(elapsedTime, builder)
 
+    local success = false
+    local playAV = false
+    
     if (not self.constructionComplete) then
 
         local startBuildFraction = self.buildFraction
@@ -586,11 +686,11 @@ function Structure:Construct(elapsedTime)
             
         else
         
-            if ( (self.buildTime <= self.timeOfNextBuildEffects) and (newBuildTime >= self.timeOfNextBuildEffects) ) then
+            if ( (self.buildTime <= self.timeOfNextBuildWeldEffects) and (newBuildTime >= self.timeOfNextBuildWeldEffects) ) then
             
-                self:TriggerEffects("construct")
+                playAV = true
                 
-                self.timeOfNextBuildEffects = newBuildTime + Structure.kBuildEffectsInterval
+                self.timeOfNextBuildWeldEffects = newBuildTime + Structure.kBuildWeldEffectsInterval
                 
             end
 
@@ -601,11 +701,11 @@ function Structure:Construct(elapsedTime)
 
         end
         
-        return true
+        success = true
 
     end
 
-    return false
+    return success, playAV
 
 end
 
@@ -646,7 +746,10 @@ function Structure:SetConstructionComplete()
     // Built structures need to belong to one team or the other, so give it to the builder's team if not set
     local teamNumber = self:GetTeamNumber()
     
-    self.constructionComplete = true
+    if not constructionComplete then
+        self.constructionComplete = true
+        self.timeWarmupComplete = Shared.GetTime() + kStructureWarmupTime
+    end
     
     self:AddBuildHealth(1 - self.buildFraction)
     
@@ -672,39 +775,24 @@ function Structure:GetPointCost()
 
 end
 
-function Structure:GetIsValidForRecycle()
-    return true
-end
-
 function Structure:GetRecycleScalar()
     return kRecyclePaybackScalar
 end
 
 function Structure:PerformAction(techNode, position)
 
-    if(techNode.techId == kTechId.Recycle) and self:GetIsValidForRecycle() then
+    // Process Cancel of research or upgrade
+    if(techNode.techId == kTechId.Cancel) then
     
-        self:AbortResearch()
+        if self:GetIsResearching() then
         
-        self:TriggerEffects("recycle")
-        
-        local team = self:GetTeam()
-        if(team ~= nil) then
-            team:TechRemoved(self)
-        end
-        
-        // Amount to get back, accounting for upgraded structures too
-        local upgradeLevel = 0
-        if self.GetUpgradeLevel then
-            upgradeLevel = self:GetUpgradeLevel()
-        end
-        
-        local amount = GetRecycleAmount(self:GetTechId(), upgradeLevel)
-        local scalar = self:GetRecycleScalar()
-        
-        self:GetTeam():AddTeamResources(amount * scalar)
-        
-        self:SafeDestroy()   
+            self:AbortResearch(true)
+            
+        end       
+    
+    elseif(techNode.techId == kTechId.Recycle) then
+    
+        self:TriggerEffects("recycle_start")
         
         return true
     

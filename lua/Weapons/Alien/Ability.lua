@@ -111,10 +111,15 @@ function Ability:OnInit()
     
 end
 
+// Child class should override if preventing the primary attack is needed.
+function Ability:GetPrimaryAttackAllowed()
+    return true
+end
+
 // Child class can override
 function Ability:OnPrimaryAttack(player)
 
-    if not self:GetPrimaryAttackRequiresPress() or not player:GetPrimaryAttackLastFrame() then
+    if self:GetPrimaryAttackAllowed() and (not self:GetPrimaryAttackRequiresPress() or not player:GetPrimaryAttackLastFrame()) then
     
         // Check energy cost
         local energyCost = self:GetEnergyCost(player)

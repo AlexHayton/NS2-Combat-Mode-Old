@@ -15,47 +15,42 @@ local kMaxThreshold = 0.50
     
 function MarineCommander:InitSquadSelectionScreenEffects()
 
-    self.metaballScreenEffect = Client.CreateScreenEffect("shaders/Metaballs.screenfx")
+    self.squadScreenEffect = {}
+    for i = 1, kMaxRenderBlobSquads do
+        self.squadScreenEffect[i] = Client.CreateScreenEffect("shaders/Metaballs.screenfx")
+    end
 
 end
 
 function MarineCommander:DestroySquadSelectionScreenEffects()
 
-    if(self.metaballScreenEffect ~= nil) then
-        Client.DestroyScreenEffect(self.metaballScreenEffect)
-        self.metaballScreenEffect = nil
+    if self.squadScreenEffect ~= nil then
+        for i, screenEffect in ipairs(self.squadScreenEffect) do
+            Client.DestroyScreenEffect(screenEffect)
+        end    
+        self.squadScreenEffect = nil
     end
 
 end
 
 function MarineCommander:GetMaxNumSquadBalls()
-
     return GetMaxSquadSize()
-
 end
 
 function MarineCommander:GetMaxRenderBlobSquads()
-
     return kMaxRenderBlobSquads
-
 end
 
 function MarineCommander:GetSquadBallRadius()
-
     return kBallRadius
-
 end
 
 function MarineCommander:GetSquadBallMinThreshold()
-
     return kMinThreshold
-
 end
 
 function MarineCommander:GetSquadBallMaxThreshold()
-
     return kMaxThreshold
-
 end
 
 function MarineCommander:GetSquadBallInfo()
@@ -115,10 +110,61 @@ end
 
 function MarineCommander:UpdateSquadScreenEffects(highlightSquad, selectedSquad)
 
-    if(self.metaballScreenEffect == nil) then
+    if self.squadScreenEffect == nil then
         return
     end
+
+    // Initially disable all squads. We'll enable them later if there are players
+    // in the squads.
+    for i=1,self:GetMaxRenderBlobSquads() do
+
+        local screenEffect = self.squadScreenEffect[i];
+        screenEffect:SetActive(false)
+
+        for j=1,self:GetMaxNumSquadBalls() do
+            screenEffect:SetParameter("metaBallRender", j, 0)
+        end
+
+        screenEffect:SetParameter("metaBallRadius", self:GetSquadBallRadius())
+        screenEffect:SetParameter("minThreshold", self:GetSquadBallMinThreshold())
+        screenEffect:SetParameter("maxThreshold", self:GetSquadBallMaxThreshold())
     
+    end
+    
+    local ballInfo = self:GetSquadBallInfo()
+    
+    for index, ball in ipairs(ballInfo) do
+    
+        local setColor = Color(ball[2])
+        
+        if (selectedSquad == ball[4]) then
+            setColor.r = setColor.r * 6
+            setColor.g = setColor.g * 6
+            setColor.b = setColor.b * 6
+        elseif(highlightSquad == ball[4]) then
+            setColor.r = setColor.r * 4
+            setColor.g = setColor.g * 4
+            setColor.b = setColor.b * 4
+        end
+        
+        setColor.r = setColor.r * 0.2
+        setColor.g = setColor.g * 0.2
+        setColor.b = setColor.b * 0.2
+        
+        local ballIndex    = ball[1]
+        local screenPos    = ball[3]
+        local squadIndex   = ball[5]
+        
+        local screenEffect = self.squadScreenEffect[ squadIndex ]
+        
+        screenEffect:SetActive(true)
+        screenEffect:SetParameter("metaBallColor", ballIndex, setColor)
+        screenEffect:SetParameter("metaBallPos", ballIndex, screenPos)
+        screenEffect:SetParameter("metaBallRender", ballIndex, 1)
+        
+    end
+    
+    /*
     self.metaballScreenEffect:SetParameter("metaBallRadius", self:GetSquadBallRadius())
     self.metaballScreenEffect:SetParameter("minThreshold", self:GetSquadBallMinThreshold())
     self.metaballScreenEffect:SetParameter("maxThreshold", self:GetSquadBallMaxThreshold())
@@ -161,6 +207,7 @@ function MarineCommander:UpdateSquadScreenEffects(highlightSquad, selectedSquad)
         self.metaballScreenEffect:SetPassActive(string.format("p%d", ball[5]), true)
         
     end
+    */
  
 end
 

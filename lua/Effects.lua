@@ -87,12 +87,13 @@ kEffectFilterFrom                   = "upgraded"
 kEffectFilterLeft                   = "left"
 kEffectFilterActive                 = "active"              // Generic "active" tag to denote change of state. Used for infantry portal spinning effects.
 kEffectFilterHitSurface             = "surface"             // Set in events that hit something
+kEffectFilterDeployed               = "deployed"            // When entity is in a deployed state
 
 kEffectFilters =
 {
     kEffectFilterClassName, kEffectFilterDoerName, kEffectFilterDamageType, kEffectFilterIsAlien, kEffectFilterBuilt, kEffectFilterFlinchSevere,
     kEffectFilterInAltMode, kEffectFilterOccupied, kEffectFilterEmpty, kEffectFilterVariant, kEffectFilterFrom, kEffectFilterFromAnimation, 
-    kEffectFilterFrom, kEffectFilterLeft, kEffectFilterActive, kEffectFilterHitSurface
+    kEffectFilterFrom, kEffectFilterLeft, kEffectFilterActive, kEffectFilterHitSurface, kEffectFilterDeployed
 }
 
 // Load effect data, adding to effect manager

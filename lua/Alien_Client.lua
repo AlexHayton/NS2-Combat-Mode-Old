@@ -6,17 +6,6 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-// Texture should have 98x98 alien ability icons in it. The weapon chooses which x/y offset
-// into it to use (eg offset of <1, 0> => 98, 0)
-Alien.kHUDAbilitiesTexture = "ui/alien_abilities.dds"
-Alien.kHUDFlash = "ui/alien_hud.swf"
-
-// For choosing lifeform and upgrades
-Alien.kBuyHUDFlash = "ui/alien_buy.swf"
-Alien.kBuyHUDTexture = "ui/alien_buildmenu.dds"
-
-Alien.kOpenSound = PrecacheAsset("sound/ns2.fev/alien/common/select")
-
 // Returns all the info about all hive sight blips so it can be rendered by the UI.
 // Returns single-dimensional array of fields in the format screenX, screenY, drawRadius, blipType
 function PlayerUI_GetBlipInfo()
@@ -253,24 +242,18 @@ function GetAbility(abilityIndex)
 end
 
 function Alien:OnInitLocalClient()
-    
+
     Player.OnInitLocalClient(self)
     
     if(self:GetTeamNumber() ~= kTeamReadyRoom) then
-        
-        RemoveFlashPlayer(kClassFlashIndex)
-        
-        //GetFlashPlayer(kClassFlashIndex):Load(Alien.kHUDFlash)
-        //GetFlashPlayer(kClassFlashIndex):SetBackgroundOpacity(0)
-        //Client.BindFlashTexture("alien_abilities", Alien.kHUDAbilitiesTexture)
-        //Client.BindFlashTexture("alien_upgradeicons", Alien.kUpgradeIconsTexture)
-        
+
         if self.alienHUD == nil then
             self.alienHUD = GetGUIManager():CreateGUIScript("GUIAlienHUD")
         end
         if self.hiveBlips == nil then
             self.hiveBlips = GetGUIManager():CreateGUIScript("GUIHiveBlips")
         end
+
     end
     
 end
@@ -285,19 +268,20 @@ function Alien:OnDestroyClient()
         GetGUIManager():DestroyGUIScript(self.hiveBlips)
         self.hiveBlips = nil
     end
+    if self.buyMenu then
+        GetGUIManager():DestroyGUIScript(self.buyMenu)
+        self.buyMenu = nil
+    end
+
 end
 
 function Alien:UpdateClientEffects(deltaTime, isLocal)
-    
+
     Player.UpdateClientEffects(self, deltaTime, isLocal)
     
     // If we are dead, close the evolve menu.
-    if isLocal and GetFlashPlayerDisplaying(kClassFlashIndex) then
-    
-        if not self:GetIsAlive() then
-            self:CloseMenu(kClassFlashIndex)
-        end
-        
+    if isLocal and not self:GetIsAlive() and self:GetBuyMenuIsDisplaying() then
+        self:CloseMenu()
     end
     
     if isLocal then
@@ -306,24 +290,63 @@ function Alien:UpdateClientEffects(deltaTime, isLocal)
         local darkVisionFadeTime = 0.2
         
         if not self.darkVisionOn then
-            darkVisionFadeAmount = math.max( 1 - (Client.GetTime() - self.darkVisionEndTime) / darkVisionFadeTime, 0 ) 
+            darkVisionFadeAmount = math.max( 1 - (Client.GetTime() - self.darkVisionEndTime) / darkVisionFadeTime, 0 )
         end
         
-        self.screenEffects.darkVision:SetActive(self.darkVisionOn or darkVisionFadeAmount > 0)   
+        self.screenEffects.darkVision:SetActive(self.darkVisionOn or darkVisionFadeAmount > 0)
         
         self.screenEffects.darkVision:SetParameter("startTime", self.darkVisionTime)
         self.screenEffects.darkVision:SetParameter("time", Client.GetTime())
         self.screenEffects.darkVision:SetParameter("amount", darkVisionFadeAmount)
         
+        self:SetBlurEnabled( self:GetBuyMenuIsDisplaying() )
+        
     end
     
 end
 
-function Alien:CloseMenu(flashIndex)
+function Alien:UpdateMisc(input)
 
-    if self.showingBuyMenu and Player.CloseMenu(self, flashIndex) then
+    Player.UpdateMisc(self, input)
     
-        self.showingBuyMenu = false
+    if not Shared.GetIsRunningPrediction() then
+
+        // Close the buy menu if it is visible when the Alien moves.
+        if input.move.x ~= 0 or input.move.z ~= 0 then
+            self:CloseMenu()
+        end
+        
+    end
+    
+end
+
+function Alien:GetBuyMenuIsDisplaying()
+    return self.buyMenu ~= nil
+end
+
+function Alien:_UpdateMenuMouseState()
+
+    local showingBuyMenu = self:GetBuyMenuIsDisplaying()
+    Client.SetMouseVisible(showingBuyMenu)
+    Client.SetMouseCaptured(not showingBuyMenu)
+    Client.SetMouseClipped(not showingBuyMenu)
+
+end
+
+function Alien:CloseMenu()
+
+    if self.buyMenu then
+    
+        self.buyMenu:OnClose()
+        
+        GetGUIManager():DestroyGUIScript(self.buyMenu)
+        self.buyMenu = nil
+        
+        self:_UpdateMenuMouseState()
+        
+        // Quick work-around to not fire weapon when closing menu
+        self.timeClosedMenu = Shared.GetTime()
+        
         return true
         
     end
@@ -338,31 +361,12 @@ function Alien:Buy()
     // Don't allow display in the ready room
     if self:GetTeamNumber() ~= 0 and (Client.GetLocalPlayer() == self) then
     
-        if not self.showingBuyMenu then
-        
-            // Can only bring up on infestation
-            //if self:GetGameEffectMask(kGameEffect.OnInfestation) then
-        
-                GetFlashPlayer(kClassFlashIndex):Load(Alien.kBuyHUDFlash)
-                GetFlashPlayer(kClassFlashIndex):SetBackgroundOpacity(0)
-                self.showingBuyMenu = true
-                
-                Shared.PlaySound(self, Alien.kOpenSound)
-            
-            //else
-            //    self:AddTooltipOncePer("You must be on infestation to evolve.", 3)
-            //end            
-            
+        if not self.buyMenu then
+            self.buyMenu = GetGUIManager():CreateGUIScript("GUIAlienBuyMenu")
+            self:_UpdateMenuMouseState()
         else
-        
-            RemoveFlashPlayer(kClassFlashIndex)
-            self.showingBuyMenu = false
-            
-        end    
-        
-        Client.SetMouseVisible(self.showingBuyMenu)
-        Client.SetMouseCaptured(not self.showingBuyMenu)
-        Client.SetMouseClipped(not self.showingBuyMenu)
+            self:CloseMenu()
+        end
         
     end
     

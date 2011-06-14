@@ -4,7 +4,7 @@
 //
 //    Created by:   Charlie Cleveland (charlie@unknownworlds.com)
 //
-// Infestation spray on primary.
+// Infestation spray on primary. Currently not used.
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Weapons/Alien/Ability.lua")

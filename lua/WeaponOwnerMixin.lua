@@ -9,13 +9,42 @@
 WeaponOwnerMixin = { }
 WeaponOwnerMixin.type = "WeaponOwner"
 
+function WeaponOwnerMixin.__prepareclass(toClass)
+    
+    ASSERT(toClass.networkVars ~= nil, "WeaponOwnerMixin expects the class to have network fields")
+    
+    local addNetworkFields =
+    {
+        updateWeapons   = "boolean",
+    }
+    
+    for k, v in pairs(addNetworkFields) do
+        toClass.networkVars[k] = v
+    end
+    
+end
+
+function WeaponOwnerMixin:__initmixin()
+    self.updateWeapons = true
+end
+
+function WeaponOwnerMixin:SetUpdateWeapons(updates)
+    ASSERT(type(updates) == "boolean")
+    self.updateWeapons = updates
+end
+
 function WeaponOwnerMixin:UpdateWeapons(input)
 
-    self:ComputeHUDOrderedWeaponList()
+    // Don't update weapon if set to false (commander mode)
+    if self.updateWeapons then
     
-    // Call ProcessMove on all our weapons so they can update properly
-    for index, weapon in ipairs(self:GetHUDOrderedWeaponList()) do
-        weapon:OnProcessMove(self, input)
+        self:ComputeHUDOrderedWeaponList()
+        
+        // Call ProcessMove on all our weapons so they can update properly
+        for index, weapon in ipairs(self:GetHUDOrderedWeaponList()) do
+            weapon:OnProcessMove(self, input)
+        end
+        
     end
         
 end

@@ -91,12 +91,12 @@ function Door:OnWeld(entity, elapsedTime)
 end
 
 function Door:OnWeldCanceled(entity)
-	if (self.state == Door.kState.Welding) then
+    if (self.state == Door.kState.Welding) then
         self:SetState(Door.kState.Open)
-	end
+    end
 end
 
-function Door:ComputeDamageOverride(damage, damageType)
+function Door:ComputeDamageOverride(attacker, damage, damageType, time)
 
     if damageType ~= kDamageType.Door then
         damage = 0

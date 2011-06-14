@@ -286,20 +286,53 @@ function GUISelectionPanel:Update(deltaTime)
     
 end
 
+function GUISelectionPanel:SetIsVisible(state)
+    self.background:SetIsVisible(state)
+    self.selectedIcon:SetIsVisible(state)
+    self.healthIcon:SetIsVisible(state)
+    self.armorIcon:SetIsVisible(state)
+    self.energyIcon:SetIsVisible(state)
+    self.statusBar:SetIsVisible(state)
+    self.selectedName:SetIsVisible(state)
+    self.selectedLocationName:SetIsVisible(state)
+    self.statusText:SetIsVisible(state)
+    self.selectedSquadName:SetIsVisible(state)
+    self.armorText:SetIsVisible(state)
+    self.energyText:SetIsVisible(state)
+    self.customText:SetIsVisible(state)
+end
+
 function GUISelectionPanel:UpdateSelected()
 
     local selectedEntities = CommanderUI_GetSelectedEntities()
     local numberSelectedEntities = table.count(selectedEntities)
     self.selectedIcon:SetIsVisible(false)
+    
+    // Hide selection panel with nothing selected
+    self:SetIsVisible(numberSelectedEntities > 0)
+    
+    
     if numberSelectedEntities > 0 then
+    
         if numberSelectedEntities == 1 then
             self:UpdateSingleSelection(selectedEntities[1])
         else
-            if self.highlightedMultiItem > table.count(selectedEntities) then
-                self.highlightedMultiItem = 1
+        
+            // Highlight first unit in subgroup
+            for index = 1, numberSelectedEntities do
+            
+                local entId = selectedEntities[index]
+                local status = CommanderUI_GetPortraitStatus(entId)
+                if status[2] then
+                    self.highlightedMultiItem = index
+                    break
+                end
+                
             end
+            
             self:UpdateSingleSelection(selectedEntities[self.highlightedMultiItem])
             self:UpdateMultiSelection(selectedEntities)
+            
         end
     end
     

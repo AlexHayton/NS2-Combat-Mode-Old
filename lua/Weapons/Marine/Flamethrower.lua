@@ -112,15 +112,22 @@ function Flamethrower:FirePrimary(player, bullets, range, penetration)
         
                 if GetGamerules():CanEntityDoDamageTo(player, ent) then
 
+                    local health = ent:GetHealth()
+
                     // Do damage to them and catch them on fire
                     ent:TakeDamage(Flamethrower.kDamage, player, self, ent:GetModelOrigin(), toEnemy)
-                
-                    ent:SetOnFire(player, self)
                     
-                    // Impact should not be played for the player that is on fire (if it is a player).
-                    local entIsPlayer = ConditionalValue(ent:isa("Player"), ent, nil)
-                    // Play on fire cinematic
-                    Shared.CreateEffect(entIsPlayer, Flamethrower.kImpactCinematic, ent, Coords.GetIdentity())
+                    // Only light on fire if we successfully damaged them
+                    if ent:GetHealth() ~= health then
+                    
+                        ent:SetOnFire(player, self)
+                    
+                        // Impact should not be played for the player that is on fire (if it is a player).
+                        local entIsPlayer = ConditionalValue(ent:isa("Player"), ent, nil)
+                        // Play on fire cinematic
+                        Shared.CreateEffect(entIsPlayer, Flamethrower.kImpactCinematic, ent, Coords.GetIdentity())
+
+                    end
                     
                 end
                 
@@ -165,6 +172,13 @@ end
 if Server then
 function Flamethrower:SetPilotLightState(state)
 end
+end
+
+function Flamethrower:Dropped(prevOwner)
+
+    ClipWeapon.Dropped(self, prevOwner)
+    self:SetPilotLightState(false)
+    
 end
 
 Shared.LinkClassToMap("Flamethrower", Flamethrower.kMapName, networkVars)

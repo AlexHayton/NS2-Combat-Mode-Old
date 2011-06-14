@@ -172,7 +172,7 @@ end
  * Allow weapons to have different capsules
  */
 function Weapon:GetMeleeCapsule()
-    return Vector(0.4, 0.4, 0.01)
+    return Vector(0.4, 0.4, 0.4)
 end
 
 /**
@@ -186,17 +186,19 @@ end
  * Checks if a melee capsule would hit anything. Does not actually carry
  * out any attack or inflict any damage.
  */
-function Weapon:CheckMeleeCapsule(player, damage, range, optionalOffset)
+function Weapon:CheckMeleeCapsule(player, damage, range, optionalCoords)
     // Trace using a box so that unlike bullet attacks we don't require precise targeting
     local extents = self:GetMeleeCapsule()
    
     local attackOffset = self:GetMeleeOffset()
     local eyePoint = player:GetOrigin() + player:GetViewOffset()
-    if optionalOffset then
-        eyePoint = eyePoint + optionalOffset
-    end
-    local startPoint = eyePoint + player:GetViewAngles():GetCoords().zAxis * attackOffset
-    local endPoint   = eyePoint + player:GetViewAngles():GetCoords().zAxis * range
+
+    local coords = optionalCoords or player:GetViewAngles():GetCoords()
+
+    local axis = coords.zAxis
+    
+    local startPoint = eyePoint + axis * attackOffset
+    local endPoint   = eyePoint + axis * range 
 
     local filter = EntityFilterTwo(player, self)
    
@@ -217,7 +219,7 @@ function Weapon:CheckMeleeCapsule(player, damage, range, optionalOffset)
         end
 
         if Server then
-            Server.dbgTracer:TraceMelee(player, startPoint, trace, extents)
+            Server.dbgTracer:TraceMelee(player, startPoint, trace, extents, coords)
         end
     end
     
@@ -233,22 +235,33 @@ end
 /**
  * Does an attack with a melee capsule.
  */
-function Weapon:AttackMeleeCapsule(player, damage, range, optionalOffset)
-    self.traceRealAttack = true // enable tracing on this capsule check
-    local didHit, trace, direction = self:CheckMeleeCapsule(player, damage, range, optionalOffset)
+function Weapon:AttackMeleeCapsule(player, damage, range, optionalCoords)
+
+    // Enable tracing on this capsule check.
+    self.traceRealAttack = true
+    local didHit, trace, direction = self:CheckMeleeCapsule(player, damage, range, optionalCoords)
     self.traceRealAttack = false
     
     if trace.fraction < 1 then
     
-        if Server then
-            self:ApplyMeleeHitEffects(player, damage, trace.entity, trace.endPoint, direction)
-        end
-        
-        TriggerHitEffects(self, trace.entity, trace.endPoint, trace.surface)
+        self:ApplyMeleeHit(player, damage, trace, direction)
         
     end
     
     return didHit, trace
+    
+end
+
+/**
+ * Apply melee attack hit on the target
+ */
+function Weapon:ApplyMeleeHit(player, damage, trace, direction)
+
+    if Server then
+        self:ApplyMeleeHitEffects(player, damage, trace.entity, trace.endPoint, direction)
+    end
+    
+    TriggerHitEffects(self, trace.entity, trace.endPoint, trace.surface)
     
 end
 

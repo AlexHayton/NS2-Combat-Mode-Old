@@ -345,7 +345,7 @@ end
 
 // players can move, and drifters, and MACs, and whips
 // should really ask the entities instead...
-TargetCache.kMobileClasses = { "Player", "Drifter", "MAC", "Whip" }
+TargetCache.kMobileClasses = { "Player", "Drifter", "MAC", "Whip", "ARC" }
 
 // true if the target is able to move. Should really be a method on the object instead, but
 // I don't want to mess around with changes in multiple files.
@@ -492,10 +492,10 @@ end
 //
 // Return true if the target is acceptable to all filters
 //
-function TargetCache:_ApplyFilters(target, targetPoint, filters)
+function TargetCache:_ApplyFilters(target, targetPoint, attacker, filters)
     if filters then
         for _, filter in ipairs(filters) do
-            if not filter(target, targetPoint) then
+            if not filter(target, targetPoint, attacker) then
                 return false
             end
         end
@@ -515,7 +515,7 @@ function TargetCache:PossibleTarget(attacker, origin, sqMaxRange, target, sqRang
     if target ~= nil and attacker ~= target and self:_IsPossibleTarget(target, self:_IsMobile(target)) then 
         local targetPoint = target:GetEngagementPoint()
         sqRange = sqRange or (origin - targetPoint):GetLengthSquared()     
-        if sqRange < sqMaxRange and self:_ApplyFilters(target, targetPoint, filters) then
+        if sqRange < sqMaxRange and self:_ApplyFilters(target, targetPoint, attacker, filters) then
             return true, sqRange
         end
     end            
@@ -542,23 +542,27 @@ function TargetCache:_GetRawTargetList(attacker, range, visibilityRequired, mobi
     local origin = attacker:GetEyePos()
 
     // filter the mobile targets
-    for i,target in ipairs(self.targetListCache[mobileListType]) do
-        local valid, sqRange = self:PossibleTarget(attacker, origin, sqMaxRange, target, nil, filters)
-        if valid then
-            table.insert(result, {target, sqRange })
+    if mobileListType then
+        for i,target in ipairs(self.targetListCache[mobileListType]) do
+            local valid, sqRange = self:PossibleTarget(attacker, origin, sqMaxRange, target, nil, filters)
+            if valid then
+                table.insert(result, {target, sqRange })
+            end
         end
     end
     
-    // make sure the the list of static targets are uptodate
-    staticList, staticListVersion = self:_GetStaticTargets(staticListType, attacker, range, visibilityRequired, staticList, staticListVersion)
-    self.stats:UseStatic(attacker, staticList)
-    
-    // add in the static targets
-    for i,targetAndSqRange in ipairs(staticList) do
-        local target, sqRange = unpack(targetAndSqRange)
-        local valid, sqRange = self:PossibleTarget(attacker, origin, sqMaxRange, target, sqRange, filters)
-        if valid then
-            table.insert(result, targetAndSqRange)
+    if staticListType then
+        // make sure the the list of static targets are uptodate
+        staticList, staticListVersion = self:_GetStaticTargets(staticListType, attacker, range, visibilityRequired, staticList, staticListVersion)
+        self.stats:UseStatic(attacker, staticList)
+        
+        // add in the static targets
+        for i,targetAndSqRange in ipairs(staticList) do
+            local target, sqRange = unpack(targetAndSqRange)
+            local valid, sqRange = self:PossibleTarget(attacker, origin, sqMaxRange, target, sqRange, filters)
+            if valid then
+                table.insert(result, targetAndSqRange)
+            end
         end
     end
  
@@ -820,6 +824,17 @@ function TargetSelector:ValidateTarget(target)
         return self.cache:ValidateTarget(self.attacker, origin, sqMaxRange, target, nil, self.filters)
     end
     return false, -1
+end
+
+function TargetSelector:HasStaticTargets()
+    self.staticList, self.staticListVersion = self.cache:_GetStaticTargets(
+            self.staticListType, 
+            self.attacker,
+            self.range, 
+            self.visibilityRequired, 
+            self.staticList,
+            self.staticListVersion)
+    return #self.staticList > 0
 end
 
 //

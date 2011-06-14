@@ -14,7 +14,7 @@ local kPortraitIconIndices = {
     
 // From alien portrait icons
 local kIconIndexToTechId = {
-    kTechId.Hive, kTechId.HiveMass, kTechId.HiveColony, kTechId.Harvester, kTechId.Drifter, kTechId.Egg,
+    kTechId.Hive, kTechId.None, kTechId.None, kTechId.Harvester, kTechId.Drifter, kTechId.Egg,
     kTechId.Crag, kTechId.Whip, kTechId.Shift, kTechId.Shade, kTechId.Hydra,
     kTechId.Skulk, kTechId.Gorge, kTechId.Lerk, kTechId.Fade, kTechId.Onos
 }

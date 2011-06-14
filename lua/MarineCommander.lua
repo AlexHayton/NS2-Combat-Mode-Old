@@ -55,6 +55,11 @@ function MarineCommander:OnInit()
     self.numSquads = 0
     self.selectedSquad = 0
     
+    // Start in build menu (more useful then command station menu)
+    if Client then
+        self:SetCurrentTech(kTechId.BuildMenu)
+    end
+    
 end
 
 function MarineCommander:GetNumSquads()
@@ -82,38 +87,69 @@ function MarineCommander:OnSelectionChanged()
 end
 
 // Top row always the same. Alien commander can override to replace. 
-function MarineCommander:GetTopRowTechButtons()
-    return { kTechId.BuildMenu, kTechId.AdvancedMenu, kTechId.AssistMenu, kTechId.SquadMenu }
-end
+function MarineCommander:GetQuickMenuTechButtons(techId)
 
-function MarineCommander:GetSelectionRowsTechButtons(techId)
-
-    local techButtons = {}
+    // Top row always for quick access
+    local marineTechButtons = { kTechId.BuildMenu, kTechId.AdvancedMenu, kTechId.AssistMenu, kTechId.RootMenu }
+    local menuButtons = nil    
+    local inQuickAccessMenu = true
     
+    // Ignore selected and use set tech buttons when in a quick-access menu
     if(techId == kTechId.BuildMenu) then 
     
-        techButtons = { kTechId.CommandStation, kTechId.Extractor, kTechId.InfantryPortal, kTechId.Armory,
-                        kTechId.Sentry, kTechId.None, kTechId.None, kTechId.RootMenu}
+        menuButtons = { kTechId.CommandStation, kTechId.Extractor, kTechId.InfantryPortal, kTechId.Armory,
+                        kTechId.RoboticsFactory, kTechId.ArmsLab, kTechId.None, kTechId.None}
                         
     elseif(techId == kTechId.AdvancedMenu) then 
     
-        techButtons = { kTechId.PowerPack, kTechId.Observatory, kTechId.PhaseGate, kTechId.RoboticsFactory,
-                        kTechId.PrototypeLab, kTechId.None, kTechId.None, kTechId.RootMenu}
+        menuButtons = { kTechId.Sentry, kTechId.Observatory, kTechId.PhaseGate, kTechId.PowerPack, kTechId.PrototypeLab, kTechId.None, kTechId.None, kTechId.None}
         
     elseif(techId == kTechId.AssistMenu) then 
     
-        techButtons = { kTechId.AmmoPack, kTechId.MedPack, kTechId.None, kTechId.None,
-                        kTechId.None, kTechId.None, kTechId.None, kTechId.RootMenu}
+        menuButtons = { kTechId.AmmoPack, kTechId.MedPack, kTechId.CatPack, kTechId.None,
+                        kTechId.Shotgun, kTechId.GrenadeLauncher, kTechId.Flamethrower, kTechId.None}
         
-    elseif(techId == kTechId.SquadMenu) then 
+    else
     
-        techButtons = { kTechId.SelectRedSquad, kTechId.SelectBlueSquad, kTechId.SelectGreenSquad, kTechId.SelectYellowSquad,
-                        kTechId.SelectOrangeSquad, kTechId.None, kTechId.None, kTechId.RootMenu}
+        // Make sure all slots are initialized so entities can override simply
+        menuButtons = {kTechId.None, kTechId.None, kTechId.None, kTechId.None, kTechId.None, kTechId.None, kTechId.None, kTechId.None }
+        inQuickAccessMenu = false
+        
+    end
 
+    table.copy(menuButtons, marineTechButtons, true)        
+
+    // Return buttons and true/false if we are in a quick-access menu
+    return marineTechButtons, inQuickAccessMenu
+    
+end
+
+function MarineCommander:GetCurrentTechButtons(techId, entity)
+
+    local techButtons, inQuickMenu = self:GetQuickMenuTechButtons(techId)
+
+    if not inQuickMenu and entity then
+    
+        // Allow selected entities to add/override buttons in the menu (but not top row)
+        local selectedTechButtons = entity:GetTechButtons(techId)
+        if selectedTechButtons then
+            for index, id in pairs(selectedTechButtons) do
+               techButtons[4 + index] = id 
+            end
+        end
+        
+        // If we're researching, add cancel button
+        if entity.GetIsResearching and entity:GetIsResearching() then
+            techButtons[kRecycleCancelButtonIndex] = kTechId.Cancel
+        // Otherwise add recycle button if it can be
+        elseif entity:isa("Structure") and not entity:isa("PowerPoint") then
+            techButtons[kRecycleCancelButtonIndex] = kTechId.Recycle
+        end
+    
     end
     
     return techButtons
-    
+
 end
 
 function MarineCommander:ProcessNumberKeysMove(input, newPosition)

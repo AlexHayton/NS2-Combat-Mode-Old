@@ -209,6 +209,47 @@ function DebugBox(minPoint, maxPoint, extents, lifetime, r, g, b, a)
     
 end
 
+/**
+ * Show how a Shared.TraceBox works. 
+ */
+function DebugTraceBox(extents, startPoint, endPoint, lifetime, r, g, b, a)  
+    local lineArgs= { lifetime, r, g, b, a }
+  
+    DebugLine(startPoint, endPoint, unpack(lineArgs))
+
+    local points = {}
+    // create points for the boxes around the start and endpoint
+    for i=0,7 do
+        local v = Vector(
+                    extents.x * (bit.band(i,1) == 1 and 1 or -1),
+                    extents.y * (bit.band(i,2) == 2 and 1 or -1),
+                    extents.z * (bit.band(i,4) == 4 and 1 or -1))
+        table.insert(points, startPoint + v )
+        table.insert(points, endPoint + v)
+    end
+    // even points are the startpoint box
+    // first four points have the same z-coords
+    // first point is all negative
+    _DebugTraceNeighbours(lineArgs, points, 1, 3, 5, 9, 2)
+    _DebugTraceNeighbours(lineArgs, points, 7, 3, 5, 15, 8)
+    _DebugTraceNeighbours(lineArgs, points, 11, 3, 9, 15, 12)
+    _DebugTraceNeighbours(lineArgs, points, 13, 5, 9, 15, 14)
+    
+    _DebugTraceNeighbours(lineArgs, points, 4, 2, 8, 12, 3)
+    _DebugTraceNeighbours(lineArgs, points, 6, 2, 8, 14, 5)
+    _DebugTraceNeighbours(lineArgs, points, 10, 2, 12, 14, 9)
+    _DebugTraceNeighbours(lineArgs, points, 16, 8, 12, 14, 15 )
+    
+end
+
+function _DebugTraceNeighbours(lineArgs, points, pi, ...)
+    local p1 = points[pi]
+    for _,pointIndex in ipairs(arg) do
+        local p2 = points[pointIndex] 
+        DebugLine(p1, p2, unpack(lineArgs))
+    end
+end
+
 // rgba are normalized values (0-1)
 function DebugLine(startPoint, endPoint, lifetime, r, g, b, a)
     if (Client and not Shared.GetIsRunningPrediction()) then
@@ -517,12 +558,12 @@ function ToString(t)
         elseif t:isa("Trace") then
             return string.format("trace fraction: %.2f entity: %s", t.fraction, SafeClassName(t.entity))
         elseif t:isa("Color") then            
-            return string.format("color rgba: %.2f, %.2f, %.2f, %.2f", t.r, t.g, t.g, t.a)
+            return string.format("color rgba: %.2f, %.2f, %.2f, %.2f", t.r, t.g, t.b, t.a)
         elseif t:isa("Angles") then
             return string.format("angles yaw/pitch/roll: %.2f, %.2f, %.2f", t.yaw, t.pitch, t.roll)
         elseif t:isa("Coords") then
             return CoordsToString(t)
-        elseif t:isa("Actor") then
+        elseif t:isa("Entity") then
             return t:GetClassName() .. "-" .. t:GetId()
         elseif t.GetClassName then
             return t:GetClassName()

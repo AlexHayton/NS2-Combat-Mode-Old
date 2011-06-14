@@ -131,7 +131,7 @@ end
 function CommanderUI_GetSelectedHealth(entityId)
 
     local ent = Shared.GetEntity(entityId)
-    if ent then
+    if ent and ent.GetHealth and ent.GetMaxHealth then
         return string.format("%d/%d", math.floor(ent:GetHealth()), math.ceil(ent:GetMaxHealth()))
     end
     
@@ -142,7 +142,7 @@ end
 function CommanderUI_GetSelectedArmor(entityId)
 
     local ent = Shared.GetEntity(entityId)
-    if ent then
+    if ent and ent.GetArmor and ent.GetMaxArmor then
         return string.format("%d/%d", math.floor(ent:GetArmor()), math.ceil(ent:GetMaxArmor()))
     end
     
@@ -153,7 +153,7 @@ end
 function CommanderUI_GetSelectedEnergy(entityId)
 
     local ent = Shared.GetEntity(entityId)
-    if ent then
+    if ent and ent.GetEnergy and ent.GetMaxEnergy then
         return string.format("%d/%d", math.floor(ent:GetEnergy()), math.ceil(ent:GetMaxEnergy()))
     end
     
@@ -253,7 +253,8 @@ end
  */
 function CommanderUI_GetSelectedIconOffset(entityId)
     
-    return Client.GetLocalPlayer():GetPixelCoordsForIcon(entityId)
+    local isaMarine = Client.GetLocalPlayer():isa("MarineCommander")
+    return GetPixelCoordsForIcon(entityId, isaMarine)
     
 end
 

@@ -14,10 +14,12 @@ kMACConstructEfficacy = .3
 kStopFireProbability = .10       // 10% chance per second
 kFlamethrowerAltTechResearchCost = 20
 kDefaultFOV = 90
+kStructureWarmupTime = 1.0
 kDefaultStructureCost = 10
 kStructureCircleRange = 4
 kInfantryPortalUpgradeCost = 10
 kInfantryPortalAttachRange = 10
+kArmoryWeaponAttachRange = 10
 // Minimum distance that initial IP spawns away from team location
 kInfantryPortalMinSpawnDistance = 4
 kWeaponStayTime = 30    // NS1
@@ -80,3 +82,8 @@ kStructureInfestationRadius = 2
 kHiveInfestationRadius = 20
 kInfestationRadius = 6
 kGorgeInfestationLifetime = 60
+
+// Alien upgrades
+kFrenzyMinHealth = 10
+kSwarmInterval = 2
+kSwarmDamageBonus = 1.25

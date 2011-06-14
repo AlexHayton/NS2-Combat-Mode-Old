@@ -6,6 +6,9 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+function Weapon:Dropped(prevOwner)
+end
+
 function Weapon:CreateWeaponEffect(player, playerAttachPointName, entityAttachPointName, cinematicName)
         
     if not player:GetIsThirdPerson() then

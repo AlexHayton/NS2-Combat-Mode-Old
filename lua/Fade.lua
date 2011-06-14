@@ -5,8 +5,6 @@
 //    Created by:   Charlie Cleveland (charlie@unknownworlds.com) and
 //                  Max McGuire (max@unknownworlds.com)
 //
-// Think about having Fade walk silently.
-//
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Utility.lua")
 Script.Load("lua/Weapons/Alien/SwipeBlink.lua")
@@ -38,7 +36,12 @@ Fade.kMass = 158 // ~350 pounds
 Fade.kJumpHeight = 1
 Fade.kMaxSpeed = 6.5
 Fade.kStabSpeed = .5
-Fade.kBlinkEnergyCost = 40
+Fade.kEtherealSpeed = 20
+Fade.kEtherealAcceleration = 10
+Fade.kBlinkEnergyCost = 30
+
+// Energy per second
+Fade.kBlinkContinuousEnergyCost = 50
 
 if(Server) then
     Script.Load("lua/Fade_Server.lua")
@@ -46,7 +49,10 @@ end
 
 Fade.kBlinkState = enum( {'Normal', 'BlinkOut', 'BlinkIn'} )
 
-local networkVars = {}
+Fade.networkVars =
+{
+    blinkModifier    = "boolean",
+}
 
 function Fade:GetTauntSound()
     return Fade.kTauntSound
@@ -57,6 +63,15 @@ function Fade:OnInit()
     Alien.OnInit(self)
     
     self.blinkState = Fade.kBlinkState.Normal
+    self.blinkModifier = false
+    
+end
+
+function Fade:PreCopyPlayerDataFrom()
+
+    // Reset visibility and gravity in case we were in ether mode.
+    self:SetIsVisible(true)
+    self:SetGravityEnabled(true)
 
 end
 
@@ -89,14 +104,85 @@ function Fade:GetCrouchAmount()
     return 0
 end
 
+function Fade:UpdateButtons(input)
+
+    Alien.HandleButtons(self, input)
+    
+    self.blinkModifier = (bit.band(input.commands, Move.MovementModifier) ~= 0)
+    
+end
+
+function Fade:GetFrictionForce(input, velocity)
+    if self:GetIsEthereal() then
+        return Vector(0, 0, 0)
+    end
+    return Alien.GetFrictionForce(self, input, velocity)
+end
+
+function Fade:GetBlinkModifier()
+    return self.blinkModifier
+end
+
+function Fade:ConstrainMoveVelocity(moveVelocity)
+    
+    if not self:GetIsEthereal() then
+        Alien.ConstrainMoveVelocity(self, moveVelocity)
+    end
+    
+end
+
+function Fade:ModifyVelocity(input, velocity)   
+
+    if not self:GetIsEthereal() then
+        Alien.ModifyVelocity(self, input, velocity)
+    end
+    
+end
+
+function Fade:GetIsOnGround()
+    if self:GetIsEthereal() then
+        return false
+    end
+    return Alien.GetIsOnGround(self)
+end
+
+function Fade:GetAcceleration()
+    if self:GetIsEthereal() then
+        return Fade.kEtherealAcceleration
+    end
+    return Alien.GetAcceleration(self)
+end
+
+
+function Fade:GetIsEthereal()
+
+    local weapon = self:GetActiveWeapon()
+    return (weapon ~= nil and weapon:isa("Blink") and weapon:GetEthereal())
+    
+end
+
+// When in ethereal mode, move forward at full speed if no movement given (so you
+// can't speed up by pressing keys)
+function Fade:OverrideInput(input)
+
+    if self:GetIsEthereal() and input.move:GetLength() == 0 then
+        input.move.z = 1
+    end
+    
+    return Alien.OverrideInput(self, input)
+    
+end
+
 function Fade:GetMaxSpeed()
 
-    local baseSpeed = Fade.kMaxSpeed
-    
+    // Ethereal Fades move very quickly
+    if self:GetIsEthereal() then
+        return Fade.kEtherealSpeed
+    end
+
+    local baseSpeed = Fade.kMaxSpeed    
     if self.mode == kPlayerMode.FadeStab then
-    
-        baseSpeed = Fade.kStabSpeed
-        
+        baseSpeed = Fade.kStabSpeed        
     end
 
     // Take into account crouching
@@ -132,7 +218,7 @@ function Fade:GetIsBlinking()
     
     local weapon = self:GetActiveWeapon()
     
-    if weapon ~= nil and weapon:isa("SwipeBlink") then
+    if weapon ~= nil and weapon:isa("Blink") then
         isBlinking = weapon:GetIsBlinking()
     end
     
@@ -189,4 +275,16 @@ function Fade:GetBlinkTime()
     return math.max(self:GetAnimationLength(Fade.kBlinkInAnim), self:GetAnimationLength(Fade.kBlinkOutAnim))
 end
 
-Shared.LinkClassToMap( "Fade", Fade.kMapName, networkVars )
+// Double-tap in a direction to blink that way quickly
+function Fade:OnDoubleTap(tapDirection)
+
+    // Move Fade in direction as far as we can go
+    local capsuleHeight, capsuleRadius = self:GetTraceCapsule()
+    local trace = Shared.TraceCapsule(self:GetOrigin(), self:GetOrigin() + tapDirection * 6, capsuleRadius, capsuleHeight, PhysicsMask.AllButPCs, EntityFilterOne(self))
+    self:SetOrigin(trace.endPoint)
+    
+    self:SetActivityEnd(.1)
+    
+end
+
+Shared.LinkClassToMap( "Fade", Fade.kMapName, Fade.networkVars )

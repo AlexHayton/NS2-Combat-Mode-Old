@@ -87,6 +87,8 @@ local networkVars =
 	// Medpack + Ammo Pack logic
     timeOfLastMedPack                  = 'float',
 	timeOfLastAmmoPack                  = 'float',
+    timeOfLastPhase                 = "float",
+    
     // Updated every frame depending if we have a jetpack child object
     hasJetpack                      = "boolean",
     

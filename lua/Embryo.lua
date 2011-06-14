@@ -17,6 +17,7 @@ Embryo.kThinkTime = .1
 Embryo.kXExtents = .25
 Embryo.kYExtents = .25
 Embryo.kZExtents = .25
+Embryo.kEvolveSpawnOffset = 0.2
 
 local networkVars = 
 {
@@ -76,16 +77,28 @@ function Embryo:GetMaxViewOffsetHeight()
     return .2
 end
 
-function Embryo:SetGestationTechId(techId)
+function Embryo:SetGestationTechIds(techIds, previousTechId)
 
-    self.gestationClass = LookupTechData(techId, kTechDataGestateName)
+    local alienTypeTechId = nil
+    self.gestationClass = nil
+    for i, techId in ipairs(techIds) do
+        alienTypeTechId = techId
+        self.gestationClass = LookupTechData(techId, kTechDataGestateName)
+        if self.gestationClass then break end
+    end
+    // Upgrades don't have a gestate name, we want to gestate back into the
+    // current alien type, previousTechId.
+    if not self.gestationClass then
+        alienTypeTechId = previousTechId
+        self.gestationClass = LookupTechData(previousTechId, kTechDataGestateName)
+    end
     self.gestationStartTime = Shared.GetTime()
     
-    self.gestationTime = ConditionalValue(Shared.GetCheatsEnabled(), 2, LookupTechData(techId, kTechDataGestateTime))
+    self.gestationTime = ConditionalValue(Shared.GetCheatsEnabled(), 2, LookupTechData(alienTypeTechId, kTechDataGestateTime))
     self.evolveTime = 0
     
     self:SetHealth(Embryo.kBaseHealth)
-    self.maxHealth = LookupTechData(techId, kTechDataMaxHealth)   
+    self.maxHealth = LookupTechData(alienTypeTechId, kTechDataMaxHealth)
     
 end
 
@@ -137,9 +150,14 @@ if Server then
             self.evolvePercentage = Clamp((self.evolveTime / self.gestationTime) * 100, 0, 100)
             
             if self.evolveTime >= self.gestationTime then
+                
+                // Move up slightly so that if we gestated on a sloped surface we don't get stuck
+                self:SetOrigin( self:GetOrigin() + Vector(0, Embryo.kEvolveSpawnOffset, 0) )
             
                 // Replace player with new player
                 self:Replace(self.gestationClass)
+                
+                self:DropToFloor()
                 
                 self:TriggerEffects("player_end_gestate")
                 

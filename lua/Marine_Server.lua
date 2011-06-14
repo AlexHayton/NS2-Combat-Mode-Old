@@ -81,8 +81,10 @@ function Marine:OnOverrideOrder(order)
     
 end
 
-function Marine:AttemptToBuy(techId)
+function Marine:AttemptToBuy(techIds)
 
+    local techId = techIds[1]
+    
     local armory = GetArmory(self)
     
     if armory then
@@ -164,6 +166,8 @@ function Marine:Drop(weapon)
     end
     
     if( weapon ~= nil and weapon.GetIsDroppable and weapon:GetIsDroppable() ) then
+    
+        weapon:OnPrimaryAttackEnd(self)
     
         // Remove from player's inventory
         self:RemoveWeapon(weapon)

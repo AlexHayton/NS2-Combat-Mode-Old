@@ -17,11 +17,19 @@ PhaseGate.kModelName = PrecacheAsset("models/marine/phase_gate/phase_gate.model"
 // Can only teleport a player every so often
 PhaseGate.kDepartureRate = .5
 
+PhaseGate.networkVars =
+{
+    linked      = "boolean"
+}
+
 function PhaseGate:OnInit()
 
     Structure.OnInit(self)
 
     self:SetModel(PhaseGate.kModelName)
+    
+    // Compute link state on server and propagate to client for looping effects
+    self.linked = false
     
     if Server then
     self:SetNextThink(PhaseGate.kThinkInterval)
@@ -33,7 +41,7 @@ end
 function PhaseGate:GetTechButtons(techId)
 
     return { kTechId.None, kTechId.None, kTechId.None, kTechId.None, 
-             kTechId.None, kTechId.None, kTechId.Recycle, kTechId.None }
+             kTechId.None, kTechId.None, kTechId.None, kTechId.None }
     
 end
 
@@ -42,44 +50,46 @@ function PhaseGate:GetEngagementPoint()
     return LiveScriptActor.GetEngagementPoint(self)
 end
 
+function PhaseGate:GetRequiresPower()
+    return true
+end
+
 if Server then
 
 function PhaseGate:OnThink()
 
     Structure.OnThink(self)
     
+    local destinationPhaseGate = self:GetDestinationGate()
+    
     // If built and active 
-    if self:GetIsBuilt() and self:GetIsActive() and (self.timeOfLastPhase == nil or (Shared.GetTime() > (self.timeOfLastPhase + PhaseGate.kDepartureRate))) then
+    if self:GetIsBuilt() and self:GetIsActive() and destinationPhaseGate and (self.timeOfLastPhase == nil or (Shared.GetTime() > (self.timeOfLastPhase + PhaseGate.kDepartureRate))) then
     
         local players = GetEntitiesForTeamWithinRange("Marine", self:GetTeamNumber(), self:GetOrigin(), 1)
         
         for index, player in ipairs(players) do
         
             if player.GetCanPhase and player:GetCanPhase() then
+                
+                local destOrigin = destinationPhaseGate:GetOrigin() + Vector(0, player:GetExtents().y, 0)
+                
+                // Check if destination is clear
+                if player:SpaceClearForEntity(destOrigin) then
+                
+                    self:TriggerEffects("phase_gate_player_enter")
+                    
+                    TransformPlayerCoords(player, self:GetCoords(), destinationPhaseGate:GetCoords())
             
-                local destinationPhaseGate = self:GetDestinationGate()
-                
-                if destinationPhaseGate then 
-                
-                    local destOrigin = destinationPhaseGate:GetOrigin() + Vector(0, player:GetExtents().y, 0)
+                    SpawnPlayerAtPoint(player, destOrigin)
                     
-                    // Check if destination is clear
-                    if player:SpaceClearForEntity(destOrigin) then
+                    destinationPhaseGate:TriggerEffects("phase_gate_player_exit")
                     
-                        player:TriggerEffects("phase_gate_player_enter")
-                
-                        SpawnPlayerAtPoint(player, destOrigin, destinationPhaseGate:GetAngles())
+                    self.timeOfLastPhase = Shared.GetTime()
                     
-                        player:TriggerEffects("phase_gate_player_exit")
-                        
-                        self.timeOfLastPhase = Shared.GetTime()
-                        
-                        player:SetTimeOfLastPhase(self.timeOfLastPhase)
-                        
-                        break    
-    
-                    end
+                    player:SetTimeOfLastPhase(self.timeOfLastPhase)
                     
+                    break    
+
                 end
                 
             end
@@ -87,6 +97,9 @@ function PhaseGate:OnThink()
         end
             
     end
+    
+    // Update linked state
+    self.linked = self:GetIsBuilt() and self:GetIsActive() and (destinationPhaseGate ~= nil)
     
     self:SetNextThink(PhaseGate.kThinkInterval)
     
@@ -109,15 +122,37 @@ function PhaseGate:GetDestinationGate()
     
     // Find our index and add 1
     local index = table.find(phaseGates, self)
-    ASSERT(index ~= nil)
+    if (index ~= nil) then
     
-    local nextIndex = ConditionalValue(index == table.count(phaseGates), 1, index + 1)
-    ASSERT(nextIndex >= 1)
-    ASSERT(nextIndex <= table.count(phaseGates))
-    return phaseGates[nextIndex]
+        local nextIndex = ConditionalValue(index == table.count(phaseGates), 1, index + 1)
+        ASSERT(nextIndex >= 1)
+        ASSERT(nextIndex <= table.count(phaseGates))
+        return phaseGates[nextIndex]
+        
+    end
+    
+    return nil
     
 end
         
 end
 
-Shared.LinkClassToMap("PhaseGate", PhaseGate.kMapName)
+if Client then
+
+// Update effects
+function PhaseGate:OnSynchronized()
+
+    Structure.OnSynchronized(self)
+    
+    if self.linked ~= self.clientLinkedState then
+    
+        self:TriggerEffects(ConditionalValue(self.linked, "phase_gate_linked", "phase_gate_unlinked"))
+        self.clientLinkedState = self.linked
+        
+    end
+    
+end
+
+end
+
+Shared.LinkClassToMap("PhaseGate", PhaseGate.kMapName, PhaseGate.networkVars)

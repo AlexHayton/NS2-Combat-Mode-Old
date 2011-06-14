@@ -14,13 +14,13 @@ kTechId = enum({
     'Default', 'Move', 'Attack', 'Build', 'Construct', 'Cancel', 'Recycle', 'Weld', 'Stop', 'SetRally', 'SetTarget',
     
     // Commander menus for selected units
-    'RootMenu', 'BuildMenu', 'AdvancedMenu', 'AssistMenu', 'SquadMenu', 'MarkersMenu', 'UpgradesMenu',
+    'RootMenu', 'BuildMenu', 'AdvancedMenu', 'AssistMenu', 'MarkersMenu', 'UpgradesMenu',
     
     // Command station menus
     'CommandStationUpgradesMenu',
     
-    // Armory menus
-    'ArmoryUpgradesMenu', 'ArmoryEquipmentMenu',
+    // Armory + Arms Lab menus
+    'ArmsLabUpgradesMenu',
     
     // Robotics factory menus
     'RoboticsFactoryARCUpgradesMenu', 'RoboticsFactoryMACUpgradesMenu',
@@ -58,7 +58,7 @@ kTechId = enum({
     
     // Marine tech 
     'CommandStation', 'CommandFacility', 'CommandCenter', 'MAC', 'Armory', 'InfantryPortal', 'Extractor', 'ExtractorUpgrade', 'PowerPack', 'SentryTech', 'Sentry', 'ARC', 'InfantryPortalTransponderTech', 'InfantryPortalTransponderUpgrade', 'InfantryPortalTransponder',
-    'Scan', 'AmmoPack', 'MedPack', 'CatPack', 'CatPackTech', 'PowerPoint', 'AdvancedArmoryUpgrade', 'Observatory', 'ObservatoryEnergy', 'DistressBeacon', 'PhaseGate', 'RoboticsFactory', 
+    'Scan', 'AmmoPack', 'MedPack', 'CatPack', 'CatPackTech', 'PowerPoint', 'AdvancedArmoryUpgrade', 'Observatory', 'ObservatoryEnergy', 'DistressBeacon', 'PhaseGate', 'RoboticsFactory', 'ArmsLab',
     'WeaponsModule', 'PrototypeLab', 'AdvancedArmory', 'CommandFacilityUpgrade', 'CommandCenterUpgrade', 
     
     // Weapon tech
@@ -96,13 +96,13 @@ kTechId = enum({
     ////////////
 
     // Alien lifeforms 
-    'Skulk', 'Gorge', 'Lerk', 'Fade', 'Onos', "AlienCommander",
+    'Skulk', 'Gorge', 'Lerk', 'Fade', 'Onos', "AlienCommander", "AllAliens",
     
     // Alien abilities (not all are needed, only ones with damage types)
     'Bite', 'Parasite', 'Spit', 'Spray', 'Spikes', 'SpikesAlt', 'Spores', 'HydraSpike', 'SwipeBlink', 'StabBlink', 'Gore',
     
     // Alien structures 
-    'Hive', 'HiveMass', 'HiveColony', 'Harvester', 'HarvesterUpgrade', 'Drifter', 'Egg', 'Cocoon', 'Embryo', 'Hydra', 'HiveMassUpgrade', 'HiveColonyUpgrade',
+    'Hive', /*'HiveMass', 'HiveColony',*/ 'Harvester', 'HarvesterUpgrade', 'Drifter', 'Egg', 'Cocoon', 'Embryo', 'Hydra', 'HiveMassUpgrade', 'HiveColonyUpgrade',
 
     // Upgrade buildings and abilities (structure, upgraded structure, passive, triggered, targeted)
     'Crag', 'UpgradeCrag', 'MatureCrag', 'CragHeal', 'CragUmbra', 'CragBabblers',
@@ -114,12 +114,16 @@ kTechId = enum({
     'WhipRoot', 'WhipUnroot',
     
     // Alien abilities and upgrades - BabblerTech
-    'BabblerTech', 'LobTech', 'EchoTech', 'PhantasmTech', 
-    'BloodThirstTech', 'FeedTech', 'Melee1Tech', 'Melee2Tech', 'Melee3Tech', 'AlienArmor1Tech', 'AlienArmor2Tech', 'AlienArmor3Tech',
+    'BabblerTech', 'EchoTech', 'PhantasmTech', 
+    'Melee1Tech', 'Melee2Tech', 'Melee3Tech', 'AlienArmor1Tech', 'AlienArmor2Tech', 'AlienArmor3Tech',
     'AdrenalineTech', 'CorpulenceTech', 'BacteriaTech', 'FeintTech', 'SapTech', 'StompTech', 'BoneShieldTech', 'CarapaceTech', 'PiercingTech',
+    'FrenzyTech', 'SwarmTech', 'RegenerationTech', 
     
-    // Alien buys
-    'Leap', 'Feed', 'Carapace', 'BloodThirst', 'Bacteria', 'Corpulence', 'HydraAbility', 'HarvesterAbility', 'Piercing', 'Adrenaline', 'Feint', 'Sap', 'Gore', 'Stomp', 'BoneShield', 
+    // Global upgrades
+    'Carapace', 'Regeneration', 'Frenzy', 'Swarm', 'Adrenaline', 
+    
+    // Alien-specific upgrades
+    'Leap', 'Bacteria', 'Corpulence', 'HydraAbility', 'HarvesterAbility', 'Piercing', 'Feint', 'Sap', 'Gore', 'Stomp', 'BoneShield',     
     
     // Drifter tech/abilities
     'DrifterFlareTech', 'DrifterFlare', 'DrifterParasiteTech', 'DrifterParasite', 
@@ -162,7 +166,7 @@ kTechIdMax  = kTechId.Max
 kTechType = enum({ 'Invalid', 'Order', 'Research', 'Upgrade', 'Action', 'Buy', 'Build', 'Manufacture', 'Activation', 'Menu', 'EnergyBuild', 'Special' })
 
 // Button indices
-kRecycleButtonIndex         = 7
+kRecycleCancelButtonIndex   = 12
 kMarineUpgradeButtonIndex   = 5
 kAlienBackButtonIndex       = 8
 

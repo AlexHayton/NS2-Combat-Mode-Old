@@ -325,31 +325,9 @@ function DbgMeleeTracer:Trace(shooter, startPoint, trace, capsule)
     DbgBulletTracer.Trace(self, shooter, startPoint, trace, capsule)
 end
 
-
 function DbgMeleeTracer:DrawCapsule(startPoint, endPoint, frac, capsule)  
-
-    // fix for now for zero-length line boxing - we need a non-zero vector to build
-    // a view-aligned box, and we don't always have that.
-    if startPoint == endPoint then
-        endPoint = startPoint + Vector(0,0,0.001)
-    end
-  
-    DbgBulletTracer.Line(self,startPoint,endPoint, frac)
-
-    local coords = BuildCoordsFromDirection(endPoint - startPoint, startPoint, 1)
-    local points = {}
-    for i=0,3 do
-        local dx = i % 2 == 0 and 1 or -1
-        local dy = i < 2 and 1 or -1
-        local v1 = Vector(dx * capsule.x,dy * capsule.y,-capsule.z)
-        local v2 = Vector(dx * capsule.x,dy * capsule.y, capsule.z)
-        table.insert(points, startPoint + coords:TransformVector(v1))
-        table.insert(points, endPoint + coords:TransformVector(v2))  
-    end
-    self:DrawLines(points, frac, 1, 2, 3, 5)
-    self:DrawLines(points, frac, 4, 2, 3, 8)
-    self:DrawLines(points, frac, 6, 2, 5, 8)
-    self:DrawLines(points, frac, 7, 3, 5, 8)
+    local color = frac and frac < 1 and self.incompleteColor or self.completeColor
+    DebugTraceBox(capsule, startPoint, endPoint, self.duration, unpack(color))
 end
 
 function DbgMeleeTracer:DrawLines(points, frac, pi, ...)

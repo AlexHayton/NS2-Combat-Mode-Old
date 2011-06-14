@@ -187,11 +187,6 @@ function Armory:OnResearch(researchId)
         // Create visual add-on
         self:AddChildModel(Armory.kAdvancedArmoryChildModel)
         
-    elseif(researchId == kTechId.WeaponsModule) then
-    
-        // Create visual add-on for module
-        self:AddChildModel(Armory.kWeaponsModuleChildModel)
-
     end
     
 end
@@ -210,12 +205,6 @@ function Armory:OnResearchComplete(structure, researchId)
             
             self:TriggerChildDeployAnimation(Armory.kAdvancedArmoryChildModel)
         
-        elseif(researchId == kTechId.WeaponsModule) then
-        
-            success = self:SetTechId(kTechId.WeaponsModule)
-            
-            self:TriggerChildDeployAnimation(Armory.kWeaponsModuleChildModel)
-    
         end
         
     end

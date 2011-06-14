@@ -16,6 +16,11 @@ BiteLeap.kMapName = "bite"
 
 BiteLeap.kRange = 1.0    // 60" inches in NS1
 
+// how much the two attacks diverge 
+BiteLeap.kAttackSpreadDegrees = 20
+// rotate around y-axis to get a wider horizontal spread, around x-axis to get a higher vertical spread
+BiteLeap.kAttackRotationAxis = Vector.yAxis
+
 local networkVars =
 {
     lastBittenEntityId = "entityid"
@@ -62,15 +67,38 @@ function BiteLeap:PerformPrimaryAttack(player)
     // Play random animation, speeding it up if we're under effects of fury
     player:SetActivityEnd( player:AdjustFuryFireDelay(kBiteFireDelay) )
 
-    // Trace melee attack below first, if that fails, try one above (to try to prevent biting the ground or ceiling.
-    local didHit, trace = self:AttackMeleeCapsule(player, kBiteDamage, BiteLeap.kRange, Vector(0, -0.2, 0))
-    if not trace or not trace.entity then
-        didHit, trace = self:AttackMeleeCapsule(player, kBiteDamage, BiteLeap.kRange, Vector(0, 0.2, 0))
+    // do a left and right melee attack, choose the juiciest target if any
+
+    local viewCoords = player:GetViewAngles():GetCoords()
+    
+
+    local angle = BiteLeap.kAttackSpreadDegrees * math.pi / 180
+
+    local leftCoords = viewCoords * Coords.GetRotation(BiteLeap.kAttackRotationAxis, -angle)
+    local rightCoords = viewCoords * Coords.GetRotation(BiteLeap.kAttackRotationAxis, angle)
+
+    self.traceRealAttack = true // enable tracing on both capsule checks
+    // the left attack is the default
+    local hit, trace, direction = self:CheckMeleeCapsule(player, kBiteDamage, BiteLeap.kRange, leftCoords)
+    local rightHit, rightTrace, rightDirection = self:CheckMeleeCapsule(player, kBiteDamage, BiteLeap.kRange, rightCoords)   
+    self.traceRealAttack = false
+ 
+    // check if we should use the right hit instead of the left 
+    if rightHit and rightTrace and rightTrace.entity ~= nil then
+        // is the right hit a juicier target? Well, if it is an enemy player, then we switch to it
+        if not hit or (rightTrace.entity:isa("Player") and player:GetTeamType() ~= rightTrace.entity:GetTeamType()) then
+            hit, trace, direction = rightHit, rightTrace, rightDirection
+        end
     end
 
     self.lastBittenEntityId = Entity.invalidId
-    if didHit and trace and trace.entity then
+   
+    if hit and trace and trace.entity ~= nil then
+
         self.lastBittenEntityId = trace.entity:GetId()
+
+        self:ApplyMeleeHit(player, kBiteDamage, trace, direction)
+        
     end
 
 end
@@ -131,7 +159,7 @@ end
  * cast (which is the y component here).
  */
 function BiteLeap:GetMeleeCapsule()
-    return Vector(0.4, 0.2, 0.01)
+    return Vector(0.4, 0.2, 0.4)
 end
 
 /**

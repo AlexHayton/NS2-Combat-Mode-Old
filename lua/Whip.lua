@@ -119,7 +119,7 @@ function Whip:GetTechButtons(techId)
         end
        
     elseif(techId == kTechId.UpgradesMenu) then 
-        techButtons = {kTechId.None, kTechId.None, kTechId.Melee1Tech, kTechId.Melee2Tech, kTechId.Melee3Tech, kTechId.None, kTechId.None}
+        techButtons = {kTechId.Melee1Tech, kTechId.Melee2Tech, kTechId.Melee3Tech, kTechId.None, kTechId.FrenzyTech, kTechId.SwarmTech, kTechId.None }
         techButtons[kAlienBackButtonIndex] = kTechId.RootMenu
     end
     

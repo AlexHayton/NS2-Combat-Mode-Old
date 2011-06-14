@@ -294,4 +294,8 @@ function Door:OnUse(player, elapsedTime, useAttachPoint, usePoint)
     
 end
 
+function Door:OnOverrideCanSetFire()
+    return false
+end
+
 Shared.LinkClassToMap("Door", Door.kMapName, networkVars)

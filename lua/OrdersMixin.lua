@@ -29,7 +29,7 @@ end
 function OrdersMixin:__initmixin()
 
     self.ignoreOrders = false
-        
+    
     self.orderPosition = Vector(0, 0, 0)
     
     self.orderType = kTechId.None
@@ -220,13 +220,9 @@ function OrdersMixin:CompletedCurrentOrder()
             self:OnOrderComplete(currentOrder)
         end
     
-        DestroyEntity(currentOrder)
-        
-        table.remove(self.orders, 1)
+        self:ClearCurrentOrder()
         
     end
-    
-    self:_OrderChanged()
     
 end
 
@@ -236,7 +232,10 @@ function OrdersMixin:_OrderChanged()
     
         local order = self:GetCurrentOrder()
         local orderLocation = order:GetLocation()
-        self.orderPosition = Vector(orderLocation)
+        self.orderPosition = nil
+        if orderLocation then
+            self.orderPosition = Vector(orderLocation)
+        end
         self.orderType = order:GetType()
         
     end
@@ -247,7 +246,7 @@ function OrdersMixin:_OrderChanged()
     
 end
 
-// Convert rally orders to move and we're done
+// Convert rally orders to move and we're done.
 function OrdersMixin:ProcessRallyOrder(originatingEntity)
 
     if self.ignoreOrders then
@@ -292,18 +291,12 @@ function OrdersMixin:ProcessAttackOrder(targetSearchDistance, moveSpeed, time)
                 if self:GetIsFlying() then
                     targetLocation = self:GetHoverAt(targetLocation)
                 end
-                local distToTarget = self:MoveToTarget(PhysicsMask.AIMovement, targetLocation, moveSpeed, time)
-                if(distToTarget < self.__mixindata.kMoveToDistance) then
-                    self:CompletedCurrentOrder()
-                end
+                
+                self:MoveToTarget(PhysicsMask.AIMovement, targetLocation, moveSpeed, time)
                 
             end
                 
-            return
-
-        end
-        
-        if not target then
+        else
         
             // Check for a nearby target. If not found, move towards destination.
             target = self:FindTarget(targetSearchDistance)
@@ -341,6 +334,60 @@ function OrdersMixin:ProcessAttackOrder(targetSearchDistance, moveSpeed, time)
                 self:CompletedCurrentOrder()
             end
  
+        end
+        
+    end
+    
+end
+
+function OrdersMixin:UpdateOrder()
+
+    local currentOrder = self:GetCurrentOrder()
+    
+    if(currentOrder ~= nil) then
+    
+        local orderType = currentOrder:GetType()
+        
+        if orderType == kTechId.Move or orderType == kTechId.SquadMove then
+        
+            if (currentOrder:GetLocation() - self:GetOrigin()):GetLength() < 1.5 then
+                
+                self:GetTeam():TriggerAlert(kTechId.MarineAlertOrderComplete, self)
+                
+                self:CompletedCurrentOrder()
+                
+            end
+        
+        elseif orderType == kTechId.Construct then
+        
+            local orderTarget = Shared.GetEntity(currentOrder:GetParam())
+            
+            if orderTarget == nil or not orderTarget:GetIsAlive() or orderTarget:GetIsBuilt() then
+                self:CompletedCurrentOrder()
+            end
+            
+            if orderTarget ~= nil and orderTarget:GetIsBuilt() then
+            
+                self:GetTeam():TriggerAlert(kTechId.MarineAlertOrderComplete, self)
+                
+            end
+
+        elseif orderType == kTechId.Attack then
+
+            local orderTarget = Shared.GetEntity(currentOrder:GetParam())
+
+            if not orderTarget or orderTarget:GetId() == Entity.invalidId then
+            
+                self:ClearOrders()
+                
+            elseif not orderTarget:GetIsAlive() then
+            
+                self:GetTeam():TriggerAlert(kTechId.MarineAlertOrderComplete, self)
+                
+                self:CompletedCurrentOrder()
+                
+            end
+            
         end
         
     end

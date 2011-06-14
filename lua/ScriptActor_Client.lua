@@ -155,7 +155,7 @@ function ScriptActor:UpdateAttachedEffects()
 
         for index, effectPair in ipairs(self.attachedEffects) do
     
-            local coords = Coords.GetIdentity()
+            local coords = self:GetAngles():GetCoords()
             coords.origin = self:GetOrigin()
             effectPair[1]:SetCoords(coords)
             

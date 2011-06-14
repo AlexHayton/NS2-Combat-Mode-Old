@@ -48,20 +48,7 @@ function TechTree:AddNode(node)
 end
 
 function TechTree:GetTechNode(techId)
-   
-    // Find entry with this techId
-    for index, techNode in pairs(self.nodeList) do
-    
-        local currentTechId = techNode:GetTechId()
-        
-        if(techId == currentTechId) then
-            return techNode
-        end           
-    
-    end
-    
-    return nil
-
+    return self.nodeList[techId]
 end
 
 function TechTree:GetTechSupported(techId, silenceError)

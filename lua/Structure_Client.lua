@@ -5,7 +5,16 @@
 //    Created by:   Charlie Cleveland (charlie@unknownworlds.com)
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
- 
+Script.Load("lua/EnergyMixin.lua")
+
+function Structure:OnInit()
+
+    InitMixin(self, EnergyMixin )
+
+    LiveScriptActor.OnInit(self)
+    
+end
+
 function Structure:UpdateEffects()
 
     LiveScriptActor.UpdateEffects(self)
@@ -20,3 +29,15 @@ function Structure:UpdateEffects()
 
 end
 
+function Structure:OnUse(player, elapsedTime, useAttachPoint, usePoint)
+
+    if self:GetCanConstruct(player) and self:GetIsWarmedUp() then
+    
+        player:SetActivityEnd(elapsedTime)
+        return true
+        
+    end
+    
+    return false
+    
+end

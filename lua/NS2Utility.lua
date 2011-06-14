@@ -129,8 +129,8 @@ function GetBuildNoCollision(techId, position, attachEntity, ignoreEntity)
     
 end
 
-function CheckBuildEntityRequirements(techId, position, player, ignoreEntity)
-
+function CheckBuildEntityRequirements(techId, position, player, ignoreEntity, silent)
+    
     local legalBuild = true
     
     local techTree = nil
@@ -240,7 +240,7 @@ function GetIsBuildLegal(techId, position, snapRadius, player, ignoreEntity)
     
     // Check collision and make sure there aren't too many entities nearby
     if legalBuild and player then
-        legalBuild = CheckBuildEntityRequirements(techId, legalPosition, player, ignoreEntity)
+        legalBuild = CheckBuildEntityRequirements(techId, legalPosition, player, ignoreEntity, true)
     end    
 
     // Check infestation requirements
@@ -288,13 +288,11 @@ function CreateEntityForTeam(techId, position, teamNumber, player)
     
     local mapName = LookupTechData(techId, kTechDataMapName)
     
-    newEnt = CreateEntity( mapName, Vector(position), teamNumber )
-    
     // Allow entities to be positioned off ground (eg, hive hovers over tech point)        
     local spawnHeight = LookupTechData(techId, kTechDataSpawnHeightOffset, .05)
     local spawnHeightPosition = Vector(position.x, position.y + LookupTechData(techId, kTechDataSpawnHeightOffset, .05), position.z)
     
-    newEnt:SetOrigin(spawnHeightPosition)
+    newEnt = CreateEntity( mapName, spawnHeightPosition, teamNumber )
     
     // Hook it up to attach entity
     local attachEntity = GetAttachEntity(techId, position)    
@@ -1240,13 +1238,12 @@ function GetCrosshairText(entity, teamNumber)
 
         local secondaryText = ""
         if entity:isa("Structure") then
-        
+
             // Display location name for power point so we know what it affects
             if entity:isa("PowerPoint") then
             
                 if not entity:GetIsPowered() then
                     secondaryText = "Destroyed " .. entity:GetLocationName() .. " "
-                    statusText = ""
                 else
                     secondaryText = entity:GetLocationName() .. " "
                 end
@@ -1255,20 +1252,59 @@ function GetCrosshairText(entity, teamNumber)
                 secondaryText = "Unbuilt "
             elseif entity:GetRequiresPower() and not entity:GetIsPowered() then
                 secondaryText = "Unpowered "
-                
+            
             elseif entity:isa("Whip") then
             
                 if not entity:GetIsRooted() then
                     secondaryText = "Unrooted "
                 end
+
+            else
+            
+                // If we're upgrading, show status
+                local researchId = entity:GetResearchingId()
+                local researchTechNode = GetTechTree():GetTechNode(researchId)
+                if researchTechNode and researchTechNode:GetIsUpgrade() then
+                
+                    if not enemyTeam then
+                        statusText = string.format("(%.0f%%)", Clamp(math.ceil(entity:GetResearchProgress() * 100), 0, 100))
+                    else
+                        statusText = string.format("(in progress)")
+                    end
+                    
+                end
+
             end
             
         end
         
-        text = string.format("%s%s %s", secondaryText, LookupTechData(techId, kTechDataDisplayName), statusText)
+        local primaryText = LookupTechData(techId, kTechDataDisplayName)
+        if entity.GetDescription then
+            primaryText = entity:GetDescription()
+        end
+        text = string.format("%s%s %s", secondaryText, primaryText, statusText)
 
     end
     
     return text    
+    
+end
+
+// Transform angles, view angles and velocity from srcCoords to destCoords (when going through phase gate)
+function TransformPlayerCoords(player, srcCoords, destCoords)
+
+    // Redirect player velocity relative to gates
+    local invSrcCoords = srcCoords:GetInverse()
+    local invVel = invSrcCoords:TransformVector( player:GetVelocity() )
+    local newVelocity = destCoords:TransformVector( invVel )
+    player:SetVelocity(newVelocity)
+    
+    // Redirect view angles
+    local invViewZAxis = invSrcCoords:TransformVector(player:GetViewCoords().zAxis)
+    SetViewAnglesFromVector(player, destCoords:TransformVector(invViewZAxis))                   
+    
+    // Change player angles relative to gate
+    local invZAxis = invSrcCoords:TransformVector(player:GetCoords().zAxis)
+    SetAnglesFromVector(player, destCoords:TransformVector(invZAxis))
     
 end

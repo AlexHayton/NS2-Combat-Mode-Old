@@ -7,106 +7,102 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-function Alien:Evolve(techId)
+/**
+ * Morph into new class or buy upgrade.
+ */
+function Alien:Evolve(techIds)
 
-    local handled = false
     local success = false
-    
-    // Morph into new class or buy upgrade
-    local gestationMapName = LookupTechData(techId, kTechDataGestateName)
-    if gestationMapName then
-    
-        // Change into new life form if different
-        if self:GetMapName() ~= gestationMapName then
 
-            // Check for room
-            local eggExtents = LookupTechData(kTechId.Embryo, kTechDataMaxExtents)
-            local newAlienExtents = LookupTechData(techId, kTechDataMaxExtents)
-            local physicsMask = PhysicsMask.AllButPCsAndRagdolls
-            local position = Vector(self:GetOrigin())
-            
-            // Move us up a little bit to prevent problems with getting stuck
-            // or intersecting the ground.
-            position.y = position.y + 0.1
-            
-            if not self:GetIsOnGround() then
-            
-                Print("You must be on the ground to evolve.")
-                // Pop up tooltip
-                self:AddTooltipOncePer("You must be on the ground to evolve.", 3)
-
-            //elseif not self:GetGameEffectMask(kGameEffect.OnInfestation) then
-            //    self:AddTooltipOncePer("You must be on infestation to evolve.", 3)
-                
-            elseif GetHasRoomForCapsule(eggExtents, position + Vector(0, eggExtents.y, 0), physicsMask, self) and
-                   GetHasRoomForCapsule(newAlienExtents, position + Vector(0, newAlienExtents.y, 0), physicsMask, self) then
-            
-                self:RemoveChildren()
-                
-                // Deduct cost here as player is immediately replaced and copied
-                self:AddResources(-LookupTechData(techId, kTechDataCostKey))
-                
-                local newPlayer = self:Replace(Embryo.kMapName)
-                newPlayer:SetOrigin(position)
-                
-                // Clear angles, in case we were wall-walking or doing some crazy alien thing
-                local angles = Angles(self:GetViewAngles())
-                angles.roll = 0.0
-                angles.pitch = 0.0
-                newPlayer:SetAngles(angles)
-                
-                // Eliminate velocity so that we don't slide or jump as an egg
-                newPlayer.velocity.x = 0
-                newPlayer.velocity.y = 0
-                newPlayer.velocity.z = 0
-                
-                newPlayer:DropToFloor()
-                        
-                // We lose our purchased upgrades when we morph into something else
-                newPlayer:ResetUpgrades()
-                
-                newPlayer:SetGestationTechId(techId)
-                
-                success = true
-
-            else
-            
-                // Pop up tooltip
-                Print("You need more room to evolve.")
-                self:AddTooltipOncePer("You need more room to evolve.", 3)
-                
-            end        
-            
-        end
-        
-        handled = true
-
+    // Check for room
+    local eggExtents = LookupTechData(kTechId.Embryo, kTechDataMaxExtents)
+    local newAlienExtents = nil
+    // Aliens will have a kTechDataMaxExtents defined, find it.
+    for i, techId in ipairs(techIds) do
+        newAlienExtents = LookupTechData(techId, kTechDataMaxExtents)
+        if newAlienExtents then break end
+    end
+    // In case we aren't evolving to a new alien, using the current's extents.
+    if not newAlienExtents then
+        newAlienExtents = LookupTechData(self:GetTechId(), kTechDataMaxExtents)
     end
     
-    return handled, success
+    local physicsMask = PhysicsMask.AllButPCsAndRagdolls
+    local position = Vector(self:GetGroundAt(self:GetOrigin(), physicsMask))                        
+    
+    if not self:GetIsOnGround() then
+    
+        Print("You must be on the ground to evolve.")
+        // Pop up tooltip
+        self:AddTooltipOncePer("You must be on the ground to evolve.", 3)
+
+    //elseif not self:GetGameEffectMask(kGameEffect.OnInfestation) then
+    //    self:AddTooltipOncePer("You must be on infestation to evolve.", 3)
+        
+    elseif GetHasRoomForCapsule(eggExtents, position + Vector(0, eggExtents.y + Embryo.kEvolveSpawnOffset, 0), physicsMask, self)and
+           GetHasRoomForCapsule(newAlienExtents, position + Vector(0, newAlienExtents.y + Embryo.kEvolveSpawnOffset, 0), physicsMask, self)  then
+    
+        self:RemoveChildren()
+        
+        // Deduct cost here as player is immediately replaced and copied.
+        for i, techId in ipairs(techIds) do
+        
+            local bought = true
+            
+            // Try to buy upgrades (upgrades don't have a gestate name, only aliens do).
+            if not LookupTechData(techId, kTechDataGestateName) then
+                // If we don't already have this upgrade, buy it.
+                if not self:GetHasUpgrade(techId) then
+                    bought = self:GiveUpgrade(techId)
+                else
+                    bought = false
+                    Print("%s:AttemptToBuy(%s) - Player already has tech.", self:GetClassName(), EnumToString(kTechId, techId))
+                end
+            end
+            
+            if bought then
+                self:AddResources(-LookupTechData(techId, kTechDataCostKey))
+            end
+
+        end
+        
+        local newPlayer = self:Replace(Embryo.kMapName)
+        position.y = position.y + Embryo.kEvolveSpawnOffset
+        newPlayer:SetOrigin(position)
+        
+        // Clear angles, in case we were wall-walking or doing some crazy alien thing
+        local angles = Angles(self:GetViewAngles())
+        angles.roll = 0.0
+        angles.pitch = 0.0
+        newPlayer:SetAngles(angles)
+        
+        // Eliminate velocity so that we don't slide or jump as an egg
+        newPlayer.velocity.x = 0
+        newPlayer.velocity.y = 0
+        newPlayer.velocity.z = 0
+        
+        newPlayer:DropToFloor()
+        
+        newPlayer:SetGestationTechIds(techIds, self:GetTechId())
+        
+        success = true
+
+    else
+    
+        // Pop up tooltip
+        Print("You need more room to evolve.")
+        self:AddTooltipOncePer("You need more room to evolve.", 3)
+        
+    end
+
+    return success
     
 end
 
 // Availability and cost already checked
-function Alien:AttemptToBuy(techId)
+function Alien:AttemptToBuy(techIds)
 
-    // Morph into new class 
-    local handled, success = self:Evolve(techId)
-    
-    if not handled then
-        
-        // Else try to buy tech (carapace, piercing, etc.). If we don't already have this tech node, buy it.
-        if not self:GetHasUpgrade(techId) then
-            
-            success = self:GiveUpgrade(techId)
-            
-        else
-            Print("%s:AttemptToBuy(%s) - Player already has tech.", self:GetClassName(), EnumToString(kTechId, techId))
-        end
-    
-    end
-        
-    return success
+    return self:Evolve(techIds)
     
 end
 

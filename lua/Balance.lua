@@ -15,24 +15,26 @@ kCommandStationCost = 20
 kCommandFacilityUpgradeCost = 30
 kCommandCenterUpgradeCost = 40
 
-kExtractorCost = 15
+kExtractorCost = 10
 kResourceUpgradeResearchCost = 5
 
-kInfantryPortalCost = 20
+kInfantryPortalCost = 10
 
 kArmoryCost = 10
 kAmmoPackCost = 1
 kMedPackCost = 2
+kArmsLabCost = 20
 
-kAdvancedArmoryUpgradeCost = 15
+kAdvancedArmoryUpgradeCost = 30
 
 kWeaponsModuleAddonCost = 20
 kPrototypeLabCost = 40
 
-kSentryCost = 20
+kSentryCost = 10
 kSentryTechCost = 5
 kPowerPackCost = 15
 
+kMACCost = 10
 kMACMineCost = 5
 kTechMinesResearchCost = 10
 kTechEMPResearchCost = 10
@@ -54,7 +56,7 @@ kARCSplashTechResearchCost = 15
 kARCArmorTechResearchCost = 15
 
 kJetpackCost = 25
-kJetpackTechResearchCost = 25
+kJetpackTechResearchCost = 35
 kJetpackFuelTechResearchCost = 15
 kJetpackArmorTechResearchCost = 15
 
@@ -85,15 +87,15 @@ kPhaseTechResearchCost = 15
 
 
 
-kHiveCost = 25
+kHiveCost = 50
 kHiveMassUpgradeCost = 30
 kHiveColonyUpgradeCost = 40
 
-kMetabolizeTechCost = 25
+kMetabolizeTechCost = 10
 
-kHarvesterCost = 15
+kHarvesterCost = 10
 
-kDrifterFlareTechResearchCost = 20
+kDrifterFlareTechResearchCost = 10
 
 kCragCost = 10
 kMatureCragCost = 10
@@ -113,10 +115,13 @@ kFadeCost = 50
 kOnosCost = 75
 kHydraCost = 10
 
+kFrenzyResearchCost = 10
+kSwarmResearchCost = 10
+
 kLeapResearchCost = 5
-kBloodThirstResearchCost = 5
-kFeedResearchCost = 5
-kCarapaceResearchCost = 5
+
+kCarapaceResearchCost = 10
+kRegenerationResearchCost = 10
 
 kCorpulenceResearchCost = 5
 kBacteriaResearchCost = 5
@@ -131,11 +136,10 @@ kBoneShieldResearchCost = 5
 kStompResearchCost = 5
 
 kCarapaceCost = 2
+kRegenerationCost = 2
 kLeapCost = 2
-kFeedCost = 2
-kBloodThirstCost = 2
-kCorpulenceCost = 2
-kBacteriaCost = 2
+kFrenzyCost = 2
+kSwarmCost = 2
 kHydraAbilityCost = 2
 kHarvesterAbilityCost = 2
 kPiercingCost = 2
@@ -157,7 +161,19 @@ kPlayingTeamInitialTeamRes = 50
 
 kPlayerInitialIndivRes = 999
 
-kResourceTowerResourceInterval = 12
+kResourceTowerResourceInterval = 8
+
+kPlayerResPerInterval = 0.25
+
+kKillRewardMin = 1
+kKillRewardMax = 3
+kKillTeamReward = 0
+
+
+
+
+
+
 
 // MARINE DAMAGE
 kRifleDamage = 10
@@ -192,7 +208,7 @@ kGrenadeLauncherClipSize = 4
 kGrenadeLauncherDamageRadius = 8
 kGrenadeLifetime = 3
 
-kShotgunMaxDamage = 20
+kShotgunMaxDamage = 18
 kShotgunMinDamage = 14
 kShotgunDamageType = kDamageType.Normal
 kShotgunFireDelay = 0.9
@@ -225,7 +241,7 @@ kSentryAttackBaseROF = 0.08
 kSentryAttackRandROF = 0.04
 kSentryAttackBulletsPerSalvo = 1
 
-kARCDamage = 300
+kARCDamage = 400
 kARCDamageType = kDamageType.StructuresOnly
 kARCFireDelay = 3
 
@@ -308,15 +324,19 @@ kMelee1DamageScalar = 1.1
 kMelee2DamageScalar = 1.2
 kMelee3DamageScalar = 1.3
 
+
+
 // SPAWN TIMES
 kMarineRespawnTime = 5
 kAlienRespawnTime = 9
 
 // BUILD/RESEARCH TIMES
+kRecycleTime = 8
 kArmoryBuildTime = 15
 kAdvancedArmoryResearchTime = 60
 kWeaponsModuleAddonTime = 40
 kPrototypeLabBuildTime = 20
+kArmsLabBuildTime = 19
 
 kMACBuildTime = 5
 kExtractorBuildTime = 15
@@ -341,7 +361,7 @@ kCommandCenterUpgradeTime = 120
 kPowerPointBuildTime = 15
 kPowerPackBuildTime = 13
 
-kRoboticsFactoryBuildTime = 50
+kRoboticsFactoryBuildTime = 40
 kARCBuildTime = 20
 kARCSplashTechResearchTime = 30
 kARCArmorTechResearchTime = 30
@@ -381,7 +401,7 @@ kArmor2ResearchTime = 90
 kArmor3ResearchTime = 120
 
 
-kHiveBuildTime = 30
+kHiveBuildTime = 180
 kHiveMassUpgradeTime = 180
 kHiveColonyUpgradeTime = 180
 
@@ -416,10 +436,11 @@ kMetabolizeTime = 10
 kMetabolizeResearchScalar = 0.2
 kFuryTime = 6
 
-kLeapResearchTime = 10
-kBloodThirstResearchTime = 10
-kFeedResearchTime = 10
-kCarapaceResearchTime = 10
+kFrenzyResearchTime = 25
+kSwarmResearchTime = 25
+kLeapResearchTime = 20
+kCarapaceResearchTime = 20
+kRegenerationResearchTime = 20
 
 kCorpulenceResearchTime = 10
 kBacteriaResearchTime = 10
@@ -441,13 +462,14 @@ kAlienArmor2ResearchTime = 30
 kAlienArmor3ResearchTime = 40
 
 
+
+
+
 // ENERGY COSTS
 kCommandStationInitialEnergy = 50  kCommandStationMaxEnergy = 200
 kCommandFacilityMaxEnergy = 250
 kCommandCenterMaxEnergy = 300
 kCommandCenterNanoGridCost = 50  
-
-kMACCost = 50  
 
 kHiveInitialEnergy = 100  kHiveMaxEnergy = 200
 kHiveMassMaxEnergy = 250
@@ -485,6 +507,8 @@ kShadePhantasmCost = 75
 kMatureShadeMaxEnergy = 150
 
 kEnergyUpdateRate = 0.5
+
+
 
 
 

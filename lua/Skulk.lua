@@ -34,7 +34,8 @@ local networkVars =
     leapingAnimationPlaying     = "compensated boolean",
     wallWalkingNormalGoal       = "compensated vector",
     wallWalkingNormalCurrent    = "compensated vector",
-    wallWalkingStickGoal        = "compensated vector"
+    wallWalkingStickGoal        = "compensated vector",
+    wallWalkingStickEnabled     = "compensated boolean"
 }
 
 // Balance, movement, animation
@@ -240,6 +241,7 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
             if goal ~= nil then
                 self.wallWalkingNormalGoal = goal
                 self.wallWalkingStickGoal = goal
+                self.wallWalkingStickEnabled = true
                 self.wallWalking = true
             // If not on the ground, check for a wall a bit further away and move towards it like a magnet.
             elseif not self:GetIsOnGround() then
@@ -249,6 +251,7 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
                 if stickDirectionGoal then
                     self.wallWalkingNormalGoal = stickDirectionGoal
                     self.wallWalkingStickGoal = stickDirectionGoal
+                    self.wallWalkingStickEnabled = true
                     self.wallWalking = true
                 else
                     self.wallWalking = false
@@ -266,6 +269,7 @@ function Skulk:PreUpdateMovePhysics(input, runningPrediction)
         // When not wall walking, the goal is always directly up (running on ground).
         self.wallWalkingNormalGoal = Vector.yAxis
         self.wallWalkingStickGoal = nil
+        self.wallWalkingStickEnabled = false
         // Smooth out faster when not wall walking.
         smoothMultiplier = 3
     end
@@ -359,7 +363,7 @@ function Skulk:UpdatePosition(velocity, time)
     self:PerformMovement( offset, 1, nil, true )
     
     // Move towards the stick goal if there is a stick goal.
-    if self.wallWalkingStickGoal then
+    if self.wallWalkingStickEnabled and self.wallWalkingStickGoal then
         self:PerformMovement(-self.wallWalkingStickGoal * (time * 2), 1, nil)
     end
     

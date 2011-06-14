@@ -10,6 +10,7 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/LiveScriptActor.lua")
 Script.Load("lua/DoorMixin.lua")
+Script.Load("lua/EnergyMixin.lua")
 
 class 'MAC' (LiveScriptActor)
 
@@ -59,6 +60,10 @@ MAC.kGreetingInterval = 10
 MAC.kGreetingDistance = 5
 MAC.kUseTime = 2.0
 
+MAC.networkVars = {}
+
+PrepareClassForMixin(MAC, EnergyMixin)
+
 function MAC:OnCreate()
 
     LiveScriptActor.OnCreate(self)
@@ -77,6 +82,7 @@ end
 function MAC:OnInit()
 
     InitMixin(self, DoorMixin)
+    InitMixin(self, EnergyMixin )
     
     LiveScriptActor.OnInit(self)
 
@@ -223,12 +229,12 @@ function MAC:OnOrderChanged()
 end
 
 function MAC:OnDestroyCurrentOrder(currentOrder)
-	
-	local orderTarget = nil
+    
+    local orderTarget = nil
     if (currentOrder:GetParam() ~= nil) then
         orderTarget = Shared.GetEntity(currentOrder:GetParam())
     end
-	
+    
     if(currentOrder:GetType() == kTechId.Weld and GetOrderTargetIsWeldTarget(currentOrder, self:GetTeamNumber())) then
         orderTarget:OnWeldCanceled(self)
     end
@@ -569,6 +575,8 @@ function MAC:OnUpdate(deltaTime)
     
     self:UpdateControllerFromEntity()
     
+    self:UpdateEnergy(deltaTime)
+    
 end
 
 function MAC:FindSomethingToDo()
@@ -656,4 +664,4 @@ function MAC:OnOverrideDoorInteraction(inEntity)
     return true, 4
 end
 
-Shared.LinkClassToMap("MAC", MAC.kMapName, {})
+Shared.LinkClassToMap("MAC", MAC.kMapName, MAC.networkVars)

@@ -37,7 +37,7 @@ function Infestation:UpdateInfestation(deltaTime)
         
         if not self.fullyGrown then
             // More connections count for faster growth, but only up to three and not explosive growth
-            self.growthRate = math.cos(.4 + math.min(table.count(self.connections), 3) / 3 * .6 * math.pi/2) * .45
+            self.growthRate = math.cos(.4 + math.min(table.count(self.connections), 3) / 3 * .6 * math.pi/2) * self.growthRateScalar
         end
     
         // when lifetime runs low or when we are not connected, we shrink with a fixed speed
@@ -87,9 +87,9 @@ end
 
 
 // Infestation can only take damage from flames.
-function Infestation:ComputeDamageOverride(damage, damageType) 
-
-    if damageType == kDamageType.Flame then
+function Infestation:ComputeDamageOverride(attacker, damage, damageType, time) 
+  
+    if damageType == kDamageType.Flame then         
         return damage, damageType
     end
     
