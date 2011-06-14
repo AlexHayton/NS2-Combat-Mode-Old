@@ -49,8 +49,11 @@ end
 
 function Spikes:OnDestroy()
 
-    // Make sure the player doesn't get stuck with scaled sensitivity
-    if Client then
+    // Make sure the player doesn't get stuck with scaled sensitivity.
+    // Only change this if clientZoomedIn is true (we don't want other
+    // Lerks dying causing the local client's Lerk to lose their zoomed
+    // in sensitivity).
+    if Client and self.clientZoomedIn then
         Client.SetMouseSensitivityScalar(1)
     end
     
@@ -201,14 +204,16 @@ end
 
 function Spikes:SetZoomState(player, zoomedIn)
 
-    if(zoomedIn ~= self.zoomedIn) then
+    if zoomedIn ~= self.zoomedIn then
     
         self.zoomedIn = zoomedIn
         self.timeZoomedIn = Shared.GetTime()
-            
-        if(Client) then
         
-            // Lower mouse sensitivity when zoomed in
+        if Client and player == Client.GetLocalPlayer() then
+        
+            // Keep track of the zoomed state here just for the client.
+            self.clientZoomedIn = self.zoomedIn
+            // Lower mouse sensitivity when zoomed in, only affects the local player.
             Client.SetMouseSensitivityScalar(ConditionalValue(self.zoomedIn, Spikes.kZoomedSensScalar, 1))
             
         end

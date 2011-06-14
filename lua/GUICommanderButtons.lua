@@ -97,6 +97,8 @@ function GUICommanderButtons:Initialize()
     
     self.mousePressed = { LMB = { Down = nil, X = 0, Y = 0 }, RMB = { Down = nil, X = 0, Y = 0 } }
     
+    self.lastPressedTab = nil
+    
 end
 
 function GUICommanderButtons:InitializeAlienBackground()
@@ -616,14 +618,14 @@ function GUICommanderButtons:UpdateButtonHotkeys()
 
     local triggeredButton = CommanderUI_HotkeyTriggeredButton()
     if triggeredButton ~= nil then
+    
         local buttonStatus = CommanderUI_MenuButtonStatus(triggeredButton)
+        
         // Only allow hotkeys on enabled buttons.
         if buttonStatus == GUICommanderButtons.kButtonStatusEnabled.Id then
-            if CommanderUI_MenuButtonRequiresTarget(triggeredButton) then
-                self:SetTargetedButton(triggeredButton)
-            end
-            
-            CommanderUI_MenuButtonAction(triggeredButton)
+        
+            local player = Client.GetLocalPlayer()
+            player:TriggerButtonIndex(triggeredButton, false)
             
         end
     end
@@ -705,6 +707,13 @@ function DeselectTab(tabTable)
     
 end
 
+function GUICommanderButtons:DeselectTab()
+
+    table.foreachfunctor(self.tabs, DeselectTab)
+    self.lastPressedTab = nil
+
+end
+
 function GUICommanderButtons:ButtonPressed(index, mouseX, mouseY)
 
     if CommanderUI_MenuButtonRequiresTarget(index) then
@@ -713,11 +722,18 @@ function GUICommanderButtons:ButtonPressed(index, mouseX, mouseY)
     
     CommanderUI_MenuButtonAction(index)
     
+    self:SelectTab(index)    
+
+end
+
+function GUICommanderButtons:SelectTab(index)
+
     // If this button is a tab, change it to the selected state.
     local buttonItem = self.buttons[index]
     local foundTabTable = nil
     table.foreachfunctor(self.tabs, function (tabTable) if tabTable.TopItem == buttonItem then foundTabTable = tabTable end end)
     if foundTabTable then
+    
         // Unselect all tabs and hide tab connectors first.
         table.foreachfunctor(self.tabs, DeselectTab)
         
@@ -725,6 +741,7 @@ function GUICommanderButtons:ButtonPressed(index, mouseX, mouseY)
         GUISetTextureCoordinatesTable(foundTabTable.BottomItem, GUICommanderButtons.kMarineTabTextureCoords.BottomSelected)
         foundTabTable.ConnectorItem:SetIsVisible(true)
         self.lastPressedTab = foundTabTable
+
     else
         // This is a bit of a hack for now.
         local tooltipData = CommanderUI_MenuButtonTooltip(index)
@@ -734,9 +751,48 @@ function GUICommanderButtons:ButtonPressed(index, mouseX, mouseY)
             table.foreachfunctor(self.tabs, DeselectTab)
             self.lastPressedTab = nil
         end
+        
     end
     
+end
 
+function GUICommanderButtons:GetSelectedTab ()
+    return self.lastPressedTab
+end
+
+function GUICommanderButtons:IsTabSelected (techId) 
+    local techTree = GetTechTree()                
+    local techText = techTree:GetDescriptionText(techId)
+    
+    if (self.lastPressedTab) then
+        local tabText = self.lastPressedTab.TextItem:GetText()
+        if (tabText == nil) then
+            return false
+        end
+        
+        if (tabText == techText) then
+            return true
+        end
+    end
+    
+    return false
+end
+
+function GUICommanderButtons:IsTab(techId)
+    local techTree = GetTechTree()                
+    local techText = techTree:GetDescriptionText(techId)
+    
+    
+    for i, tabTable in ipairs(self.tabs) do        
+        local tabText = tabTable.TextItem:GetText()
+        if (tabText == nil) then
+            return false
+        end
+        
+        if (tabText == techText) then
+            return true
+        end
+    end    
 end
 
 function GUICommanderButtons:GetBackground()

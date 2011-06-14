@@ -69,12 +69,8 @@ function MapBlip:Update(entity, blipType, blipTeam)
 
     self.mapBlipType = blipType
     self.mapBlipTeam = blipTeam
-
-    if entity.GetEngagementPoint then
-        self:SetOrigin(entity:GetEngagementPoint())
-    else
-        self:SetOrigin(entity:GetModelOrigin())
-    end
+    
+    self:SetOrigin(entity:GetOrigin())    
     
     self.ownerEntityId = entity:GetId()
     

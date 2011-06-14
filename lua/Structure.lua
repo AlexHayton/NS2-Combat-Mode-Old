@@ -21,9 +21,9 @@ else
 end
 
 // Play construction effects every time structure has built this much (faster if multiple builders)
-Structure.kBuildEffectsInterval = .5
+Structure.kBuildWeldEffectsInterval = .5
 Structure.kDefaultBuildTime = 8.00
-Structure.kUseInterval = 0.65
+Structure.kUseInterval = 0.1
 
 // Played when structure is first created (includes tech points)
 Structure.kAnimSpawn = "spawn"
@@ -36,7 +36,7 @@ Structure.kAnimPowerUp = "power_up"
 
 Structure.kRandomDamageEffectNode = "fxnode_damage"     // Looks for 1-5 to find damage points
 
-local networkVars =
+Structure.networkVars =
 {
     // Tech id of research this building is currently researching
     researchingId           = "enum kTechId",
@@ -52,11 +52,17 @@ local networkVars =
     // true if structure finished building
     constructionComplete    = "boolean",
     
+    // time that building will have "warmed up" (slight delay since building it has elapsed).
+    // 0 if structure isn't built yet.
+    timeWarmupComplete      = "float",
+    
     powered                 = "boolean",
     
     // Allows client-effects to be triggered
     effectsActive           = "boolean",
 }
+
+PrepareClassForMixin(Structure, EnergyMixin)
 
 function Structure:OnCreate()
 
@@ -70,9 +76,11 @@ function Structure:OnCreate()
     self:SetPhysicsType(Actor.PhysicsType.Kinematic)
     
     self.effectsActive = false
+    
+    self.timeWarmupComplete = 0
 
 end
-    
+
 function Structure:GetEffectsActive()
     return self.effectsActive
 end
@@ -95,7 +103,7 @@ function Structure:SetTechId(techId)
 end
 
 function Structure:GetIsActive()
-    return self:GetIsAlive() and (self:GetIsPowered() or not self:GetRequiresPower())
+    return self:GetIsAlive() and (self:GetIsPowered() or not self:GetRequiresPower()) and self:GetIsWarmedUp()
 end
 
 function Structure:GetResearchingId()
@@ -157,7 +165,23 @@ end
 function Structure:GetCanIdle()
     return self:GetIsBuilt() and self:GetIsActive()
 end
+
+function Structure:GetIsResearching()
+    return self:GetResearchProgress() ~= 0
+end
+
+function Structure:GetTechAllowed(techId, techNode, player)
+    if techId == kTechId.Recycle or techId == kTechId.Cancel then
+        return (self:GetTeamType() == kMarineTeamType)
+    end
     
+    if (self.researchingId ~= kTechId.None) then
+        return false
+    end
+    
+    return LiveScriptActor.GetTechAllowed(self, techId, techNode, player)
+end
+   
 function Structure:GetStatusDescription()
 
     if (not self:GetIsBuilt() ) then
@@ -198,16 +222,6 @@ end
 
 function Structure:GetIsBuilt()
     return self.constructionComplete and self:GetIsAlive()
-end
-
-if Client then
-function Structure:OnUse(player, elapsedTime, useAttachPoint, usePoint)
-    local success = self:GetCanConstruct(player)
-    if success then
-        player:SetActivityEnd(elapsedTime)
-    end
-    return success
-end
 end
 
 function Structure:GetSpawnAnimation()
@@ -273,4 +287,8 @@ function Structure:GetEffectParams(tableParams)
         
 end
 
-Shared.LinkClassToMap("Structure", Structure.kMapName, networkVars)
+function Structure:GetIsWarmedUp()
+    return (self.timeWarmupComplete ~= 0) and (Shared.GetTime() >= self.timeWarmupComplete)
+end
+
+Shared.LinkClassToMap("Structure", Structure.kMapName, Structure.networkVars)

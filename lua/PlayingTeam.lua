@@ -53,7 +53,7 @@ function PlayingTeam:AddPlayer(player)
     player.teamResources = self.teamResources
     
     // TODO: Make sure players don't leave server and come back to get resources
-    player:SetIndividualResources( kPlayerInitialIndivRes )
+    player:SetResources( kPlayerInitialIndivRes )
     
 end
 
@@ -113,7 +113,6 @@ function PlayingTeam:InitTechTree()
     self.techTree:AddMenu(kTechId.BuildMenu)
     self.techTree:AddMenu(kTechId.AdvancedMenu)
     self.techTree:AddMenu(kTechId.AssistMenu)
-    self.techTree:AddMenu(kTechId.SquadMenu)
     
     // Orders
     self.techTree:AddOrder(kTechId.Default)
@@ -123,7 +122,6 @@ function PlayingTeam:InitTechTree()
     self.techTree:AddOrder(kTechId.Construct)
     
     self.techTree:AddAction(kTechId.Cancel)
-    self.techTree:AddAction(kTechId.Recycle)
     
     self.techTree:AddOrder(kTechId.Weld)   
     
@@ -270,7 +268,7 @@ function PlayingTeam:SetTeamResources(amount)
     self.teamResources = amount
     
     function PlayerSetTeamResources(player)
-        player.teamResources = self.teamResources
+        player:SetTeamResources(self.teamResources)
     end
     
     self:ForEachPlayer(PlayerSetTeamResources)
@@ -546,7 +544,7 @@ function PlayingTeam:ComputeLOS()
         if(entity:GetTeamNumber() == self:GetTeamNumber()) then
         
             // Scan entities are structures
-            if( (entity:isa("Player") and not entity:GetIsCommander()) or entity:isa(teamBuilderName) or entity:isa("Structure") ) then
+            if( (entity:isa("Player") and not entity:GetIsCommander()) or entity:isa(teamBuilderName) or entity:isa("Structure") or entity:isa("ARC") ) then
             
                 return true
                 
@@ -638,17 +636,9 @@ function PlayingTeam:Update(timePassed)
 
     PROFILE("PlayingTeam:Update")
 
-    // Update structure research and energy
-    for index, structure in ipairs(self.structures) do
-    
-        if(structure:GetIsBuilt()) then
-        
-            structure:UpdateResearch(timePassed)
-
-            structure:UpdateEnergy(timePassed)
-            
-        end
-        
+    // Update structure research/energy
+    for index, structure in ipairs(self.structures) do    
+        structure:UpdateStructure(timePassed)        
     end
     
     self:UpdateHelp()
@@ -932,23 +922,9 @@ function PlayingTeam:UpdateTeamSpecificGameEffects(teamEntities, enemyPlayers)
     local catchFireEntities = {}
     
     for index, entity in ipairs(teamEntities) do
-
-        if entity:GetGameEffectMask(kGameEffect.OnFire) then
-        
-            // Do damage over time
-            entity:TakeDamage(kBurnDamagePerSecond * PlayingTeam.kUpdateGameEffectsInterval, Shared.GetEntity(entity.fireAttackerId), Shared.GetEntity(entity.fireDoerId))
-            
-            // See if we put ourselves out
-            local stopFireChance = PlayingTeam.kUpdateGameEffectsInterval * kStopFireProbability
-            
-            if NetworkRandom() < stopFireChance then
-            
-                entity:SetGameEffectMask(kGameEffect.OnFire, false)
-
-            end
-            
+        if HasMixin(entity, "Fire") then
+            entity:UpdateFire(PlayingTeam.kUpdateGameEffectsInterval)
         end
-    
     end
     
     for index, catchFireEntity in ipairs(catchFireEntities) do

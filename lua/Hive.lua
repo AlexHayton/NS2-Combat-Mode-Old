@@ -12,6 +12,11 @@ Script.Load("lua/InfestationMixin.lua")
 class 'Hive' (CommandStructure)
 PrepareClassForMixin(Hive, InfestationMixin)
 
+Hive.networkVars = 
+{
+    upgradeTechId   = string.format("integer (0 to %d)", kTechIdMax),
+}
+
 Hive.kMapName        = "hive"
 
 Hive.kLevel1MapName  = "hivel1"
@@ -69,15 +74,6 @@ function Hive:GetTechButtons(techId)
     
         techButtons = { kTechId.Grow, kTechId.Drifter, kTechId.MarkersMenu, kTechId.UpgradesMenu, kTechId.SetRally, kTechId.Metabolize }
         
-        // Allow hive to be upgraded but you'll never upgrade to Level1 so don't show it
-        local upgradeIndex = table.maxn(techButtons) + 1
-
-        if(self:GetTechId() == kTechId.Hive) then
-            techButtons[upgradeIndex] = kTechId.HiveMassUpgrade
-        elseif(self:GetTechId() == kTechId.HiveMass) then
-            techButtons[upgradeIndex] = kTechId.HiveColonyUpgrade
-        end        
-       
     elseif(techId == kTechId.MarkersMenu) then 
         techButtons = {kTechId.RootMenu, kTechId.ThreatMarker, kTechId.LargeThreatMarker, kTechId.NeedHealingMarker, kTechId.WeakMarker, kTechId.ExpandingMarker}
     elseif(techId == kTechId.UpgradesMenu) then 
@@ -145,7 +141,21 @@ function Hive:OnInit()
     end        
 end
 
-Shared.LinkClassToMap("Hive",    Hive.kLevel1MapName, {})
+// Show "Crag Hive" or "Shift Hive"
+function Hive:GetDescription()
+
+    local hiveDescription = LookupTechData(self:GetTechId(), kTechDataDisplayName, "<no description>")
+    
+    if self.upgradeTechId ~= kTechId.None then
+        hiveDescription = string.format("%s %s", LookupTechData(self.upgradeTechId, kTechDataDisplayName, "<not found>"), hiveDescription)
+    end    
+    
+    return hiveDescription
+    
+end
+
+
+Shared.LinkClassToMap("Hive",    Hive.kLevel1MapName, Hive.networkVars)
 
 // Create new classes here so L2 and L3 hives can be created for test cases without
 // create a basic hive and then upgrading it

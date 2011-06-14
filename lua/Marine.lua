@@ -80,6 +80,7 @@ local networkVars =
     
     timeOfLastCatPack               = "float",    
     flashlightOn                    = "boolean",
+    timeOfLastPhase                 = "float",
     
     // Updated every frame depending if we have a jetpack child object
     hasJetpack                      = "boolean",

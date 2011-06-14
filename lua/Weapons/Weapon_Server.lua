@@ -21,7 +21,8 @@ function Weapon:Dropped(prevOwner)
     self:SetWeaponWorldState(true)
     
     // So we can see the result
-    self:AddImpulse(prevOwner:GetEyePos(), prevOwner:GetViewAngles():GetCoords().zAxis * 3)
+    local viewCoords = prevOwner:GetViewCoords()
+    self:AddImpulse(viewCoords.origin, viewCoords.zAxis)
     
 end
 
@@ -35,10 +36,14 @@ function Weapon:SetWeaponWorldState(state)
             self:SetPhysicsType(Actor.PhysicsType.DynamicServer)
     
             // So it doesn't affect player movement and so collide callback is called
-            self:SetPhysicsGroup(PhysicsGroup.ProjectileGroup)
+            self:SetPhysicsGroup(PhysicsGroup.DroppedWeaponGroup)
             self:SetIsVisible(true)
             
             self:UpdatePhysicsModel()
+            
+            if (self.physicsModel) then
+                self.physicsModel:SetCCDEnabled(true)
+            end
             
             self.dropTime = Shared.GetTime()
             
@@ -50,6 +55,10 @@ function Weapon:SetWeaponWorldState(state)
             self:SetPhysicsGroup(PhysicsGroup.WeaponGroup)
             
             self:UpdatePhysicsModel()
+            
+            if (self.physicsModel) then
+                self.physicsModel:SetCCDEnabled(false)
+            end
             
             self.dropTime = nil
             
@@ -63,12 +72,19 @@ function Weapon:SetWeaponWorldState(state)
     
 end
 
+function Weapon:OnCapsuleTraceHit(entity)
+    if (self.OnCollision) then
+        self:OnCollision(entity)
+    end
+end
+
+
 // Should only be called when dropped
 function Weapon:OnCollision(targetHit)
-
-    // Don't hit owner - shooter
-    if not targetHit then
     
+    // Don't hit owner - shooter
+    if targetHit == nil then
+        
         // Play weapon drop sound
         if not self.hitGround then
             Shared.PlayWorldSound(nil, Weapon.kDropSound, nil, self:GetOrigin())
@@ -76,8 +92,7 @@ function Weapon:OnCollision(targetHit)
         
         self.hitGround = true
    
-    elseif targetHit.GetTeamNumber and targetHit:GetTeamNumber() == self:GetTeamNumber() then
-    
+    elseif targetHit and targetHit:isa("Player") and  targetHit.GetTeamNumber and targetHit:GetTeamNumber() == self:GetTeamNumber() then
         // Don't allow dropper to pick it up until it hits the ground            
         if (targetHit:GetId() ~= self.prevOwnerId) or self.hitGround then
         
@@ -110,3 +125,10 @@ end
 // Only on client
 function Weapon:CreateViewModelEffect(effectName)
 end
+
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.DroppedWeaponGroup, 0 )
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.DroppedWeaponGroup, PhysicsGroup.PlayerControllersGroup)
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.DroppedWeaponGroup, PhysicsGroup.CommanderPropsGroup )
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.DroppedWeaponGroup, PhysicsGroup.AttachClassGroup )
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.DroppedWeaponGroup, PhysicsGroup.CommanderUnitGroup )
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.DroppedWeaponGroup, PhysicsGroup.CollisionGeometryGroup )

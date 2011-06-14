@@ -80,7 +80,7 @@ kDisplayWeaponTime = 1.5
 kSpecialEditionProductId = 4930
 
 // Allow players to fire before animation finishes, feels too sluggish otherwise (marine weapons)
-kMarineDrawSpeedScalar = 1.25
+kMarineDrawSpeedScalar = 1.6
 kSkulkBiteSpeedScalar = 1.25
 
 // Damage types 
@@ -146,7 +146,7 @@ kMaxEntityStringLength = 32
 kMaxAnimationStringLength = 32
 
 // Player modes. When outside the default player mode, input isn't processed from the player
-kPlayerMode = enum( {'Default', 'Taunt', 'Knockback', 'StandUp', 'GorgeStructure', 'GorgeStartArmor', 'GorgeArmor', 'GorgeEndArmor', 'GorgeStartSlide', 'GorgeSliding', 'GorgeEndSlide', 'GorgeDeath', 'FadeBlinkIn', 'FadeStab', 'OnosStartJump'} )
+kPlayerMode = enum( {'Default', 'Taunt', 'Knockback', 'StandUp', 'GorgeStructure', 'GorgeStartArmor', 'GorgeArmor', 'GorgeEndArmor', 'GorgeStartSlide', 'GorgeSliding', 'GorgeEndSlide', 'GorgeDeath', 'FadeBlinkIn', 'FadeBlinkOut', 'FadeStab', 'OnosStartJump'} )
 
 // Team alert types
 kAlertType = enum( {'Attack', 'Info', 'Request'} )
@@ -216,6 +216,9 @@ kMaxPlayerAlerts = 127
 kMaxRelevancyDistance = 40
 
 kEpsilon = 0.0001
+
+// Weapon spawn height (for Commander dropping weapons)
+kCommanderDropSpawnHeight = 0.5
 
 // Options keys
 kNicknameOptionsKey = "nickname"

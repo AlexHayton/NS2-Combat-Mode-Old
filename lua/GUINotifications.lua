@@ -43,6 +43,7 @@ function GUINotifications:Initialize()
     self.locationText:SetPosition(Vector(20, 20, 0))
     self.locationText:SetColor(Color(1, 1, 1, 1))
     self.locationText:SetText(PlayerUI_GetLocationName())
+    self.locationText:SetLayer(kGUILayerLocationText)
     
     self:InitializeTooltip()
     
@@ -200,13 +201,19 @@ function GUINotifications:UpdateScoreDisplay(deltaTime)
         end
     end
     
-    local newScore = ScoreDisplayUI_GetNewScore()
+    local newScore, resAwarded = ScoreDisplayUI_GetNewScore()
     if newScore > 0 then
         // Restart the animation sequence.
         self.scoreDisplayPopupTime = GUINotifications.kScoreDisplayPopTimer
         self.scoreDisplayPopdownTime = 0
         self.scoreDisplayFadeoutTime = 0
-        self.scoreDisplay:SetText(string.format("+%s", tostring(newScore)))
+        
+        local resAwardedString = ""
+        if resAwarded > 0 then
+            resAwardedString = string.format(" (+%d res)", resAwarded)
+        end
+        
+        self.scoreDisplay:SetText(string.format("+%s%s", tostring(newScore), resAwardedString))
         self.scoreDisplay:SetFontSize(GUINotifications.kScoreDisplayMinFontHeight)
         self.scoreDisplay:SetColor(GUINotifications.kScoreDisplayTextColor)
         self.scoreDisplay:SetIsVisible(true)

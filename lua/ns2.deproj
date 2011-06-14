@@ -829,9 +829,6 @@
     <filename>Infestation_Server.lua</filename>
   </file>
   <file>
-    <filename>Weapons\Alien\InfestationAbility.lua</filename>
-  </file>
-  <file>
     <filename>TimedCallbackMixin.lua</filename>
   </file>
   <file>
@@ -877,9 +874,33 @@
     <filename>InfestationMixin.lua</filename>
   </file>
   <file>
-    <filename>ScenarioHandler.lua</filename>
+    <filename>PhaseGate.lua</filename>
   </file>
   <file>
-    <filename>ScenarioHandler_Commands.lua</filename>
+    <filename>ArmsLab.lua</filename>
+  </file>
+  <file>
+    <filename>GUIAlienBuyMenu.lua</filename>
+  </file>
+  <file>
+    <filename>InfestationMap.lua</filename>
+  </file>
+  <file>
+    <filename>GUIParticleSystem.lua</filename>
+  </file>
+  <file>
+    <filename>EnergyMixin.lua</filename>
+  </file>
+  <file>
+    <filename>ARC_Server.lua</filename>
+  </file>
+  <file>
+    <filename>FireMixin.lua</filename>
+  </file>
+  <file>
+    <filename>UpgradeStructureManager.lua</filename>
+  </file>
+  <file>
+    <filename>TechTreeButtons.lua</filename>
   </file>
 </project>

@@ -76,44 +76,8 @@ function InfantryPortal:QueueWaitingPlayer()
 
 end
 
-function InfantryPortal:OnResearchComplete(structure, researchId)
-
-    local success = Structure.OnResearchComplete(self, structure, researchId)
-    
-    if success then
-    
-        if(researchId == kTechId.InfantryPortalTransponderUpgrade) then
-        
-            success = self:Upgrade(kTechId.InfantryPortalTransponder)
-            
-        end
-        
-    end
-    
-end
-
 function InfantryPortal:GetSpawnTime()
     return kMarineRespawnTime
-end
-
-function InfantryPortal:GetTechButtons(techId)
-
-    if(techId == kTechId.RootMenu) then
-    
-        local techButtons = {   kTechId.None, kTechId.None, kTechId.None, kTechId.None, 
-                                kTechId.None, kTechId.None, kTechId.Recycle, kTechId.None }
-
-        // Don't display if upgraded already        
-        if self:GetTechId() ~= kTechId.InfantryPortalTransponder then
-            techButtons[kMarineUpgradeButtonIndex] = kTechId.InfantryPortalTransponderUpgrade
-        end
-        
-        return techButtons
-        
-    end
-    
-    return nil
-    
 end
 
 function InfantryPortal:OnReplace(newStructure)

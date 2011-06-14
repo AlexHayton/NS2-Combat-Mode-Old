@@ -26,18 +26,6 @@ function LiveScriptActor:SetPathingEnabled(state)
     self.pathingEnabled = state
 end
 
-function LiveScriptActor:UpdateEnergy(timePassed)
-
-    local scalar = ConditionalValue(self:GetGameEffectMask(kGameEffect.OnFire), kOnFireEnergyRecuperationScalar, 1)
-    local count = self:GetStackableGameEffectCount(kEnergizeGameEffect)
-    local energyRate = (kEnergyUpdateRate * scalar) + kEnergyUpdateRate * count * kEnergizeEnergyIncrease
-    
-    if(timePassed > 0 and self.maxEnergy ~= nil and self.maxEnergy > 0) then
-        self.energy = math.min(self.energy + timePassed * energyRate, self.maxEnergy)
-    end
-    
-end
-
 function LiveScriptActor:Upgrade(newTechId)
 
     if self:GetTechId() ~= newTechId then
@@ -45,17 +33,14 @@ function LiveScriptActor:Upgrade(newTechId)
         // Preserve health and armor scalars but potentially change maxHealth and maxArmor
         local healthScalar = self:GetHealthScalar()
         local armorScalar = self:GetArmorScalar()
-        local energyScalar = self.energy / self.maxEnergy
         
         self:SetTechId(newTechId)
         
         self:SetMaxHealth(LookupTechData(newTechId, kTechDataMaxHealth, self:GetMaxHealth()))
         self:SetMaxArmor(LookupTechData(newTechId, kTechDataMaxArmor, self:GetMaxArmor()))
-        self.maxEnergy = LookupTechData(newTechId, kTechDataMaxEnergy, self.maxEnergy)
         
         self:SetHealth(healthScalar * self:GetMaxHealth())
         self:SetArmor(armorScalar * self:GetMaxArmor())
-        self.energy = energyScalar * self.maxEnergy
         
         return true
         
@@ -138,9 +123,6 @@ function LiveScriptActor:OnTakeDamage(damage, doer, point)
         self.flinchIntensity = self.flinchIntensity + .1
     end
     
-    // Remember time we were last hurt so we can trigger alert
-    self.timeOfLastDamage = Shared.GetTime()
-    
 end
 
 function LiveScriptActor:GetTimeOfLastDamage()
@@ -155,6 +137,7 @@ function LiveScriptActor:Reset()
 
     ScriptActor.Reset(self)
     self:ResetUpgrades()
+    self:ClearOrders()
     
 end
 
@@ -179,7 +162,7 @@ function LiveScriptActor:OnKill(damage, attacker, doer, point, direction)
     end
 
     self:ResetUpgrades()
-	self:ClearOrders()
+    self:ClearOrders()
 
     ScriptActor.OnKill(self, damage, attacker, doer, point, direction)
 
@@ -326,18 +309,23 @@ function LiveScriptActor:MoveToTarget(physicsGroupMask, location, movespeed, tim
     
         // No pathing, move straight towards target.
         local distToTarget = (location - self:GetOrigin()):GetLength()
-        if distToTarget < movespeed * time then
-        
+        if distToTarget < movespeed * time then        
             VectorCopy(location, newOrigin)
             distance = 0
-
         else
         
             newOrigin = self:GetOrigin() + GetNormalizedVector(location - self:GetOrigin()) * movespeed * time
-            distance = (location - self:GetOrigin()):GetLength()
-            
+            distance = (location - self:GetOrigin()):GetLength()        
         end
-
+        
+        // $AS - FIXME: This is to prevent you from going through the level and such if navigation fails
+        // it will just stop and you will not move anywhere better than nothing really. 
+        local trace = Shared.TraceRay(location, newOrigin, PhysicsMask.AIMovement, EntityFilterOne(self))
+        if trace.fraction ~= 1 or trace.entity then
+            VectorCopy(self:GetOrigin(), newOrigin)
+            distance = 0
+            Print("Invalid move location")
+        end
     end
 
     if not self:GetIsFlying() then
@@ -565,14 +553,5 @@ function LiveScriptActor:GetTarget()
     end    
     
     return target
-end
-
-function LiveScriptActor:SetOnFire(attacker, doer)
-
-    self:SetGameEffectMask(kGameEffect.OnFire, true)
-    
-    self.fireAttackerId = attacker:GetId()
-    self.fireDoerId = doer:GetId()
-    
 end
 

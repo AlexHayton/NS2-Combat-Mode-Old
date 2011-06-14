@@ -19,19 +19,22 @@ Build.networkVars =
     buildLocation       = "vector",
     buildOrientation    = "float",
     buildProgress       = "float"
+    buildCompleted      = "boolean"
 }
 
 function Build:OnCreate()
-    self.buildType = Build.kBuildType
-    self.buildTechId = -1
-    self.buildLocation = Vector(0, 0, 0)
-    self.buildOrientation = 0 
-    self.buildProgress = 0
+    self.buildType          = Build.kBuildType
+    self.buildTechId        = -1
+    self.buildLocation      = Vector(0, 0, 0)
+    self.buildOrientation   = 0 
+    self.buildProgress      = 0
+    self.buildCompleted     = false
 
-    self.buildPlayer = Entity.invalidId 
+    self.buildPlayerId      = Entity.invalidId
+    self.buildEntity        = Entity.invalidId
 end
 
-function Build:Initialize(buildType, buildTechId, position, orientation)
+function Build:Initialize(buildType, buildTechId, position, orientation, playerId)
 
     self.buildType = buildType
     self.buildTechId = buildTechId
@@ -44,6 +47,7 @@ function Build:Initialize(buildType, buildTechId, position, orientation)
         self.buildLocation = position    
     end
     
+    self.buildPlayer = playerId    
 end
 
 function Build:GetBuildType()
@@ -56,6 +60,10 @@ end
 
 function Build:GetTechId()
     return self.buildTechId
+end
+
+function Build:GetPlayerId()
+    return self.buildPlayerId
 end
 
 function Build:GetLocation()
@@ -105,13 +113,95 @@ function Build:_SetBuildProgress(progress)
         end
         
     end
+    
+    if (self.buildProgess == 1) then
+        self.buildCompleted = true
+    end
+end
+
+function Build:_EvalBuildIsLegal(techId, origin, ignoreEntity, pickVec, radius)
+    local legalBuildPosition = false
+    local position = nil
+    local attachEntity = nil
+
+    if pickVec == nil then
+    
+        // When Drifters and MACs build, or untargeted build/buy actions, no pickVec. Trace from order point down to see
+        // if they're trying to build on top of anything and if that's OK.
+        local trace = Shared.TraceRay(Vector(origin.x, origin.y + .1, origin.z), Vector(origin.x, origin.y - .2, origin.z), PhysicsMask.CommanderBuild, EntityFilterOne(builderEntity))
+        legalBuildPosition, position, attachEntity = GetIsBuildLegal(techId, trace.endPoint, radius, self, ignoreEntity)
+
+    else
+    
+        // Make sure entity is near enough to attach class if required (snap to it as well)
+        legalBuildPosition, position, attachEntity = GetIsBuildLegal(techId, origin, radius, self, ignoreEntity)
+        
+    end
+    
+    return legalBuildPosition, position, attachEntity
+end
+
+function Build:_AttemptToBuild(pickVec, ignoreEntity, radius)
+    local legalBuildPosition = false
+    local position = nil
+    local attachEntity = nil
+    
+    legalBuildPosition, position, attachEntity = self:EvalBuildIsLegal(self:GetTechId(), self:GetLocation(), ignoreEntity, pickVec, radius)
+    local owner = Shared.GetEntity(self:GetPlayerId())
+    
+    if legalBuildPosition and owner then
+    
+        local newEnt = CreateEntityForCommander(self:GetTechId(), position, owner)
+        
+        if newEnt ~= nil then
+        
+            // Use attach entity orientation 
+            if attachEntity then
+                orientation = attachEntity:GetAngles().yaw
+            end
+            
+            // If orientation yaw specified, set it
+            if orientation then
+                local angles = Angles(0, self:GetOrientation(), 0)
+                local coords = BuildCoordsFromDirection(angles:GetCoords().zAxis, newEnt:GetOrigin())
+                newEnt:SetCoords(coords)                
+            end
+            
+            local isAlien = false
+            if newEnt.GetIsAlienStructure then
+                isalien = newEnt:GetIsAlienStructure()
+            end
+            
+            newEnt:TriggerEffects("commander_create", {isalien = isAlien})
+            
+            owner:TriggerEffects("commander_create_local")
+            
+            return true, newEnt:GetId()
+                        
+        end
+        
+    end
+    
+    return false, -1
 end
 
 function Build:GetIsComplete ()
-    return (self.buildProgress == 1)
+    return (self.buildCompleted == true)
+end
+
+function Build:GetBuildEntity()
+    return self.buildEntity
 end
 
 function Build:UpdateProgress ()
+
+  // Builds do not have progress they should just complete
+  // $AS FIXME: right now I am passing in nil and 4 to these values
+  if (self:GetBuildType() == kTechType.Build) then
+    self.buildCompleted, self.buildEntity = self:_AttemptToBuild(nil, 4, nil)
+    return    
+  end
+  
   local timePassed = Shared.GetTime() - self.timeBuildStarted
         
   // Adjust for metabolize effects
@@ -120,15 +210,15 @@ function Build:UpdateProgress ()
     timePassed = GetAlienEvolveResearchTime(timePassed, self)
   end
         
-  local researchTime = ConditionalValue(Shared.GetCheatsEnabled(), 2, self.researchTime)
-  self:_SetBuildProgress( timePassed / researchTime )
+  local buildTime = ConditionalValue(Shared.GetCheatsEnabled(), 2, self:GetBuildTime())
+  self:_SetBuildProgress( timePassed / buildTime )
 end
 
-function CreateBuild(buildType, buildTechId, position, orientation)
+function CreateBuild(buildType, buildTechId, position, orientation, playerId)
 
     local newBuild = CreateEntity(Build.kMapName)
        
-    newBuild:Initialize(buildType, buildTechId, position, tonumber(orientation))
+    newBuild:Initialize(buildType, buildTechId, position, tonumber(orientation), playerId)
     
     return newBuild
     

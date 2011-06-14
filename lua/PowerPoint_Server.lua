@@ -129,9 +129,14 @@ function PowerPoint:OnWeld(entity, elapsedTime)
     
         welded = (self:AddHealth(kMarineRepairHealthPerSecond * elapsedTime) > 0)        
         
-        if welded then
-            // Play puff of sparks
+        // Play puff of sparks every so often
+        local time = Shared.GetTime()
+        if welded and (time >= self.timeOfNextBuildWeldEffects) then        
+            
             self:TriggerEffects("player_weld")
+            
+            self.timeOfNextBuildWeldEffects = time + Structure.kBuildWeldEffectsInterval
+            
         end
         
     else    

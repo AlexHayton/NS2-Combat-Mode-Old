@@ -42,17 +42,15 @@ end
 // If more than one entity is passed in, only show build menu icons that they all share.
 function Commander:OnSelectionChanged()
     if(Client) then
-        self.menuTechId = kTechId.RootMenu
+    
+        self:TriggerButtonIndex(4, CommanderUI_IsAlienCommander())
         self.createSelectionCircles = true
         self:UpdateSelectionCircles()
+        
     else
         self:ProcessTechTreeAction(kTechId.RootMenu, nil, nil)
     end
     
-    // Clear last hotkey group when we change selection so next time
-    // we press the hotkey, we select instead of go to it    
-    self.gotoHotKeyGroup = 0
-
 end
 
 function Commander:GetEntitiesBetweenVecs(potentialEntities, pickStartVec, pickEndVec, entityList)
@@ -365,6 +363,7 @@ function Commander:GetNumSubGroups()
     
 end
 
+// Get table of selected entity ids
 function Commander:GetSelectedSubGroup()
 
     if (self.selectedEntities ~= nil) then
@@ -376,7 +375,7 @@ function Commander:GetSelectedSubGroup()
             Print("Commander:GetSelectedSubGroup(): groupIndex %d, but only %d selectedEntityTypes", groupIndex, table.count(selectedEntityTypes))
         else
     
-            // Now build list of ents
+            // Now build list of ent ids
             local subGroupEnts = {}            
             local numTypes = 0
             local prevTechId = nil
@@ -398,7 +397,7 @@ function Commander:GetSelectedSubGroup()
                     // Insert entity if in this subgroup
                     if groupIndex == numTypes then
                     
-                        table.insert(subGroupEnts, ent)
+                        table.insert(subGroupEnts, ent:GetId())
                         
                     end
                     
@@ -424,15 +423,22 @@ function Commander:InternalSetSelection(newSelection, allowEmpty)
     
         // Reset sub group
         self.focusGroupIndex = 1
-    
+        
+        // Clear last hotkey group when we change selection so next time
+        // we press the hotkey, we select instead of go to it    
+        self.gotoHotKeyGroup = 0
+        
         if not self:SelectionEntitiesEquivalent(newSelection, self.selectedEntities) then
         
             self.selectedEntities = newSelection
-            self.selectedSubGroupEntities = self:GetSelectedSubGroup()
+            self.selectedSubGroupEntityIds = self:GetSelectedSubGroup()
             self:OnSelectionChanged()
             return true
             
         end
+        
+        // Always go back to root menu when selecting something, even if the same thing
+        self.menuTechId = kTechId.RootMenu
         
     end
     
@@ -490,7 +496,7 @@ end
 
 function Commander:UpdateSelection(deltaTime)
 
-    /*local entPairsToDelete = {}
+    local entPairsToDelete = {}
     
     for tableIndex, entityPair in ipairs(self.selectedEntities) do
     
@@ -507,10 +513,10 @@ function Commander:UpdateSelection(deltaTime)
     
     for index, entityPair in ipairs(entPairsToDelete) do
         table.removevalue(self.selectedEntities, entityPair)
-    end*/
+    end
     
     // Recompute our sub-group
-    self.selectedSubGroupEntities = self:GetSelectedSubGroup()
+    self.selectedSubGroupEntityIds = self:GetSelectedSubGroup()
 
 end
 
@@ -533,7 +539,10 @@ end
 
 
 function Commander:GetIsEntityInSelectedSubGroup(entity)
-    return (table.find(self.selectedSubGroupEntities, entity) ~= nil)
+    if entity then
+        return (table.find(self.selectedSubGroupEntityIds, entity:GetId()) ~= nil)
+    end
+    return false
 end
 
 // Returns true if hotkey exists and was selected
@@ -551,11 +560,7 @@ function Commander:SelectHotkeyGroup(number)
                 
             end
             
-            local success = self:SetSelection(selection)
-            
-            self.gotoHotKeyGroup = number
-            
-            return success
+            return self:SetSelection(selection)
             
         end
         
@@ -569,19 +574,33 @@ function Commander:GotoHotkeyGroup(number, position)
 
     if (number >= 1 and number <= Player.kMaxHotkeyGroups) then
     
-        if (table.count(self.hotkeyGroups[number]) > 0) then
+        if table.count(self.hotkeyGroups[number]) > 0 then
         
             // Goto first unit in group
             local entityId = self.hotkeyGroups[number][1]
             local entity = Shared.GetEntity(entityId)
+            if entity then
             
-            VectorCopy(entity:GetOrigin(), position)
+                VectorCopy(entity:GetOrigin(), position)
 
-            // Add in extra x offset to center view where we're told, not ourselves            
-            position.x = position.x - Commander.kViewOffsetXHeight
+                // Add in extra x offset to center view where we're told, not ourselves            
+                position.x = position.x - Commander.kViewOffsetXHeight
+                
+                // Jump to hotkey group if not nearby, else jump to previous
+                // position before we jumped to group
+                local dist = (self:GetOrigin() - position):GetLength()
+                if dist < 1 then
+                    VectorCopy(self.positionBeforeJump, position)
+                end
+                
+                return true
+            
+            end
             
         end
         
     end 
+    
+    return false
            
 end

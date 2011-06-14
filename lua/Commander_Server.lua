@@ -73,9 +73,9 @@ end
 function Commander:AttemptToResearchOrUpgrade(techNode, force)
 
     // Make sure we have a valid and available structure selected
-    if (table.maxn(self.selectedSubGroupEntities) == 1 or force) then
+    if (table.maxn(self.selectedSubGroupEntityIds) == 1 or force) then
     
-        local entity = self.selectedSubGroupEntities[1]
+        local entity = Shared.GetEntity( self.selectedSubGroupEntityIds[1] )
         
         // Don't allow it to be researched while researching
         if( (entity ~= nil and entity:isa("Structure") and entity:GetCanResearch() and techNode:GetCanResearch()) or force) then
@@ -178,6 +178,20 @@ function Commander:TriggerNotEnoughResourcesAlert()
 
 end
 
+// Can't kill commander, kill selection instead
+function Commander:KillSelection()
+
+    // Give order to selection
+    for tableIndex, entityPair in ipairs(self.selectedEntities) do
+
+        local entityIndex = entityPair[1]
+        local selectedEntity = Shared.GetEntity(entityIndex)
+        selectedEntity:TakeDamage(20000, self, self, nil, nil)
+        
+    end
+
+end
+
 // Return whether action should continue to be processed for the next selected unit. Position will be nil
 // for non-targeted actions and will be the world position target for the action for targeted actions.
 function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pickVec, orientation, entity, force)
@@ -209,7 +223,10 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pi
         local costsEnergy = techNode:GetIsEnergyBuild()
 
         local teamResources = team:GetTeamResources()
-        local energy = entity:GetEnergy()
+        local energy = 0
+        if HasMixin(entity, "Energy") then
+            energy = entity:GetEnergy()
+        end
         
         if (not costsEnergy and cost <= teamResources) or (costsEnergy and cost <= energy) then
         
@@ -248,15 +265,18 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pi
         end
                         
     // Handle resources-based abilities
-    elseif(techNode:GetIsAction() or techNode:GetIsBuy()) then
-    
+    elseif(techNode:GetIsAction() or techNode:GetIsBuy() or techNode:GetIsManufacture()) then
+
         local playerResources = self:GetResources()
         if(cost == nil or cost <= playerResources) then
         
-            if(techNode:GetIsAction()) then
-            
+            if(techNode:GetIsAction()) then            
                 success = entity:PerformAction(techNode, position)
-                
+            elseif (techNode:GetIsManufacture()) then
+                success = self:AttemptToResearchOrUpgrade(techNode, true)
+                if success then 
+                    keepProcessing = false
+                end
             elseif(techNode:GetIsBuy()) then
             
                 success = self:AttemptToBuild(techId, position, normal, orientation, pickVec, false)
@@ -282,7 +302,7 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pi
                     
             success = entity:PerformActivation(techId, position, normal, self)
             
-            if success then
+            if success and HasMixin(entity, "Energy") and cost ~= 0 then
             
                 entity:AddEnergy(-cost)
                 
@@ -434,8 +454,9 @@ function Commander:ProcessTechTreeAction(techId, pickVec, orientation, worldCoor
            
             // For every selected entity, process this desired action. For some actions (research), only
             // process once, not on every entity.
-            for index, selectedEntity in ipairs(self.selectedSubGroupEntities) do
+            for index, selectedEntityId in ipairs(self.selectedSubGroupEntityIds) do
             
+                local selectedEntity = Shared.GetEntity(selectedEntityId)
                 local actionSuccess = false
                 local keepProcessing = false
                 actionSuccess, keepProcessing = self:ProcessTechTreeActionForEntity(techNode, targetPosition, targetNormal, pickVec, orientation, selectedEntity)
@@ -452,12 +473,6 @@ function Commander:ProcessTechTreeAction(techId, pickVec, orientation, worldCoor
                 end
                     
             end
-            
-            // On successful action, allow selection to receive orders
-            //if success then
-            //    for index, selectedEntity in ipairs(self.selectedSubGroupEntities) do
-            //    end
-            //end
             
         end
         

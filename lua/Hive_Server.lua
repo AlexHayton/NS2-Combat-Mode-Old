@@ -21,8 +21,10 @@ function Hive:OnCreate()
     CommandStructure.OnCreate(self)
     
     self:SetLevelTechId(1, kTechId.Hive)
-    self:SetLevelTechId(2, kTechId.HiveMass)
-    self:SetLevelTechId(3, kTechId.HiveColony)
+    //self:SetLevelTechId(2, kTechId.HiveMass)
+    //self:SetLevelTechId(3, kTechId.HiveColony)
+    
+    self.upgradeTechId = kTechId.None
     
     self:SetTechId(kTechId.Hive)
     
@@ -30,6 +32,7 @@ function Hive:OnCreate()
     self.health = kHiveHealth
     
     self:SetModel(Hive.kModelName)
+
 end
 
 function Hive:OnDestroy()
@@ -78,10 +81,12 @@ end
 function Hive:GetNumDesiredEggs()
     if self:GetTechId() == kTechId.Hive then
         return Hive.kHiveNumEggs
+    /*
     elseif self:GetTechId() == kTechId.HiveMass then
         return Hive.kMassNumEggs
     elseif self:GetTechId() == kTechId.HiveColony then
         return Hive.kColonyNumEggs
+    */
     end
     ASSERT(false, string.format("Hive tech id invalid: %s", EnumToString(kTechId, self:GetTechId())))
     return Hive.kHiveNumEggs 
@@ -261,6 +266,7 @@ function Hive:OnConstructionComplete()
     self:SpawnInfestation()
 end
 
+/*
 function Hive:OnResearchComplete(structure, researchId)
 
     local success = Structure.OnResearchComplete(self, structure, researchId)
@@ -290,6 +296,7 @@ function Hive:OnResearchComplete(structure, researchId)
     
     return success    
 end
+*/
 
 function Hive:GetIsPlayerValidForCommander(player)
     return player ~= nil and player:isa("Alien") and player:GetTeamNumber() == self:GetTeamNumber()
@@ -316,3 +323,8 @@ function Hive:LoginPlayer(player)
     end  
 
 end
+
+function Hive:SetSupportingUpgradeTechId(techId)
+    self.upgradeTechId = techId
+end
+

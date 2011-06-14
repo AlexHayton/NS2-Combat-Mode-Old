@@ -79,14 +79,35 @@ function Marine:UpdateClientEffects(deltaTime, isLocal)
     end
     
     // If we're too far from an armory or dead, close the menu
-    if isLocal and GetFlashPlayerDisplaying(kClassFlashIndex) then
+    if isLocal then
     
-        if not GetArmory(self) or not self:GetIsAlive() then
-            self:CloseMenu(kClassFlashIndex)
+        if GetFlashPlayerDisplaying(kClassFlashIndex) then
+            if not GetArmory(self) or not self:GetIsAlive() then
+                self:CloseMenu(kClassFlashIndex)
+            end
+        end
+        
+        if self.showingBuyMenu then
+            self:SetBlurEnabled( true )
+        else
+            self:SetBlurEnabled( false )
         end
         
     end
     
+end
+
+function Marine:Drop(weapon)
+
+    local weapon = self:GetActiveWeapon()
+    
+    if( weapon ~= nil and weapon.GetIsDroppable and weapon:GetIsDroppable() ) then
+        // Do basic prediction of the weapon drop on the client so that any client
+        // effects for the weapon can be dealt with
+        weapon:OnPrimaryAttackEnd(self)
+        weapon:Dropped(self)
+    end
+
 end
 
 function Marine:CloseMenu(flashIndex)
@@ -96,9 +117,6 @@ function Marine:CloseMenu(flashIndex)
         if Player.CloseMenu(self, flashIndex) then
         
             Shared.StopSound(self, Armory.kResupplySound)
-            
-            // Quick work-around to not fire weapon when closing menu
-            self.timeClosedMenu = Shared.GetTime()
             
             self.showingBuyMenu = false
             

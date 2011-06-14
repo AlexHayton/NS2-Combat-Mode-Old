@@ -79,6 +79,9 @@ function TechTree:AddManufactureNode(techId, prereq1, prereq2)
 
     techNode:Initialize(techId, kTechType.Manufacture, prereq1, prereq2)
     
+    local buildTime = LookupTechData(techId, kTechDataBuildTime, Structure.kDefaultBuildTime)
+    techNode.time = ConditionalValue(buildTime ~= nil, buildTime, 0)
+    
     self:AddNode(techNode)  
 
 end
@@ -224,7 +227,7 @@ function TechTree:SetTechChanged()
 end
 
 // Pre-compute stuff
-function TechTree:SetComplete()
+function TechTree:SetComplete(complete)
 
     if not self.complete then
         
@@ -372,6 +375,7 @@ function TechTree:GetHasTech(techId)
 
 end
 
+// TwoCommandStations and ThreeCommandStations not currently used
 function TechTree:GetTechSpecial(techId)
     return (techId == kTechId.TwoCommandStations) or (techId == kTechId.ThreeCommandStations) or (techId == kTechId.TwoHives) or (techId == kTechId.ThreeHives)
 end
@@ -429,7 +433,7 @@ function TechTree:ComputeAvailability()
                 newAvailableState = node:GetCanResearch()
             
             // Disable anything with this as a prereq if no longer available                
-            elseif( self:GetTechSupported(node.techId) or (self:GetTechSupported(node.prereq1) and self:GetTechSupported(node.prereq2)) ) then
+            elseif( self:GetTechSupported(node.prereq1) and self:GetTechSupported(node.prereq2) ) then
             
                 newAvailableState = true
 

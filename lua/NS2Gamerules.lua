@@ -14,7 +14,7 @@ NS2Gamerules.kMapName = "ns2_gamerules"
 
 NS2Gamerules.kGamerulesThinkInterval = .5
 NS2Gamerules.kGameEndCheckInterval = .75
-NS2Gamerules.kPregameLength = 8
+NS2Gamerules.kPregameLength = 15
 NS2Gamerules.kCountDownLength = 6
 NS2Gamerules.kTimeToReadyRoom = 8
 
@@ -34,6 +34,9 @@ NS2Gamerules.kDefeatSound        = PrecacheAsset("sound/ns2.fev/common/loss")
 NS2Gamerules.kCountdownSound     = PrecacheAsset("sound/ns2.fev/common/countdown")
 
 NS2Gamerules.kInfestationEffectsUpdateRate = .3
+
+// Allow players to spawn in for free (not using IP or eggs) for this many seconds after the game starts
+NS2Gamerules.kFreeSpawnTime = 15
 
 function NS2Gamerules:BuildTeam(teamType)
 
@@ -591,7 +594,7 @@ function NS2Gamerules:GetMinimapBlipTypeAndTeam(entity)
     // Players and structures.
     elseif entity:GetIsVisible() then
     
-        if entity:isa("Player") or entity:isa("MAC") or entity:isa("Drifter") then
+        if entity:isa("Player") or entity:isa("MAC") or entity:isa("Drifter") or entity:isa("ARC") then
             blipType = kMinimapBlipType.Player 
         elseif entity:isa("Structure") then
             blipType = kMinimapBlipType.Structure
@@ -861,8 +864,8 @@ function NS2Gamerules:JoinTeam(player, newTeamNumber, force)
         
         local team = self:GetTeam(newTeamNumber)
 
-        // Spawn immediately if going to ready room, game hasn't started or cheats on        
-        if (newTeamNumber == kTeamReadyRoom) or not self:GetGameStarted() or Shared.GetCheatsEnabled() or force then
+        // Spawn immediately if going to ready room, game hasn't started, cheats on, or game started recently
+        if (newTeamNumber == kTeamReadyRoom) or not self:GetGameStarted() or Shared.GetCheatsEnabled() or (Shared.GetTime() < (self.gameStartTime + NS2Gamerules.kFreeSpawnTime) or force ) then
         
             success, newPlayer = team:ReplaceRespawnPlayer(player, nil, nil)
         
@@ -935,7 +938,7 @@ function NS2Gamerules:CheckGameStart()
             if self:GetGameState() == kGameState.NotStarted then
             
                 // Tell everyone the game will be starting shortly
-                self:AddGlobalTooltip("The game will be starting shortly...")
+                self:AddGlobalTooltip(string.format("The game will start in %d seconds...", NS2Gamerules.kPregameLength))
                 self:SetGameState(kGameState.PreGame)
 
             end
@@ -982,10 +985,11 @@ function NS2Gamerules:UpdatePregame(timePassed)
     
         local preGameTime = NS2Gamerules.kPregameLength
         if(Shared.GetDevMode() or Shared.GetCheatsEnabled()) then
+            Print("Setting preGameTime to 0")
             preGameTime = 0
-        end    
+        end
 
-        if Shared.GetTime() > (self.timeSinceGameStateChanged + preGameTime) then
+        if self.timeSinceGameStateChanged > preGameTime then
             self:StartCountdown()
         end
         
@@ -997,21 +1001,23 @@ function NS2Gamerules:UpdatePregame(timePassed)
         local countDownSeconds = math.ceil(self.countdownTime)
         if(self.lastCountdownPlayed ~= countDownSeconds and (countDownSeconds < 4)) then        
 
+            self.worldTeam:PlayPrivateTeamSound(NS2Gamerules.kCountdownSound)
             self.team1:PlayPrivateTeamSound(NS2Gamerules.kCountdownSound)
             self.team2:PlayPrivateTeamSound(NS2Gamerules.kCountdownSound)
-            
+            self.spectatorTeam:PlayPrivateTeamSound(NS2Gamerules.kCountdownSound)
+
             self.lastCountdownPlayed = countDownSeconds
             
         end
         
         if(self.countdownTime <= 0) then
         
-            if(not Shared.GetDevMode()) then
+            //if(not Shared.GetDevMode()) then
            
                 self.team1:PlayPrivateTeamSound(ConditionalValue(self.team1:GetTeamType() == kAlienTeamType, NS2Gamerules.kAlienStartSound, NS2Gamerules.kMarineStartSound))
                 self.team2:PlayPrivateTeamSound(ConditionalValue(self.team2:GetTeamType() == kAlienTeamType, NS2Gamerules.kAlienStartSound, NS2Gamerules.kMarineStartSound))
                 
-            end
+            //end
 
             self:SetGameState(kGameState.Started)
             
@@ -1028,13 +1034,12 @@ function NS2Gamerules:GetIsRelevant(player, entity, noRecurse)
 
     local relevant = false
     
-    // Hive sight blips only go to aliens and also have a bigger range
-    local dist = player:GetDistance(entity)
+    if entity:isa("Blip") then
     
-    if player:isa("Alien") and entity:isa("Blip") then
-    
-        if (entity.entId ~= player:GetId()) then
-            relevant = (dist < kHiveSightMaxRange)
+        // Hive sight blips only go to aliens and also have a bigger range
+        if player:isa("Alien") and entity.entId ~= player:GetId() then
+            local dist = player:GetDistanceSquared(entity)
+            relevant = (dist < kHiveSightMaxRange * kHiveSightMaxRange)
         end
         
     elseif entity:isa("MapBlip") then
@@ -1085,8 +1090,9 @@ function NS2Gamerules:GetIsRelevant(player, entity, noRecurse)
             
         else
         
+            local dist = player:GetDistanceSquared(entity)
             // Friendly entities
-            if (dist < kMaxRelevancyDistance) /*or GetCanSeeEntity(player, entity)*/ then
+            if (dist < kMaxRelevancyDistance * kMaxRelevancyDistance) /*or GetCanSeeEntity(player, entity)*/ then
 
                 relevant = true
                 
@@ -1096,8 +1102,9 @@ function NS2Gamerules:GetIsRelevant(player, entity, noRecurse)
         
     else
     
+        local dist = player:GetDistanceSquared(entity)
         // Check the distance to determine if the entity is relevant.
-        if(dist < kMaxRelevancyDistance /*or GetCanSeeEntity(player, entity)*/) then
+        if(dist < kMaxRelevancyDistance * kMaxRelevancyDistance  /*or GetCanSeeEntity(player, entity)*/) then
 
             relevant = true
             
@@ -1109,9 +1116,7 @@ function NS2Gamerules:GetIsRelevant(player, entity, noRecurse)
             
                 local parent = entity:GetParent()
                 if parent ~= nil and parent:GetActiveWeapon() == entity then
-                
                     relevant = self:GetIsRelevant(player, parent, true)
-                    
                 end
                 
             end

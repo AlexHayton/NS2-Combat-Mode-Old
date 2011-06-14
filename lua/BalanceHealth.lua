@@ -32,7 +32,7 @@ kLerkArmorFullyUpgradedAmount = 30
 kFadeArmorFullyUpgradedAmount = 100		
 kOnosArmorFullyUpgradedAmount = 350		
 		
-kAlienArmorAbsorption1 = 1.0		
+kAlienArmorAbsorption1 = 1		
 kAlienArmorAbsorption2 = 1.1		
 kAlienArmorAbsorption3 = 1.2		
 		
@@ -51,50 +51,50 @@ kStartHealthScalar = 0.3
 kCarapaceHealthPerArmor = 3		
 		
 		
-kArmoryHealth = 2400	kArmoryArmor = 0	kArmoryPointValue = 10
-kAdvancedArmoryHealth = 4000	kAdvancedArmoryArmor = 0	kAdvancedArmoryPointValue = 40
+kArmoryHealth = 1800	kArmoryArmor = 300	kArmoryPointValue = 10
+kAdvancedArmoryHealth = 3000	kAdvancedArmoryArmor = 500	kAdvancedArmoryPointValue = 40
 		
-kCommandStationHealth = 10000	kCommandStationArmor = 0	kCommandStationPointValue = 25
+kCommandStationHealth = 5000	kCommandStationArmor = 2500	kCommandStationPointValue = 25
 kCommandFacilityHealth = 12500	kCommandFacilityArmor = 0	kCommandFacilityPointValue = 35
 kCommandCenterHealth = 15000	kCommandCenterArmor = 0	kCommandCenterPointValue = 45
 		
 kObservatoryHealth = 1700	kObservatoryArmor = 0	kObservatoryPointValue = 15
-kRoboticsFactoryHealth = 4000	kRoboticsFactoryArmor = 0	kRoboticsFactoryPointValue = 20
-kPrototypeLabHealth = 4000	kPrototypeLabArmor = 0	kPrototypeLabPointValue = 20
-kInfantryPortalHealth = 2500	kInfantryPortalArmor = 0	kInfantryPortalPointValue = 15
+kPhaseGateHealth = 2700	kPhaseGateArmor = 150	kPhaseGatePointValue = 15
+kRoboticsFactoryHealth = 2400	kRoboticsFactoryArmor = 800	kRoboticsFactoryPointValue = 20
+kPrototypeLabHealth = 3200	kPrototypeLabArmor = 400	kPrototypeLabPointValue = 20
+kInfantryPortalHealth = 2250	kInfantryPortalArmor = 125	kInfantryPortalPointValue = 15
 kInfantryPortalTransponderHealth = 3000	kInfantryPortalTransponderArmor = 0	kInfantryPortalTransponderPointValue = 20
-kPowerPackHealth = 2000	kPowerPackArmor = 0	kPowerPackPointValue = 15
+kPowerPackHealth = 1200	kPowerPackArmor = 400	kPowerPackPointValue = 15
+kArmsLabHealth = 1870	kArmsLabArmor = 165	kArmsLabPointValue = 20
 		
-kHiveHealth = 7000	kHiveArmor = 0	kHivePointValue = 30
+kHiveHealth = 6300	kHiveArmor = 350	kHivePointValue = 30
 kHiveMassHealth = 8000	kHiveMassArmor = 0	kHiveMassPointValue = 40
 kHiveColonyHealth = 9000	kHiveColonyArmor = 0	kHiveColonyPointValue = 50
 		
 kDrifterHealth = 150	kDrifterArmor = 0	kDrifterPointValue = 2
 kMACHealth = 300	kMACArmor = 50	kMACPointValue = 5
 		
-kExtractorHealth = 4800	kExtractorArmor = 600	kExtractorPointValue = 15
-kHarvesterHealth = 2000	kHarvesterArmor = 250	kHarvesterPointValue = 15
+kExtractorHealth = 4200	kExtractorArmor = 900	kExtractorPointValue = 15
+kHarvesterHealth = 1750	kHarvesterArmor = 375	kHarvesterPointValue = 15
 		
-kSentryHealth = 1300	kSentryArmor = 0	kSentryPointValue = 10
-kARCHealth = 2000	kARCArmor = 0	kARCPointValue = 20
+kSentryHealth = 1040	kSentryArmor = 130	kSentryPointValue = 10
+kARCHealth = 1600	kARCArmor = 200	kARCPointValue = 20
 		
-kCragHealth = 1000	kCragArmor = 0	kCragPointValue = 10
-kMatureCragHealth = 1200	kMatureCragArmor = 0	kMatureCragPointValue = 15
+kCragHealth = 600	kCragArmor = 200	kCragPointValue = 10
+kMatureCragHealth = 600	kMatureCragArmor = 300	kMatureCragPointValue = 15
 		
-kWhipHealth = 800	kWhipArmor = 0	kWhipPointValue = 10
-kMatureWhipHealth = 1000	kMatureWhipArmor = 0	kMatureWhipPointValue = 15
+kWhipHealth = 640	kWhipArmor = 80	kWhipPointValue = 10
+kMatureWhipHealth = 750	kMatureWhipArmor = 125	kMatureWhipPointValue = 15
 		
-kShiftHealth = 700	kShiftArmor = 0	kShiftPointValue = 10
-kMatureShiftHealth = 900	kMatureShiftArmor = 0	kMatureShiftPointValue = 15
+kShiftHealth = 560	kShiftArmor = 70	kShiftPointValue = 10
+kMatureShiftHealth = 720	kMatureShiftArmor = 90	kMatureShiftPointValue = 15
 		
 kShadeHealth = 700	kShadeArmor = 0	kShadePointValue = 10
 kMatureShadeHealth = 900	kMatureShadeArmor = 0	kMatureShadePointValue = 15
 		
 kHydraHealth = 500	kHydraArmor = 0	kHydraPointValue = 5
 		
-kPowerPointHealth = 5000	kPowerPointArmor = 0	kPowerPointPointValue = 15
-		
-		
+kPowerPointHealth = 2500	kPowerPointArmor = 1250	kPowerPointPointValue = 15
 		
 		
 		

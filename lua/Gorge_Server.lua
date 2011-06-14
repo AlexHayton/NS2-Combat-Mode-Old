@@ -12,34 +12,17 @@ function Gorge:InitWeapons()
     Alien.InitWeapons(self)
 
     self:GiveItem(SpitSpray.kMapName)
-    self:GiveItem(InfestationAbility.kMapName)
     self:GiveItem(HydraAbility.kMapName)
     
     self:SetActiveWeapon(SpitSpray.kMapName)
     
 end
 
-// When we're in our Gorge armor shell, damage comes off of energy first
-function Gorge:ComputeDamageOverride(damage, damageType)
-
-    if(self.mode == kPlayerMode.GorgeArmor) then
-    
-        // Soak as much damage as we can in energy
-        local energyNeeded = damage/Gorge.kDamageEnergyFactor
-        local energyUsed = math.min(self.energy, energyNeeded)
-        self.energy = self.energy - energyUsed
-        
-        damage = damage - energyUsed*Gorge.kDamageEnergyFactor
-        
-    end
-    
-    return damage, damageType
-    
-end
-
 // Create hydra from menu
-function Gorge:AttemptToBuy(techId)
+function Gorge:AttemptToBuy(techIds)
 
+    local techId = techIds[1]
+    
     // Drop hydra
     if (techId == kTechId.Hydra) then    
     
@@ -72,7 +55,7 @@ function Gorge:AttemptToBuy(techId)
         
     else
     
-        return Alien.AttemptToBuy(self, techId)
+        return Alien.AttemptToBuy(self, techIds)
         
     end
     

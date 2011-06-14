@@ -352,32 +352,54 @@ kAlienWeaponEffects =
 
     blink_out =
     {
-        blinkOutEffects = {
-        
-            // Animated ghost that plays blinkin or blinkout is handled as a special case
-            {viewmodel_cinematic = "cinematics/alien/fade/blink_view.cinematic", attach_point = ""},
-            {viewmodel_animation = "swipe_blink", classname = "SwipeBlink"},
-            {viewmodel_animation = "stab_blink", classname = "StabBlink"},
+        blinkOutEffects =
+        {        
             {cinematic = "cinematics/alien/fade/blink_out.cinematic"},
             
             // Play sound with randomized positional offset (in sound) at place we're leaving
             {sound = "sound/ns2.fev/alien/fade/blink"},
         },
-
+    },
+    
+    blink_out_local =
+    {
+        blinkOutEffects =
+        {        
+            {viewmodel_cinematic = "cinematics/alien/fade/blink_view.cinematic", attach_point = ""},
+            {viewmodel_animation = "swipe_blink", classname = "SwipeBlink"},
+            {viewmodel_animation = "stab_blink", classname = "StabBlink"},
+            
+            {looping_sound = "sound/ns2.fev/alien/fade/blink_loop"},
+        },
     },
 
     blink_in =
     {
-        blinkInEffects = {
-        
+        blinkInEffects =
+        {
             {cinematic = "cinematics/alien/fade/blink_in.cinematic"},
             
             // Play sound with randomized positional offset (in sound) at place we're leaving
-            {sound = "sound/ns2.fev/alien/fade/blink"},
+            {sound = "sound/ns2.fev/alien/fade/blink_end"},            
+            {stop_sound = "sound/ns2.fev/alien/fade/blink_loop"},            
+        },
+    },    
+    
+    // double-tap to quickly jump in a direction. Played at position before blink.
+    quick_blink =
+    {
+        blinkOutEffects = {
+        
+            // Animated ghost that plays blinkin or blinkout is handled as a special case
+            //{cinematic = "cinematics/alien/fade/blink_out.cinematic"},
+            //{viewmodel_cinematic = "cinematics/alien/fade/blink_view.cinematic", attach_point = ""},
             
+            // Play sound with randomized positional offset (in sound) at place we're leaving
+            //{sound = "sound/ns2.fev/alien/fade/blink"},
+            {sound = "sound/ns2.fev/alien/common/vision_on"}
         },
 
-    },    
+    },
     
     blink_ghost =
     {
@@ -408,61 +430,3 @@ kAlienWeaponEffects =
 // "false" means play all effects in each block
 GetEffectManager():AddEffectData("AlienWeaponEffects", kAlienWeaponEffects)
 
-/*
-Weapons\Alien\Spikes.lua:24: Spikes.kFireEffect = PrecacheAsset("cinematics/alien/lerk/spike_fire.cinematic")
-Weapons\Alien\Spikes.lua:25: Spikes.kEffect = PrecacheAsset("cinematics/alien/lerk/spike.cinematic")
-Weapons\Alien\Spikes.lua:26: Spikes.kImpactEffect = PrecacheAsset("cinematics/alien/lerk/spike_impact.cinematic")
-Weapons\Alien\Spikes.lua:27: Spikes.kFireViewEffect = PrecacheAsset("cinematics/alien/lerk/spike_view_fire.cinematic")
-Weapons\Alien\Spikes.lua:18: Spikes.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spikes")
-Weapons\Alien\Spikes.lua:19: Spikes.kAttackPierceSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spikes_pierce")
-Weapons\Alien\Spikes.lua:20: Spikes.kAttackZoomedSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spikes_zoomed")
-Weapons\Alien\Spikes.lua:21: Spikes.kAttackZoomedPierceSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spikes_zoomed_pierce")
-Weapons\Alien\Spikes.lua:22: Spikes.kZoomToggleSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spikes_zoom")
-
-Weapons\Alien\Spike.lua:15: Spike.kHitSound           = PrecacheAsset("sound/ns2.fev/alien/common/spikes_ricochet")
-
-Weapons\Alien\Spores.lua:20: Spores.kEffect = PrecacheAsset("cinematics/alien/lerk/spores.cinematic")
-Weapons\Alien\Spores.lua:21: Spores.kImpactEffect = PrecacheAsset("cinematics/alien/lerk/spore_impact.cinematic")
-Weapons\Alien\Spores.lua:23: Spores.kViewFireEffect = PrecacheAsset("cinematics/alien/lerk/spore_view_fire.cinematic")
-Weapons\Alien\Spores.lua:16: Spores.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spores_shoot")
-Weapons\Alien\Spores.lua:17: Spores.kHitSound = PrecacheAsset("sound/ns2.fev/alien/lerk/spores_hit")
-
-Weapons\Alien\SpitSpray.lua:23: SpitSpray.kHealthSprayEffect = PrecacheAsset("cinematics/alien/gorge/healthspray.cinematic")
-
-Weapons\Alien\Gore.lua:20: Gore.kDoorHitEffect = PrecacheAsset("cinematics/alien/onos/door_hit.cinematic")
-
-Weapons\Alien\HydraAbility.lua:18: HydraAbility.kCreateEffect = PrecacheAsset("cinematics/alien/gorge/create.cinematic")
-Weapons\Alien\HydraAbility.lua:19: HydraAbility.kCreateViewEffect = PrecacheAsset("cinematics/alien/gorge/create_view.cinematic")
-Weapons\Alien\HydraAbility.lua:14: HydraAbility.kCreateStartSound = PrecacheAsset("sound/ns2.fev/alien/gorge/create_structure_start")
-
-Weapons\Alien\Spit.lua:16: Spit.kSpitEffect         = PrecacheAsset("cinematics/alien/gorge/spit.cinematic")
-Weapons\Alien\Spit.lua:17: Spit.kSpitHitEffect      = PrecacheAsset("cinematics/alien/gorge/spit_impact.cinematic")
-
-HydraSpike.lua:16: HydraSpike.kImpactEffect       = PrecacheAsset("cinematics/alien/lerk/spike_impact.cinematic")
-
-Weapons\Alien\Blink.lua:26: Blink.kBlinkInEffect = PrecacheAsset("cinematics/alien/fade/blink_in.cinematic")
-Weapons\Alien\Blink.lua:28: Blink.kBlinkViewEffect = PrecacheAsset("cinematics/alien/fade/blink_view.cinematic")
-Weapons\Alien\Blink.lua:29: Blink.kBlinkPreviewEffect = PrecacheAsset("cinematics/alien/fade/blink_preview.cinematic")
-Weapons\Alien\StabBlink.lua:18: StabBlink.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/fade/stab")
-Weapons\Alien\StabBlink.lua:19: StabBlink.kStabSound = PrecacheAsset("sound/ns2.fev/alien/fade/impale")
-Weapons\Alien\StabBlink.lua:20: StabBlink.kHitMarineSound = PrecacheAsset("sound/ns2.fev/alien/fade/stab_marine")
-Weapons\Alien\StabBlink.lua:21: StabBlink.kImpaleSound = PrecacheAsset("sound/ns2.fev/alien/fade/impale")
-Weapons\Alien\StabBlink.lua:22: StabBlink.kScrapeMaterialSound = "sound/ns2.fev/materials/%s/scrape"
-
-Weapons\Alien\SwipeBlink.lua:20: SwipeBlink.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/fade/swipe")
-Weapons\Alien\SwipeBlink.lua:21: SwipeBlink.kHitMarineSound = PrecacheAsset("sound/ns2.fev/alien/fade/swipe_hit_marine")
-Weapons\Alien\SwipeBlink.lua:22: SwipeBlink.kScrapeMaterialSound = "sound/ns2.fev/materials/%s/scrape"
-
-Weapons\Alien\BiteLeap.lua:17: BiteLeap.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/skulk/bite")
-Weapons\Alien\BiteLeap.lua:18: BiteLeap.kLeapSound = PrecacheAsset("sound/ns2.fev/alien/skulk/bite_alt")
-Weapons\Alien\BiteLeap.lua:20: BiteLeap.kKillSound = PrecacheAsset("sound/ns2.fev/alien/skulk/bite_kill")
-
-Weapons\Alien\SpitSpray.lua:22: SpitSpray.kRegenerationSound = PrecacheAsset("sound/ns2.fev/alien/common/regeneration")
-
-Weapons\Alien\Gore.lua:17: Gore.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/onos/gore")
-Weapons\Alien\Gore.lua:18: Gore.kHitMaterialSoundSpec = "sound/ns2.fev/alien/onos/gore_hit_%s"
-
-Weapons\Alien\Stomp.lua:17: Stomp.kAttackSound = PrecacheAsset("sound/ns2.fev/alien/onos/stomp")
-
-
-*/

@@ -47,12 +47,13 @@ PhysicsGroup = enum
         'PlayerControllersGroup',   // Bullets will not collide with this group.
         'PlayerGroup',              // Ignored for movement
         'WeaponGroup',
-        'ProjectileGroup',          // Includes dropped weapons
+        'ProjectileGroup',
         'CommanderPropsGroup',
         'CommanderUnitGroup',       // Macs, Drifters, doors, etc.
         'AttachClassGroup',         // Nozzles, tech points, etc.
         'InfestationGroup',         // Infestation only
-        'CollisionGeometryGroup'    // Used so players walk smoothly gratings and skulks wall-run on railings, etc.
+        'CollisionGeometryGroup',   // Used so players walk smoothly gratings and skulks wall-run on railings, etc.
+        'DroppedWeaponGroup'
     }
 
 // Pre-defined physics group masks.

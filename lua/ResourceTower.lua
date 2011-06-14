@@ -13,7 +13,7 @@ class 'ResourceTower' (Structure)
 
 ResourceTower.kMapName = "resourcetower"
 
-ResourceTower.kResourcesInjection = 1
+ResourceTower.kResourcesInjection = kPlayerResPerInterval
 ResourceTower.kTeamResourcesInjection = 1
 ResourceTower.kMaxUpgradeLevel = 3
 
@@ -56,6 +56,7 @@ function ResourceTower:GiveResourcesToTeam(player)
 
 end
 
+/*
 function ResourceTower:GetDescription()
 
     local description = Structure.GetDescription(self)
@@ -67,6 +68,6 @@ function ResourceTower:GetDescription()
     return description
     
 end
-
+*/
 
 Shared.LinkClassToMap("ResourceTower", ResourceTower.kMapName, networkVars)

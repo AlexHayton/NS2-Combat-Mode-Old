@@ -58,6 +58,9 @@ TechNode.kTechNodeVars =
     // 0-1 research progress. This is non-authoritative and set/duplicated from Structure:SetResearchProgress()
     // so player buy menus can display progress.
     researchProgress    = "float",
+    
+    // 0-1 research progress of the prerequisites of this node.
+    prereqResearchProgress = "float",
 
     // True after being researched.
     researched          = "boolean",
@@ -106,6 +109,8 @@ function TechNode:Initialize(techId, techType, prereq1, prereq2)
     self.time = 0
     
     self.researchProgress = 0
+    
+    self.prereqResearchProgress = 0
     
     self.researched = false
     
@@ -173,6 +178,10 @@ function TechNode:GetIsActivation()
     return self.techType == kTechType.Activation
 end
 
+function TechNode:GetIsManufacture()
+    return self.techType == kTechType.Manufacture
+end
+
 function TechNode:GetIsMenu()
     return self.techType == kTechType.Menu
 end
@@ -197,6 +206,14 @@ function TechNode:GetPrereq2()
     return self.prereq2
 end
 
+function TechNode:SetPrereq1(prereq1)
+    self.prereq1 = prereq1
+end
+
+function TechNode:SetPrereq2(prereq2)
+    self.prereq2 = prereq2
+end
+
 function TechNode:GetCost()
     return self.cost
 end
@@ -210,6 +227,18 @@ end
 
 function TechNode:SetResearchProgress(progress)
     self.researchProgress = progress
+end
+
+function TechNode:GetResearchProgress()
+    return self.researchProgress
+end
+
+function TechNode:SetPrereqResearchProgress(progress)
+    self.prereqResearchProgress = progress
+end
+
+function TechNode:GetPrereqResearchProgress()
+    return self.prereqResearchProgress
 end
 
 function TechNode:GetAvailable()
@@ -236,6 +265,13 @@ function TechNode:SetResearching()
 
 end
 
+function TechNode:ClearResearching()
+
+    self.researching = false
+    self.researchProgress = 0
+        
+end
+
 // Make sure to call TechTree:ComputeAvailability() after making a change here.
 function TechNode:SetResearched(state)
 
@@ -251,31 +287,33 @@ if Client then
     // Build tech node from data sent in base update
     function TechNode:InitializeFromNetwork(networkVars)
 
-        self.techId             = networkVars.techId
-        self.techType           = networkVars.techType
-        self.prereq1            = networkVars.prereq1
-        self.prereq2            = networkVars.prereq2
-        self.addOnTechId        = networkVars.addOnTechId
-        self.cost               = networkVars.cost
-        self.available          = networkVars.available
-        self.time               = networkVars.time
-        self.researchProgress   = networkVars.researchProgress
-        self.researched         = networkVars.researched
-        self.researching        = networkVars.researching
-        self.hasTech            = networkVars.hasTech
-        self.requiresTarget     = networkVars.requiresTarget
-        self.energyBuild        = networkVars.energyBuild
+        self.techId                 = networkVars.techId
+        self.techType               = networkVars.techType
+        self.prereq1                = networkVars.prereq1
+        self.prereq2                = networkVars.prereq2
+        self.addOnTechId            = networkVars.addOnTechId
+        self.cost                   = networkVars.cost
+        self.available              = networkVars.available
+        self.time                   = networkVars.time
+        self.researchProgress       = networkVars.researchProgress
+        self.prereqResearchProgress = networkVars.prereqResearchProgress
+        self.researched             = networkVars.researched
+        self.researching            = networkVars.researching
+        self.hasTech                = networkVars.hasTech
+        self.requiresTarget         = networkVars.requiresTarget
+        self.energyBuild            = networkVars.energyBuild
         
     end
 
     // Update values from kTechNodeUpdateMessage
     function TechNode:UpdateFromNetwork(networkVars)
 
-        self.available          = networkVars.available
-        self.researchProgress   = networkVars.researchProgress
-        self.researched         = networkVars.researched
-        self.researching        = networkVars.researching
-        self.hasTech            = networkVars.hasTech
+        self.available              = networkVars.available
+        self.researchProgress       = networkVars.researchProgress
+        self.prereqResearchProgress = networkVars.prereqResearchProgress
+        self.researched             = networkVars.researched
+        self.researching            = networkVars.researching
+        self.hasTech                = networkVars.hasTech
         
     end
 
@@ -287,19 +325,20 @@ if Server then
 
         local t = {}
         
-        t.techId             = techNode.techId
-        t.techType           = techNode.techType
-        t.prereq1            = techNode.prereq1
-        t.prereq2            = techNode.prereq2
-        t.addOnTechId        = techNode.addOnTechId
-        t.cost               = techNode.cost
-        t.available          = techNode.available
-        t.time               = techNode.time
-        t.researchProgress   = techNode.researchProgress
-        t.researched         = techNode.researched
-        t.researching        = techNode.researching
-        t.requiresTarget     = techNode.requiresTarget
-        t.energyBuild        = techNode.energyBuild
+        t.techId                    = techNode.techId
+        t.techType                  = techNode.techType
+        t.prereq1                   = techNode.prereq1
+        t.prereq2                   = techNode.prereq2
+        t.addOnTechId               = techNode.addOnTechId
+        t.cost                      = techNode.cost
+        t.available                 = techNode.available
+        t.time                      = techNode.time
+        t.researchProgress          = techNode.researchProgress
+        t.prereqResearchProgress    = techNode.prereqResearchProgress
+        t.researched                = techNode.researched
+        t.researching               = techNode.researching
+        t.requiresTarget            = techNode.requiresTarget
+        t.energyBuild               = techNode.energyBuild
         
         return t
         

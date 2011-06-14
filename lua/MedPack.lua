@@ -14,10 +14,6 @@ if Server then
     Script.Load("lua/MedPack_Server.lua")
 end
 
-function MedPack:GetHasBuildFootPrint()
-    return true
-end
-
 MedPack.kMapName = "medpack"
 
 MedPack.kModelName = PrecacheAsset("models/marine/medpack/medpack.model")

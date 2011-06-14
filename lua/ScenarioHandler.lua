@@ -22,8 +22,8 @@ function ScenarioHandler:Init()
         Whip = OrientedEntityHandler(),
         Crag = OrientedEntityHandler(),
         Hive = OrientedEntityHandler(),
-        HiveMass = OrientedEntityHandler(),
-        HiveColony = OrientedEntityHandler(),
+        //HiveMass = OrientedEntityHandler(),
+        //HiveColony = OrientedEntityHandler(),
         Harvester = OrientedEntityHandler()
     })
     // marines   

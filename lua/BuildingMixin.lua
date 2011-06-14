@@ -9,6 +9,9 @@
 BuildingMixin = { }
 BuildingMixin.type = "Builds"
 
+// Snap structures within this range to attach points.
+BuildingMixin.kStructureSnapRadius = 4
+
 function BuildingMixin.__prepareclass(toClass)
     
     ASSERT(toClass.networkVars ~= nil, "BuildingMixin expects the class to have network fields")
@@ -16,6 +19,7 @@ function BuildingMixin.__prepareclass(toClass)
     local addNetworkFields =
     {        
         buildPosition       = "vector",
+        buildTechId         = "enum kTechId"
         buildType           = "enum kTechType"
         timeBuildStarted    = "float" 
     }
@@ -31,6 +35,8 @@ function BuildingMixin:__initmixin()
     self.buildPosition = Vector(0, 0, 0)
     
     self.buildType = kTechId.None
+    
+    self.buildTechId = kTechId.None
     
     self.timeBuildStarted = 0
         
@@ -52,12 +58,13 @@ function BuildingMixin:_OverrideBuild(build)
     end    
 end
 
-function BuildingMixin:AttemptCreateBuild(buildType, builderId, builderOrigin, orientation, clearExisting, insertFirst)
+function BuildingMixin:CreateBuild(buildType, builderId, builderOrigin, orientation, clearExisting, insertFirst, buildPlayerId)
    
     ASSERT(type(buildType) == "number")
-    ASSERT(type(builderId) == "number")        
+    ASSERT(type(builderId) == "number")
+    ASSERT(type(buildPlayerId) == "number")        
     
-    local build = CreateBuild(buildType, builderId, builderOrigin, orientation)
+    local build = CreateBuild(buildType, builderId, builderOrigin, orientation, buildPlayerId)
     
     self:_OverrideBuild(build)
     
@@ -75,9 +82,11 @@ function BuildingMixin:AttemptCreateBuild(buildType, builderId, builderOrigin, o
 
 end
 
+
+
 function BuildingMixin:ClearBuilds()
 
-    if table.count(self.orders) > 0 then
+    if table.count(self.builds) > 0 then
     
         self:_DestroyBuilds()
         self:_BuildChanged()
@@ -112,34 +121,19 @@ function BuildingMixin:_DestroyBuilds()
 
 end
 
-function BuildingMixin:GetHasSpecifiedOrder(orderEnt)
-
-    ASSERT(orderEnt ~= nil and orderEnt.GetId ~= nil)
-    
-    for index, orderEntId in ipairs(self.orders) do
-        if orderEntId == orderEnt:GetId() then
-            return true
-        end
-    end
-    
-    return false
-
-end
-
-function BuildingMixin:_SetOrder(build, clearExisting, insertFirst)
+function BuildingMixin:_SetBuild(build, clearExisting, insertFirst)
 
     if clearExisting then
         self:ClearBuilds()
     end
         
     if(insertFirst) then
-        table.insert(self.orders, 1, order:GetId())
+        table.insert(self.builds, 1, build:GetId())
     else    
-        table.insert(self.orders, order:GetId())
-    end
-    
-    self:_BuildChanged()
-
+        table.insert(self.builds, build:GetId())
+    end        
+            
+    self:_BuildChanged()    
 end
 
 function BuildingMixin:GetCurrentBuild()
@@ -182,6 +176,7 @@ end
 function BuildingMixin:OnOverrideUpgradeComplete()
     local currentBuild = self:GetCurrentBuild()
     
+    // Right now I think upgrades use the same path as research
     if self:GetTeam().OnResearchComplete then
         self:GetTeam():OnResearchComplete(self, currentBuild:GetTechId())
     end
@@ -215,6 +210,14 @@ function BuildingMixin:OnOverrideEnergyBuildComplete()
     end
 end
 
+function BuildingMixin:OnOverrideBuildComplete()
+    local currentBuild = self:GetCurrentBuild()             
+    
+    if self:GetTeam().OnBuildComplete then
+        self:GetTeam():OnBuildComplete(self, currentBuild:GetTechId(), currentBuild:GetBuildEntity())
+    end
+end
+
 function BuildingMixin:CompletedCurrentBuild()
 
     local currentBuild = self:GetCurrentBuild()
@@ -226,6 +229,8 @@ function BuildingMixin:CompletedCurrentBuild()
             self:OnOverrideUpgradeComplete()
         elseif (buildType == kTechType.Manufacture) then
             self:OnOverrideManufactureComplete()
+        elseif (buildType == kTechType.Build) then
+            self:OnOverrideBuildComplete()
         elseif (buildType == kTechType.EnergyBuild) then
             self:OnOverrideEnergyBuildComplete()   
         end
@@ -253,6 +258,14 @@ function BuildingMixin:_BuildChanged()
         self:OnBuildChanged()
     end
     
+end
+
+function BuildingMixin:UpdateBuilds () 
+    if (self._overrideBuildUpdate)
+        self._overrideBuildUpdate()
+    end
+    
+    self:_UpdateBuild()
 end
 
 function BuildingMixin:_UpdateBuild()

@@ -234,11 +234,13 @@ function Gorge:SetAnimAndMode(animName, mode)
         self.modeTime = -1
     end
     
+    /*
     if mode == kPlayerMode.GorgeStructure then
         local velocity = self:GetVelocity()
-        velocity:Scale(.1)
+        velocity:Scale(.5)
         self:SetVelocity(velocity)
     end
+    */
     
 end
 
@@ -247,9 +249,6 @@ function Gorge:HandleButtons(input)
     PROFILE("Gorge:HandleButtons")
     
     Alien.HandleButtons(self, input)
-    
-    // Crouch key for armor
-    self:SetArmorMode(self.crouching and self.energy > 0)
     
     // Shift key for belly slide
     self:UpdateSliding(input)
@@ -365,8 +364,8 @@ function Gorge:ConstrainMoveVelocity(moveVelocity)
     
     if self:GetIsSliding() then
         moveVelocity:Scale(.02)
-    elseif self.mode == kPlayerMode.GorgeStructure then
-        moveVelocity:Scale(Gorge.kBuildingModeMovementScalar)
+    //elseif self.mode == kPlayerMode.GorgeStructure then
+    //    moveVelocity:Scale(Gorge.kBuildingModeMovementScalar)
     end
     
 end
@@ -376,6 +375,11 @@ function Gorge:GetFrictionForce(input, velocity)
     if(self:GetIsSliding()) then
     
         local scalar = .4
+        return Vector(-velocity.x, 0, -velocity.z) * scalar
+
+    elseif self.mode == kPlayerMode.GorgeStructure then
+    
+        local scalar = 18
         return Vector(-velocity.x, 0, -velocity.z) * scalar
         
     end

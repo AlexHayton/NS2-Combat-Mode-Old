@@ -48,3 +48,25 @@ function GUISetTextureCoordinatesTable(item, coordinateTable)
     item:SetTexturePixelCoordinates(coordinateTable.X1, coordinateTable.Y1,
                                     coordinateTable.X2, coordinateTable.Y2)
 end
+
+// Pass in a Column number, Row Number, Width, and Height.
+// For use in the GUIItem:SetTexturePixelCoordinates call.
+function GUIGetSprite(col, row, width, height)
+
+	ASSERT(type(col) == 'number')
+	ASSERT(type(row) == 'number')
+	ASSERT(type(width) == 'number')
+	ASSERT(type(height) == 'number')
+
+	return ((width * col) - width), ((height * row) - height), (width + (( width * col ) - width)), (height + (( height * row ) - height))
+
+end
+
+// Reduces any input value based on user resultion
+// Usefull for scaling UI Sizes and positions so they never domainte the screen on small screen aspects.
+// See MenuManager for changing the resolution calculations
+function GUIScale(size)
+
+    return math.scaledown(size, MenuManager.ScreenSmallAspect(), MenuManager.ScreenScaleAspect) * (2 - (MenuManager.ScreenSmallAspect() / MenuManager.ScreenScaleAspect))
+
+end

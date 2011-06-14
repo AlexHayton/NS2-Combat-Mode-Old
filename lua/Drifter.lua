@@ -10,6 +10,7 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/LiveScriptActor.lua")
 Script.Load("lua/DoorMixin.lua")
+Script.Load("lua/EnergyMixin.lua")
 
 class 'Drifter' (LiveScriptActor)
 
@@ -37,13 +38,15 @@ Drifter.kCapsuleRadius = .5
 Drifter.kStartDistance = 4
 Drifter.kHoverHeight = 1.2
 
-local networkVars = {
+Drifter.networkVars = {
     // 0-1 scalar used to set move_speed model parameter according to how fast we recently moved
     moveSpeed               = "float",
     timeOfLastUpdate        = "float",
     moveSpeedParam          = "compensated float",
     landed                  = "boolean"
 }
+
+PrepareClassForMixin(Drifter, EnergyMixin)
 
 function Drifter:OnCreate()
 
@@ -61,6 +64,7 @@ end
 function Drifter:OnInit()
 
     InitMixin(self, DoorMixin)
+    InitMixin(self, EnergyMixin )
     
     self:SetModel(Drifter.kModelName)
     
@@ -257,12 +261,15 @@ function Drifter:OnThink()
     
 end
 
-function Drifter:ResetOrders()
+function Drifter:ResetOrders(resetOrigin)
      self.landed = false
      self:SetIgnoreOrders(false)    
      self:ClearOrders()
-     self:SetAnimationWithBlending(Drifter.kAnimFly, nil, true)          
-     self:SetOrigin(self:GetOrigin() + Vector(0, self:GetHoverHeight(), 0))     
+     
+     if resetOrigin then
+        self:SetAnimationWithBlending(Drifter.kAnimFly, nil, true)         
+        self:SetOrigin(self:GetOrigin() + Vector(0, self:GetHoverHeight(), 0))
+     end     
 end
 
 function Drifter:ProcessBuildOrder(moveSpeed)
@@ -282,7 +289,7 @@ function Drifter:ProcessBuildOrder(moveSpeed)
         // Create structure here
         local commander = self:GetOwner()
         if (not commander or not commander:isa("Commander")) then
-            self:ResetOrders()            
+            self:ResetOrders(false)            
             return
         end
         
@@ -294,7 +301,7 @@ function Drifter:ProcessBuildOrder(moveSpeed)
         // know its going to fail and to be honest we should never get to this point anyways
         legalBuildPosition, position, attachEntity = commander:EvalBuildIsLegal(techId, groundLocation, self, Vector(0, 1, 0))
         if (not legalBuildPosition) then
-            self:ResetOrders()
+            self:ResetOrders(false)
             return
         end
              
@@ -338,7 +345,7 @@ function Drifter:ProcessBuildOrder(moveSpeed)
                                     
                     else
                         // TODO: Issue alert to commander that way was blocked?
-                        self:ResetOrders()
+                        self:ResetOrders(true)
                     end
                                 
                 else
@@ -346,7 +353,7 @@ function Drifter:ProcessBuildOrder(moveSpeed)
                     self:GetTeam():TriggerAlert(kTechId.AlienAlertNotEnoughResources, self)
                                     
                     // Cancel build bots orders so he doesn't move away
-                    self:ResetOrders()
+                    self:ResetOrders(true)
                                     
                 end 
             end                    
@@ -381,6 +388,8 @@ function Drifter:OnUpdate(deltaTime)
         self:SetPoseParam("move_speed", self.moveSpeedParam)
         
     end
+    
+    self:UpdateEnergy(deltaTime)
     
     self.timeOfLastUpdate = Shared.GetTime()
     
@@ -542,11 +551,11 @@ function Drifter:GetMeleeAttackDamage()
 end
 
 function Drifter:GetMeleeAttackInterval()
-    return kDrifterAttackDelay
+    return kDrifterAttackFireDelay
 end
 
 function Drifter:OnOverrideDoorInteraction(inEntity)
     return true, 4
 end
 
-Shared.LinkClassToMap("Drifter", Drifter.kMapName, networkVars)
+Shared.LinkClassToMap("Drifter", Drifter.kMapName, Drifter.networkVars)

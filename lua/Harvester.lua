@@ -16,24 +16,6 @@ function Harvester:GetIsAlienStructure()
     return true
 end
 
-function Harvester:GetTechButtons(techId)
-
-    if(techId == kTechId.RootMenu) then
-    
-        local techButtons = { kTechId.None }
-        
-        if (self:GetResearchingId() == kTechId.None) and (self:GetUpgradeLevel() < ResourceTower.kMaxUpgradeLevel) then
-            techButtons[1] = kTechId.HarvesterUpgrade
-        end
-        
-        return techButtons
-        
-    end
-    
-    return nil
-    
-end
-
 function Harvester:OnResearchComplete(structure, researchId)
 
     local success = ResourceTower.OnResearchComplete(self, structure, researchId)

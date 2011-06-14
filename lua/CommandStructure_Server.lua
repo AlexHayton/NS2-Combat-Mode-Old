@@ -22,10 +22,6 @@ function CommandStructure:GetTeamType()
     return kNeutralTeamType
 end
 
-function CommandStructure:GetIsValidForRecycle()
-    return not self.occupied
-end
-
 function CommandStructure:OnInit()
 
     Structure.OnInit(self)

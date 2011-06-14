@@ -17,6 +17,22 @@ Script.Load("lua/Onos.lua")
 // Indices passed in from flash
 local indexToAlienTechIdTable = {kTechId.Fade, kTechId.Gorge, kTechId.Lerk, kTechId.Onos, kTechId.Skulk}
 
+local kAlienBuyMenuSounds = { Open = "sound/ns2.fev/alien/common/alien_menu/open_menu",
+                              Close = "sound/ns2.fev/alien/common/alien_menu/close_menu",
+                              Evolve = "sound/ns2.fev/alien/common/alien_menu/evolve",
+                              BuyUpgrade = "sound/ns2.fev/alien/common/alien_menu/buy_upgrade",
+                              SellUpgrade = "sound/ns2.fev/alien/common/alien_menu/sell_upgrade",
+                              Hover = "sound/ns2.fev/alien/common/alien_menu/hover",
+                              SelectSkulk = "sound/ns2.fev/alien/common/alien_menu/skulk_select",
+                              SelectFade = "sound/ns2.fev/alien/common/alien_menu/fade_select",
+                              SelectGorge = "sound/ns2.fev/alien/common/alien_menu/gorge_select",
+                              SelectOnos = "sound/ns2.fev/alien/common/alien_menu/onos_select",
+                              SelectLerk = "sound/ns2.fev/alien/common/alien_menu/lerk_select" }
+
+for i, soundAsset in pairs(kAlienBuyMenuSounds) do
+    Client.PrecacheLocalSound(soundAsset)
+end
+
 function IndexToAlienTechId(index)
 
     if index >= 1 and index <= table.count(indexToAlienTechIdTable) then
@@ -73,14 +89,14 @@ function GetUnpurchasedUpgradeInfoArray(techIdTable)
     
     for index, techId in ipairs(techIdTable) do
     
-        local success, iconX, iconY = GetAlienUpgradeIconXY(techId)
+        local iconX, iconY = GetMaterialXYOffset(techId, false)
         
-        if success then
+        if iconX and iconY then
         
             table.insert(t, iconX)
             table.insert(t, iconY)
             
-            table.insert(t, LookupTechData(techId, kTechDataDisplayName))
+            table.insert(t, LookupTechData(techId, kTechDataDisplayName, string.format("<name not found - %s>", EnumToString(kTechId, techId))))
             
             table.insert(t, GetTechTree():GetResearchProgressForBuyNode(techId))
             
@@ -105,9 +121,12 @@ function GetUnpurchasedTechIds(techId)
     
     if techTree ~= nil then
     
-        addOnUpgrades = techTree:GetAddOnsForTechId(techId)
+        // Use upgrades for our lifeform, plus global upgrades 
+        addOnUpgrades = techTree:GetAddOnsForTechId(techTree:GetAddOnsForTechId(techId))
         
-        // If we've already purchased it, remove it. Iterate through a different
+        table.copy(techTree:GetAddOnsForTechId(kTechId.AllAliens), addOnUpgrades, true)        
+        
+        // If we've already purchased it, or if it's not available, remove it. Iterate through a different
         // table as we'll be changing it as we go.
         local addOnCopy = {}
         table.copy(addOnUpgrades, addOnCopy)
@@ -115,8 +134,10 @@ function GetUnpurchasedTechIds(techId)
         for key, value in pairs(addOnCopy) do
         
             local hasTech = player:GetHasUpgrade(value)
+            local techNode = techTree:GetTechNode(value)
+            local canPurchase = (techNode and techNode:GetIsBuy() and techNode:GetAvailable())
             
-            if hasTech then
+            if hasTech or not canPurchase then
             
                 table.removevalue(addOnUpgrades, value)
                 
@@ -155,7 +176,7 @@ function GetPurchasedUpgradeInfoArray(techIdTable)
         
             table.insert(t, iconX)
             table.insert(t, iconY)
-            table.insert(t, LookupTechData(id, kTechDataDisplayName))
+            table.insert(t, LookupTechData(id, kTechDataDisplayName, string.format("<not found - %s>", EnumToString(kTechId, id))))
             
         else
         
@@ -176,55 +197,80 @@ function AlienBuy_GetPurchasedUpgrades(idx)
     // If this is us
     local player = Client.GetLocalPlayer()
     local techId = player:GetTechId()
-    if AlienTechIdToIndex(techId) == idx then
-        return GetPurchasedUpgradeInfoArray(player:GetUpgrades())
-    end
-    
-    // Any alien that we haven't evolved to shows no purchased upgrades on the menu (TODO: handle global upgrades)
-    return {}
+    return GetPurchasedUpgradeInfoArray(player:GetUpgrades())
     
 end
 
-function PurchaseTech(purchaseId)
+function PurchaseTechs(purchaseIds)
 
+    ASSERT(purchaseIds)
+    ASSERT(table.count(purchaseIds) > 0)
+    
     local player = Client.GetLocalPlayer()
-    local techNode = GetTechTree():GetTechNode(purchaseId)
     
-    if techNode ~= nil then
+    local buyCommand = "buy"
+    local buyAllowed = true
+    local totalCost = 0
     
-        if techNode:GetAvailable() then
+    for i, purchaseId in ipairs(purchaseIds) do
+    
+        local techNode = GetTechTree():GetTechNode(purchaseId)
         
-            if techNode:GetCost() <= player:GetResources() then
-            
-                Client.ConsoleCommand("buy " .. tostring(purchaseId))
-                
-                Shared.PlayPrivateSound(player, Alien.kSpendResourcesSoundName, player, 1.0, Vector(0, 0, 0))
-                
+        if techNode ~= nil then
+        
+            if techNode:GetAvailable() then
+                totalCost = totalCost + techNode:GetCost()
+                buyCommand = buyCommand .. " " .. tostring(purchaseId)
             else
-            
-                Shared.PlayPrivateSound(player, player:GetNotEnoughResourcesSound(), player, 1.0, Vector(0, 0, 0))
-            
+                buyAllowed = false
+                break
             end
+            
+        else
+        
+            Print("PurchaseTechs(): Couldn't find tech node %d", purchaseId)
+            buyAllowed = false
+            break
             
         end
         
-    else
-    
-        Print("PurchaseTech(): Couldn't find tech node %d", purchaseId)
-        
     end
     
-    Shared.PlayPrivateSound(player, buttonClickSound, player, 1.0, Vector(0, 0, 0))
+    if buyAllowed then
+        if totalCost <= player:GetResources() then
+            Client.ConsoleCommand(buyCommand)
+        else
+            Shared.PlayPrivateSound(player, player:GetNotEnoughResourcesSound(), player, 1.0, Vector(0, 0, 0))
+        end
+    end
 
 end
 
 /**
- * Indicated the selected index for the selected alien has been purchased.
+ * Pass in a table describing what should be purchased. The table has the following format:
+ * Type = "Alien" or "Upgrade"
+ * Alien = "Skulk", "Lerk", etc
+ * UpgradeIndex = Only needed when purchasing an upgrade, number index for the upgrade
  */
-function AlienBuy_PurchaseUpgrade(idx, upgradeIndex)
-    local unpurchasedIds = GetUnpurchasedTechIds(IndexToAlienTechId(idx))
-    local purchaseId = unpurchasedIds[upgradeIndex]
-    PurchaseTech(purchaseId)    
+function AlienBuy_Purchase(purchaseTable)
+
+    ASSERT(type(purchaseTable) == "table")
+    
+    local purchaseTechIds = { }
+    
+    for i, purchase in ipairs(purchaseTable) do
+
+        if purchase.Type == "Alien" then
+            table.insert(purchaseTechIds, IndexToAlienTechId(purchase.Alien))
+        elseif purchase.Type == "Upgrade" then
+            local unpurchasedIds = GetUnpurchasedTechIds(IndexToAlienTechId(purchase.Alien))
+            table.insert(purchaseTechIds, unpurchasedIds[purchase.UpgradeIndex])
+        end
+    
+    end
+    
+    PurchaseTechs(purchaseTechIds)
+
 end
 
 function GetAlienTechNode(idx, isAlienIndex)
@@ -253,6 +299,20 @@ end
 function AlienBuy_IsAlienResearched(alienType)
     local techNode = GetAlienTechNode(alienType, true)
     return (techNode ~= nil) and techNode:GetAvailable()    
+end
+
+/**
+ * Return the research progress (0-1) of the passed in alien type.
+ * Returns 0 if the passed in alien type didn't have a tech node.
+ */
+function AlienBuy_GetAlienResearchProgress(alienType)
+
+    local techNode = GetAlienTechNode(alienType, true)
+    if techNode then
+        return techNode:GetPrereqResearchProgress()
+    end
+    return 0
+    
 end
 
 /**
@@ -289,11 +349,58 @@ function AlienBuy_GetCurrentAlien()
     
 end
 
-/**
- * Buy alien type
- */
-function AlienBuy_BuyAlien(alienType)
-    PurchaseTech(IndexToAlienTechId(alienType))
+function AlienBuy_OnMouseOver()
+
+    Shared.PlaySound(nil, kAlienBuyMenuSounds.Hover)
+
+end
+
+function AlienBuy_OnOpen()
+
+    Shared.PlaySound(nil, kAlienBuyMenuSounds.Open)
+
+end
+
+function AlienBuy_OnClose()
+
+    Shared.PlaySound(nil, kAlienBuyMenuSounds.Close)
+
+end
+
+function AlienBuy_OnPurchase()
+
+    Shared.PlaySound(nil, kAlienBuyMenuSounds.Evolve)
+
+end
+
+function AlienBuy_OnSelectAlien(type)
+
+    local assetName = ""
+    if type == "Skulk" then
+        assetName = kAlienBuyMenuSounds.SelectSkulk
+    elseif type == "Gorge" then
+        assetName = kAlienBuyMenuSounds.SelectGorge
+    elseif type == "Lerk" then
+        assetName = kAlienBuyMenuSounds.SelectLerk
+    elseif type == "Onos" then
+        assetName = kAlienBuyMenuSounds.SelectOnos
+    elseif type == "Fade" then
+        assetName = kAlienBuyMenuSounds.SelectFade
+    end
+    Shared.PlaySound(nil, assetName)
+
+end
+
+function AlienBuy_OnUpgradeSelected()
+
+    Shared.PlaySound(nil, kAlienBuyMenuSounds.BuyUpgrade)
+    
+end
+
+function AlienBuy_OnUpgradeDeselected()
+
+    Shared.PlaySound(nil, kAlienBuyMenuSounds.SellUpgrade)
+    
 end
 
 /**
@@ -301,6 +408,5 @@ end
  */
 function AlienBuy_Close()
     local player = Client.GetLocalPlayer()
-    player:CloseMenu(kClassFlashIndex)
-    Shared.PlayPrivateSound(player, buttonClickSound, player, 1.0, Vector(0, 0, 0))
+    player:CloseMenu()
 end

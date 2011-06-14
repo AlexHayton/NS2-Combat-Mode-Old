@@ -411,26 +411,3 @@ function Player:UpdateTeam(joinTeam)
     end
     
 end
-
-function Player:UpdateOrder()
-
-    // Complete order if we're close to it, no need to be exact
-    local order = self:GetCurrentOrder()
-    if order then
-    
-        local orderType = order:GetType()
-        
-        if (orderType == kTechId.Move) or (orderType == kTechId.SquadMove) then
-
-            local orderLocation = order:GetLocation()
-            local orderDist = (self:GetOrigin() - orderLocation):GetLength()
-            
-            if orderDist < .75 then
-                self:CompletedCurrentOrder()
-            end
-            
-        end
-        
-    end
-
-end

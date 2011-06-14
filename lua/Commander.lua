@@ -57,14 +57,14 @@ Commander.kSelectMode = enum( {'None', 'SelectedGroup', 'JumpedToGroup'} )
 local networkVars = 
 {
     timeScoreboardPressed   = "float",
-    focusGroupIndex         = string.format("integer (0 to %d)", Commander.kMaxSubGroupIndex - 1),
+    focusGroupIndex         = string.format("integer (1 to %d)", Commander.kMaxSubGroupIndex),
     numIdleWorkers          = string.format("integer (0 to %d)", kMaxIdleWorkers),
     numPlayerAlerts         = string.format("integer (0 to %d)", kMaxPlayerAlerts),
     commanderCancel         = "boolean",
     commandStationId        = "entityid",
     // Set to a number after a hotgroup is selected, so we know to jump to it next time we try to select it
     positionBeforeJump      = "vector",
-    selectMode              = "enum Commander.kSelectMode"
+    gotoHotKeyGroup         = string.format("integer (0 to %d)", Player.kMaxHotkeyGroups)
 }
 
 function Commander:OnInit()
@@ -73,7 +73,7 @@ function Commander:OnInit()
 
     self.selectedEntities = {}
     
-    self.selectedSubGroupEntities = {}
+    self.selectedSubGroupEntityIds = {}
 
     self:SetIsVisible(false)
     
@@ -93,9 +93,7 @@ function Commander:OnInit()
         self.specifyingOrientationPosition = Vector(0, 0, 0)
         
         self.scrollX = 0
-        self.scrollY = 0
-       
-        self.timeSinceUpdateMenu = 0
+        self.scrollY = 0       
         
         self.ghostStructure = nil
         self.ghostStructureValid = false
@@ -117,19 +115,15 @@ function Commander:OnInit()
     end
 
     self.timeScoreboardPressed = 0
-    self.focusGroupIndex = 0
+    self.focusGroupIndex = 1
     self.numIdleWorkers = 0
     self.numPlayerAlerts = 0
     self.positionBeforeJump = Vector(0, 0, 0)
-    self:SetSelectMode(Commander.kSelectMode.None)
+    self.selectMode = Commander.kSelectMode.None
     self.commandStationId = Entity.invalidId
     
-end
-
-function Commander:SetSelectMode(mode)
-    if mode ~= self.selectMode then
-        self.selectMode = mode
-    end
+    self:SetUpdateWeapons(false)
+    
 end
 
 // Needed so player origin is same as camera for selection
@@ -176,16 +170,14 @@ function Commander:HandleButtons(input)
         
     end
     
-    self:HandleScoreboardSubgroups(input)
-    
     if Client then
         self:ShowMap(bit.band(input.commands, Move.ShowMap) ~= 0)
     end
     
 end
 
-// Handle sub-group selection
-function Commander:HandleScoreboardSubgroups(input)
+// Don't show scoreboard right away, also use tab to handle sub-group selection through UI cleverness
+function Commander:UpdateScoreboard(input)
 
     // If player holds scoreboard key (tab), show scores. If they tap it, switch
     // focus to next sub-group within selection
@@ -267,7 +259,7 @@ function Commander:UpdateMovePhysics(input)
             
         end
 
-        self:SetSelectMode(Commander.kSelectMode.None)
+        self.gotoHotKeyGroup = 0
         
     // Returns true if player jumped to a hotkey group
     elseif not self:ProcessNumberKeysMove(input, finalPos) then
@@ -277,8 +269,10 @@ function Commander:UpdateMovePhysics(input)
         
         // Set final position (no collision)
         finalPos = self:GetOrigin() + moveVelocity * input.time
-
-        self:SetSelectMode(Commander.kSelectMode.None)
+        
+        if input.move:GetLength() > kEpsilon then
+            self.gotoHotKeyGroup = 0
+        end
         
     end
     
@@ -362,39 +356,42 @@ function Commander:ProcessNumberKeysMove(input, newPosition)
                 self:CreateHotkeyGroup(number)
             end
             
-        // Make sure we're not selection a squad
+        // Make sure we're not selecting a squad
         elseif (bit.band(input.commands, Move.MovementModifier) == 0) then
         
-            // Temporarily removed jumping to a hotkey group because it doesn't work well
-            if self.selectMode == Commander.kSelectMode.None then
-            
-                self:SelectHotkeyGroup(number)
-                
-                self.positionBeforeJump = Vector(self:GetOrigin())
-                self:SetSelectMode(Commander.kSelectMode.SelectedGroup)
-                self.gotoHotKeyGroup = number
-                setPosition = true
-                
-            // Jump to position of hotkey group
-            elseif self.selectMode == Commander.kSelectMode.SelectedGroup then
-            
-                self:GotoHotkeyGroup(number, newPosition)
-                self:SetSelectMode(Commander.kSelectMode.JumpedToGroup)
-                setPosition = true
-
-            // Jump back to our last position if hit again
-            else
-            
-                self:SetOrigin(self.positionBeforeJump)
-                self:SetSelectMode(Commander.kSelectMode.SelectedGroup)
-                setPosition = true
-                
-            end
-                
+            setPosition = self:ProcessHotkeyGroup(number, newPosition)
+        
         end
         
     end
     
+    return setPosition
+    
+end
+
+// Assumes number non-zero
+function Commander:ProcessHotkeyGroup(number, newPosition)
+
+    local setPosition = false
+    
+    if (self.gotoHotKeyGroup == 0) or (number ~= self.gotoHotKeyGroup) then
+    
+        // Select hotgroup        
+        self:SelectHotkeyGroup(number)        
+        self.positionBeforeJump = Vector(self:GetOrigin())
+        self.gotoHotKeyGroup = number
+        
+    else
+    
+        // Jump to hotgroup if we're selecting same one and not nearby
+        if self.gotoHotKeyGroup == number then
+        
+            setPosition = self:GotoHotkeyGroup(number, newPosition)
+            
+        end
+        
+    end
+
     return setPosition
     
 end
@@ -449,10 +446,14 @@ function Commander:GetCurrentTechButtons(techId, entity)
         table.copy(topRowTechButtons, techButtons, true)
     end
     
-    local selectedTechButtons = entity:GetTechButtons(techId)
+    local selectedTechButtons = nil
+    if entity then
+        selectedTechButtons = entity:GetTechButtons(techId)
+    end
     if not selectedTechButtons then
         selectedTechButtons = self:GetSelectionRowsTechButtons(techId)
     end
+    
     if selectedTechButtons then
         table.copy(selectedTechButtons, techButtons, true)
     end

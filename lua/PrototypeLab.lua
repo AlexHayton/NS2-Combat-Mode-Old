@@ -26,7 +26,7 @@ function PrototypeLab:GetTechButtons(techId)
     if(techId == kTechId.RootMenu) then
     
         return  {   kTechId.None, kTechId.None, kTechId.None, kTechId.None, 
-                    kTechId.None, kTechId.None, kTechId.Recycle, kTechId.None }
+                    kTechId.None, kTechId.None, kTechId.None, kTechId.None }
 
     elseif techId == kTechId.kTechId.PrototypeLabUpgradesMenu then
     

@@ -17,7 +17,7 @@ end
 
 Sentry.kModelName = PrecacheAsset("models/marine/sentry/sentry.model")
 
-Sentry.kSpinUpSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/sentr_spin_up")
+Sentry.kSpinUpSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/sentry_spin_up")
 Sentry.kSpinDownSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/sentry_spin_down")
 Sentry.kAttackSoundName = PrecacheAsset("sound/ns2.fev/marine/structures/sentry_fire_loop")
 
@@ -178,7 +178,7 @@ function Sentry:GetTechButtons(techId)
 
         return { 
             kTechId.Attack, kTechId.Stop, kTechId.SetTarget, kTechId.None,
-            kTechId.None, kTechId.None, kTechId.Recycle, kTechId.None 
+            kTechId.None, kTechId.None, kTechId.None, kTechId.None 
             }
     end
     

@@ -228,7 +228,12 @@ function ScriptActor:GetTechAllowed(techId, techNode, player)
         
     elseif techNode:GetIsEnergyBuild() then
         
-        return self:GetUpgradeTechAllowed(techId) and (techNode:GetCost() <= self:GetEnergy())
+        local energy = 0
+        if self.GetEnergy then
+            energy = self:GetEnergy()
+        end
+        
+        return self:GetUpgradeTechAllowed(techId) and (techNode:GetCost() <= energy)
     
     // If tech is research
     elseif(techNode:GetIsResearch()) then
@@ -248,7 +253,12 @@ function ScriptActor:GetTechAllowed(techId, techNode, player)
     elseif(techNode:GetIsActivation()) then
     
         // Return false if structure doesn't have enough energy
-        if techNode:GetCost() <= self:GetEnergy() then
+        local energy = 0
+        if self.GetEnergy then
+            energy = self:GetEnergy()
+        end
+
+        if techNode:GetCost() <= energy then
             return self:GetActivationTechAllowed(techId)
         else
             return false
@@ -310,6 +320,10 @@ end
 
 function ScriptActor:GetDescription()
     return LookupTechData(self:GetTechId(), kTechDataDisplayName, "<no description>")
+end
+
+function ScriptActor:GetVisualRadius ()
+    return LookupTechData(self:GetTechId(), kVisualRange, nil)
 end
 
 // Something isn't working right here - has to do with references to points or vector

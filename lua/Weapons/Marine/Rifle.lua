@@ -445,4 +445,11 @@ function Rifle:GetEffectParams(tableParams)
     
 end
 
+function Rifle:Dropped(prevOwner)
+
+    ClipWeapon.Dropped(self, prevOwner)
+    self:UpdateShootingEffects()
+    
+end
+
 Shared.LinkClassToMap("Rifle", Rifle.kMapName, networkVars)

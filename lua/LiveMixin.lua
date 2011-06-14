@@ -27,6 +27,9 @@ function LiveMixin.__prepareclass(toClass)
         
         armor       = "float",
         maxArmor    = "float",
+        
+        timeOfLastDamage        = "float",
+        lastDamageAttackerId    = "entityid",
     }
     
     for k, v in pairs(addNetworkFields) do
@@ -44,6 +47,11 @@ function LiveMixin:__initmixin()
 
     self.armor = LookupTechData(self:GetTechId(), kTechDataMaxArmor, self.__mixindata.kArmor)
     self.maxArmor = self.armor
+    
+    self.timeOfLastDamage = nil
+    self.lastDamageAttackerId = -1
+    
+    self.overkillHealth = 0
     
 end
 
@@ -113,6 +121,14 @@ end
 
 function LiveMixin:SetMaxArmor(setMax)
     self.maxArmor = setMax
+end
+
+function LiveMixin:SetOverkillHealth(health)
+    self.overkillHealth = health
+end
+
+function LiveMixin:GetOverkillHealth()
+    return self.overkillHealth
 end
 
 function LiveMixin:Heal(amount)
@@ -189,11 +205,36 @@ function LiveMixin:GetArmorAbsorbPercentage(damageType)
     
 end
 
-function LiveMixin:ComputeDamage(damage, damageType)
+function LiveMixin:ComputeDamageFromUpgrades(attacker, damage, damageType, time)
+
+    if time == nil then
+        time = Shared.GetTime()
+    end
+    
+    // Give damage bonus if someone else hit us recently
+    if attacker and attacker.GetHasUpgrade and attacker:GetHasUpgrade(kTechId.Swarm) then
+    
+        if self.timeOfLastDamage ~= nil and (time <= (self.timeOfLastDamage + kSwarmInterval)) then
+        
+            if attacker and attacker.GetId and (self.lastDamageAttackerId ~= attacker:GetId()) then
+            
+                damage = damage * kSwarmDamageBonus
+                
+            end
+            
+        end
+        
+    end
+    
+    return damage, damageType
+
+end
+
+function LiveMixin:ComputeDamage(attacker, damage, damageType, time)
 
     // The host can provide an override for this function.
     if self.ComputeDamageOverride then
-        damage, damageType = self:ComputeDamageOverride(damage, damageType)
+        damage, damageType = self:ComputeDamageOverride(attacker, damage, damageType, time)
     end
     
     local armorPointsUsed = 0
@@ -204,6 +245,9 @@ function LiveMixin:ComputeDamage(damage, damageType)
     end
 
     if damage > 0 then
+    
+        // Compute extra damage from upgrades
+        damage, damageType = self:ComputeDamageFromUpgrades(attacker, damage, damageType, time)
     
         // Calculate damage absorbed by armor according to damage type
         local absorbPercentage = self:GetArmorAbsorbPercentage(damageType)
@@ -222,6 +266,14 @@ function LiveMixin:ComputeDamage(damage, damageType)
 
 end
 
+function LiveMixin:SetLastDamage(time, attacker)
+
+    if attacker and attacker.GetId then
+        self.timeOfLastDamage = time
+        self.lastDamageAttackerId = attacker:GetId()
+    end    
+end
+
 /**
  * Returns true if the damage has killed the entity.
  */
@@ -233,6 +285,7 @@ function LiveMixin:TakeDamage(damage, attacker, doer, point, direction)
     local killed = false
     
     if self:GetCanTakeDamage() then
+    
         if Client then
             killed = self:TakeDamageClient(damage, attacker, doer, point, direction)
         else
@@ -278,16 +331,23 @@ function LiveMixin:TakeDamageServer(damage, attacker, doer, point, direction)
         
         // Children can override to change damage according to player mode, damage type, etc.
         local armorUsed, healthUsed
-        damage, armorUsed, healthUsed = self:ComputeDamage(damage, damageType)
+        damage, armorUsed, healthUsed = self:ComputeDamage(attacker, damage, damageType)
         
         local oldHealth = self:GetHealth()
         
         self:SetArmor(self:GetArmor() - armorUsed)
         self:SetHealth(math.max(self:GetHealth() - healthUsed, 0))
         
+        if self:GetHealth() == 0 then
+            self:SetOverkillHealth(healthUsed - oldHealth)
+        end
+        
         if damage > 0 then
         
             self:OnTakeDamage(damage, doer, point)
+            
+            // Remember time we were last hurt for Swarm upgrade
+            self:SetLastDamage(Shared.GetTime(), attacker)
             
             // Notify the doer they are giving out damage.
             local doerPlayer = doer
@@ -305,6 +365,8 @@ function LiveMixin:TakeDamageServer(damage, attacker, doer, point, direction)
                 GetGamerules():OnKill(self, damage, attacker, doer, point, direction)
         
                 self:OnKill(damage, attacker, doer, point, direction)
+                
+                self:ProcessFrenzy(attacker, self)
 
                 self.justKilled = true
                 
@@ -355,5 +417,20 @@ function LiveMixin:AddHealth(health, playSound)
     end
     
     return total
+    
+end
+
+function LiveMixin:ProcessFrenzy(attacker, targetEntity)
+
+    // Process Frenzy - give health back according to the amount of extra damage we did
+    if attacker and attacker.GetHasUpgrade and attacker:GetHasUpgrade(kTechId.Frenzy) and targetEntity and targetEntity.GetOverkillHealth then
+    
+        attacker:TriggerEffects("frenzy")
+        
+        local overkillHealth = targetEntity:GetOverkillHealth()        
+        local healthToGiveBack = math.max(overkillHealth, kFrenzyMinHealth)
+        attacker:AddHealth(healthToGiveBack)
+        
+    end
     
 end

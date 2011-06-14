@@ -23,41 +23,6 @@ function CommanderUI_UpdateMouseOverUIState(overUI)
 
 end
 
-// These are the icons that appear next to alerts or as hotkey icons.
-// Icon size should be 20x20. Also used for the alien buy menu.
-function CommanderUI_Icons()
-
-    local player = Client.GetLocalPlayer()
-    if(player and (player:isa("Alien") or player:isa("AlienCommander"))) then
-        return "alien_upgradeicons"
-    end
-    
-    return "marine_upgradeicons"
-
-end
-
-function CommanderUI_MenuImage()
-
-    local player = Client.GetLocalPlayer()
-    if(player and player:isa("AlienCommander")) then
-        return "alien_buildmenu"
-    end
-    
-    return "marine_buildmenu"
-    
-end
-
-function CommanderUI_MenuImageSize()
-
-    local player = Client.GetLocalPlayer()
-    if(player and player:isa("AlienCommander")) then
-        return 640, 1040
-    end
-    
-    return 960, 960
-    
-end
-
 function CommanderUI_IsAlienCommander()
 
     local player = Client.GetLocalPlayer()
@@ -464,7 +429,7 @@ function Commander:UpdateGhostGuides()
             local entity = Shared.GetEntity(entityEntry[1])
             if entity ~= nil then
             
-                local visualRadius = LookupTechData(entity:GetTechId(), kStructureVisualRange, nil)
+                local visualRadius = entity:GetVisualRadius()
                 
                 if visualRadius ~= nil then
                     self:AddGhostGuide(Vector(entity:GetOrigin()), visualRadius)
@@ -623,7 +588,7 @@ function CommanderUI_TargetedAction(index, x, y, button)
     local player = Client.GetLocalPlayer()
     local normalizedPickRay = CreatePickRay(player, x, y)
     
-    if (player.ghostStructureValid == false or player.ghostStructureValid == true) and button == 1 then
+    if button == 1 then
     
         // Send order target to where ghost structure is, in case it was snapped to an attach point
         if player.ghostStructureValid then
@@ -727,7 +692,7 @@ function Commander:AddAlert(techId, worldX, worldZ, entityId, entityTechId)
     // Create alert blip
     local alertType = LookupTechData(techId, kTechDataAlertType, kAlertType.Info)
     local success, mapX, mapY = self:GetMapXY(worldX, worldZ)
-    local xOffset, yOffset = self:GetMaterialXYOffset(entityTechId, self:isa("MarineCommander"))
+    local xOffset, yOffset = GetMaterialXYOffset(entityTechId, self:isa("MarineCommander"))
     if success then
     
         table.insert(self.alertBlips, mapX)
@@ -777,9 +742,6 @@ function Commander:OnInitLocalClient()
     // Turn off skybox rendering when commanding
     SetSkyboxDrawState(false)
     
-    // Initialize offsets used for drawing tech ids as buttons
-    self:InitTechTreeMaterialOffsets()
-    
     // Set props invisible for Comm      
     SetCommanderPropState(true)
     
@@ -794,7 +756,7 @@ function Commander:OnInitLocalClient()
     
     // Set our location so we are viewing the command structure we're in
     self:SetStartPosition() 
-
+    
     self.selectionCircles = {}
     
     self.sentryArcs = {}
@@ -816,6 +778,8 @@ function Commander:OnInitLocalClient()
     self.cursorOverUI = false
     
     self.lastHotkeyIndex = nil
+    
+    self:TriggerButtonIndex(1, CommanderUI_IsAlienCommander())
 
 end
 
@@ -1576,4 +1540,27 @@ function Commander:SetCurrentTech(techId)
     
     self:CreateGhostStructure(techId)
     
+end
+
+function Commander:TriggerButtonIndex(index, isAlien)
+    // $AS - HACKS: So Aliens do not really have this concept of tabs
+    // like marines do and so using the tab behavior really messes them up
+    // for now until we refactor this code a little better I have put in this
+    // horrible hack to make it all work!!! 
+    if isAlien then
+        self.menuTechId =  kTechId.RootMenu
+        self:UpdateSharedTechButtons()
+        self:ComputeMenuTechAvailability()
+    else
+        local commButtons = self.buttonsScript
+        if CommanderUI_MenuButtonRequiresTarget(index) and commButtons then
+            commButtons:SetTargetedButton(index)
+        end
+    
+        CommanderUI_MenuButtonAction(index)
+    
+        if commButtons then    
+            commButtons:SelectTab(index)    
+        end
+    end
 end

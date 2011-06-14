@@ -9,6 +9,7 @@
 
 Script.Load("lua/HudTooltips.lua")
 Script.Load("lua/DSPEffects.lua")
+Script.Load("lua/tweener/Tweener.lua")
 
 Player.kFeedbackFlash = "ui/feedback.swf"
 Player.kSharedHUDFlash = "ui/shared_hud.swf"
@@ -22,6 +23,8 @@ Player.kLowHealthWarning = 0.35
 Player.kLowHealthPulseSpeed = 10
 
 Player.kShowGiveDamageTime = 1
+
+Player.kPhaseEffectActiveTime = 1
 
 gFlashPlayers = nil
 
@@ -433,6 +436,37 @@ function PlayerUI_GetCrosshairHeight()
 
 end
 
+function PlayerUI_GetWeapon()
+-- TODO : Return actual weapon name
+    local player = Client.GetLocalPlayer()
+    if player then
+        return player:GetActiveWeapon()
+    end
+    return nil
+
+end
+
+function PlayerUI_GetPlayerClass()
+
+    local player = Client.GetLocalPlayer()
+    if player then
+        return player:GetClassName()
+    end
+    return nil
+
+end
+
+function PlayerUI_GetMinimapPlayerDirection()
+
+    local player = Client.GetLocalPlayer()
+    if player then
+        local coords = player:GetViewAngles():GetCoords().zAxis
+        return math.atan2(coords.x, coords.z)
+    end
+    return 0
+
+end
+
 /**
  * Called by Flash to get the number of reserve bullets in the active weapon.
  */
@@ -685,7 +719,11 @@ function Player:UpdateCloaking()
 end
 */
 
-function Player:UpdateScreenEffects(timePassed)
+function Player:SetBlurEnabled(blurEnabled)
+    self.screenEffects.blur:SetActive(blurEnabled)
+end
+
+function Player:UpdateScreenEffects(deltaTime)
 
     if(self.flareStartTime > 0) then
     
@@ -735,6 +773,22 @@ function Player:UpdateScreenEffects(timePassed)
         self.screenEffects.lowHealth:SetActive(false)
         
     end
+    
+    if self.timeOfLastPhase and (Shared.GetTime() - self.timeOfLastPhase <= Player.kPhaseEffectActiveTime) then
+        self.screenEffects.phase:SetActive(true)
+        if not self.phaseTweener then
+            self.phaseTweener = Tweener("forward")
+            self.phaseTweener.add(0, { amount = 1 }, Easing.linear)
+            local amplitude = 0.01
+            local period = Player.kPhaseEffectActiveTime * 0.75
+            self.phaseTweener.add(Player.kPhaseEffectActiveTime, { amount = 0 }, Easing.outElastic, { amplitude, period })
+        end
+        self.phaseTweener.update(deltaTime)
+        self.screenEffects.phase:SetParameter("amount", self.phaseTweener.getCurrentProperties().amount)
+    else
+        self.screenEffects.phase:SetActive(false)
+        self.phaseTweener = nil
+    end
 
 end
 
@@ -742,9 +796,10 @@ end
 function Player:UpdateClientEffects(deltaTime, isLocal)
 
     // Only show local player model and active weapon for local player when third person 
-    // or for other players
+    // or for other players (not ethereal Fades)
     local drawWorld = ((not isLocal) or self:GetIsThirdPerson())
-    self:SetIsVisible(drawWorld)
+    local drawPlayer = drawWorld and (not self.GetIsEthereal or not self:GetIsEthereal())
+    self:SetIsVisible(drawPlayer)
     
     local activeWeapon = self:GetActiveWeapon()
     if activeWeapon then
@@ -911,6 +966,9 @@ end
 // Ie, the local player is controlling this Marine and wants to intialize local UI, flash, etc.
 function Player:OnInitLocalClient()
     
+    // Initialize offsets used for drawing tech ids as buttons
+    InitTechTreeMaterialOffsets()
+
     // Only create base HUDs the first time a player is created.
     // We only ever want one of these.
     GetGUIManager():CreateGUIScriptSingle("GUICrosshair")
@@ -977,7 +1035,19 @@ function Player:InitScreenEffects()
     self.screenEffects.lowHealth = Client.CreateScreenEffect("shaders/LowHealth.screenfx")
     self.screenEffects.darkVision = Client.CreateScreenEffect("shaders/DarkVision.screenfx")
     self.screenEffects.darkVision:SetActive(false)    
+    self.screenEffects.fadeBlink = Client.CreateScreenEffect("shaders/FadeBlink.screenfx")
+    self.screenEffects.fadeBlink:SetActive(false)
+    self.screenEffects.blur = Client.CreateScreenEffect("shaders/Blur.screenfx")
+    self.screenEffects.blur:SetActive(false)
+    self.screenEffects.phase = Client.CreateScreenEffect("shaders/Phase.screenfx")
+    self.screenEffects.phase:SetActive(false)
     
+end
+
+function Player:SetEthereal(ethereal)
+    if not ethereal or not self:GetIsThirdPerson() then
+        self.screenEffects.fadeBlink:SetActive(ethereal)
+    end
 end
 
 /**
@@ -1507,9 +1577,8 @@ function PlayerUI_GetStaticMapBlips()
         for index, blip in ientitylist(Shared.GetEntitiesWithClassname("MapBlip")) do
             
             local blipOrigin = blip:GetOrigin()
-            local posX, posY = PlayerUI_GetMapXY(blipOrigin.x, blipOrigin.z)
-            table.insert(blipsData, posX)
-            table.insert(blipsData, posY)
+            table.insert(blipsData, blipOrigin.z)
+            table.insert(blipsData, blipOrigin.x)
             table.insert(blipsData, 0)
             table.insert(blipsData, 0)
             table.insert(blipsData, blip:GetType())

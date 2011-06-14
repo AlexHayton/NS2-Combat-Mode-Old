@@ -107,7 +107,11 @@ function OnCommandKill(client, otherPlayer)
         end
         
         if (player ~= nil) then
-            player:Kill(otherPlayer, otherPlayer, player:GetOrigin())
+            if not player:isa("Commander") then
+                player:Kill(otherPlayer, otherPlayer, player:GetOrigin())
+            else
+                player:KillSelection()
+            end
         end
         
     end

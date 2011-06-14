@@ -14,12 +14,13 @@ Script.Load("lua/TechTreeConstants.lua")
 // From TechNode.kTechNodeVars
 local kTechNodeUpdateMessage = 
 {
-    techId              = "enum kTechId",
-    available           = "boolean",
-    researchProgress    = "float",
-    researched          = "boolean",
-    researching         = "boolean",
-    hasTech             = "boolean"
+    techId                  = "enum kTechId",
+    available               = "boolean",
+    researchProgress        = "float",
+    prereqResearchProgress  = "float",
+    researched              = "boolean",
+    researching             = "boolean",
+    hasTech                 = "boolean"
 }
 
 // Tech node messages. Base message is in TechNode.lua
@@ -27,12 +28,13 @@ function BuildTechNodeUpdateMessage(techNode)
 
     local t = {}
     
-    t.techId            = techNode.techId
-    t.available         = techNode.available
-    t.researchProgress  = techNode.researchProgress
-    t.researched        = techNode.researched
-    t.researching       = techNode.researching
-    t.hasTech           = techNode.hasTech
+    t.techId                    = techNode.techId
+    t.available                 = techNode.available
+    t.researchProgress          = techNode.researchProgress
+    t.prereqResearchProgress    = techNode.prereqResearchProgress
+    t.researched                = techNode.researched
+    t.researching               = techNode.researching
+    t.hasTech                   = techNode.hasTech
     
     return t
     

@@ -16,10 +16,11 @@ Infestation.kMapName = "infestation"
 Infestation.kEnergyCost = kGrowCost
 Infestation.kInitialHealth = 50
 Infestation.kMaxHealth = 500
-Infestation.kGrowRate = .75
 Infestation.kVerticalSize = 1.0
+Infestation.kGrowthRateScalar = .45
 
 Infestation.kInitialRadius = .05
+Infestation.kModelName = PrecacheAsset("models/alien/pustule/pustule.model")
 
 Infestation.kThinkTime = 3
 
@@ -34,6 +35,7 @@ local networkVars =
     maxRadius               = "float",
     connected               = "boolean",
     fullyGrown              = "boolean",
+    pustuleAlive            = "boolean",
 }
 
 function Infestation:OnCreate()
@@ -59,6 +61,9 @@ function Infestation:OnCreate()
     // Start visible
     self.radius = Infestation.kInitialRadius
     
+    // Connection-dependent growth rate
+    self.growthRateScalar = Infestation.kGrowthRateScalar
+    
     // track when we last thought
     self.lastThinkTime = Shared.GetTime()
     
@@ -75,6 +80,15 @@ function Infestation:OnCreate()
     self:SetPhysicsGroup(PhysicsGroup.InfestationGroup)
     
 end
+
+function Infestation:SetGrowthRateScalar(scalar)
+    self.growthRateScalar = scalar
+end
+
+/*
+function Infestation:GetIsAliveOverride()
+end
+*/
 
 function Infestation:OnDestroy()
 

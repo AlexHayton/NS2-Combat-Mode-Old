@@ -51,6 +51,14 @@ function ARC:UpdateMoveOrder(deltaTime)
     
 end
 
+function ARC:SetTargetDirection (target)    
+    self.targetDirection = GetNormalizedVector(target:GetEngagementPoint() - self:GetAttachPointOrigin(ARC.kMuzzleNode))
+end
+
+function ARC:ClearTargetDirection ()
+    self.targetDirection = nil
+end
+
 function ARC:UpdateOrders(deltaTime)
 
     // If deployed, check for targets
@@ -64,16 +72,16 @@ function ARC:UpdateOrders(deltaTime)
 
         elseif currentOrder:GetType() == kTechId.Attack and (self.mode == ARC.kMode.Deployed or self.mode == ARC.kMode.FireCooldown) then
             
-            local target = self:GetTarget()
-            if self:GetIsTargetValid(target) then
-            
+            local target = self:GetTarget()            
+            if target ~= nil then                            
+                self:SetTargetDirection(target)
+                
                 // Try to attack it
-                self:SetDesiredMode(ARC.kMode.Firing)
-                
+                self:SetDesiredMode(ARC.kMode.Firing)                
             else
-            
+                self:ClearTargetDirection()
                 self:ClearCurrentOrder()
-                
+                self:GotoIdle()                
             end
             
         end
@@ -95,50 +103,26 @@ function ARC:UpdateOrders(deltaTime)
 end
 
 function ARC:AcquireTarget()
-
-    local newTarget = nil
     
-    // Find the nearest enemy structure in range
-    local shortestDistanceToTarget = nil
-    
-    local targets = GetGamerules():GetEntities("Structure" , GetEnemyTeamNumber(self:GetTeamNumber()), self:GetOrigin(), ARC.kFireRange, true)
-
-    for index, structure in pairs(targets) do
-
-        if self:GetIsTargetValid(structure) then
-
-            // Is it closest?
-            local distanceToTarget = (structure:GetOrigin() - self:GetOrigin()):GetLengthXZ()
-            if(newTarget == nil or distanceToTarget < shortestDistanceToTarget) then
-
-                // New closest target
-                newTarget = structure
-                shortestDistanceToTarget = distanceToTarget
-
-            end
-
-        end
-
-    end
-    
-    if newTarget ~= nil then
-    
-        if not self.desiredMode == ARC.kMode.UndeployedStationary then
-        
-            //Print("ARC:Acquired new target: %s, firing", SafeClassName(newTarget))
-            self:GiveOrder(kTechId.Attack, newTarget:GetId(), nil)
-            self:SetDesiredMode(ARC.kMode.Firing)
+    local finalTarget = nil
             
-        end
-        
-    end
-    
-    return newTarget
+    finalTarget = self.targetSelector:AcquireTarget();
 
+    if finalTarget ~= nil then    
+      self:GiveOrder(kTechId.Attack, finalTarget:GetId(), nil)        
+    else           
+      self:ClearOrders()            
+    end                    
 end
 
-function ARC:GetIsTargetValid(target) 
-    return target ~= nil and target:isa("Structure") and (GetEnemyTeamNumber(self:GetTeamNumber()) == target:GetTeamNumber()) and target:GetIsAlive() and ((target:GetOrigin() - self:GetOrigin()):GetLengthXZ() < ARC.kFireRange) and self:GetCanSeeEntity(target)
+function ARC:GotoIdle()
+   if (self.mode == ARC.kMode.Deployed or self.mode == ARC.kMode.FireCooldown) then
+        self:SetDesiredMode(ARC.kMode.Deployed)
+        self:SetMode(ARC.kMode.Deployed)
+   elseif (self.mode == ARC.kMode.UndeployedStationary) then
+        self:SetDesiredMode(ARC.kMode.UndeployedStationary)
+        self:SetMode(ARC.kMode.UndeployedStationary)
+   end
 end
 
 function ARC:PerformAttack()
@@ -151,7 +135,7 @@ function ARC:PerformAttack()
 
         // Do damage to everything in radius. Use upgraded splash radius if researched.
         local damageRadius = ConditionalValue(GetTechSupported(self, kTechId.ARCSplashTech), ARC.kUpgradedSplashRadius, ARC.kSplashRadius)
-        local hitEntities = GetEntitiesIsaInRadius("Structure", GetEnemyTeamNumber(self:GetTeamNumber()), target:GetOrigin(), damageRadius, false)
+        local hitEntities = self.targetSelector:AcquireTargets(1000, damageRadius, target:GetOrigin())
 
         // Do damage to every target in range
         RadiusDamage(hitEntities, target:GetOrigin(), damageRadius, ARC.kAttackDamage, self)
@@ -164,6 +148,7 @@ function ARC:PerformAttack()
         end
         
     else
+        self:GotoIdle()
         Print("ARC:PerformAttack(): No target.")
     end
     
@@ -214,7 +199,7 @@ function ARC:SetMode(mode)
         end
         
         if self.modeBlockTime then
-            Print("Set mode block time delay %.2f (currentTime is %.2f)", self.modeBlockTime - Shared.GetTime(), Shared.GetTime())
+           // Print("Set mode block time delay %.2f (currentTime is %.2f)", self.modeBlockTime - Shared.GetTime(), Shared.GetTime())
         end
         
     end
@@ -223,7 +208,7 @@ end
 
 function ARC:SetDesiredMode(mode)
     if self.desiredMode ~= mode then
-        //Print("Setting desired mode to %s", EnumToString(ARC.kMode, mode))
+      //  Print("Setting desired mode to %s", EnumToString(ARC.kMode, mode))
         self.desiredMode = mode
     end
 end
@@ -231,6 +216,10 @@ end
 function ARC:UpdateMode()
 
     if self.desiredMode ~= self.mode then
+
+        if (self.desiredMode ==  ARC.kMode.UndeployedStationary) and (self.mode == ARC.kMode.Deployed) then
+            self.targetSelector:InvalidateStaticCache()
+        end
     
         // Look at desired state transitions with a target of this desired mode and move us toward it
         if not self.modeBlockTime or Shared.GetTime() >= self.modeBlockTime then
@@ -265,16 +254,6 @@ function ARC:UpdateMode()
         end
         
     end
-    
-end
-
-function ARC:OnUpdate(deltaTime)
-
-    LiveScriptActor.OnUpdate(self, deltaTime)
-    
-    self:UpdateMode()
-    
-    self:UpdateOrders(deltaTime)
     
 end
 

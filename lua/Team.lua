@@ -31,6 +31,14 @@ function Team:OnKill(targetEntity, damage, killer, doer, point, direction)
 end
 
 /**
+ * If a team doesn't support orders then any player changing to the team will have it's
+ * orders cleared.
+ */
+function Team:GetSupportsOrders()
+    return true
+end
+
+/**
  * Adds a player to the team. This generally does not need to be called directly. Called only
  * by Player:OnTeamChange().
  */
