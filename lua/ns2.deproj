@@ -823,9 +823,6 @@
     <filename>Infestation.lua</filename>
   </file>
   <file>
-    <filename>InfestationManager.lua</filename>
-  </file>
-  <file>
     <filename>Infestation_Server.lua</filename>
   </file>
   <file>
@@ -902,5 +899,47 @@
   </file>
   <file>
     <filename>TechTreeButtons.lua</filename>
+  </file>
+  <file>
+    <filename>Weapons\Alien\BileBomb.lua</filename>
+  </file>
+  <file>
+    <filename>Weapons\Alien\Bomb.lua</filename>
+  </file>
+  <file>
+    <filename>Weapons\Alien\DropStructureAbility.lua</filename>
+  </file>
+  <file>
+    <filename>TrackYZ.lua</filename>
+  </file>
+  <file>
+    <filename>Hive_Client.lua</filename>
+  </file>
+  <file>
+    <filename>Build.lua</filename>
+  </file>
+  <file>
+    <filename>BuildingMixin.lua</filename>
+  </file>
+  <file>
+    <filename>..\..\core\lua\FunctionContracts.lua</filename>
+  </file>
+  <file>
+    <filename>StunMixin.lua</filename>
+  </file>
+  <file>
+    <filename>Cyst.lua</filename>
+  </file>
+  <file>
+    <filename>Cyst_Server.lua</filename>
+  </file>
+  <file>
+    <filename>Weapons\Alien\CystAbility.lua</filename>
+  </file>
+  <file>
+    <filename>MiniCyst.lua</filename>
+  </file>
+  <file>
+    <filename>CystUtility.lua</filename>
   </file>
 </project>

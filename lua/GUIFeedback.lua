@@ -27,7 +27,7 @@ function GUIFeedback:Initialize()
     self.buildText:SetPosition(GUIFeedback.kTextOffset)
     self.buildText:SetColor(GUIFeedback.kTextColor)
     self.buildText:SetFontIsBold(true)
-    self.buildText:SetText("Beta Build " .. tostring(Shared.GetBuildNumber()))
+    self.buildText:SetWideText(Locale.ResolveString("BETA_MAINMENU") .. Locale.StringToWideString(tostring(Shared.GetBuildNumber())))
     
     self.feedbackText = GUIManager:CreateTextItem()
     self.feedbackText:SetFontSize(GUIFeedback.kFontSize)
@@ -37,7 +37,7 @@ function GUIFeedback:Initialize()
     self.feedbackText:SetTextAlignmentY(GUIItem.Align_Min)
     self.feedbackText:SetColor(GUIFeedback.kTextColor)
     self.feedbackText:SetFontIsBold(true)
-    self.feedbackText:SetText("Press F1 to give us feedback")
+    self.feedbackText:SetWideText(Locale.ResolveString("FEEDBACK_MAINMENU"))
     self.buildText:AddChild(self.feedbackText)
 
 end

@@ -47,7 +47,22 @@ if (Server) then
         self:SetUpdates(true)
       
         self:SetIsVisible(true)
+    
+        self:SetPropagate(Entity.Propagate_Mask)
+        self:UpdateRelevancyMask()
 
+    end
+    
+    function PropDynamic:UpdateRelevancyMask()
+    
+        local mask = bit.bor(kRelevantToTeam1Unit, kRelevantToTeam2Unit)
+        if self.commAlpha == 1 then
+            mask = bit.bor(mask, kRelevantToTeam1Commander, kRelevantToTeam2Commander)
+        end
+        
+        self:SetExcludeRelevancyMask( mask )
+        self:SetRelevancyDistance( kMaxRelevancyDistance )
+        
     end
     
 end

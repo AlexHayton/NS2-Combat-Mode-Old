@@ -25,7 +25,7 @@ function BaseSpawn:GetOrigin()
 end
 
 function BaseSpawn:SetOrigin( origin )
-    VectorCopy(origin, self.origin)
+    self.origin = origin
 end
 
 function BaseSpawn:GetAngles()

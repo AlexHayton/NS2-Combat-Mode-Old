@@ -28,7 +28,7 @@ Whip.kTargetCheckTime = .3
 Whip.kRange = 6
 Whip.kAreaEffectRadius = 3
 Whip.kDamage = 50
-Whip.kMoveSpeed = .75
+Whip.kMoveSpeed = 1.2
 
 // Fury
 Whip.kFuryRadius = 6
@@ -119,7 +119,7 @@ function Whip:GetTechButtons(techId)
         end
        
     elseif(techId == kTechId.UpgradesMenu) then 
-        techButtons = {kTechId.Melee1Tech, kTechId.Melee2Tech, kTechId.Melee3Tech, kTechId.None, kTechId.FrenzyTech, kTechId.SwarmTech, kTechId.None }
+        techButtons = {kTechId.Melee1Tech, kTechId.Melee2Tech, kTechId.Melee3Tech, kTechId.None, kTechId.FrenzyTech, kTechId.SwarmTech, kTechId.BileBombTech }
         techButtons[kAlienBackButtonIndex] = kTechId.RootMenu
     end
     

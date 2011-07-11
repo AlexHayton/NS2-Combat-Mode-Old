@@ -12,8 +12,6 @@ class 'Weapon' (ScriptActor)
 
 Weapon.kMapName = "weapon"
 
-Weapon.kDropSound = PrecacheAsset("sound/ns2.fev/marine/common/drop_weapon")
-
 // Attach point for marine weapons
 Weapon.kHumanAttachPoint = "RHand_Weapon"
 
@@ -26,6 +24,13 @@ Weapon.kSwingPitch = "swing_pitch"
 
 // Move hit effect slightly off surface we hit so particles don't penetrate. In meters.
 Weapon.kHitEffectOffset = .15
+
+// How much force to use when knocking back a target.
+Weapon.kKnockbackForce = 25
+// This value is multiplied into the y component of the velocity after knockback force has been calculated.
+Weapon.kKnockbackYScalar = 0.05
+// How long a target is stunned (unable to control their velocity) after being knocked back.
+Weapon.kKnockbackStunTime = 0.5
 
 if (Server) then
     Script.Load("lua/Weapons/Weapon_Server.lua")
@@ -74,6 +79,12 @@ end
 
 function Weapon:GetRange()
     return 8012
+end
+
+// Return 0-1 scalar approximation for weight. Owner of weapon will determine
+// what this means and how to use it.
+function Weapon:GetWeight()
+    return 0
 end
 
 function Weapon:SetCameraShake(amount, speed, time)
@@ -179,7 +190,7 @@ end
  * Offset the start of the melee capsule with this much from the viewpoint
  */
 function Weapon:GetMeleeOffset()
-    return 0.2
+    return -0.1
 end
 
 /**
@@ -191,7 +202,7 @@ function Weapon:CheckMeleeCapsule(player, damage, range, optionalCoords)
     local extents = self:GetMeleeCapsule()
    
     local attackOffset = self:GetMeleeOffset()
-    local eyePoint = player:GetOrigin() + player:GetViewOffset()
+    local eyePoint = player:GetEyePos()
 
     local coords = optionalCoords or player:GetViewAngles():GetCoords()
 
@@ -287,6 +298,51 @@ function Weapon:ApplyMeleeHitEffects(player, damage, target, endPoint, direction
 end
 
 function Weapon:UpdateViewModelPoseParameters(viewModel, input)
+end
+
+/**
+ * Some weapons support knocking back the target. This will cause the target's
+ * velocity to be repelled backward's away from the player and stun the target
+ * if they are stunnable (have the StunMixin).
+ */
+function Weapon:KnockbackTarget(player, target, hitLocation)
+
+    // Knockback the target a bit if the target allows it.
+    if Server and target.GetIsKnockbackAllowed and target:GetIsKnockbackAllowed() then
+    
+        // Take target mass into account.
+        local direction = target:GetOrigin() - player:GetOrigin()
+        direction:Normalize()
+        
+        self.executeKnockback = { Direction = direction, TargetId = target:GetId() }
+        
+    end
+
+end
+
+function Weapon:OnUpdate(deltaTime)
+
+    ScriptActor.OnUpdate(self, deltaTime)
+    
+    if Server and self.executeKnockback then
+    
+        local direction = self.executeKnockback.Direction
+        local knockEntity = Shared.GetEntity(self.executeKnockback.TargetId)
+        self.executeKnockback = nil
+        // Just in case the target is no longer valid.
+        if knockEntity then
+            local targetVelocity = direction * (300 / knockEntity:GetMass()) * Weapon.kKnockbackForce
+            targetVelocity.y = targetVelocity.y * Weapon.kKnockbackYScalar
+            knockEntity:SetVelocity(targetVelocity)
+            // Stun after setting velocity as stun limits the ability to set velocity.
+            if HasMixin(knockEntity, "Stun") then
+                knockEntity:SetStunTime(Shared.GetTime() + Weapon.kKnockbackStunTime)
+                knockEntity:SetAnimationWithBlending("death")
+            end
+        end
+        
+    end
+
 end
 
 // TODO: Move into UpdateAnimation?

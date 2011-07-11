@@ -17,7 +17,8 @@ function ScenarioHandler:Init()
     
     // aliens
     self.handlers = self:InitHandlers({}, kAlienTeamType, {
-        Infestation = InfestationHandler(),
+        Cyst = CystHandler(),
+        MiniCyst = CystHandler(),
         Hydra = OrientedEntityHandler(),
         Whip = OrientedEntityHandler(),
         Crag = OrientedEntityHandler(),
@@ -29,10 +30,9 @@ function ScenarioHandler:Init()
     // marines   
     self.handlers = self:InitHandlers(self.handlers, kMarineTeamType, {
         CommandStation = OrientedEntityHandler(),
-        CommandFacility = OrientedEntityHandler(),
-        CommandCenter = OrientedEntityHandler(),
         Sentry = OrientedEntityHandler(),
         Armory = OrientedEntityHandler(),
+        ArmsLab = OrientedEntityHandler(),
         AdvancedArmory = OrientedEntityHandler(),
         Observatory = OrientedEntityHandler(),
         RoboticsFactory = OrientedEntityHandler(),
@@ -65,7 +65,7 @@ end
 
 //
 // Save the current scenario
-// This just dumps formatted strings for all structures and non-building-owned infestations that allows
+// This just dumps formatted strings for all structures and non-building-owned Cysts that allows
 // the Load() method to easily reconstruct them
 // The data is written to the server log. The user should just cut out the chunk of the log containing the
 // scenario and put in on a webserver
@@ -82,7 +82,7 @@ function ScenarioHandler:Save()
         local handler = self.handlers[cname]
         local accepted = handler and handler:Accept(entity)
         if not excluded and accepted then
-            Shared.Message(cname .. "|" .. handler:Save(entity))
+            Shared.Message(string.format("%s|%s", cname,handler:Save(entity)))
         end
     end
     Shared.Message(ScenarioHandler.kEndTag)    
@@ -92,6 +92,8 @@ function ScenarioHandler:Load(data)
     Shared.Message("LOAD: ")
     local startTagFound, endTagFound = false, false
     local lines = data:gmatch("[^\n]+")
+    // load in two stages; use the second stage to resolve references to other entities
+    local createdEntities = {}
     for line in lines do
         if line == ScenarioHandler.kStartTag then
             startTagFound = true
@@ -102,10 +104,16 @@ function ScenarioHandler:Load(data)
             local args = line:gmatch("[^|]+")
             local cname = args()
             if self.handlers[cname] then
-                Log("Created %s", self.handlers[cname]:Load(args, cname))
+                table.insert(createdEntities, self.handlers[cname]:Load(args, cname))
             end
         end
     end
+    // Resolve stage
+    for _,entity in ipairs(createdEntities) do
+        self.handlers[entity:GetClassName()]:Resolve(entity)
+        Log("Loaded %s", entity)
+    end
+    
     Shared.Message("END LOAD")
 end
 
@@ -124,6 +132,10 @@ end
 // return true if this entity should be accepted for saving
 function ScenarioEntityHandler:Accept(entity)
     return true
+end
+
+function ScenarioEntityHandler:Resolve(entity)
+    // default do nothing
 end
 
 function ScenarioEntityHandler:WriteVector(vec)
@@ -172,33 +184,48 @@ function OrientedEntityHandler:Load(args, classname)
     return result
 end
 
+
 function OrientedEntityHandler:Create(origin)
     return CreateEntityForTeam( self.techId, origin, self.teamType, nil )
 end 
 
 //
-// Special case infestations.
-// - we don't want derived infestations (we detect that by checking for size)
-// - when loading them, set them to max size right away to avoid having other structs dying
-// - The kMapName is missing from the tech table for some reason... so we need a custom
-//    Create() as well
+// Special case Cysts. They have a parent and needs to initalize the track
 //
-class "InfestationHandler" (OrientedEntityHandler)
+class "CystHandler" (OrientedEntityHandler)
 
-function InfestationHandler:Load(args, classname)
-    local infestation = OrientedEntityHandler.Load(self, args, classname)
-    infestation.radius = infestation.maxRadius
-    return infestation
+// use the LOCATION of the parent to identify it across saves/loads
+function CystHandler:Save(entity)
+    local parent = Shared.GetEntity(entity.parentId)
+    ASSERT(parent)
+    local parentLoc = parent:GetOrigin()
+    return string.format("%s|%s", OrientedEntityHandler.Save(self, entity), self:WriteVector(parentLoc))
 end
 
-function InfestationHandler:Create(origin)
-    return CreateEntity( Infestation.kMapName, origin, self.teamType )
+// read off and save the parent id until the resolve phase
+function CystHandler:Load(args, classname)
+    local cyst = OrientedEntityHandler.Load(self, args, classname)
+    cyst.savedParentLoc = self:ReadVector(args())
+    return cyst
 end
 
-function InfestationHandler:Accept(entity)
-    // only accept "real" infestations, not those belong to other entities
-    return entity.maxRadius == kInfestationRadius
+// resolve the parent and make a track from it to us
+function CystHandler:Resolve(cyst)
+    local targets = GetEntitiesWithinRange("Entity", cyst.savedParentLoc, 0.01)
+    ASSERT(#targets == 1)
+    local parent = targets[1]
+    cyst.savedParentLoc = nil // remove the variable
+    
+    local track = TrackYZ():CreateBetween(parent:GetOrigin(), parent:GetCoords().yAxis, cyst:GetOrigin(), cyst:GetCoords().yAxis)
+    if track == nil then
+        // probably has reversed it (assymetrical tracking bug)
+        track = TrackYZ():CreateBetween(cyst:GetOrigin(), cyst:GetCoords().yAxis, parent:GetOrigin(), parent:GetCoords().yAxis)
+        ASSERT(track)
+        track:Reverse()
+    end
+    cyst:SetCystParent(parent, track)
 end
+
 
 // create the singleton instance
 ScenarioHandler.instance = ScenarioHandler():Init()

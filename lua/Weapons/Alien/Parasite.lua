@@ -22,7 +22,7 @@ function Parasite:GetEnergyCost(player)
     return kParasiteEnergyCost
 end
 
-function Parasite:GetHasSecondary()
+function Parasite:GetHasSecondary(player)
     return false
 end
 
@@ -78,7 +78,8 @@ function Parasite:PerformPrimaryAttack(player)
         end
         
     end
-
+    
+    return true
 end
 
 Shared.LinkClassToMap("Parasite", Parasite.kMapName, {} )

@@ -6,6 +6,8 @@
 //    
 // ========= For more information, visit us at http://www.unknownworlds.com =====================    
 
+Script.Load("lua/FunctionContracts.lua")
+
 TooltipMixin = { }
 TooltipMixin.type = "Tooltip"
 
@@ -26,7 +28,7 @@ function TooltipMixin:_GetCanDisplayTooltip(tooltipText, timeInterval)
     local currentTime = Shared.GetTime()
     
     // Return false if we've recently added any tooltip
-    if self.timeOfLastTooltip ~= nil and currentTime < (self.timeOfLastTooltip + self.__mixindata.kToolTipInterval) then
+    if self.timeOfLastTooltip ~= nil and currentTime < (self.timeOfLastTooltip + self:GetMixinConstants().kToolTipInterval) then
     
         return false
         
@@ -50,6 +52,7 @@ function TooltipMixin:_GetCanDisplayTooltip(tooltipText, timeInterval)
     return true
     
 end
+AddFunctionContract(TooltipMixin._GetCanDisplayTooltip, { Arguments = { "Entity", "string", { "number", "nil" } }, Returns = { "boolean" } })
 
 function TooltipMixin:AddTooltipOnce(tooltipText)
 
@@ -65,6 +68,7 @@ function TooltipMixin:AddTooltipOnce(tooltipText)
     return false
     
 end
+AddFunctionContract(TooltipMixin.AddTooltipOnce, { Arguments = { "Entity", "string" }, Returns = { "boolean" } })
 
 function TooltipMixin:AddTooltipOncePer(tooltipText, timeInterval)
 
@@ -85,6 +89,7 @@ function TooltipMixin:AddTooltipOncePer(tooltipText, timeInterval)
     return false
 
 end
+AddFunctionContract(TooltipMixin.AddTooltipOncePer, { Arguments = { "Entity", "string", { "number", "nil" } }, Returns = { "boolean" } })
 
 function TooltipMixin:AddTooltip(message)
 
@@ -100,6 +105,7 @@ function TooltipMixin:AddTooltip(message)
     self.timeOfLastTooltip = Shared.GetTime()
     
 end
+AddFunctionContract(TooltipMixin.AddTooltip, { Arguments = { "Entity", "string" }, Returns = { } })
 
 /**
  * Display the tooltip and play a sound.
@@ -112,9 +118,10 @@ function TooltipMixin:AddTooltipClient(message)
     // Hook GUI display 
     HudTooltip_SetMessage(message)
     
-    Shared.PlaySound(self, self.__mixindata.kTooltipSound)
+    Shared.PlaySound(self, self:GetMixinConstants().kTooltipSound)
     
 end
+AddFunctionContract(TooltipMixin.AddTooltipClient, { Arguments = { "Entity", "string" }, Returns = { } })
 
 /**
  * Send notification to the Client to add this tooltip.
@@ -124,11 +131,14 @@ function TooltipMixin:AddTooltipServer(message)
     Server.SendCommand(self, string.format("%s \"%s\"", "tooltip", message))
 
 end
+AddFunctionContract(TooltipMixin.AddTooltipServer, { Arguments = { "Entity", "string" }, Returns = { } })
 
 function TooltipMixin:ClearDisplayedTooltips()
     table.clear(self.displayedTooltips)
 end
+AddFunctionContract(TooltipMixin.ClearDisplayedTooltips, { Arguments = { "Entity" }, Returns = { } })
 
 function TooltipMixin:GetNumberOfDisplayedTooltips()
     return table.count(self.displayedTooltips)
 end
+AddFunctionContract(TooltipMixin.GetNumberOfDisplayedTooltips, { Arguments = { "Entity" }, Returns = { "number" } })

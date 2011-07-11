@@ -6,6 +6,13 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+function Commander:OnDestroy()
+    
+    Player.OnDestroy(self)
+    self:SetEntitiesSelectionState(false)
+    
+end
+
 function Commander:CopyPlayerDataFrom(player)
 
     Player.CopyPlayerDataFrom(self, player)
@@ -34,6 +41,13 @@ function Commander:CopyPlayerDataFrom(player)
     self.previousArmor = player:GetArmor()
     
     self.previousAngles = Angles(player:GetAngles())
+    
+    // Save off alien values
+    if player.GetEnergy then
+        self.previousAlienEnergy = player:GetEnergy()
+    end
+    self.timeStartedCommanderMode = Shared.GetTime()
+    
 end
 
 // Returns nearest unattached entity of specified classtype within radius of position (nil otherwise)
@@ -83,7 +97,7 @@ function Commander:AttemptToResearchOrUpgrade(techNode, force)
             entity:SetResearching(techNode, self)
             entity:OnResearch(techNode:GetTechId())
             
-            if not techNode:GetIsUpgrade() and not techNode:GetIsEnergyBuild() then
+            if not techNode:GetIsUpgrade() and not techNode:GetIsEnergyManufacture() then
                 techNode:SetResearching()
             end
             
@@ -99,74 +113,7 @@ function Commander:AttemptToResearchOrUpgrade(techNode, force)
     
 end
 
-function Commander:EvalBuildIsLegal(techId, origin, builderEntity, pickVec)
-    local legalBuildPosition = false
-    local position = nil
-    local attachEntity = nil
 
-    if pickVec == nil then
-    
-        // When Drifters and MACs build, or untargeted build/buy actions, no pickVec. Trace from order point down to see
-        // if they're trying to build on top of anything and if that's OK.
-        local trace = Shared.TraceRay(Vector(origin.x, origin.y + .1, origin.z), Vector(origin.x, origin.y - .2, origin.z), PhysicsMask.CommanderBuild, EntityFilterOne(builderEntity))
-        legalBuildPosition, position, attachEntity = GetIsBuildLegal(techId, trace.endPoint, Commander.kStructureSnapRadius, self, builderEntity)
-
-    else
-    
-        // Make sure entity is near enough to attach class if required (snap to it as well)
-        legalBuildPosition, position, attachEntity = GetIsBuildLegal(techId, origin, Commander.kStructureSnapRadius, self, builderEntity)
-        
-    end
-    
-    return legalBuildPosition, position, attachEntity
-end
-
-// Returns true or false, as well as the entity id of the new structure (or -1 if false)
-// pickVec optional (for AI units). In those cases, builderEntity will be the entity doing the building.
-function Commander:AttemptToBuild(techId, origin, normal, orientation, pickVec, buildTech, builderEntity)
-
-    local legalBuildPosition = false
-    local position = nil
-    local attachEntity = nil
-    
-    legalBuildPosition, position, attachEntity = self:EvalBuildIsLegal(techId, origin, builderEntity, pickVec)
-    
-    if legalBuildPosition then
-    
-        local newEnt = CreateEntityForCommander(techId, position, self)
-        
-        if newEnt ~= nil then
-        
-            // Use attach entity orientation 
-            if attachEntity then
-                orientation = attachEntity:GetAngles().yaw
-            end
-            
-            // If orientation yaw specified, set it
-            if orientation then
-                local angles = Angles(0, orientation, 0)
-                local coords = BuildCoordsFromDirection(angles:GetCoords().zAxis, newEnt:GetOrigin())
-                newEnt:SetCoords(coords)                
-            end
-            
-            local isAlien = false
-            if newEnt.GetIsAlienStructure then
-                isalien = newEnt:GetIsAlienStructure()
-            end
-            
-            newEnt:TriggerEffects("commander_create", {isalien = isAlien})
-            
-            self:TriggerEffects("commander_create_local")
-            
-            return true, newEnt:GetId()
-                        
-        end
-        
-    end
-    
-    return false, -1
-            
-end
 
 // TODO: Add parameters for energy or resources
 function Commander:TriggerNotEnoughResourcesAlert()
@@ -194,7 +141,7 @@ end
 
 // Return whether action should continue to be processed for the next selected unit. Position will be nil
 // for non-targeted actions and will be the world position target for the action for targeted actions.
-function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pickVec, orientation, entity, force)
+function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pickVec, orientation, entity, trace)
 
     local success = false
     local keepProcessing = true
@@ -208,19 +155,19 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pi
     end
     
     // Cost is in team resources, energy or individual resources, depending on tech node type        
-    local cost = LookupTechData(techId, kTechDataCostKey, 0)
+    local cost = GetCostForTech(techId)
     local team = self:GetTeam()
     
     // Let entities override actions themselves (eg, so buildbots can execute a move-build order instead of building structure immediately)
-    success, keepProcessing = entity:OverrideTechTreeAction(techNode, position, orientation, self)
+    success, keepProcessing = entity:OverrideTechTreeAction(techNode, position, orientation, self, trace)
     if(success) then
         return success, keepProcessing
     end        
     
     // Handle tech tree actions that cost team resources    
-    if(techNode:GetIsResearch() or techNode:GetIsUpgrade() or techNode:GetIsBuild() or techNode:GetIsEnergyBuild()) then
+    if(techNode:GetIsResearch() or techNode:GetIsUpgrade() or techNode:GetIsBuild() or techNode:GetIsEnergyBuild() or techNode:GetIsEnergyManufacture() or techNode:GetIsManufacture()) then
 
-        local costsEnergy = techNode:GetIsEnergyBuild()
+        local costsEnergy = techNode:GetIsEnergyBuild() or techNode:GetIsEnergyManufacture()
 
         local teamResources = team:GetTeamResources()
         local energy = 0
@@ -230,14 +177,18 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pi
         
         if (not costsEnergy and cost <= teamResources) or (costsEnergy and cost <= energy) then
         
-            if(techNode:GetIsResearch() or techNode:GetIsUpgrade() or techNode:GetIsEnergyBuild()) then
+            if(techNode:GetIsResearch() or techNode:GetIsUpgrade() or techNode:GetIsEnergyManufacture() or techNode:GetIsManufacture()) then
             
+                if techNode:GetIsManufacture() then
+                    force = true
+                end
+                
                 success = self:AttemptToResearchOrUpgrade(techNode, force)
                 if success then 
                     keepProcessing = false
                 end
                                 
-            elseif(techNode:GetIsBuild()) then
+            elseif techNode:GetIsBuild() or techNode:GetIsEnergyBuild() then
             
                 success = self:AttemptToBuild(techId, position, normal, orientation, pickVec, false)
                 if success then 
@@ -265,18 +216,13 @@ function Commander:ProcessTechTreeActionForEntity(techNode, position, normal, pi
         end
                         
     // Handle resources-based abilities
-    elseif(techNode:GetIsAction() or techNode:GetIsBuy() or techNode:GetIsManufacture()) then
+    elseif(techNode:GetIsAction() or techNode:GetIsBuy()) then
 
         local playerResources = self:GetResources()
         if(cost == nil or cost <= playerResources) then
         
             if(techNode:GetIsAction()) then            
                 success = entity:PerformAction(techNode, position)
-            elseif (techNode:GetIsManufacture()) then
-                success = self:AttemptToResearchOrUpgrade(techNode, true)
-                if success then 
-                    keepProcessing = false
-                end
             elseif(techNode:GetIsBuy()) then
             
                 success = self:AttemptToBuild(techId, position, normal, orientation, pickVec, false)
@@ -459,7 +405,7 @@ function Commander:ProcessTechTreeAction(techId, pickVec, orientation, worldCoor
                 local selectedEntity = Shared.GetEntity(selectedEntityId)
                 local actionSuccess = false
                 local keepProcessing = false
-                actionSuccess, keepProcessing = self:ProcessTechTreeActionForEntity(techNode, targetPosition, targetNormal, pickVec, orientation, selectedEntity)
+                actionSuccess, keepProcessing = self:ProcessTechTreeActionForEntity(techNode, targetPosition, targetNormal, pickVec, orientation, selectedEntity, trace)
                 
                 // Successful if just one of our entities handled action
                 if(actionSuccess) then
@@ -526,6 +472,25 @@ function Commander:GiveOrderToSelection(orderType, targetId)
 
 end
 
+
+function Commander:SetEntitiesHotkeyState(group, state)
+        
+    if Server then
+        
+        for index, entityIndex in ipairs(group) do
+            
+            local entity = Shared.GetEntity(entityIndex)        
+            
+            if entity ~= nil then
+                entity:SetIsHotgrouped(state)
+            end
+            
+        end
+    
+    end 
+    
+end
+
 // Creates hotkey for number out of current selection. Returns true on success.
 // Replaces existing hotkey on this number if it exists.
 function Commander:CreateHotkeyGroup(number)
@@ -538,7 +503,9 @@ function Commander:CreateHotkeyGroup(number)
             // Don't update hotkeys if they are the same (also happens when key is held down)
             if (not table.getIsEquivalent(selection, self.hotkeyGroups[number])) then
         
+                self:SetEntitiesHotkeyState(self.hotkeyGroups[number], false)
                 table.copy(selection, self.hotkeyGroups[number])
+                self:SetEntitiesHotkeyState(self.hotkeyGroups[number], true)
                 
                 self:SendHotkeyGroup(number)
                 
@@ -561,6 +528,7 @@ function Commander:DeleteHotkeyGroup(number)
     
         if (table.count(self.hotkeyGroups[number]) > 0) then
         
+            self:SetEntitiesHotkeyState(self.hotkeyGroups[number], false)
             self.hotkeyGroups[number] = {}
             
             self:SendHotkeyGroup(number)
@@ -611,8 +579,22 @@ function Commander:TriggerAlert(techId, entity)
         
     end
     
-    local location = Vector(entity:GetOrigin())
-    Server.SendCommand(self, string.format("minimapalert %d %.2f %.2f %d %d", techId, location.x, location.z, entity:GetId(), entity:GetTechId())) 
+    local location = entity:GetOrigin()
+    if entity:GetTechId() == nil then
+        Print( "Triggering an alert for an entity with no tech ID (entity is class %s)", entity:GetClassName() )
+    end
+    assert( entity:GetTechId() ~= nil )
+    
+    local message =
+        {
+            techId = techId,
+            worldX = location.x,
+            worldZ = location.z,
+            entityId = entity:GetId(),
+            entityTechId = entity:GetTechId() 
+        }
+        
+    Server.SendNetworkMessage(self, "MinimapAlert", message, true)        
 
     // Insert new generic alert triple: techid/entityid/timesent
     table.insert(self.alerts, {techId, entityId, time})

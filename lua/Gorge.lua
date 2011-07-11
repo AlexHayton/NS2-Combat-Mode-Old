@@ -11,8 +11,12 @@ Script.Load("lua/Alien.lua")
 Script.Load("lua/Weapons/Alien/SpitSpray.lua")
 Script.Load("lua/Weapons/Alien/InfestationAbility.lua")
 Script.Load("lua/Weapons/Alien/HydraAbility.lua")
+Script.Load("lua/Weapons/Alien/CystAbility.lua")
+Script.Load("lua/Weapons/Alien/BileBomb.lua")
 Script.Load("lua/Weapons/Alien/HarvesterAbility.lua")
 Script.Load("lua/Weapons/Alien/Absorb.lua")
+Script.Load("lua/Mixins/GroundMoveMixin.lua")
+Script.Load("lua/Mixins/CameraHolderMixin.lua")
 
 class 'Gorge' (Alien)
 
@@ -20,7 +24,7 @@ if (Server) then
     Script.Load("lua/Gorge_Server.lua")
 end
 
-local networkVars = {
+Gorge.networkVars = {
     bellyYaw            = "float",
     slideFlinchAmount   = "float",
     timeToEndSlide      = "float"
@@ -40,8 +44,8 @@ Gorge.kSoakViewEffect = PrecacheAsset("cinematics/alien/gorge/soak_view.cinemati
 Gorge.kSlideEffect = PrecacheAsset("cinematics/alien/gorge/slide.cinematic")
 
 Gorge.kMass = 80                    // I hope this is more than 16-bits! ;) Fatty!
-Gorge.kXZExtents = .65              // Wide load
-Gorge.kYExtents = .65
+Gorge.kXZExtents = 0.5              // Wide load
+Gorge.kYExtents = 0.475
 Gorge.kHealth = kGorgeHealth
 Gorge.kArmor = kGorgeArmor
 Gorge.kFov = 95
@@ -52,7 +56,6 @@ Gorge.kViewOffsetHeight = .6
 Gorge.kMaxGroundSpeed = 5.1
 Gorge.kMaxSlidingSpeed = 10
 Gorge.kMaxArmorModeSpeed = 1
-Gorge.kMaxAirSpeed = 12
 Gorge.kSlidingMoveInputScalar = 0.00015
 Gorge.kArmorModeMoveInputScalar = .015
 Gorge.kArmorModeEnergyScalar = 1.25
@@ -74,8 +77,14 @@ Gorge.kFlinch = "flinch1"
 Gorge.kBigFlinch = "flinch2"
 Gorge.kCreateStructure = "chamber"
 
+PrepareClassForMixin(Gorge, GroundMoveMixin)
+PrepareClassForMixin(Gorge, CameraHolderMixin)
+
 function Gorge:OnInit()
 
+    InitMixin(self, GroundMoveMixin, { kGravity = Player.kGravity })
+    InitMixin(self, CameraHolderMixin, { kFov = Gorge.kFov })
+    
     Alien.OnInit(self)
     
     self.bellyYaw = 0
@@ -98,10 +107,6 @@ end
 
 function Gorge:GetCrouchShrinkAmount()
     return 0
-end
-
-function Gorge:GetStartFov()
-    return Gorge.kFov
 end
 
 function Gorge:GetViewModelName()
@@ -328,11 +333,11 @@ function Gorge:GetInArmorMode()
     return (self.mode == kPlayerMode.GorgeStartArmor or self.mode == kPlayerMode.GorgeArmor or self.mode == kPlayerMode.GorgeEndArmor)
 end
 
-function Gorge:UpdateMove(input)
+function Gorge:AdjustMove(input)
 
-    PROFILE("Gorge:UpdateMove")
+    PROFILE("Gorge:AdjustMove")
 
-    Alien.UpdateMove(self, input)
+    Alien.AdjustMove(self, input)
 
     // Can't do anything for a bit after a crash
     if (self.timeToEndSlide ~= 0) then
@@ -394,21 +399,19 @@ end
 
 function Gorge:GetMaxSpeed()
 
-    if not self:GetIsOnGround() then
+    local speed = Gorge.kMaxGroundSpeed
     
-        return Gorge.kMaxAirSpeed
-        
-    elseif self:GetIsSliding() then
+    if self:GetIsSliding() then
     
-        return Gorge.kMaxSlidingSpeed
+        speed = Gorge.kMaxSlidingSpeed
         
     elseif self:GetInArmorMode() then
     
-        return Gorge.kMaxArmorModeSpeed
-        
+        speed = Gorge.kMaxArmorModeSpeed
+
     end
     
-    return Gorge.kMaxGroundSpeed
+    return speed * self:GetSlowSpeedModifier()
     
 end
 
@@ -471,24 +474,7 @@ function Gorge:ProcessEndMode()
         
     end
     
-    // Create structure after we finish puke animation
-    if(self.mode == kPlayerMode.GorgeStructure) then
-    
-        local ability = self:GetActiveWeapon()
-        if ability and ability:isa("HydraAbility") then
-        
-            ability:CreateHydra(self)
 
-        elseif ability and ability:isa("InfestationAbility") then
-        
-            ability:CreateInfestation(self)
-            
-        end
-        
-        self.mode = kPlayerMode.Default
-        return true
-        
-    end
     
     return false
     
@@ -535,9 +521,7 @@ function Gorge:UpdateHelp()
         return true
     elseif self:AddTooltipOnce("Press left-click to spit and right-click to heal players or structures.") then
         return true
-    elseif activeWeaponName ~= "InfestationAbility" and self:AddTooltipOnce("Switch to weapon #2 to spread infestation.") then
-        return true       
-    elseif activeWeaponName ~= "HydraAbility" and self:AddTooltipOnce("Switch to weapon #3 to build hydras that attack enemies.") then
+    elseif activeWeaponName ~= "HydraAbility" and self:AddTooltipOnce("Switch to weapon #2 to build hydras that attack enemies.") then
         return true       
     elseif activeWeaponName == "HydraAbility" and self:AddTooltipOnce("Building a Hydra costs you resources, but you can build as many as you like.") then
         return true       
@@ -552,4 +536,4 @@ function Gorge:UpdateHelp()
 end
 
 
-Shared.LinkClassToMap("Gorge", Gorge.kMapName, networkVars )
+Shared.LinkClassToMap("Gorge", Gorge.kMapName, Gorge.networkVars )

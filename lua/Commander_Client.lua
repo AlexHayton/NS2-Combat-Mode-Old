@@ -217,7 +217,7 @@ function CommanderUI_MenuButtonRequiresTarget(index)
         if(techNode ~= nil) then
         
             // Buy nodes require a target for the commander
-            requiresTarget = techNode:GetRequiresTarget() or techNode:GetIsBuy()
+            requiresTarget = techNode:GetRequiresTarget() or techNode:GetIsBuy() or techNode:GetIsEnergyBuild()
             
         end
         
@@ -337,7 +337,7 @@ function Commander:CreateGhostStructure(techId)
 
     local techNode = GetTechNode(techId)
     
-    if(techNode ~= nil and (techNode:GetIsBuild() or techNode:GetIsBuy())) then
+    if(techNode ~= nil and (techNode:GetIsBuild() or techNode:GetIsBuy() or techNode:GetIsEnergyBuild())) then
     
         self:DestroyGhostStructure()
         
@@ -388,6 +388,16 @@ function Commander:UpdateGhostGuides()
         local techId = self.currentTechId
         if techId ~= nil and techId ~= kTechId.None then
             
+            // check if entity has a special ghost guide method
+            local method = LookupTechData(techId, kTechDataGhostGuidesMethod, nil)
+            
+            if method then
+                local guides = method(self)
+                for entity, radius in pairs(guides) do
+                    self:AddGhostGuide(Vector(entity:GetOrigin()), radius)
+                end
+            end
+            
             // If entity can only be placed within range of attach structures, get all the ents that
             // count for this and draw circles around them
             local ghostRadius = LookupTechData(techId, kStructureAttachRange, 0)
@@ -397,17 +407,22 @@ function Commander:UpdateGhostGuides()
                 // Lookup attach entity 
                 local attachId = LookupTechData(techId, kStructureAttachId)
                 
-                local supportingTechIds = GetTechTree():ComputeUpgradedTechIdsSupportingId(attachId)
-                table.insert(supportingTechIds, attachId)
+                // Handle table of attach ids
+                local supportingTechIds = {}
+                if type(attachId) == "table" then
+                    for index, currentAttachId in ipairs(attachId) do
+                        table.insert(supportingTechIds, GetTechTree():ComputeUpgradedTechIdsSupportingId(currentAttachId))
+                    end
+                else
+                    table.insert(supportingTechIds, GetTechTree():ComputeUpgradedTechIdsSupportingId(attachId))
+                end                
                 
-                for index, ent in ipairs(GetEntsWithTechId(supportingTechIds)) do
-                
-                    self:AddGhostGuide(Vector(ent:GetOrigin()), ghostRadius)
-                
+                for index, ent in ipairs(GetEntsWithTechId(supportingTechIds)) do                
+                    self:AddGhostGuide(Vector(ent:GetOrigin()), ghostRadius)                
                 end
-                    
+   
             else
-
+ 
                 // Otherwise, draw only the free attach entities for this build tech (this is the common case)
                 for index, ent in ipairs(GetFreeAttachEntsForTechId(techId)) do
                 
@@ -443,6 +458,27 @@ function Commander:UpdateGhostGuides()
  
     end
     
+end
+
+function Commander:GetCystParentFromCursor()
+
+    PROFILE("Commander:GetCystParentFromCursor")
+
+    local x, y = Client.GetCursorPosScreen()           
+    local trace = GetCommanderPickTarget(self, CreatePickRay(self, x, y), false, true)
+    local endPoint = trace.endPoint
+    
+    if trace.fraction == 1 then
+    
+        // the pointer is not on the map. set the pointer to where it intersects y==0, so we can get a reasonable range to it
+        local dy = trace.endPoint.y - self:GetOrigin().y
+        local frac = self:GetOrigin().y / math.abs(dy)
+        endPoint = self:GetOrigin() + (trace.endPoint - self:GetOrigin()) * frac          
+        
+    end
+    
+    return GetCystParentFromPoint(endPoint, trace.normal)
+
 end
 
 function Commander:DestroyGhostGuides()
@@ -501,7 +537,7 @@ function Commander:UpdateGhostStructureVisuals()
             coords.origin = position
         end
         
-        self.ghostStructure:SetCoords(coords)        
+        self.ghostStructure:SetCoords(coords)    
 
         if not self.specifyingOrientation then
 
@@ -603,7 +639,7 @@ function CommanderUI_TargetedAction(index, x, y, button)
 
         // Don't destroy ghost when they first place the sentry - allow commander to specify orientation
         if not LookupTechData(techId, kTechDataSpecifyOrientation, false) or player.specifyingOrientation then
-        
+
             player:SendTargetedAction(techId, normalizedPickRay)
             player:SetCurrentTech(kTechId.None)
             
@@ -634,7 +670,7 @@ function CommanderUI_IsValid(button, x, y)
         else
         
             local techNode = GetTechNode(player.currentTechId)
-            if techNode ~= nil and (techNode:GetIsBuild() or techNode:GetIsBuy()) then
+            if techNode ~= nil and (techNode:GetIsBuild() or techNode:GetIsBuy() or techNode:GetIsEnergyBuild()) then
             
                 local trace = GetCommanderPickTarget(player, CreatePickRay(player, x, y), false, true)
         
@@ -701,11 +737,8 @@ function Commander:AddAlert(techId, worldX, worldZ, entityId, entityTechId)
         
         // Create alert message => {text, icon x offset, icon y offset, -1, entity id}
         local alertText = LookupTechData(techId, kTechDataAlertText, "")
-        ASSERT(type(alertText) == "string")
         table.insert(self.alertMessages, alertText)
-        ASSERT(type(xOffset) == "number")
         table.insert(self.alertMessages, xOffset)
-        ASSERT(type(yOffset) == "number")
         table.insert(self.alertMessages, yOffset)
         table.insert(self.alertMessages, entityId)
         table.insert(self.alertMessages, worldX)
@@ -1525,7 +1558,7 @@ function Commander:SetCurrentTech(techId)
         
     end
     
-    if techNode and not techNode:GetRequiresTarget() and not techNode:GetIsBuy() then
+    if techNode and not techNode:GetRequiresTarget() and not techNode:GetIsBuy() and not techNode:GetIsEnergyBuild() then
         
         // Send action up to server. Necessary for even menu changes as 
         // server validates all actions.

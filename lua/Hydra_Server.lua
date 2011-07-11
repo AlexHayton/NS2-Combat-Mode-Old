@@ -126,8 +126,6 @@ function Hydra:OnConstructionComplete()
 
     Structure.OnConstructionComplete(self)
     
-    self:SpawnInfestation()
-    
     // Start scanning for targets once built
     self:SetNextThink(Hydra.kThinkInterval)
         

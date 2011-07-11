@@ -48,7 +48,8 @@ function Absorb:PerformPrimaryAttack(player)
     // Play random animation
     player:SetViewAnimation( Absorb.kAnimAttackTable )
     player:SetActivityEnd(self:GetPrimaryAttackDelay())
-
+    
+    return true
 end
 
 function Absorb:PerformSecondaryAttack(player)

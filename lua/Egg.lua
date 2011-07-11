@@ -105,15 +105,30 @@ function Egg:QueueWaitingPlayer()
 
 end
 
-function Egg:OnKill(damage, attacker, doer, point, direction)
+// Takes the queued player from this Egg and placed them back in the
+// respawn queue to be spawned elsewhere.
+function Egg:RequeuePlayer()
 
-    // If we were spawning a player, put them back in the respawn queue
-    if self.queuedPlayerId ~= nil then
+    if self.queuedPlayerId then
     
-        local player = Shared.GetEntity(self.queuedPlayerId) 
-        self:GetTeam():PutPlayerInRespawnQueue(player, Shared.GetTime())
+        local player = Shared.GetEntity(self.queuedPlayerId)
+        ASSERT(player ~= nil)
+        
+        local team = self:GetTeam()
+        ASSERT(team ~= nil)
+        team:PutPlayerInRespawnQueue(player, Shared.GetTime())
         
     end
+    
+    // Don't spawn player
+    self.queuedPlayerId = nil
+    self.timeQueuedPlayer = nil
+
+end
+
+function Egg:OnKill(damage, attacker, doer, point, direction)
+
+    self:RequeuePlayer()
 
     self:TriggerEffects("egg_death")        
     
@@ -195,17 +210,13 @@ function Egg:OnThink()
     
 end
 
-function Egg:OnConstructionComplete()
-
-    Structure.OnConstructionComplete(self)
-    
-    self:SpawnInfestation()
-end
-
 function Egg:OnDestroy()
     self:ClearInfestation()
     
-    Structure.OnDestroy(self)        
+    Structure.OnDestroy(self)
+    
+    // Put the player back in queue if there was one hoping to spawn at this now destroyed Egg. 
+    self:RequeuePlayer()   
 end
 end
 

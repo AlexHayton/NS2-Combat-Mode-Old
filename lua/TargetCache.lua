@@ -1,4 +1,3 @@
-
 // ======= Copyright © 2003-2011, Unknown Worlds Entertainment, Inc. All rights reserved. =======
 //
 // lua\TargetCache.lua
@@ -7,61 +6,6 @@
 //
 Script.Load("lua/NS2Gamerules.lua") 
 Script.Load("lua/TargetCache_Commands.lua")
-
-//
-// These three methods belongs in Utility
-//
-// Wraps all arguments in ToString() before passing them to Print(). Very convinient.
-//
-function Log(formatString, ...)
-    local args = {}
-    for i = 1, select('#', ...) do
-        local v = select(i, ...)
-        table.insert(args, ToString(v))
-    end
-    if #args > 0 then 
-        PrintToLog(formatString, unpack(args))
-    else
-        PrintToLog(formatString)
-    end
-end
-
-// 
-// Enable a logger that can be turned on /off
-// Usage:
-// self.logTable = {}
-// self.logStats = Logger("stats", self.logTable, false)
-// self.logStats = Logger("base", self.logTable, true)
-// self.enabledLogs.stats = true
-// self.logStats("logs %s", msg)
-// 
-function Logger(name, logTable, enabled)
-    local result = function(format, ...) if logTable[name] then Log(format, ...) end end
-    logTable[name] = enabled and true or false
-    return result
-end
-
-//
-// Allow turning on/off loggers belonging to the given logTable.
-// It returns a description of changed logs and the available logs.
-//
-function LogCtrl(prefix, on, logTable)
-    local msg = nil
-    if prefix and string.len(prefix) > 0 then
-        for name,v in pairs(logTable) do
-            if prefix == "all" or prefix == "*" or string.find(name, prefix) == 1 then
-                logTable[name] = on
-                msg = (msg and msg .. ", " .. name) or "Set " .. name
-            end
-        end
-    end
-    msg = msg or "No logs changed"   
-    for name,v in pairs(logTable) do
-        msg = msg .. "\n" .. name .. " = " .. (v and "on" or "off")
-    end
-    return msg 
-end
-
 
 //
 // TargetFilters are used to check targets before presenting them to the prioritizers
@@ -73,8 +17,8 @@ end
 function PitchTargetFilter(attacker, minPitchDegree, maxPitchDegree)
     local lastPitch = 0
     return function(target, targetPoint)
-        local origin = attacker:GetEyePos()   
-        local viewCoords = attacker:GetViewAngles():GetCoords() 
+        local origin = GetEntityEyePos(attacker)
+        local viewCoords = GetEntityViewAngles(attacker):GetCoords()
         local v = targetPoint - origin
         local distY = Math.DotProduct(viewCoords.yAxis, v)
         local distZ = Math.DotProduct(viewCoords.zAxis, v)
@@ -440,7 +384,7 @@ function TargetCache:RebuildStaticTargetList(attacker, range, visibilityRequired
      // static target list has changed. Rebuild it for the given entity
     local result = {}
     local sqRange = range * range
-    local origin = attacker:GetEyePos()
+    local origin = GetEntityEyePos(attacker)
     local traceCount = 0
 
     for i,target in ipairs(targetList) do
@@ -539,7 +483,7 @@ function TargetCache:_GetRawTargetList(attacker, range, visibilityRequired, mobi
     self:VerifyTargetingListCache() 
     local result = {}
     local sqMaxRange = range * range
-    local origin = attacker:GetEyePos()
+    local origin = GetEntityEyePos(attacker)
 
     // filter the mobile targets
     if mobileListType then
@@ -700,7 +644,7 @@ end
 // A target selector allows one attacker to acquire and validate targets. 
 //
 // Arguments: 
-// - attacker - the attacker. Must have an GetEyePos() method
+// - attacker - the attacker.
 //
 // - range - the maximum range of the attack. 
 //
@@ -791,7 +735,7 @@ function TargetSelector:AcquireTargets(maxTargets, rangeOverride, originOverride
         if self.filters then
             table.copy(self.filters, filters)
         end
-        local origin = originOverride or self.attacker:GetEyePos()
+        local origin = originOverride or GetEntityEyePos(self.attacker)
         table.insert(filters, RangeTargetFilter(origin, rangeOverride))
     end
     // 1000 targets should be plenty ...
@@ -820,7 +764,7 @@ function TargetSelector:ValidateTarget(target)
     if target then
         self.cache:VerifyTargetingListCache()
         local sqMaxRange = self.range * self.range
-        local origin = self.attacker:GetEyePos()
+        local origin = GetEntityEyePos(self.attacker)
         return self.cache:ValidateTarget(self.attacker, origin, sqMaxRange, target, nil, self.filters)
     end
     return false, -1

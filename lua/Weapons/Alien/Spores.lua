@@ -46,23 +46,22 @@ function Spores:PerformPrimaryAttack(player)
     // Trace instant line to where it should hit
     local viewAngles = player:GetViewAngles()
     local viewCoords = viewAngles:GetCoords()    
-    local startPoint = player:GetOrigin() + player:GetViewOffset() + viewCoords.zAxis
+    local startPoint = player:GetEyePos() + viewCoords.zAxis
 
-    local trace = Shared.TraceRay(startPoint, startPoint + viewCoords.zAxis * 1000, PhysicsMask.AllButPCs, EntityFilterOne(self))
-    if trace.fraction < 1 then
+    local trace = Shared.TraceRay(startPoint, startPoint + viewCoords.zAxis * kLerkSporeShootRange, PhysicsMask.AllButPCs, EntityFilterOne(self))
     
-        // Create spore cloud that will damage players
-        if Server then
-       
-            local spores = CreateEntity(SporeCloud.kMapName, trace.endPoint, player:GetTeamNumber())
-            spores:SetOwner(player)
+    // Create spore cloud that will damage players
+    if Server then
+   
+        local spores = CreateEntity(SporeCloud.kMapName, trace.endPoint, player:GetTeamNumber())
+        spores:SetOwner(player)
 
-            self:TriggerEffects("spores", {effecthostcoords = Coords.GetTranslation(trace.endPoint) })
+        self:TriggerEffects("spores", {effecthostcoords = Coords.GetTranslation(trace.endPoint) })
 
-        end
-        
     end
     
+    return true
+        
 end
 
 function Spores:GetHUDSlot()

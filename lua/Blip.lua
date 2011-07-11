@@ -17,15 +17,23 @@ Blip.kMapName = "blip"
 Blip.networkVars =
 {
     // No need to send entId as the entity origin is updated every frame
-    blipType = "enum kBlipType"
+    blipType    = "enum kBlipType",
+    entId       = "entityid"
 }
 
 function Blip:OnCreate()
 
     self.blipType = kBlipType.Undefined
+    self.entId    = Entity.invalidId
     
-    self.entId = Entity.invalidId
+    self:SetPropagate(Entity.Propagate_Mask)
+    self:UpdateRelevancy()
     
+end
+
+function Blip:UpdateRelevancy()
+	self:SetRelevancyDistance( kHiveSightMaxRange )
+	self:SetExcludeRelevancyMask( kRelevantToTeam2 )
 end
 
 function Blip:OnGetIsRelevant(player)

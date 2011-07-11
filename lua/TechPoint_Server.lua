@@ -10,7 +10,7 @@ function TechPoint:GetCanTakeDamage()
     return false
 end
 
-function TechPoint:OnReset()
+function TechPoint:Reset()
     
     self:OnInit()
     

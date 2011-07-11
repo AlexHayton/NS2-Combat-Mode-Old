@@ -28,7 +28,7 @@ function GUICrosshair:Initialize()
     self.crosshairs:SetAnchor(GUIItem.Middle, GUIItem.Center)
     self.crosshairs:SetPosition(Vector(-GUICrosshair.kCrosshairSize / 2, -GUICrosshair.kCrosshairSize / 2, 0))
     self.crosshairs:SetTexture("ui/crosshairs.dds")
-    self.crosshairs:SetIsVisible(true)
+    self.crosshairs:SetIsVisible(false)
     
     self.damageIndicator = GUIManager:CreateGraphicItem()
     self.damageIndicator:SetSize(Vector(GUICrosshair.kCrosshairSize, GUICrosshair.kCrosshairSize, 0))
@@ -69,9 +69,10 @@ function GUICrosshair:Update(deltaTime)
     // Update crosshair image.
     local xCoord = PlayerUI_GetCrosshairX()
     local yCoord = PlayerUI_GetCrosshairY()
+    self.crosshairs:SetIsVisible((xCoord and yCoord) ~= nil)
     if PlayerUI_GetCrosshairWidth() == 0 then
         self.crosshairs:SetColor(GUICrosshair.kInvisibleColor)
-    else
+    elseif xCoord and yCoord then
         self.crosshairs:SetColor(GUICrosshair.kVisibleColor)
         self.crosshairs:SetTexturePixelCoordinates(xCoord, yCoord,
                                                    xCoord + PlayerUI_GetCrosshairWidth(), yCoord + PlayerUI_GetCrosshairHeight())

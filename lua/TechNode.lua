@@ -11,7 +11,7 @@
 //   Action (eg, medpack, drifter flare) - Optionally costs energy, optional position, optionally must be researched
 //   Buy (eg, create siege cannon from factory, player buy weapon) - Costs resources, position implied from buyer or originating structure (unless targeted). Requires target for commander.
 //   Build (eg, build structure from drifter) - Costs team resources, requires position
-//   EnergyBuild (add to manufacture queue, create unit when done) - Costs energy, takes time to complete, no position (MACs, Drifters). Only use for AI units that don't need a position.
+//   EnergyManufacture (add to manufacture queue, create unit when done) - Costs energy, takes time to complete, no position (MACs, Drifters). Only use for AI units that don't need a position.
 //   Manufacture (add to manufacture queue, create unit when done) - Costs resources, takes time to complete, no position (ARCs)
 //   Activation (eg, deploy/undeploy siege) - Optionally costs energy, optional position
 //   Menu - No cost, no position
@@ -40,7 +40,8 @@ TechNode.kTechNodeVars =
     
     // This node is an upgrade, addition, evolution or add-on to another node
     // This includes an alien upgrade for a specific lifeform or an alternate
-    // ammo upgrade for a weapon
+    // ammo upgrade for a weapon. For research nodes, they can only be triggered
+    // on structures of this type (ie, mature versions of a structure).
     addOnTechId         = string.format("integer (0 to %d)", kTechIdMax),
 
     // Resource costs (team resources, individual resources or energy depending on type)
@@ -74,9 +75,6 @@ TechNode.kTechNodeVars =
     // If true, tech tree activity requires ghost, otherwise it will execute at target location's position (research, most actions)
     requiresTarget      = "boolean",
     
-    // For some abilities, they look and feel like "build" actions but they cost energy
-    energyBuild         = "boolean",
-
 }
 
 function TechNode:Initialize(techId, techType, prereq1, prereq2)
@@ -120,8 +118,6 @@ function TechNode:Initialize(techId, techType, prereq1, prereq2)
     
     self.requiresTarget = false
     
-    self.energyBuild = false
-        
 end
 
 function TechNode:GetResearched()
@@ -143,14 +139,14 @@ end
 // Returns: 0 = team resources, 1 = individual resources, 2 = energy (from CommanderUI_MenuButtonTooltip). Returns nil if none required.
 function TechNode:GetResourceType()
 
-    // TeamResources
-    if self.techType == kTechType.Research or self.techType == kTechType.Upgrade or self.techType == kTechType.Build then
+    // Team resources
+    if self.techType == kTechType.Research or self.techType == kTechType.Upgrade or self.techType == kTechType.Build or self.techType == kTechType.Manufacture then
         return 0
-    // Resources
-    elseif self.techType == kTechType.Buy or self.techType == kTechType.Manufacture then
+    // Personal Resources
+    elseif self.techType == kTechType.Buy then
         return 1
     // Energy
-    elseif self.techType == kTechType.Action or self.techType == kTechType.EnergyBuild or self.techType == kTechType.Activation then
+    elseif self.techType == kTechType.Action or self.techType == kTechType.EnergyBuild or self.techType == kTechType.EnergyManufacture or self.techType == kTechType.Activation then
         return 2
     end
     
@@ -174,6 +170,10 @@ function TechNode:GetIsBuild()
     return self.techType == kTechType.Build
 end
 
+function TechNode:GetIsEnergyBuild()
+    return self.techType == kTechType.EnergyBuild
+end
+
 function TechNode:GetIsActivation()
     return self.techType == kTechType.Activation
 end
@@ -190,8 +190,8 @@ function TechNode:GetRequiresTarget()
     return self.requiresTarget
 end
 
-function TechNode:GetIsEnergyBuild()
-    return self.energyBuild
+function TechNode:GetIsEnergyManufacture()
+    return self.techType == kTechType.EnergyManufacture
 end
 
 function TechNode:GetTechId()
@@ -247,7 +247,7 @@ end
 
 function TechNode:GetCanResearch()
 
-    return ((self.techType == kTechType.Research) and not self.researched and not self.researching) or (self.techType == kTechType.Upgrade) or (self.techType == kTechType.EnergyBuild)
+    return ((self.techType == kTechType.Research) and not self.researched and not self.researching) or (self.techType == kTechType.Upgrade) or (self.techType == kTechType.EnergyManufacture)
     
 end
 
@@ -301,7 +301,6 @@ if Client then
         self.researching            = networkVars.researching
         self.hasTech                = networkVars.hasTech
         self.requiresTarget         = networkVars.requiresTarget
-        self.energyBuild            = networkVars.energyBuild
         
     end
 
@@ -338,7 +337,6 @@ if Server then
         t.researched                = techNode.researched
         t.researching               = techNode.researching
         t.requiresTarget            = techNode.requiresTarget
-        t.energyBuild               = techNode.energyBuild
         
         return t
         

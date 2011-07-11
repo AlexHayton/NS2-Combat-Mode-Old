@@ -30,6 +30,7 @@ local defaults = {
     {"TeamChat", "Y"},
     {"ToggleSayings1", "Z"},
     {"ToggleSayings2", "X"},
+    {"ShowMap", "C"},
     {"ToggleVoteMenu", "V"},
     {"Weapon1", "1"},
     {"Weapon2", "2"},
@@ -39,7 +40,6 @@ local defaults = {
     {"Scoreboard", "Tab"},
     {"ToggleConsole", "Grave"},
     {"ToggleFlashlight", "F"},
-    {"ShowMap", "C"}
 }
 
 // Order, names, description of keys in menu
@@ -61,8 +61,9 @@ local globalControlBindings = {
     "Drop", "input", "Drop weapon", "G",
     "Buy", "input", "Buy/evolve menu", "B",
     "Taunt", "input", "Taunt", "Q",
-    "ToggleSayings1", "input", "Sayings #1", "X",
-    "ToggleSayings2", "input", "Sayings #2", "C",
+    "ToggleSayings1", "input", "Sayings #1", "Z",
+    "ToggleSayings2", "input", "Sayings #2", "X",
+    "ShowMap", "input", "Show Map", "C",
     "ToggleVoteMenu", "input", "Vote menu", "V",
     "VoiceChat", "input", "Use microphone", "LeftAlt",
     "TextChat", "input", "Public chat", "Y",
@@ -74,7 +75,6 @@ local globalControlBindings = {
     "Weapon5", "input", "Weapon #5", "5",
     "ToggleConsole", "input", "Toggle Console", "Grave",
     "ToggleFlashlight", "input", "Flashlight", "F",
-    "ShowMap", "input", "Show Map", "C",
 }
 
 local specialKeys = {

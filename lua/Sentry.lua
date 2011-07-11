@@ -142,8 +142,11 @@ function Sentry:GetFov()
     return Sentry.kFov
 end
 
-// Fire out out muzzle attach point
-function Sentry:GetEyePos()
+/**
+ * Fire out out muzzle attach point.
+ */
+function Sentry:GetViewOffset()
+
     // Great idea .. but it doesn't quite work - the eyepos being offset from the
     // center of the scan means that sometimes the sensor will see a target and
     // sometimes not. An alien placing itself at the edge of the fov would be a valid 
@@ -156,8 +159,8 @@ function Sentry:GetEyePos()
     // lowering the sentry eyepos.
     // lets go for a hack: manually measusured; height of muzzle when at zero pitch is at 1.0162.
     // note: the caching here assumes that you don't change the origin of the sentry
-    self.eyePos = self.eyePos or (self:GetOrigin() + Vector(0, 1.0162, 0))
-    return self.eyePos
+    return Vector(0, 1.0162, 0)
+    
 end
 
 function Sentry:GetDeathIconIndex()

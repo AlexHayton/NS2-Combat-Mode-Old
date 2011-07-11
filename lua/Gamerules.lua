@@ -106,7 +106,7 @@ function Gamerules:ResetGame()
             if ( (entity:GetIsMapEntity() and entity:isa("ScriptActor")) or entity:isa("Player") ) then
                 entity:Reset()
             else
-                Server.DestroyEntity(entity)
+                DestroyEntity(entity)
             end
 
         end       
@@ -121,23 +121,6 @@ function Gamerules:ResetGame()
 end
 
 function Gamerules:OnUpdate(deltaTime)
-end
-
-// Returns true if entity should be propagated to player
-function Gamerules:GetIsRelevant(playerEntity, entity)
-    
-    // Check the distance to determine if the entity is relevant.
-    local relevanceDistance = 40
-    
-    local distanceSquared = (playerEntity:GetOrigin() - entity:GetOrigin()):GetLengthSquared()
-    if(distanceSquared < relevanceDistance*relevanceDistance /*or GetCanSeeEntity(playerEntity, entity)*/) then
-
-        return true
-        
-    end
-        
-    return false
-
 end
 
 // Function for allowing teams to hear each other's voice chat
@@ -180,7 +163,7 @@ function Gamerules:RespawnPlayer(player)
 end
 
 function Gamerules:GetPlayerConnectMapName(client)
-    return Player.kMapName
+    return ReadyRoomPlayer.kMapName
 end
 
 /**
@@ -199,7 +182,7 @@ function Gamerules:OnClientConnect(client)
         end    
         
         // Tell engine that player is controlling this entity
-        client:SetControllingPlayer(player)
+        player:SetControllingPlayer(client)
         
         player:OnClientConnect(client)
         
@@ -218,14 +201,8 @@ end
  * and player entity. Player could be nil if it has been deleted.
  */
 function Gamerules:OnClientDisconnect(client)
-    
-    local player = client:GetControllingPlayer()
-
     // Tell all other clients that the player has disconnected
-    if (player ~= nil) then
-        Server.SendCommand(nil, string.format("clientdisconnect %d", player:GetClientIndex()))
-    end
-   
+    Server.SendCommand( nil, string.format("clientdisconnect %d", client:GetId()) )
 end
 
 /**
@@ -251,7 +228,7 @@ function Gamerules:SetDarwinMode(darwinMode)
 end
 
 function Gamerules:GetDamageMultiplier()
-    return self.damageMultiplier
+    return ConditionalValue(Shared.GetCheatsEnabled(), self.damageMultiplier, 1)
 end
 
 function Gamerules:SetDamageMultiplier(multiplier)

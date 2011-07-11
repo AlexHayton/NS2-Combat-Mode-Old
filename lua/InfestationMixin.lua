@@ -9,6 +9,12 @@
 InfestationMixin = { }
 InfestationMixin.type = "Infestation"
 
+// Whatever uses the InfestationMixin needs to implement the following callback functions.
+InfestationMixin.expectedCallbacks = 
+{
+    GetInfestationRadius = "How far infestation should spread from entity." 
+}
+
 function InfestationMixin.__prepareclass(toClass)
 
     ASSERT(toClass.networkVars ~= nil, "InfestationMixin expects the class to have network fields")
@@ -42,13 +48,14 @@ function InfestationMixin:SpawnInfestation(percent)
     
     if self.infestationId == Entity.invalidId then
     
-        local origin = self:GetOrigin()
+        local coords = self:GetCoords()
         local attached = self:GetAttached()
         if attached then
-            origin = attached:GetOrigin()
+            coords = attached:GetCoords()
         end
         
-        local infestation = CreateStructureInfestation(origin, self:GetTeamNumber(), kStructureInfestationRadius, percent)
+        local radius = self:GetInfestationRadius()
+        local infestation = CreateStructureInfestation(coords, self:GetTeamNumber(), radius, percent)
         self.infestationId = infestation:GetId()
         
         self:OverrideSpawnInfestation(infestation)
@@ -75,7 +82,7 @@ function InfestationMixin:UpdateInfestation()
         if self.timeLastHadInfestation == nil or (Shared.GetTime() > self.timeLastHadInfestation + 5) then
             self:SpawnInfestation(.1)
         end
-    else 
+    elseif infestation then
         self.timeLastHadInfestation = Shared.GetTime()
     end       
 end

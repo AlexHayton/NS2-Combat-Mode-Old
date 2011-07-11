@@ -7,6 +7,8 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+Script.Load("lua/FunctionContracts.lua")
+
 function OnCommandTooltip(tooltipText)
     local player = Client.GetLocalPlayer()
     if (player ~= nil) then
@@ -211,6 +213,12 @@ function OnCommandSetName(nickname)
     Client.SetOptionString( kNicknameOptionsKey, nickname )     
 end
 
+local function OnCommandFunctionContractsEnabled(enabled)
+
+    SetFunctionContractsEnabled(enabled == "true")
+
+end
+
 Event.Hook("Console_tooltip",                   OnCommandTooltip)
 Event.Hook("Console_reset",                     OnCommandRoundReset)
 Event.Hook("Console_deathmsg",                  OnCommandDeathMsg)
@@ -225,6 +233,7 @@ Event.Hook("Console_oneffectdebug",             OnCommandEffectDebug)
 Event.Hook("Console_debugtext",                 OnCommandDebugText)
 Event.Hook("Console_locate",                    OnCommandLocate)
 Event.Hook("Console_name",                      OnCommandSetName)
+Event.Hook("Console_functioncontractsenabled",  OnCommandFunctionContractsEnabled)
 
 // Options Console Commands
 Event.Hook("Console_setsoundvolume",            OnCommandSetSoundVolume)

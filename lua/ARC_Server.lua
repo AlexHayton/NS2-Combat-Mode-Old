@@ -16,6 +16,7 @@ local desiredModeTransitions =
     {ARC.kMode.Firing, ARC.kMode.Undeploying, ARC.kMode.UndeployedStationary},
     {ARC.kMode.FireCooldown, ARC.kMode.Undeploying, ARC.kMode.UndeployedStationary},
     {ARC.kMode.Deployed, ARC.kMode.Undeploying, ARC.kMode.UndeployedStationary},
+    {ARC.kMode.Targeting, ARC.kMode.Undeploying, ARC.kMode.UndeployedStationary},
     {ARC.kMode.UndeployedStationary, ARC.kMode.Deploying, ARC.kMode.Deployed},
     {ARC.kMode.Moving, ARC.kMode.Deploying, ARC.kMode.Deployed},
     {ARC.kMode.UndeployedStationary, ARC.kMode.Moving},
@@ -73,7 +74,7 @@ function ARC:UpdateOrders(deltaTime)
         elseif currentOrder:GetType() == kTechId.Attack and (self.mode == ARC.kMode.Deployed or self.mode == ARC.kMode.FireCooldown) then
             
             local target = self:GetTarget()            
-            if target ~= nil then                            
+            if target ~= nil and self:GetCanFireAtTarget(target, nil) then                            
                 self:SetTargetDirection(target)
                 
                 // Try to attack it
@@ -106,7 +107,7 @@ function ARC:AcquireTarget()
     
     local finalTarget = nil
             
-    finalTarget = self.targetSelector:AcquireTarget();
+    finalTarget = self.targetSelector:AcquireTarget()
 
     if finalTarget ~= nil then    
       self:GiveOrder(kTechId.Attack, finalTarget:GetId(), nil)        
@@ -116,7 +117,7 @@ function ARC:AcquireTarget()
 end
 
 function ARC:GotoIdle()
-   if (self.mode == ARC.kMode.Deployed or self.mode == ARC.kMode.FireCooldown) then
+   if (self:GetInAttackMode()) then
         self:SetDesiredMode(ARC.kMode.Deployed)
         self:SetMode(ARC.kMode.Deployed)
    elseif (self.mode == ARC.kMode.UndeployedStationary) then
@@ -138,7 +139,7 @@ function ARC:PerformAttack()
         local hitEntities = self.targetSelector:AcquireTargets(1000, damageRadius, target:GetOrigin())
 
         // Do damage to every target in range
-        RadiusDamage(hitEntities, target:GetOrigin(), damageRadius, ARC.kAttackDamage, self)
+        RadiusDamage(hitEntities, target:GetOrigin(), damageRadius, ARC.kAttackDamage, self, true)
 
         // Play hit effect on each
         for index, target in ipairs(hitEntities) do
@@ -149,7 +150,6 @@ function ARC:PerformAttack()
         
     else
         self:GotoIdle()
-        Print("ARC:PerformAttack(): No target.")
     end
     
 end
@@ -188,13 +188,13 @@ function ARC:SetMode(mode)
                         
         elseif self.mode == ARC.kMode.FireCooldown then  
         
-            // Cooldown time is length attack rate minus fire animation length
+            // Cooldown time is length attack rate minus fire animation length. 
             self.modeBlockTime = Shared.GetTime() + ARC.kAttackInterval/*(ARC.kAttackInterval - currentAnimationLength)*/
                         
         elseif self.mode == ARC.kMode.Targeting then
         
-            // Hit a short time after firing
-            self.modeBlockTime = Shared.GetTime() + ARC.kFireToHitInterval 
+            // Slightly randomize fire to hit time so ARCs don't all fire at the same time (+/1 1 sec)
+            self.modeBlockTime = Shared.GetTime() + math.random(ARC.kFireToHitInterval - 1, ARC.kFireToHitInterval + 1)
 
         end
         

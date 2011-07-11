@@ -16,6 +16,8 @@ Script.Load("lua/Weapons/Alien/Gore.lua")
 Script.Load("lua/Weapons/Alien/BoneShield.lua")
 Script.Load("lua/Weapons/Alien/Stomp.lua")
 Script.Load("lua/Alien.lua")
+Script.Load("lua/Mixins/GroundMoveMixin.lua")
+Script.Load("lua/Mixins/CameraHolderMixin.lua")
 
 class 'Onos' (Alien)
 
@@ -62,7 +64,7 @@ else
     Script.Load("lua/Onos_Client.lua")
 end
 
-local networkVars = 
+Onos.networkVars = 
 {
     charging                        = "boolean",
     desiredCharging                 = "boolean",
@@ -71,8 +73,14 @@ local networkVars =
     justJumped                      = "boolean"    
 }
 
+PrepareClassForMixin(Onos, GroundMoveMixin)
+PrepareClassForMixin(Onos, CameraHolderMixin)
+
 function Onos:OnInit()
 
+    InitMixin(self, GroundMoveMixin, { kGravity = Player.kGravity })
+    InitMixin(self, CameraHolderMixin, { kFov = Onos.kFov })
+    
     Alien.OnInit(self)
     
     self.charging = false
@@ -97,10 +105,6 @@ end
 
 function Onos:GetMaxViewOffsetHeight()
     return Onos.kViewOffsetHeight
-end
-
-function Onos:GetStartFov()
-    return Onos.kFov
 end
 
 function Onos:GetHasSpecialAbility()
@@ -280,11 +284,11 @@ function Onos:GetMaxSpeed()
         local maxSpeed = ConditionalValue(self.charging, Onos.kStartChargeMaxSpeed + (Onos.kChargeMaxSpeed - Onos.kStartChargeMaxSpeed)*self.chargingScalar, Onos.kMaxWalkSpeed)
 
         // Take into account crouching
-        return ( 1 - self:GetCrouchAmount() * Player.kCrouchSpeedScalar ) * maxSpeed
+        return ( 1 - self:GetCrouchAmount() * Player.kCrouchSpeedScalar ) * maxSpeed * self:GetSlowSpeedModifier()
         
     end
     
-    return Onos.kLeapMaxSpeed
+    return Onos.kLeapMaxSpeed * self:GetSlowSpeedModifier()
     
 end
 
@@ -362,4 +366,4 @@ function Onos:GetBreathingHeight()
     return .05
 end
 
-Shared.LinkClassToMap( "Onos", Onos.kMapName, networkVars )
+Shared.LinkClassToMap( "Onos", Onos.kMapName, Onos.networkVars )

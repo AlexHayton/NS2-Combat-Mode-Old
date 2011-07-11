@@ -10,24 +10,10 @@ function CommandStation:OnCreate()
 
     CommandStructure.OnCreate(self)    
     
-    self:SetLevelTechId(1, kTechId.CommandStation)
-    self:SetLevelTechId(2, kTechId.CommandFacility)
-    self:SetLevelTechId(3, kTechId.CommandCenter)
-    
     self:SetTechId(kTechId.CommandStation)
     
     self:SetModel(CommandStation.kModelName)
     
-end
-
-function CommandStation:OnKill(damage, attacker, doer, point, direction)
-
-    CommandStructure.OnKill(self, damage, attacker, doer, point, direction)
-    
-    if self:GetAttached() then
-        self:GetAttached():SetTechLevel(1)
-    end
-
 end
 
 function CommandStation:OnPoweredChange(newPoweredState)
@@ -49,33 +35,6 @@ function CommandStation:GetCommanderClassName()
     return MarineCommander.kMapName   
 end
 
-function CommandStation:OnResearchComplete(structure, researchId)
-
-    local success = Structure.OnResearchComplete(self, structure, researchId)
-    
-    if success then
-    
-        local techPoint = self:GetAttached()
-        local techLevel = nil
-        
-        if(researchId == kTechId.CommandFacilityUpgrade) then
-            success = self:Upgrade(kTechId.CommandFacility)
-            techLevel = 2
-        elseif(researchId == kTechId.CommandCenterUpgrade) then
-            success = self:Upgrade(kTechId.CommandCenter)
-            techLevel = 3
-        end    
-        
-        if techPoint and techLevel then
-            techPoint:SetTechLevel(techLevel)
-        end
-        
-    end
-    
-    return success
-    
-end
-
 function CommandStation:GetIsPlayerInside(player)
     local vecDiff = (player:GetModelOrigin() - self:GetModelOrigin())
     return vecDiff:GetLength() < self:GetExtents():GetLength()
@@ -92,7 +51,7 @@ function CommandStation:KillPlayersInside()
     
         if not player:isa("Commander") and not player:isa("Spectator") then
         
-            if self:GetIsPlayerInside(player) then
+            if self:GetIsPlayerInside(player) and player:GetId() ~= self.playerIdStartedLogin then
         
                 player:Kill(self, self, self:GetOrigin())
                 

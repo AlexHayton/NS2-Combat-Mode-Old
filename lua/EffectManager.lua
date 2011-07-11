@@ -946,6 +946,8 @@ end
 
 function EffectManager:OnUpdate(deltaTime)
 
+    PROFILE("EffectManager:OnUpdate")
+
     self:TriggerQueuedAnimations()
     
     self:UpdateDecals(deltaTime)

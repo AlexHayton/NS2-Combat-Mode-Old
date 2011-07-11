@@ -11,6 +11,8 @@ Script.Load("lua/Utility.lua")
 Script.Load("lua/Alien.lua")
 Script.Load("lua/Weapons/Alien/Spikes.lua")
 Script.Load("lua/Weapons/Alien/Spores.lua")
+Script.Load("lua/Mixins/GroundMoveMixin.lua")
+Script.Load("lua/Mixins/CameraHolderMixin.lua")
 
 class 'Lerk' (Alien)
 
@@ -26,9 +28,10 @@ Lerk.kViewModelName = PrecacheAsset("models/alien/lerk/lerk_view.model")
 Lerk.kSpawnSoundName = PrecacheAsset("sound/ns2.fev/alien/lerk/spawn")
 Lerk.kFlapSound = PrecacheAsset("sound/ns2.fev/alien/lerk/flap")
 
-local networkVars = {
+Lerk.networkVars =
+{
     flappedSinceLeftGround  = "boolean",
-    gliding                 = "boolean"
+    gliding                 = "boolean",
 }
 
 Lerk.kViewOffsetHeight = .5
@@ -37,7 +40,7 @@ Lerk.YExtents = .4
 Lerk.kJumpImpulse = 5
 Lerk.kFlapUpImpulse = 4             // NS1 made this 2/3 of kFlapStraightUpImpulse
 Lerk.kFlapStraightUpImpulse = 6
-Lerk.kWingThrustForwardScalar = .85 // From NS1
+Lerk.kFlapThrustMoveScalar = .85 // From NS1
 Lerk.kFov = 100
 Lerk.kZoomedFov = 35
 Lerk.kMass = 54  // ~120 pounds
@@ -54,6 +57,21 @@ Lerk.kAnimRun = "run"
 Lerk.kAnimFly = "fly"
 Lerk.kAnimLand = "land"
 
+PrepareClassForMixin(Lerk, GroundMoveMixin)
+PrepareClassForMixin(Lerk, CameraHolderMixin)
+
+function Lerk:OnInit()
+
+    InitMixin(self, GroundMoveMixin, { kGravity = Player.kGravity })
+    InitMixin(self, CameraHolderMixin, { kFov = Lerk.kFov })
+    
+    Alien.OnInit(self)
+    
+    self.flappedSinceLeftGround = false
+    self.gliding = false
+    
+end
+
 function Lerk:GetBaseArmor()
     return Lerk.kArmor
 end
@@ -68,10 +86,6 @@ end
 
 function Lerk:GetCrouchShrinkAmount()
     return 0
-end
-
-function Lerk:GetStartFov()
-    return Lerk.kFov
 end
 
 function Lerk:GetViewModelName()
@@ -93,7 +107,7 @@ function Lerk:GetMaxSpeed()
         
     end 
     
-    return speed
+    return speed * self:GetSlowSpeedModifier()
     
 end
 
@@ -160,6 +174,7 @@ function Lerk:ModifyViewModelCoords(coords)
 end
 end
 
+// Called from GroundMoveMixin.
 function Lerk:ComputeForwardVelocity(input)
 
     // If we're in the air, move a little to left and right, but move in view direction when 
@@ -194,6 +209,7 @@ function Lerk:ComputeForwardVelocity(input)
         end
     
     else
+        // Fallback on the base function.
         return Alien.ComputeForwardVelocity(self, input)
     end
     
@@ -218,9 +234,9 @@ function Lerk:RedirectVelocity(redirectDir)
 
 end
 
-function Lerk:PreUpdateMovePhysics(input, runningPrediction)
+function Lerk:PreUpdateMove(input, runningPrediction)
 
-    PROFILE("Lerk:PreUpdateMovePhysics")
+    PROFILE("Lerk:PreUpdateMove")
 
     // If we're gliding, redirect velocity to whichever way we're looking
     // so we get that cool soaring feeling from NS1
@@ -255,15 +271,13 @@ function Lerk:HandleAttacks(input)
 
 end
 
-// Glide if jump held down
-function Lerk:GetGravityForce(input)
-
-    local gravity
+// Glide if jump held down.
+function Lerk:AdjustGravityForce(input, gravity)
 
     if bit.band(input.commands, Move.Crouch) ~= 0 then
         // Swoop
         gravity = Lerk.kSwoopGravityScalar
-    elseif self.gliding and self.velocity.y <= 0 then
+    elseif self.gliding and self:GetVelocity().y <= 0 then
         // Glide for a long time
         gravity = Lerk.kFlightGravityScalar
     else
@@ -277,25 +291,19 @@ end
 
 function Lerk:Flap(input, velocity)
 
-    local lift = 0
     local flapVelocity = Vector(0, 0, 0)
     
     // Thrust forward or backward
     if(input.move:GetLength() > 0) then
     
-        lift = Clamp((input.move.z + .5) / 1.5, 0, 1.5) * Lerk.kFlapUpImpulse
-        
-        local viewCoords = self:ConvertToViewAngles(input.pitch, input.yaw, 0):GetCoords()
-        flapVelocity = GetNormalizedVector(viewCoords:TransformVector( input.move )) * self:GetAcceleration() * Lerk.kWingThrustForwardScalar
+        flapVelocity = GetNormalizedVector(self:GetViewCoords():TransformVector( input.move )) * self:GetAcceleration() * Lerk.kFlapThrustMoveScalar
         
     else
     
         // Get more lift when that's all we're doing
-        lift = Lerk.kFlapStraightUpImpulse
+        flapVelocity.y = flapVelocity.y + Lerk.kFlapStraightUpImpulse
         
     end
-
-    flapVelocity.y = flapVelocity.y + lift
     
     VectorCopy(velocity + flapVelocity, velocity)
 
@@ -355,4 +363,4 @@ function Lerk:UpdateHelp()
     
 end
 
-Shared.LinkClassToMap( "Lerk", Lerk.kMapName, networkVars )
+Shared.LinkClassToMap( "Lerk", Lerk.kMapName, Lerk.networkVars )

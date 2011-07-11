@@ -10,6 +10,8 @@ Script.Load("lua/Utility.lua")
 Script.Load("lua/Weapons/Alien/SwipeBlink.lua")
 Script.Load("lua/Weapons/Alien/StabBlink.lua")
 Script.Load("lua/Alien.lua")
+Script.Load("lua/Mixins/GroundMoveMixin.lua")
+Script.Load("lua/Mixins/CameraHolderMixin.lua")
 
 class 'Fade' (Alien)
 Fade.kMapName = "fade"
@@ -37,11 +39,7 @@ Fade.kJumpHeight = 1
 Fade.kMaxSpeed = 6.5
 Fade.kStabSpeed = .5
 Fade.kEtherealSpeed = 20
-Fade.kEtherealAcceleration = 10
-Fade.kBlinkEnergyCost = 30
-
-// Energy per second
-Fade.kBlinkContinuousEnergyCost = 50
+Fade.kEtherealAcceleration = 50
 
 if(Server) then
     Script.Load("lua/Fade_Server.lua")
@@ -54,16 +52,23 @@ Fade.networkVars =
     blinkModifier    = "boolean",
 }
 
+PrepareClassForMixin(Fade, GroundMoveMixin)
+PrepareClassForMixin(Fade, CameraHolderMixin)
+
 function Fade:GetTauntSound()
     return Fade.kTauntSound
 end
 
 function Fade:OnInit()
+
+    InitMixin(self, GroundMoveMixin, { kGravity = Player.kGravity })
+    InitMixin(self, CameraHolderMixin, { kFov = Fade.kFov })
     
     Alien.OnInit(self)
     
     self.blinkState = Fade.kBlinkState.Normal
     self.blinkModifier = false
+    self.desiredMove = Vector()
     
 end
 
@@ -87,21 +92,8 @@ function Fade:GetMaxViewOffsetHeight()
     return Fade.kViewOffsetHeight
 end
 
-function Fade:GetStartFov()
-    return Fade.kFov
-end
-
 function Fade:GetViewModelName()
     return Fade.kViewModelName
-end
-
-function Fade:SetCrouchState(newCrouchState)
-    self.crouching = newCrouchState
-end
-
-// Disable crouch until working properly
-function Fade:GetCrouchAmount()
-    return 0
 end
 
 function Fade:UpdateButtons(input)
@@ -153,23 +145,10 @@ function Fade:GetAcceleration()
     return Alien.GetAcceleration(self)
 end
 
-
 function Fade:GetIsEthereal()
 
     local weapon = self:GetActiveWeapon()
     return (weapon ~= nil and weapon:isa("Blink") and weapon:GetEthereal())
-    
-end
-
-// When in ethereal mode, move forward at full speed if no movement given (so you
-// can't speed up by pressing keys)
-function Fade:OverrideInput(input)
-
-    if self:GetIsEthereal() and input.move:GetLength() == 0 then
-        input.move.z = 1
-    end
-    
-    return Alien.OverrideInput(self, input)
     
 end
 
@@ -186,7 +165,7 @@ function Fade:GetMaxSpeed()
     end
 
     // Take into account crouching
-    return ( 1 - self:GetCrouchAmount() * Player.kCrouchSpeedScalar ) * baseSpeed
+    return ( 1 - self:GetCrouchAmount() * Player.kCrouchSpeedScalar ) * baseSpeed * self:GetSlowSpeedModifier()
 
 end
 
@@ -208,7 +187,8 @@ function Fade:GetSpecialAbilityInterfaceData()
 
     local vis = self:GetInactiveVisible() or (self:GetEnergy() ~= Ability.kMaxEnergy)
 
-    return { self:GetEnergy()/Ability.kMaxEnergy, Fade.kBlinkEnergyCost/Ability.kMaxEnergy, 0, kAbilityOffset.SwipeBlink, vis, GetDescForMove(Move.MovementModifier) }
+    // Show minimum energy assuming we ran out of energy while blinking (kBlinkEnergyCost * Blink.kMinEnterEtherealTime)
+    return { self:GetEnergy()/Ability.kMaxEnergy, kBlinkEnergyCost * Blink.kMinEnterEtherealTime/Ability.kMaxEnergy, 0, kAbilityOffset.SwipeBlink, vis, GetDescForMove(Move.MovementModifier) }
     
 end
 
@@ -242,11 +222,11 @@ function Fade:SetAnimAndMode(animName, mode)
     
 end
 
-function Fade:UpdateMove(input)
+function Fade:AdjustMove(input)
 
-    PROFILE("Fade:UpdateMove")
+    PROFILE("Fade:AdjustMove")
 
-    Alien.UpdateMove(self, input)
+    Alien.AdjustMove(self, input)
 
     if self.mode == kPlayerMode.FadeStab then
     
@@ -254,6 +234,9 @@ function Fade:UpdateMove(input)
         input.move:Scale(0.00001)
         
     end
+    
+    // Remember our desired move for blink
+    VectorCopy(input.move, self.desiredMove)
     
     return input
 
@@ -273,18 +256,6 @@ end
 
 function Fade:GetBlinkTime()
     return math.max(self:GetAnimationLength(Fade.kBlinkInAnim), self:GetAnimationLength(Fade.kBlinkOutAnim))
-end
-
-// Double-tap in a direction to blink that way quickly
-function Fade:OnDoubleTap(tapDirection)
-
-    // Move Fade in direction as far as we can go
-    local capsuleHeight, capsuleRadius = self:GetTraceCapsule()
-    local trace = Shared.TraceCapsule(self:GetOrigin(), self:GetOrigin() + tapDirection * 6, capsuleRadius, capsuleHeight, PhysicsMask.AllButPCs, EntityFilterOne(self))
-    self:SetOrigin(trace.endPoint)
-    
-    self:SetActivityEnd(.1)
-    
 end
 
 Shared.LinkClassToMap( "Fade", Fade.kMapName, Fade.networkVars )

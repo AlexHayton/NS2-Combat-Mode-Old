@@ -7,275 +7,94 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================    
 
 BuildingMixin = { }
-BuildingMixin.type = "Builds"
+BuildingMixin.type = "Building"
 
 // Snap structures within this range to attach points.
 BuildingMixin.kStructureSnapRadius = 4
 
-function BuildingMixin.__prepareclass(toClass)
-    
-    ASSERT(toClass.networkVars ~= nil, "BuildingMixin expects the class to have network fields")
-    
-    local addNetworkFields =
-    {        
-        buildPosition       = "vector",
-        buildTechId         = "enum kTechId"
-        buildType           = "enum kTechType"
-        timeBuildStarted    = "float" 
-    }
-    
-    for k, v in pairs(addNetworkFields) do
-        toClass.networkVars[k] = v
-    end
-    
-end
 
 function BuildingMixin:__initmixin()    
-        
-    self.buildPosition = Vector(0, 0, 0)
-    
-    self.buildType = kTechId.None
-    
-    self.buildTechId = kTechId.None
-    
-    self.timeBuildStarted = 0
-        
-    self.builds = { }
     
 end
 
-function BuildingMixin:GetHasBuild()
-    return self:GetCurrentBuild() ~= nil
-end
+function BuildingMixin:EvalBuildIsLegal(techId, origin, builderEntity, pickVec)
+    local legalBuildPosition = false
+    local position = nil
+    local attachEntity = nil
 
-function BuildingMixin:GetNumBuilds()
-    return table.count(self.builds)
-end
-
-function BuildingMixin:_OverrideBuild(build)
-    if self.OnOverrideBuild then
-        self:OnOverrideBuild(build)
-    end    
-end
-
-function BuildingMixin:CreateBuild(buildType, builderId, builderOrigin, orientation, clearExisting, insertFirst, buildPlayerId)
-   
-    ASSERT(type(buildType) == "number")
-    ASSERT(type(builderId) == "number")
-    ASSERT(type(buildPlayerId) == "number")        
+    if pickVec == nil then
     
-    local build = CreateBuild(buildType, builderId, builderOrigin, orientation, buildPlayerId)
-    
-    self:_OverrideBuild(build)
-    
-    if clearExisting == nil then
-        clearExisting = true
-    end
-    
-    if insertFirst == nil then
-        insertFirst = true
-    end
-    
-    self:_SetBuild(build, clearExisting, insertFirst)
-    
-    return build:GetType()
+        // When Drifters and MACs build, or untargeted build/buy actions, no pickVec. Trace from order point down to see
+        // if they're trying to build on top of anything and if that's OK.
+        local trace = Shared.TraceRay(Vector(origin.x, origin.y + .1, origin.z), Vector(origin.x, origin.y - .2, origin.z), PhysicsMask.CommanderBuild, EntityFilterOne(builderEntity))
+        legalBuildPosition, position, attachEntity = GetIsBuildLegal(techId, trace.endPoint, BuildingMixin.kStructureSnapRadius, self:GetOwner(), builderEntity)
 
-end
-
-
-
-function BuildingMixin:ClearBuilds()
-
-    if table.count(self.builds) > 0 then
+    else
     
-        self:_DestroyBuilds()
-        self:_BuildChanged()
+        // Make sure entity is near enough to attach class if required (snap to it as well)
+        local commander = self:GetOwner()
+        if commander == nil then
+            commander = self
+        end
+        legalBuildPosition, position, attachEntity = GetIsBuildLegal(techId, origin, BuildingMixin.kStructureSnapRadius, commander, builderEntity)
         
     end
     
+    return legalBuildPosition, position, attachEntity
 end
 
-function BuildingMixin:_DestroyBuilds()
-        
-    local first = true
-        
-    for index, buildEntId in ipairs(self.builds) do
+// Returns true or false, as well as the entity id of the new structure (or -1 if false)
+// pickVec optional (for AI units). In those cases, builderEntity will be the entity doing the building.
+function BuildingMixin:AttemptToBuild(techId, origin, normal, orientation, pickVec, buildTech, builderEntity, trace)
+
+    local legalBuildPosition = false
+    local position = nil
+    local attachEntity = nil
     
-        local buildEntId = Shared.GetEntity(buildEntId)
-        ASSERT(buildEntId ~= nil)
+    legalBuildPosition, position, attachEntity = self:EvalBuildIsLegal(techId, origin, builderEntity, pickVec)
+    
+    if legalBuildPosition then
+    
+        local commander = self:GetOwner()
+        if commander == nil then
+            commander = self
+        end
         
-        if first then
+        local newEnt = CreateEntityForCommander(techId, position, commander)
         
-            if self.OnDestroyCurrentBuild and buildEntId ~= nil then
-                self:OnDestroyCurrentBuild(buildEntId)
+        if newEnt ~= nil then
+        
+            // Use attach entity orientation 
+            if attachEntity then
+                orientation = attachEntity:GetAngles().yaw
             end
-            first = false
             
+            // If orientation yaw specified, set it
+            if orientation then
+                local angles = Angles(0, orientation, 0)
+                local coords = BuildCoordsFromDirection(angles:GetCoords().zAxis, newEnt:GetOrigin())
+                newEnt:SetCoords(coords)                
+            else          
+                // align it with the surface (normal)
+                local coords = BuildCoords(normal, Vector.zAxis, newEnt:GetOrigin())
+                newEnt:SetCoords(coords)
+            end
+            
+            local isAlien = false
+            if newEnt.GetIsAlienStructure then
+                isalien = newEnt:GetIsAlienStructure()
+            end
+            
+            newEnt:TriggerEffects("commander_create", {isalien = isAlien})
+            
+            self:TriggerEffects("commander_create_local")
+            
+            return true, newEnt:GetId()
+                        
         end
         
-        DestroyEntity(buildEntId)            
-        
     end
     
-    table.clear(self.builds)
-
-end
-
-function BuildingMixin:_SetBuild(build, clearExisting, insertFirst)
-
-    if clearExisting then
-        self:ClearBuilds()
-    end
-        
-    if(insertFirst) then
-        table.insert(self.builds, 1, build:GetId())
-    else    
-        table.insert(self.builds, build:GetId())
-    end        
+    return false, -1
             
-    self:_BuildChanged()    
-end
-
-function BuildingMixin:GetCurrentBuild()
-
-    local currentBuild = nil
-    
-    if(self.builds and table.maxn(self.builds) > 0) then
-        local buildId = self.builds[1] 
-        currentBuild = Shared.GetEntity(buildId)
-        ASSERT(currentBuild ~= nil)
-    end
-
-    return currentBuild
-    
-end
-
-function BuildingMixin:ClearCurrentBuild()
-
-    local currentBuild = self:GetCurrentBuild()
-    if currentBuild then
-    
-        DestroyEntity(currentOrder)
-        
-        table.remove(self.builds, 1)
-        
-    end
-    
-    self:_BuildChanged()
-    
-end
-
-function BuildingMixin:OnOverrideResearchComplete()
-    local currentBuild = self:GetCurrentBuild()
-    
-    if self:GetTeam().OnResearchComplete then
-        self:GetTeam():OnResearchComplete(self, currentBuild:GetTechId())
-    end
-end
-
-function BuildingMixin:OnOverrideUpgradeComplete()
-    local currentBuild = self:GetCurrentBuild()
-    
-    // Right now I think upgrades use the same path as research
-    if self:GetTeam().OnResearchComplete then
-        self:GetTeam():OnResearchComplete(self, currentBuild:GetTechId())
-    end
-end
-
-function BuildingMixin:OnOverrideManufactureComplete()
-    local currentBuild = self:GetCurrentBuild()       
-    
-    local mapName = LookupTechData(currentBuild:GetTechId(), kTechDataMapName)
-    local buildEntity = CreateEntity(mapName, currentBuild:GetLocation(), structure:GetTeamNumber())
-                 
-    local owner = Shared.GetEntity(self.buildPlayerId)
-    buildEntity:SetOwner(owner)
-    
-    if self:GetTeam().OnManufactureComplete then
-        self:GetTeam():OnManufactureComplete(self, currentBuild:GetTechId(), buildEntity:GetId())
-    end
-end
-
-function BuildingMixin:OnOverrideEnergyBuildComplete()
-    local currentBuild = self:GetCurrentBuild()
-        
-    local mapName = LookupTechData(currentBuild:GetTechId(), kTechDataMapName)
-    local buildEntity = CreateEntity(mapName, currentBuild:GetLocation(), structure:GetTeamNumber())            
-    
-    local owner = Shared.GetEntity(self.buildPlayerId)
-    energyBuildEntity:SetOwner(owner)
-    
-    if self:GetTeam().OnEnergyBuildComplete then
-        self:GetTeam():OnEnergyBuildComplete(self, currentBuild:GetTechId(), buildEntity:GetId())
-    end
-end
-
-function BuildingMixin:OnOverrideBuildComplete()
-    local currentBuild = self:GetCurrentBuild()             
-    
-    if self:GetTeam().OnBuildComplete then
-        self:GetTeam():OnBuildComplete(self, currentBuild:GetTechId(), currentBuild:GetBuildEntity())
-    end
-end
-
-function BuildingMixin:CompletedCurrentBuild()
-
-    local currentBuild = self:GetCurrentBuild()
-    if currentBuild then
-        local buildType = currentBuld:GetType()
-        if (buildType == kTechType.Research) then
-            self:OnOverrideResearchComplete()
-        elseif (buildType == kTechType.Upgrade) then
-            self:OnOverrideUpgradeComplete()
-        elseif (buildType == kTechType.Manufacture) then
-            self:OnOverrideManufactureComplete()
-        elseif (buildType == kTechType.Build) then
-            self:OnOverrideBuildComplete()
-        elseif (buildType == kTechType.EnergyBuild) then
-            self:OnOverrideEnergyBuildComplete()   
-        end
-        
-        DestroyEntity(currentBuild)
-        
-        table.remove(self.builds, 1)
-        
-    end
-    
-    self:_BuildChanged()
-    
-end
-
-function BuildingMixin:_BuildChanged()
-    
-    if self:GetHasBuild() then    
-        local build = self:GetCurrentBuild()
-        local buildLocation = build:GetLocation()
-        self.buildPosition = Vector(buildLocation)
-        self.buildType = build:GetType()        
-    end
-    
-    if self.OnBuildChanged then
-        self:OnBuildChanged()
-    end
-    
-end
-
-function BuildingMixin:UpdateBuilds () 
-    if (self._overrideBuildUpdate)
-        self._overrideBuildUpdate()
-    end
-    
-    self:_UpdateBuild()
-end
-
-function BuildingMixin:_UpdateBuild()
-    local currentBuild = self:GetCurrentBuild()
-    
-    if (self:GetIsBuilt() and (currentBuild ~= nil)) then           
-      currentBuild:UpdateProgress()
-      
-      if (currentBuild:GetIsComplete()) then
-        self:CompletedCurrentBuild()
-      end
-    end
 end

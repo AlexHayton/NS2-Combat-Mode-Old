@@ -15,8 +15,9 @@ kExosuitHealth = 100	kExosuitArmor = 200	kExosuitPointValue = 10
 kSkulkHealth = 70	kSkulkArmor = 10	kSkulkPointValue = 5
 kGorgeHealth = 150	kGorgeArmor = 50	kGorgePointValue = 7
 kLerkHealth = 125	kLerkArmor = 30	kLerkPointValue = 15
-kFadeHealth = 300	kFadeArmor = 100	kFadePointValue = 20
+kFadeHealth = 300	kFadeArmor = 50	kFadePointValue = 20
 kOnosHealth = 700	kOnosArmor = 600	kOnosPointValue = 30
+		
 kEggHealth = 200	kEggArmor = 0	kEggPointValue = 2
 		
 kArmorPerUpgradeLevel = 20		
@@ -25,6 +26,7 @@ kBaseArmorAbsorption = 0.7
 kHealthPointsPerArmor = 2		
 kBuildPointValue = 5		
 kRecyclePaybackScalar = 0.75		
+kRepairMarineArmorPointValue = 1		
 		
 kSkulkArmorFullyUpgradedAmount = 20		
 kGorgeArmorFullyUpgradedAmount = 50		
@@ -43,7 +45,6 @@ kPuncturePlayerDamageScalar = 1.3
 kStructuralDamageScalar = 2		
 		
 kExosuitAbsorption = 0.95		
-kBalanceAutoHealPerSecond = 5		
 kBalanceAutoHealMaxPercentPerSecond = 0.5		
 kBalanceInfestationHurtPercentPerSecond = 2		
 		
@@ -55,8 +56,6 @@ kArmoryHealth = 1800	kArmoryArmor = 300	kArmoryPointValue = 10
 kAdvancedArmoryHealth = 3000	kAdvancedArmoryArmor = 500	kAdvancedArmoryPointValue = 40
 		
 kCommandStationHealth = 5000	kCommandStationArmor = 2500	kCommandStationPointValue = 25
-kCommandFacilityHealth = 12500	kCommandFacilityArmor = 0	kCommandFacilityPointValue = 35
-kCommandCenterHealth = 15000	kCommandCenterArmor = 0	kCommandCenterPointValue = 45
 		
 kObservatoryHealth = 1700	kObservatoryArmor = 0	kObservatoryPointValue = 15
 kPhaseGateHealth = 2700	kPhaseGateArmor = 150	kPhaseGatePointValue = 15
@@ -68,8 +67,6 @@ kPowerPackHealth = 1200	kPowerPackArmor = 400	kPowerPackPointValue = 15
 kArmsLabHealth = 1870	kArmsLabArmor = 165	kArmsLabPointValue = 20
 		
 kHiveHealth = 6300	kHiveArmor = 350	kHivePointValue = 30
-kHiveMassHealth = 8000	kHiveMassArmor = 0	kHiveMassPointValue = 40
-kHiveColonyHealth = 9000	kHiveColonyArmor = 0	kHiveColonyPointValue = 50
 		
 kDrifterHealth = 150	kDrifterArmor = 0	kDrifterPointValue = 2
 kMACHealth = 300	kMACArmor = 50	kMACPointValue = 5
@@ -93,6 +90,8 @@ kShadeHealth = 700	kShadeArmor = 0	kShadePointValue = 10
 kMatureShadeHealth = 900	kMatureShadeArmor = 0	kMatureShadePointValue = 15
 		
 kHydraHealth = 500	kHydraArmor = 0	kHydraPointValue = 5
+kCystHealth = 600	kCystArmor = 0	kCystPointValue = 5
+kMiniCystHealth = 400	kMiniCystArmor = 0	kMiniCystPointValue = 3
 		
 kPowerPointHealth = 2500	kPowerPointArmor = 1250	kPowerPointPointValue = 15
 		
@@ -106,3 +105,20 @@ kPowerPointHealth = 2500	kPowerPointArmor = 1250	kPowerPointPointValue = 15
 		
 		
 		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	

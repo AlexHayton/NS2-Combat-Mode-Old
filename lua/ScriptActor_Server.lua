@@ -7,6 +7,67 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+/**
+ * Sets whether or not the actor is marked as selected. The actual selection state is stored
+ * with the commander, this is used to make the actor always propagated to commanders.
+ */
+function ScriptActor:SetIsSelected(selected)
+
+    if selected then
+        self.selectedCount = self.selectedCount + 1
+    else
+        self.selectedCount = self.selectedCount - 1
+        ASSERT(self.selectedCount >= 0)
+    end
+    
+    self:UpdateIncludeRelevancyMask()
+
+end
+
+/**
+ * Sets whether or not the actor is marked as hotgrouped. The actual hotgroup state is stored
+ * with the commander, this is used to make the actor always propagated to commanders.
+ */
+function ScriptActor:SetIsHotgrouped(hotgrouped)
+
+    if hotgrouped then
+        self.hotgroupedCount = self.hotgroupedCount + 1
+    else
+        self.hotgroupedCount = self.hotgroupedCount - 1
+        ASSERT(self.hotgroupedCount >= 0)
+    end
+    
+    self:UpdateIncludeRelevancyMask()
+
+end
+
+function ScriptActor:UpdateIncludeRelevancyMask()
+
+    // Make entities which are active for a commander relevant to all commanders
+    // on the same team.
+    self:SetAlwaysRelevantToCommander( self.selectedCount > 0 or self.hotgroupedCount > 0 )
+    
+end
+
+/**
+ * Marks the actor as being always relevant to the commanders on the same team.
+ */
+function ScriptActor:SetAlwaysRelevantToCommander(relevant)
+    
+    local includeMask = 0
+    
+    if relevant then
+        if self:GetTeamNumber() == 1 then
+            includeMask = kRelevantToTeam1Commander
+        elseif self:GetTeamNumber() == 2 then
+            includeMask = kRelevantToTeam2Commander
+        end
+    end
+    
+    self:SetIncludeRelevancyMask( includeMask )
+
+end
+
 function ScriptActor:SetOwner(player)
 
     local success = false
@@ -107,19 +168,18 @@ function ScriptActor:ClearAttached()
     
 end
 
-
-// All team changes are routed through here. Never set teamNumber directly.
 function ScriptActor:SetTeamNumber(teamNumber)
 
-    // Team number will be nil when called from OnCreate()
-    if(teamNumber ~= self.teamNumber) then
+    self.teamNumber = teamNumber    
     
-        self:OnTeamChange(teamNumber)
-        
+    // Update team type
+    self.teamType = kNeutralTeamType
+    
+    if(teamNumber == 1) then
+        self.teamType = kTeam1Type
+    elseif(teamNumber == 2) then
+        self.teamType = kTeam2Type
     end
-    
-    // This is the only place teamNumber should ever be set
-    self.teamNumber = teamNumber
     
 end
 
@@ -146,28 +206,6 @@ end
 
 function ScriptActor:GetTeam()
     return GetGamerules():GetTeam(self:GetTeamNumber())    
-end
-
-// Used to react to team changes.
-// Called whenever SetTeamNumber() is called with a new team number. Normally called after
-// entity spawned, but is called after OnCreate() and before OnInit() during CreateEntity().
-// The entity will have the newTeamNumber after set after OnTeamChange() is called.
-// Current team number could be nil. 
-function ScriptActor:OnTeamChange(newTeamNumber)
-
-    self.teamType = kNeutralTeamType
-    
-    if(newTeamNumber == 1) then
-        self.teamType = kTeam1Type
-    elseif(newTeamNumber == 2) then
-        self.teamType = kTeam2Type
-    end
-    
-end
-
-// Returns true if entity should be propagated to player
-function ScriptActor:OnGetIsRelevant(player)
-    return GetGamerules():GetIsRelevant(player, self)   
 end
 
 function ScriptActor:GetIsTargetValid(target)

@@ -49,7 +49,7 @@ function Target:OnLoad()
     
     self.popupDelay = tonumber(self.popupDelay)
     
-    self:OnReset()
+    self:Reset()
         
 end
 
@@ -59,7 +59,7 @@ end
 
 if (Server) then
 
-    function Target:OnReset()
+    function Target:Reset()
     
         self:SetIsVisible(true)
         

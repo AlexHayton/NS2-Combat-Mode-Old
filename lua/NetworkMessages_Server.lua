@@ -96,6 +96,14 @@ function OnCommandExecuteSaying(client, message)
 
 end
 
+function OnCommandMutePlayer(client, message)
+
+    local player = client:GetControllingPlayer()
+    local muteClientIndex, setMute = ParseMutePlayerMessage(message)
+    player:SetClientMuted(muteClientIndex, setMute)
+
+end
+
 Server.HookNetworkMessage("MarqueeSelect",              OnCommandCommMarqueeSelect)
 Server.HookNetworkMessage("ClickSelect",                OnCommandCommClickSelect)
 Server.HookNetworkMessage("ControlClickSelect",         OnCommandCommControlClickSelect)
@@ -104,3 +112,4 @@ Server.HookNetworkMessage("CommAction",                 OnCommandCommAction)
 Server.HookNetworkMessage("CommTargetedAction",         OnCommandCommTargetedAction)
 Server.HookNetworkMessage("CommTargetedActionWorld",    OnCommandCommTargetedActionWorld)
 Server.HookNetworkMessage("ExecuteSaying",              OnCommandExecuteSaying)
+Server.HookNetworkMessage("MutePlayer",                 OnCommandMutePlayer)

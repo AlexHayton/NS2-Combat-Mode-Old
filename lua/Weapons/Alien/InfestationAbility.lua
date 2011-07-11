@@ -68,8 +68,10 @@ function InfestationAbility:PerformPrimaryAttack(player)
     
         player:SetAnimAndMode(Gorge.kCreateStructure, kPlayerMode.GorgeStructure)
             
-        player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))    
-        
+        player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
+
+        // We create this right away!    
+        self:CreateInfestation(player)
     end
     
 end

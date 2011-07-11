@@ -62,6 +62,7 @@ function BoneShield:PerformPrimaryAttack(player)
     
     player:SetOverlayAnimation(BoneShield.kAnimPlayerAttack)
     
+    return true
 end
 
 function BoneShield:PerformSecondaryAttack(player)

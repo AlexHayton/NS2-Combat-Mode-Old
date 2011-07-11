@@ -35,9 +35,9 @@ function Player:GetIsVirtual()
     
 end
 
-function Player:OnReset()
+function Player:Reset()
 
-    LiveScriptActor.OnReset(self)
+    LiveScriptActor.Reset(self)
     
     self.score = 0
     self.kills = 0
@@ -52,11 +52,6 @@ function Player:OnDestroy()
 
     LiveScriptActor.OnDestroy(self)
    
-    local team = self:GetTeam()
-    if(team ~= nil) then
-        team:RemovePlayer(self)
-    end
-    
     self:RemoveChildren()
         
 end
@@ -98,6 +93,30 @@ function Player:SetName(name)
     
 end
 
+/**
+ * Used to add the passed in client index to this player's mute list.
+ * This player will either hear or not hear the passed in client's
+ * voice chat based on the second parameter.
+ */
+function Player:SetClientMuted(muteClientIndex, setMuted)
+
+    if not self.mutedClients then self.mutedClients = { } end
+    self.mutedClients[muteClientIndex] = setMuted
+
+end
+AddFunctionContract(Player.SetClientMuted, { Arguments = { "Player", "number", "boolean" }, Returns = { } })
+
+/**
+ * Returns true if the passed in client is muted by this Player.
+ */
+function Player:GetClientMuted(checkClientIndex)
+
+    if not self.mutedClients then self.mutedClients = { } end
+    return self.mutedClients[checkClientIndex] == true
+
+end
+AddFunctionContract(Player.GetClientMuted, { Arguments = { "Player", "number" }, Returns = { "boolean" } })
+
 // Changes the visual appearance of the player to the special edition version.
 function Player:MakeSpecialEdition()
     self:SetModel(Player.kSpecialModelName)
@@ -116,45 +135,6 @@ function Player:ClearSendTechTreeBase()
     self.sendTechTreeBase = false
 end
 
-function Player:OnTeamChange(newTeamNumber)
-
-    LiveScriptActor.OnTeamChange(self, newTeamNumber)
-    
-    if(newTeamNumber ~= self:GetTeamNumber()) then
-
-        // Remove from the old team, if non-nil
-        if(self:GetTeamNumber() ~= -1) then
-            
-            self:RemoveChildren()
-        
-            local oldTeam = GetGamerules():GetTeam(self:GetTeamNumber())
-            if(oldTeam ~= nil) then
-                oldTeam:RemovePlayer(self)
-            end
-            
-        end
-        
-        
-        // Add to new team
-        local newTeam = GetGamerules():GetTeam(newTeamNumber)
-        if(newTeam ~= nil) then
-            newTeam:AddPlayer(self)
-        end
-
-        // Send scoreboard changes to everyone    
-        self:SetScoreboardChanged(true)
-        
-        // Clear all hotkey groups on team change since old
-        // hotkey groups will be invalid.
-        self:InitializeHotkeyGroups()
-        
-        // Tell team to send entire tech tree
-        self.sendTechTreeBase = true
-        
-    end
-    
-end
-
 function Player:GetRequestsScores()
     return self.requestsScores
 end
@@ -170,9 +150,42 @@ function Player:InitWeapons()
     self.hudOrderedWeaponList = nil
 end
 
+// Players lose a little velocity when they take damage to create more intentional tactics
+// and less random jumping around chaos. Lose velocity according to our total health and armor (ie, 
+// if we take enough damage to kill us, we lose kDamageVelocityScalar of our velocity).
+function Player:SlowOnDamage(damage, doer)
+
+    local damageType = kDamageType.Normal
+    if doer ~= nil then 
+        damageType = doer:GetDamageType()
+    end
+
+    if damageType ~= kDamageType.Gas and damageType ~= kDamageType.Flame then
+    
+        local maxHealthUnits = self.maxHealth + self.maxArmor * self:GetHealthPerArmor(kDamageType.Normal)
+        local velocityLossScalar = Clamp(damage / maxHealthUnits, 0, 1)
+        local scaledVelocityLossScalar = velocityLossScalar * kDamageVelocityScalar
+        
+        self.slowOnDamageAmount = self.slowOnDamageAmount + scaledVelocityLossScalar
+
+    end
+    
+end
+
+// Slow our velocity in OnUpdate, not OnProcessMove 
+function Player:UpdateSlowOnDamageAmount(deltaTime)
+
+    // 50% of health loss slows us for 1 second
+    local newSlow = (self.slowOnDamageAmount - deltaTime/2)
+    self.slowOnDamageAmount = math.max(0, newSlow)
+    
+end
+
 function Player:OnTakeDamage(damage, doer, point)
 
     LiveScriptActor.OnTakeDamage(self, damage, doer, point)
+    
+    self:SlowOnDamage(damage, doer)    
     
     if self:GetTeamType() == kAlienTeamType then
         self:GetTeam():TriggerAlert(kTechId.AlienAlertLifeformUnderAttack, self)
@@ -247,10 +260,18 @@ function Player:OnKill(damage, killer, doer, point, direction)
     else
         PrintToLog("%s died", self:GetName())
     end
-    
+
     // Go to third person so we can see ragdoll and avoid HUD effects (but keep short so it's personal)
     self:SetIsThirdPerson(4)
-
+    
+    local angles = self:GetAngles()
+    angles.roll = 0
+    self:SetAngles(angles)
+    
+    self.baseRoll  = 0
+    self.baseYaw   = 0
+    self.basePitch = 0
+    
     self:AddDeaths()
     
     // Don't allow us to do anything
@@ -288,7 +309,53 @@ function Player:SetControllingPlayer(client)
     
     // Save client for later
     self.client = client
+    self:UpdateClientRelevancyMask()
     
+end
+
+function Player:UpdateClientRelevancyMask()
+
+    local mask = 0xFFFFFFFF
+    
+    if self:GetTeamNumber() == 1 then
+        if self:GetIsCommander() then
+            mask = kRelevantToTeam1Commander
+         else
+            mask = kRelevantToTeam1Unit
+         end
+    elseif self:GetTeamNumber() == 2 then
+        if self:GetIsCommander() then
+            mask = kRelevantToTeam2Commander
+         else
+            mask = kRelevantToTeam2Unit
+         end
+    elseif self:GetTeamNumber() == kSpectatorIndex then
+        mask = bit.bor(kRelevantToTeam1Unit, kRelevantToTeam2Unit)
+    end
+    
+    self.client:SetRelevancyMask(mask)
+
+end
+
+function Player:SetTeamNumber(teamNumber)
+    LiveScriptActor.SetTeamNumber(self, teamNumber)
+    self:UpdateIncludeRelevancyMask()
+end
+
+function Player:UpdateIncludeRelevancyMask()
+
+    // Players are always relevant to their commanders.
+    
+    local includeMask = 0
+    
+    if self:GetTeamNumber() == 1 then
+        includeMask = kRelevantToTeam1Commander
+    elseif self:GetTeamNumber() == 2 then
+        includeMask = kRelevantToTeam2Commander
+    end
+    
+    self:SetIncludeRelevancyMask( includeMask )
+     
 end
 
 function Player:SetResources(amount)
@@ -308,7 +375,9 @@ function Player:OnUpdate(deltaTime)
     self:UpdateOrder()
     
     self:UpdateOrderWaypoint()
-
+    
+    self:UpdateSlowOnDamageAmount(deltaTime)
+    
     if (not self:GetIsAlive() and not self:isa("Spectator")) then
     
         local time = Shared.GetTime()
@@ -380,10 +449,12 @@ function Player:CopyPlayerDataFrom(player)
     self.basePitch = player.basePitch
     self.baseRoll = player.baseRoll
 
+    // MoveMixin fields.
+    self:SetVelocity(player:GetVelocity())
+    self:SetGravityEnabled(player:GetGravityEnabled())
+    
     // Player fields   
     //self:SetFov(player:GetFov())
-    self:SetVelocity(player:GetVelocity())
-    self.gravityEnabled = player.gravityEnabled
     
     // Don't copy over fields that are class-specific. We give new weapons to players
     // when they change class.
@@ -406,7 +477,7 @@ function Player:CopyPlayerDataFrom(player)
     // .displayedTooltips is stored in TooltipMixin.
     table.copy(player.displayedTooltips, self.displayedTooltips)
     
-    // Don't copy alive, health, maxhealth, armor, maxArmor, smoothCamera - they are set in Spawn()
+    // Don't copy alive, health, maxhealth, armor, maxArmor - they are set in Spawn()
     
     self.showScoreboard = player.showScoreboard
     self.score = player.score
@@ -433,9 +504,7 @@ function Player:CopyPlayerDataFrom(player)
     self.modeTime = player.modeTime
     self.outOfBreath = player.outOfBreath
     
-    self.scoreboardChanged = player.scoreboardChanged
     self.requestsScores = player.requestsScores
-    self.sendTechTreeBase = player.sendTechTreeBase
     
     // Don't lose purchased upgrades when becoming commander
     self.upgrade1 = player.upgrade1
@@ -457,6 +526,9 @@ function Player:CopyPlayerDataFrom(player)
     self.waypointType = player.waypointType
     
     player:TransferOrders(self)
+    
+    // Remember this player's muted clients.
+    self.mutedClients = player.mutedClients
         
 end
 
@@ -476,6 +548,7 @@ function Player:Replace(mapName, newTeamNumber, preserveChildren)
     
     local teamNumber = team:GetTeamNumber()    
     local owner  = Server.GetOwner(self)
+    local teamChanged = (newTeamNumber ~= nil and newTeamNumber ~= self:GetTeamNumber())
     
     // Add new player to new team if specified
     // Both nil and -1 are possible invalid team numbers.
@@ -493,6 +566,12 @@ function Player:Replace(mapName, newTeamNumber, preserveChildren)
     
     if not player:GetTeam():GetSupportsOrders() then
         player:ClearOrders()
+    end
+    
+    // Keep existing resources if on the same team, clear them out if we leave
+    // so resources can't be transferred
+    if teamChanged then
+        player:SetResources( 0 )
     end
     
     // Remove newly spawned weapons and reparent originals
@@ -523,12 +602,6 @@ function Player:Replace(mapName, newTeamNumber, preserveChildren)
     // This called EntityChange as well.
     DestroyEntity(self)
      
-    local team = self:GetTeam()
-    if(team ~= nil) then
-        team:RemovePlayer(self)
-        self.teamNumber = -1
-    end
-    
     player:SetControllingPlayer(owner)
     
     // Set up special armor marines if player owns special edition 
@@ -558,7 +631,7 @@ function Player:ProcessBuyAction(techIds)
         local techNode = techTree:GetTechNode(techId)
         if(techNode ~= nil and techNode.available) then
         
-            local cost = LookupTechData(techId, kTechDataCostKey)
+            local cost = GetCostForTech(techId)
             if cost ~= nil then
                 totalCost = totalCost + cost
                 table.insert(validBuyIds, techId)
@@ -581,9 +654,7 @@ function Player:ProcessBuyAction(techIds)
         end
         
     else
-    
-        self:PlaySound(self:GetNotEnoughResourcesSound())
-        
+        Server.PlayPrivateSound(self, self:GetNotEnoughResourcesSound(), self, 1.0, Vector(0, 0, 0))        
     end
 
     return false

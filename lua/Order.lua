@@ -30,6 +30,23 @@ function Order:OnCreate()
     
     //self:SetIsVisible(false)
     
+    self:SetPropagate(Entity.Propagate_Callback)
+    self:SetRelevancyDistance(Math.infinity)
+    
+end
+
+function Order:OnGetIsRelevant(player)
+    
+    if player:GetIsCommander() then
+        // Send orders if they belong to a unit is selected
+        return player:GetSelectionHasOrder(self)
+    elseif player:isa("Marine") then
+        // Send orders given to players to those players
+        return player.GetHasSpecifiedOrder and player:GetHasSpecifiedOrder(self)
+    end
+    
+    return false
+
 end
 
 function Order:Initialize(orderType, orderParam, position, orientation)
@@ -96,10 +113,6 @@ end
 // In radians - could be nil
 function Order:GetOrientation()
     return self.orderOrientation
-end
-
-function Order:OnGetIsRelevant(player)
-    return GetGamerules():GetIsRelevant(player, self)   
 end
 
 function CreateOrder(orderType, orderParam, position, orientation)

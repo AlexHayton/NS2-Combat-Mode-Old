@@ -22,10 +22,6 @@ function PowerPoint:OnKill(damage, attacker, doer, point, direction)
         
         self:StopDamagedSound()
         
-        self:PlaySound(PowerPoint.kDestroyedSound)
-        
-        self:PlaySound(PowerPoint.kDestroyedPowerDownSound)    
-
         self.powered = false
         
         self:SetLightMode(kLightMode.NoPower)
@@ -74,9 +70,9 @@ function PowerPoint:OnThink()
     
 end
 
-function PowerPoint:OnReset()
+function PowerPoint:Reset()
 
-    Structure.OnReset(self)
+    Structure.Reset(self)
     
     self:StopSound(PowerPoint.kAuxPowerBackupSound)
     

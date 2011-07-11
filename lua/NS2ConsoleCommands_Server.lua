@@ -95,7 +95,7 @@ end
 
 function OnCommandAutobuild(client)
 
-    if Shared.GetCheatsEnabled() then
+    if client == nil or Shared.GetCheatsEnabled() then
         GetGamerules():SetAutobuild(not GetGamerules():GetAutobuild())
         Print("Autobuild now %s", ToString(GetGamerules():GetAutobuild()))
     end
@@ -110,9 +110,9 @@ function OnCommandEnergy(client)
     
         // Give energy to all structures on our team
         for index, ent in ipairs(GetEntitiesForTeam("LiveScriptActor", player:GetTeamNumber())) do
-        
-            ent:SetEnergy(LiveScriptActor.kMaxEnergy)
-            
+            if ent.SetEnergy then        
+                ent:SetEnergy(ent:GetMaxEnergy())
+            end
         end
         
     end
@@ -131,7 +131,27 @@ function OnCommandTakeDamage(client, amount)
             damage = 20 + NetworkRandom() * 10
         end        
         
-        player:TakeDamage(damage, player, player, player:GetOrigin() + Vector(1, 0, 0))
+        local damageEntity = player        
+        if player:isa("Commander") then
+        
+            // Find command structure we're in and do damage to that instead
+            local commandStructures = Shared.GetEntitiesWithClassname("CommandStructure")
+            for index, commandStructure in ientitylist(commandStructures) do
+            
+                local comm = commandStructure:GetCommander()
+                if comm and comm:GetId() == player:GetId() then
+                
+                    damageEntity = commandStructure
+                    break
+                    
+                end
+                
+            end
+            
+        end
+        
+        Print("Doing %.2f damage to %s", damage, damageEntity:GetClassName())
+        damageEntity:TakeDamage(damage, player, player, player:GetOrigin() + Vector(1, 0, 0))
         
     end
     
@@ -139,13 +159,15 @@ end
 
 function OnCommandGiveAmmo(client)
 
-    local player = client:GetControllingPlayer()
-    
-    if(Shared.GetCheatsEnabled()) then
+    if client ~= nil and Shared.GetCheatsEnabled() then
+
+        local player = client:GetControllingPlayer()
         local weapon = player:GetActiveWeapon()
-        if(weapon ~= nil and weapon:isa("ClipWeapon")) then
+
+        if weapon ~= nil and weapon:isa("ClipWeapon") then
             weapon:GiveAmmo(1)
         end
+    
     end
     
 end
@@ -154,10 +176,10 @@ end
  * Creates an entity in front of the player.
  */
 function OnCommandSpawn(client, className)
-
-    local player = client:GetControllingPlayer()
     
-    if (Shared.GetCheatsEnabled()) then
+    if client ~= nil or Shared.GetCheatsEnabled() then
+
+        local player = client:GetControllingPlayer()
     
         // Trace a ray from the player's eye to figure out where to create
         // the new entity.
@@ -165,7 +187,7 @@ function OnCommandSpawn(client, className)
         local viewAngles = player:GetViewAngles()
         local viewCoords = viewAngles:GetCoords()
     
-        local startPoint = player:GetViewOffset() + player:GetOrigin()
+        local startPoint = player:GetEyePos()
         
         // Filter ourself out of the trace so that we don't hit ourselves.
         local filter = EntityFilterOne(player)
@@ -186,8 +208,7 @@ end
 
 function OnCommandEnts(client, className)
 
-    local player = client:GetControllingPlayer()
-    if Shared.GetCheatsEnabled() then
+    if client == nil or Shared.GetCheatsEnabled() then
     
         local entityCount = Shared.GetEntitiesWithClassname("Entity"):GetSize()
         
@@ -198,12 +219,12 @@ function OnCommandEnts(client, className)
         local commandStationsOnTeams = GetGamerules():GetTeam1():GetNumCommandStructures() + GetGamerules():GetTeam2():GetNumCommandStructures()
         local blipCount = Shared.GetEntitiesWithClassname("Blip"):GetSize()
         local infestCount = Shared.GetEntitiesWithClassname("Infestation"):GetSize()
-        
+
         if className then
             local numClassEnts = Shared.GetEntitiesWithClassname(className):GetSize()
-            Server.Broadcast(player, Pluralize(numClassEnts, className))
+            Shared.Message(Pluralize(numClassEnts, className))
         else
-            Server.Broadcast(player, string.format("%d entities (%s, %d playing, %s, %s, %s, %s, %d command structures on teams).", 
+            Shared.Message(string.format("%d entities (%s, %d playing, %s, %s, %s, %s, %d command structures on teams).", 
                                                     entityCount, Pluralize(playerCount, "player"), playersOnPlayingTeams, Pluralize(weaponCount, "weapon"), Pluralize(structureCount, "structure"), Pluralize(blipCount, "blip"), Pluralize(infestCount, "infest"), commandStationsOnTeams))
         end
     end
@@ -248,8 +269,17 @@ end
 
 function OnCommandHighDamage(client)
 
-    if(Shared.GetCheatsEnabled()) then
+    if Shared.GetCheatsEnabled() and GetGamerules():GetDamageMultiplier() < 10 then
+    
         GetGamerules():SetDamageMultiplier(10)
+        Print("highdamage on (10x damage)")
+        
+    // Toggle off
+    elseif not Shared.GetCheatsEnabled() or GetGamerules():GetDamageMultiplier() > 1 then
+    
+        GetGamerules():SetDamageMultiplier(1)
+        Print("highdamage off")
+        
     end
     
 end
@@ -708,6 +738,48 @@ function OnCommandEject(client)
     
 end
 
+
+local function GetClosestCyst(player)
+    local origin = player:GetOrigin()
+    // get closest cyst inside 5m
+    local targets = GetEntitiesWithinRange("Cyst", origin, 5)
+    local target, range
+    for _,t in ipairs(targets) do
+        local r = (t:GetOrigin() - origin):GetLength() 
+        if target == nil or range > r then
+            target, range = t, r
+        end
+    end
+    return target
+end
+
+function OnCommandCyst(client, cmd)
+
+    if client ~= nil and (Shared.GetCheatsEnabled() or Shared.GetDevMode()) then
+        local cyst = GetClosestCyst(client:GetControllingPlayer())
+        if cyst == nil then
+            Print("Have to be within 5m of a Cyst for the command to work")
+        else
+            if cmd == "track" then
+                if cyst.track == nil then
+                    Log("%s has no track", cyst)
+                else
+                    Log("track %s", cyst)
+                    cyst.track:Debug()
+                end
+            elseif cmd == "reconnect" then
+                TrackYZ.kTrace,TrackYZ.kTraceTrack,TrackYZ.logTable["log"] = true,true,true
+                Log("Try reconnect %s", cyst)
+                cyst:TryToFindABetterParent()
+                TrackYZ.kTrace,TrackYZ.kTraceTrack,TrackYZ.logTable["log"] = false,false,false
+            else
+                Print("Usage: cyst track - show track to parent") 
+            end
+        end
+    end
+end
+
+
 // GC commands
 Event.Hook("Console_changegcsettingserver", OnCommandChangeGCSettingServer)
 
@@ -778,3 +850,4 @@ Event.Hook("Console_givegameeffect",        OnCommandGiveGameEffect)
 Event.Hook("Console_setgameeffect",         OnCommandSetGameEffect)
 
 Event.Hook("Console_eject",                 OnCommandEject)
+Event.Hook("Console_cyst",                  OnCommandCyst)

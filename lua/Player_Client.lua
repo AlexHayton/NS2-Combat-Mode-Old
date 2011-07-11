@@ -14,9 +14,14 @@ Script.Load("lua/tweener/Tweener.lua")
 Player.kFeedbackFlash = "ui/feedback.swf"
 Player.kSharedHUDFlash = "ui/shared_hud.swf"
 
-Player.kDamageCameraShakeAmount = 0.01
-Player.kDamageCameraShakeSpeed = 30
-Player.kDamageCameraShakeTime = 0.1
+Player.kDamageCameraShakeAmount = 0.10
+Player.kDamageCameraShakeSpeed = 5
+Player.kDamageCameraShakeTime = 0.25
+
+Player.kMeleeHitCameraShakeAmount = 0.05
+Player.kMeleeHitCameraShakeSpeed = 5
+Player.kMeleeHitCameraShakeTime = 0.25
+
 // The amount of health left before the low health warning
 // screen effect is active
 Player.kLowHealthWarning = 0.35
@@ -349,14 +354,16 @@ function PlayerUI_GetCrosshairY()
             elseif(mapname == Flamethrower.kMapName) then
                 index = 5   
             // All alien crosshairs are the same for now
-            elseif((mapname == Spikes.kMapName) or (mapname == Spores.kMapName) or (mapname == SpitSpray.kMapName) or (mapname == Parasite.kMapName)) then
+            elseif((mapname == Spikes.kMapName) or (mapname == Spores.kMapName) or (mapname == Parasite.kMapName)) then
                 index = 6
+            elseif(mapname == SpitSpray.kMapName) then
+                index = 7              
             // Picking blink target
             elseif (mapname == SwipeBlink.kMapName) and weapon:GetShowingGhost() then
                 index = 6
             // Blanks
             else
-                index = 7
+                index = 9
             end
         
             return index*64
@@ -365,7 +372,7 @@ function PlayerUI_GetCrosshairY()
         
     end
 
-    return 0
+    return nil
 
 end
 
@@ -570,6 +577,16 @@ function PlayerUI_GetPlayerIsParasited()
 
 end
 
+function PlayerUI_GetPlayerOnInfestation()
+
+    local player = Client.GetLocalPlayer()
+    if player then
+        return player:GetGameEffectMask(kGameEffect.OnInfestation)
+    end
+    return false
+
+end
+
 // For drawing health circles
 function GameUI_GetHealthStatus(entityId)
 
@@ -593,7 +610,12 @@ function GameUI_GetHealthStatus(entityId)
 end
 
 function Player:GetName()
-    return Scoreboard_GetPlayerData(self:GetClientIndex(), kScoreboardDataIndexName)
+
+    // There are cases where the player name will be nil such as right before
+    // this Player is destroyed on the Client (due to the scoreboard removal message
+    // being received on the Client before the entity removed message). Play it safe.
+    return Scoreboard_GetPlayerData(self:GetClientIndex(), kScoreboardDataIndexName) or "No Name"
+    
 end
 
 function Player:UpdateHelp()
@@ -615,7 +637,7 @@ function Player:UpdateCrossHairText()
     
     local viewCoords = viewAngles:GetCoords()
     
-    local startPoint = self:GetViewOffset() + self:GetOrigin()
+    local startPoint = self:GetEyePos()
         
     local endPoint = startPoint + viewCoords.zAxis * 20
         
@@ -630,10 +652,10 @@ function Player:UpdateCrossHairText()
         
         if self.traceReticle then
             
-            text = string.format("%s (id: %d) origin: %s, %.2f dist", SafeClassName(entity), entity:GetId(), entity:GetOrigin():tostring(), (trace.endPoint - startPoint):GetLength())
+            text = string.format("%s (id: %d) origin: %s, %.2f dist", SafeClassName(entity), entity:GetId(), ToString(entity:GetOrigin()), (trace.endPoint - startPoint):GetLength())
 
             if entity.GetExtents then
-                text = string.format("%s extents: %s", self.crossHairText, entity:GetExtents():tostring())
+                text = string.format("%s extents: %s", self.crossHairText, ToString(entity:GetExtents()))
             end
             
             if entity.GetTeamNumber then
@@ -1031,12 +1053,12 @@ end
 function Player:InitScreenEffects()
 
     self.screenEffects = {}
+    self.screenEffects.fadeBlink = Client.CreateScreenEffect("shaders/FadeBlink.screenfx")
+    self.screenEffects.fadeBlink:SetActive(false)
     self.screenEffects.flare = Client.CreateScreenEffect("shaders/Flare.screenfx")
     self.screenEffects.lowHealth = Client.CreateScreenEffect("shaders/LowHealth.screenfx")
     self.screenEffects.darkVision = Client.CreateScreenEffect("shaders/DarkVision.screenfx")
     self.screenEffects.darkVision:SetActive(false)    
-    self.screenEffects.fadeBlink = Client.CreateScreenEffect("shaders/FadeBlink.screenfx")
-    self.screenEffects.fadeBlink:SetActive(false)
     self.screenEffects.blur = Client.CreateScreenEffect("shaders/Blur.screenfx")
     self.screenEffects.blur:SetActive(false)
     self.screenEffects.phase = Client.CreateScreenEffect("shaders/Phase.screenfx")
@@ -1134,7 +1156,7 @@ function Player:DebugVisibility()
         local seen = self:GetCanSeeEntity(entity)            
         
         // Draw red or green depending
-        DebugLine(self:GetOrigin() + self:GetViewOffset(), entity:GetOrigin(), 1, ConditionalValue(seen, 0, 1), ConditionalValue(seen, 1, 0), 0, 1)
+        DebugLine(self:GetEyePos(), entity:GetOrigin(), 1, ConditionalValue(seen, 0, 1), ConditionalValue(seen, 1, 0), 0, 1)
         
     end
 
@@ -1241,35 +1263,7 @@ function Player:GetAuxWeaponClip()
     
 end
 
-// Watch for changes in vertical movement and smooth it out (for stairs)
-function Player:SmoothCamera(cameraCoords)
-
-    if(self.smoothCamera) then
-    
-        if(self.lastEyeHeight ~= nil) then
-        
-            // Only smooth small camera differences (so it doesn't animate when respawning)
-            local yDiff = (cameraCoords.origin.y - self.lastEyeHeight)
-            if(yDiff < 1) then
-
-                local timeDiff = Shared.GetTime() - self.timeLastSmooth
-                local newY = self.lastEyeHeight + timeDiff*10*yDiff
-                local newOrigin = cameraCoords.origin
-                newOrigin.y = newY
-                cameraCoords.origin = newOrigin
-                
-            end
-            
-        end
-
-        self.lastEyeHeight = cameraCoords.origin.y
-        self.timeLastSmooth = Shared.GetTime()
-        
-    end
-    
-end
-
-function Player:GetCameraViewCoords()
+function Player:GetCameraViewCoordsOverride()
 
     local cameraCoords = self:GetViewCoords()
     
@@ -1287,9 +1281,9 @@ function Player:GetCameraViewCoords()
             
         end
         
-        // Do traceline and put camera closer if we hit something
+        // Do traceline and put camera closer if we hit level geometry
         local endPoint = cameraCoords.origin - cameraCoords.zAxis * self.cameraDistance
-        local trace = Shared.TraceRay(cameraCoords.origin, endPoint, PhysicsMask.AllButPCs, EntityFilterOne(self))
+        local trace = Shared.TraceRay(cameraCoords.origin, endPoint, PhysicsMask.FilterAll, EntityFilterOne(self))
         if(trace.fraction < 1) then
         
             // Add a little extra to avoid wall interpenetration
@@ -1315,8 +1309,6 @@ function Player:GetCameraViewCoords()
         end
     
     end
-
-    self:SmoothCamera(cameraCoords)
     
     // Allow weapon or ability to override camera (needed for Blink)
     local activeWeapon = self:GetActiveWeapon()
@@ -1357,11 +1349,6 @@ function Player:PlayerCameraCoordsAdjustment(cameraCoords)
     // coordinates right before rendering.
     return cameraCoords
 
-end
-
-function Player:GetRenderFov()
-    // Convert degrees to radians
-    return math.rad(self:GetFov())
 end
 
 // Ignore camera shaking when done quickly in a row
@@ -1562,9 +1549,9 @@ end
 
 /**
  * Returns a linear array of static blip data
- * X position, Y position, X texture offset, Y texture offset, kMinimapBlipType, kMinimapBlipTeam
+ * X position, Y position, rotation, X texture offset, Y texture offset, kMinimapBlipType, kMinimapBlipTeam
  *
- * Eg {0.5, 0.5, 0, 0, 3, 1}
+ * Eg {0.5, 0.5, 1.32, 0, 0, 3, 1}
  */
 function PlayerUI_GetStaticMapBlips()
 
@@ -1576,19 +1563,24 @@ function PlayerUI_GetStaticMapBlips()
     
         for index, blip in ientitylist(Shared.GetEntitiesWithClassname("MapBlip")) do
             
-            local blipOrigin = blip:GetOrigin()
-            table.insert(blipsData, blipOrigin.z)
-            table.insert(blipsData, blipOrigin.x)
-            table.insert(blipsData, 0)
-            table.insert(blipsData, 0)
-            table.insert(blipsData, blip:GetType())
-            local blipTeam = kMinimapBlipTeam.Neutral
-            if blip:GetTeamNumber() == player:GetTeamNumber() then
-                blipTeam = kMinimapBlipTeam.Friendly
-            elseif blip:GetTeamNumber() == GetEnemyTeamNumber(player:GetTeamNumber()) then
-                blipTeam = kMinimapBlipTeam.Enemy
-            end
-            table.insert(blipsData, blipTeam)
+            if blip.ownerEntityId ~= player:GetId() then
+                
+                local blipOrigin = blip:GetOrigin()
+                table.insert(blipsData, blipOrigin.x)
+                table.insert(blipsData, blipOrigin.z)
+                table.insert(blipsData, blip:GetRotation())
+                table.insert(blipsData, 0)
+                table.insert(blipsData, 0)
+                table.insert(blipsData, blip:GetType())
+                local blipTeam = kMinimapBlipTeam.Neutral
+                if blip:GetTeamNumber() == player:GetTeamNumber() then
+                    blipTeam = kMinimapBlipTeam.Friendly
+                elseif blip:GetTeamNumber() == GetEnemyTeamNumber(player:GetTeamNumber()) then
+                    blipTeam = kMinimapBlipTeam.Enemy
+                end
+                table.insert(blipsData, blipTeam)
+            
+            end            
             
         end
         
@@ -1753,10 +1745,8 @@ function Player:OnUpdate(deltaTime)
     
     local isLocal = (self == Client.GetLocalPlayer())
     
-    if isLocal then
-    
+    if not isLocal then
         self:UpdatePoseParameters(deltaTime)
-        
     end
 
     self:UpdateClientEffects(deltaTime, isLocal)
@@ -1795,8 +1785,7 @@ function Player:UpdateChat(input)
 end
 
 function Player:GetCustomSelectionText()
-    return string.format("%s\n%s kills\n%s deaths\n%s score", 
-            ToString(Scoreboard_GetPlayerData(self:GetClientIndex(), kScoreboardDataIndexName)), 
+    return string.format("%s kills\n%s deaths\n%s score",             
             ToString(Scoreboard_GetPlayerData(self:GetClientIndex(), kScoreboardDataIndexKills)),
             ToString(Scoreboard_GetPlayerData(self:GetClientIndex(), kScoreboardDataIndexDeaths)),
             ToString(Scoreboard_GetPlayerData(self:GetClientIndex(), kScoreboardDataIndexScore))

@@ -22,9 +22,11 @@ GUIMarineHUD.kParasiteHeight = 32
 GUIMarineHUD.kParasiteMaxSize = Vector(GUIMarineHUD.kParasiteWidth, GUIMarineHUD.kParasiteHeight, 0)
 GUIMarineHUD.kParasiteXOffset = 2
 // How long it takes for the parasite icon to scale up upon being parasited.
-GUIMarineHUD.kParasiteAnimateTime = 0.5
+GUIMarineHUD.kParasiteAnimateTime = 0.3
 GUIMarineHUD.kParasiteGrowing = 0
 GUIMarineHUD.kParasiteShrinking = 1
+GUIMarineHUD.kParasiteColor = Color(0xFF / 0xFF, 0xFF / 0xFF, 0xFF / 0xFF, 1.0)
+GUIMarineHUD.kOnInfestationColor = Color(0xFF / 0xFF, 0xFF / 0xFF, 0xFF / 0xFF, 0.5)
 
 GUIMarineHUD.kBackgroundWidth = 232
 GUIMarineHUD.kBackgroundHeight = 50
@@ -263,16 +265,25 @@ end
 function GUIMarineHUD:UpdateParasite(deltaTime)
 
     local isParasited = PlayerUI_GetPlayerIsParasited()
+    local onInfestation = PlayerUI_GetPlayerOnInfestation()
+    
     local isVisible = self.parasite:GetIsVisible()
     local currentSize = self.parasite:GetSize()
     
+    // Have base color be darker/faded when we're on infestation (implying that it's temporary)
+    if isParasited then
+        self.parasite:SetColor(Color(GUIMarineHUD.kParasiteColor))
+    elseif onInfestation then
+        self.parasite:SetColor(Color(GUIMarineHUD.kOnInfestationColor))
+    end
+    
     // Check if we should start a parasited animation.
-    if isParasited and (self.parasiteAnimationState ~= GUIMarineHUD.kParasiteGrowing) then
+    if (isParasited or onInfestation) and (self.parasiteAnimationState ~= GUIMarineHUD.kParasiteGrowing) then
         // Scale up when parasited.
         self.parasiteAnimationState = GUIMarineHUD.kParasiteGrowing
         self.parasite:SetSize(Vector(0, 0, 0))
         GetGUIManager():StartAnimation(self.parasite, ScaleParasiteOperator, Vector(0, 0, 0), GUIMarineHUD.kParasiteMaxSize, GUIMarineHUD.kParasiteAnimateTime)
-    elseif not isParasited and (self.parasiteAnimationState ~= GUIMarineHUD.kParasiteShrinking) and currentSize == GUIMarineHUD.kParasiteMaxSize then
+    elseif not isParasited and not onInfestation and (self.parasiteAnimationState ~= GUIMarineHUD.kParasiteShrinking) and currentSize == GUIMarineHUD.kParasiteMaxSize then
         // Shrink down when not parasited anymore.
         self.parasiteAnimationState = GUIMarineHUD.kParasiteShrinking
         // Need to scale time so the scale is constant time no matter what size it starts at.
@@ -280,13 +291,13 @@ function GUIMarineHUD:UpdateParasite(deltaTime)
         GetGUIManager():StartAnimation(self.parasite, ScaleParasiteOperator, self.parasite:GetSize(), Vector(0, 0, 0), GUIMarineHUD.kParasiteAnimateTime * scaleTime)
     end
     
-    if not isParasited and self.parasite:GetIsVisible() then
+    if not isParasited and not onInfestation and self.parasite:GetIsVisible() then
         // Only make it invisible if the shrink animation is done. This should eventually be chained to the scale down animation.
         if self.parasite:GetSize():GetLengthSquared() == 0 then
             self.parasiteAnimationState = nil
             self.parasite:SetIsVisible(false)
         end
-    elseif isParasited then
+    elseif isParasited or onInfestation then
         self.parasite:SetIsVisible(true)
     end
 

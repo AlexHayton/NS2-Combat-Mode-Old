@@ -284,8 +284,10 @@ function ClipWeapon:OnPrimaryAttack(player)
         
         else
         
-            self:TriggerEffects("clipweapon_empty")
-            player:SetActivityEnd(player:GetViewAnimationLength())
+            if not self.nextClipWeaponEmptyTriggerTime or self.nextClipWeaponEmptyTriggerTime <= Shared.GetTime() then
+                self:TriggerEffects("clipweapon_empty")
+                self.nextClipWeaponEmptyTriggerTime = Shared.GetTime() + player:GetViewAnimationLength()
+            end
             
             Weapon.OnPrimaryAttackEnd(self, player)
             
@@ -299,8 +301,11 @@ function ClipWeapon:CreatePrimaryAttackEffect(player)
 end
 
 function ClipWeapon:OnSecondaryAttack(player)
+
+    self.nextClipWeaponEmptyTriggerTime = 0
     Weapon.OnSecondaryAttack(self, player)
     player:DeactivateWeaponLift()
+    
 end
 
 function ClipWeapon:FirePrimary(player, bullets, range, penetration)
@@ -330,7 +335,7 @@ function ClipWeapon:FireBullets(player, bulletsToShoot, range, penetration)
     local viewAngles = player:GetViewAngles()
     local viewCoords = viewAngles:GetCoords()
     
-    local startPoint = player:GetViewOffset() + player:GetOrigin()
+    local startPoint = player:GetEyePos()
         
     // Filter ourself out of the trace so that we don't hit ourselves.
     local filter = EntityFilterTwo(player, self)
@@ -435,14 +440,15 @@ function ClipWeapon:CanReload()
     return ((self.ammo > 0) and (self.clip < self:GetClipSize()) and (self.reloadTime == 0))
 end
 
-// Return true for weapons with melee as alt-fire
+// Return true for weapons with melee as alt-fire. Allows reload to be canceled by attacking
+// (but reload will be canceled for all weapons when switching weapons).
 function ClipWeapon:GetReloadCancellable()
     return false
 end
 
 function ClipWeapon:CancelReload()
 
-    if self:GetIsReloading() and self:GetReloadCancellable() then
+    if self:GetIsReloading() then
         self.reloadTime = 0
         self:TriggerEffects("reload_cancel")
     end

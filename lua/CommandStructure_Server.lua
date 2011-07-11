@@ -27,6 +27,7 @@ function CommandStructure:OnInit()
     Structure.OnInit(self)
     
     self.commander = nil
+    self.commanderId = Entity.invalidId
     
     self.occupied = false
     
@@ -103,7 +104,7 @@ function CommandStructure:UpdateCommanderLogin(force)
     if (self.occupied and self.commander == nil and (Shared.GetTime() > (self.timeStartedLogin + self:GetLoginTime())) or force) then
     
         // Don't turn player into commander until short time later
-        local player = Shared.GetEntity(self.playerStartedLogin)
+        local player = Shared.GetEntity(self.playerIdStartedLogin)
         
         if (self:GetIsPlayerValidForCommander(player) and self:GetIsActive()) or force then
         
@@ -158,6 +159,7 @@ function CommandStructure:LoginPlayer(player)
     commanderPlayer.lastGroundOrigin = Vector(commanderStartOrigin)
     
     self.commander = commanderPlayer
+    self.commanderId = commanderPlayer:GetId()
     
     // Must reset offset angles once player becomes commander
     commanderPlayer:SetOffsetAngles(Angles(0, 0, 0))
@@ -206,7 +208,7 @@ function CommandStructure:OnUse(player, elapsedTime, useAttachPoint, usePoint)
 
                     self.timeStartedLogin = Shared.GetTime()
                     
-                    self.playerStartedLogin = player:GetId()
+                    self.playerIdStartedLogin = player:GetId()
                     
                     self.occupied = true
                
@@ -271,6 +273,8 @@ function CommandStructure:Logout()
         local previousAngles = self.commander.previousAngles
         local previousHealth = self.commander.previousHealth
         local previousArmor = self.commander.previousArmor
+        local previousAlienEnergy = self.commander.previousAlienEnergy
+        local timeStartedCommanderMode = self.commander.timeStartedCommanderMode
         
         local player = self.commander:Replace(self.commander.previousMapName, self.commander:GetTeamNumber(), true)    
 
@@ -282,9 +286,16 @@ function CommandStructure:Logout()
         player:SetHealth(previousHealth)
         player:SetArmor(previousArmor)
         player.frozen = false
+        
+        // Restore previous alien energy, but let us recuperate at the regular rate while we're in the hive
+        if previousAlienEnergy and player.SetEnergy and timeStartedCommanderMode then
+            local timePassedSinceStartedComm = Shared.GetTime() - timeStartedCommanderMode
+            player:SetEnergy(previousAlienEnergy + Alien.kEnergyRecuperationRate * timePassedSinceStartedComm)
+        end
 
         self.commander = nil
-        self.playerStartedLogin = nil
+        self.commanderId = Entity.invalidId
+        self.playerIdStartedLogin = nil
         
         self.occupied = false
         

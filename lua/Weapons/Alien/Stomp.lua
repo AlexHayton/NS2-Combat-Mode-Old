@@ -65,7 +65,8 @@ function Stomp:PerformPrimaryAttack(player)
     player:SetOverlayAnimation(Stomp.kAnimPlayerAttack)
 
     Shared.PlaySound(player, Stomp.kAttackSound)
-
+    
+    return true
 end
 
 function Stomp:PerformSecondaryAttack(player)

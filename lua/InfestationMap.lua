@@ -8,6 +8,33 @@
 
 // The infestation map is a sparse map used to quickly find out what infestations can affect you
 
+
+function UpdateInfestationMasks(entityList)
+
+    PROFILE("InfestationManager:UpdateInfestationMasks")
+
+    for index, entity in ientitylist(entityList) do
+        // Don't do this for infestations.
+        if not entity:isa("Infestation") then
+            UpdateInfestationMask(entity)
+        end
+    end
+    
+end
+
+// Clear OnInfestation game effect mask on all entities, unless they are standing on infestation
+function UpdateInfestationMask(forEntity)
+    
+    // See if entity is on infestation.
+    local onInfestation = Server.infestationMap:GetIsOnInfestation(forEntity:GetOrigin())
+
+    // Set the mask
+    if forEntity.GetGameEffectMask and (forEntity:GetGameEffectMask(kGameEffect.OnInfestation) ~= onInfestation) then
+        forEntity:SetGameEffectMask(kGameEffect.OnInfestation, onInfestation)
+    end
+        
+end
+
 class "InfestationMap"
 
 InfestationMap.kCellSize = 5

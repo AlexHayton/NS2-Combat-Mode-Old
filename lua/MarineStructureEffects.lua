@@ -17,16 +17,19 @@ kMarineStructureEffects =
             {sound = "sound/ns2.fev/marine/structures/mac/build", isalien = false, done = true},
         },
     },
+    
+    // Play when marine welds another marine's armor
+    marine_welded = 
+    {
+        marineWelded =
+        {
+            {cinematic = "cinematics/marine/mac/build.cinematic", isalien = false},
+            {sound = "sound/ns2.fev/marine/structures/mac/build", isalien = false, done = true},
+        },
+    },
 
     construction_complete = 
     {
-        marineStructureComplete =
-        {
-            {parented_sound = "sound/ns2.fev/marine/structures/armory_idle", classname = "Armory", done = true},
-            
-            {parented_sound = "sound/ns2.fev/marine/structures/extractor_active", classname = "Extractor"},
-            {animation = "active", classname = "Extractor", done = true},
-        },
     },
     
     recycle_start =
@@ -75,6 +78,8 @@ kMarineStructureEffects =
         {
             {sound = "sound/ns2.fev/marine/structures/command_station_death", classname = "CommandStation", done = true},
             {sound = "sound/ns2.fev/marine/structures/extractor_death", classname = "Extractor", done = true},
+            {sound = "sound/ns2.fev/marine/power_node/destroyed", classname = "PowerPoint"},
+            {sound = "sound/ns2.fev/marine/power_node/destroyed_powerdown", classname = "PowerPoint", done = true},
             {sound = "sound/ns2.fev/marine/structures/generic_death", classname = "Structure", isalien = false, done = true},
         },
     },
@@ -222,7 +227,7 @@ kMarineStructureEffects =
         arcTargetEffects = 
         {
             {animation = "target", force = true},
-            {sound = "sound/ns2.fev/marine/structures/arc/fire"},
+            {parented_sound = "sound/ns2.fev/marine/structures/arc/fire"},
             {parented_cinematic = "cinematics/marine/arc/target.cinematic", attach_point = "fxnode_arcmuzzle"},
         },
     },
@@ -256,6 +261,15 @@ kMarineStructureEffects =
         arcHitSecondaryEffects = 
         {
             {cinematic = "cinematics/marine/arc/explosion.cinematic"},
+        },
+    },
+    
+    
+    arc_stop_effects =
+    {
+        arcHitStopEffects = 
+        {
+            {stop_effects = ""},
         },
     },
     
@@ -434,7 +448,7 @@ kMarineStructureEffects =
         roboBuildingEffect =
         {
             {animation = "active", done = true},
-            {cinematic = "cinematics/marine/roboticsfactory/collective_effect.cinematic"},          
+            {cinematic = "cinematics/marine/roboticsfactory/collection_effect.cinematic"},          
         },
     },
     

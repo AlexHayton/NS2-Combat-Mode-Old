@@ -48,6 +48,11 @@ function Flamethrower:GetPrimaryAttackDelay()
     return Flamethrower.kAttackDelay
 end
 
+function Flamethrower:GetWeight()
+    // From NS1 
+    return .1 + ((self:GetAmmo() + self:GetClip()) / self:GetClipSize()) * 0.05
+end
+
 function Flamethrower:OnHolster(player)
 
     ClipWeapon.OnHolster(self, player)

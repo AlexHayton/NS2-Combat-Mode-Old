@@ -23,11 +23,22 @@ function PlayerUI_GetBlipInfo()
             local blipType = blip.blipType
             local blipOrigin = blip:GetOrigin()
             local blipEntId = blip.entId
+            local blipName = ""
             
             // Lookup more recent position of blip
             local blipEntity = Shared.GetEntity(blipEntId)
             if blipEntity then
-                blipOrigin = blipEntity:GetModelOrigin()
+            
+                if blipEntity:isa("Player") then
+                    blipName = Scoreboard_GetPlayerData(blipEntity:GetClientIndex(), kScoreboardDataIndexName)
+                elseif blipEntity.GetTechId then
+                    blipName = LookupTechData(blipEntity:GetTechId(), kTechDataDisplayName)
+                end
+                
+            end
+            
+            if not blipName then
+                blipName = ""
             end
             
             // Get direction to blip. If off-screen, don't render. Bad values are generated if 
@@ -48,12 +59,13 @@ function PlayerUI_GetBlipInfo()
                 local trace = Shared.TraceRay(eyePos, blipOrigin, PhysicsMask.Bullets, EntityFilterTwo(player, entity))                               
                 local obstructed = ((trace.fraction ~= 1) and ((trace.entity == nil) or trace.entity:isa("Door"))) 
                 
-                // Add to array
+                // Add to array (update numElementsPerBlip in GUIHiveBlips:UpdateBlipList)
                 table.insert(blips, screenPos.x)
                 table.insert(blips, screenPos.y)
                 table.insert(blips, drawRadius)
                 table.insert(blips, blipType)
                 table.insert(blips, obstructed)
+                table.insert(blips, blipName)
 
             end
             
@@ -83,7 +95,7 @@ function GetActiveAbilityData(secondary)
         
         if ability ~= nil and ability:isa("Ability") then
         
-            if ( (not secondary) or ( secondary and ability:GetHasSecondary())) then
+            if ( (not secondary) or ( secondary and ability:GetHasSecondary(player))) then
             
                 data = ability:GetInterfaceData(secondary, false)
                 
@@ -299,7 +311,9 @@ function Alien:UpdateClientEffects(deltaTime, isLocal)
         self.screenEffects.darkVision:SetParameter("time", Client.GetTime())
         self.screenEffects.darkVision:SetParameter("amount", darkVisionFadeAmount)
         
-        self:SetBlurEnabled( self:GetBuyMenuIsDisplaying() )
+        // Blur alien vision if they are using the buy menu or are stunned.
+        local stunned = HasMixin(self, "Stun") and self:GetIsStunned()
+        self:SetBlurEnabled( self:GetBuyMenuIsDisplaying() or stunned )
         
     end
     

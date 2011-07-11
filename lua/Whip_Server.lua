@@ -11,10 +11,8 @@ function Whip:OnConstructionComplete()
 
     Structure.OnConstructionComplete(self)
     
-    self:SpawnInfestation()
-
     self:SetNextThink(1.0)
-        
+    
 end
 
 function Whip:AcquireTarget()
@@ -56,9 +54,29 @@ function Whip:AttackTarget()
         self.timeOfLastStrikeStart = Shared.GetTime()
         
         self.timeOfNextStrikeHit = Shared.GetTime() + self:AdjustFuryFireDelay(.5)
-        
+                
     end
 
+end
+
+function Whip:GetClosestAttackPoint(target)
+
+    ASSERT(target)
+    local attackPoint = target:GetEngagementPoint()
+    local inRange = false
+
+    local toAttack = target:GetEngagementPoint() - self:GetModelOrigin()
+    local length = toAttack:GetLength()
+    
+    if length <= Whip.kRange then
+        inRange = true
+    else
+        toAttack:Normalize()    
+        attackPoint = self:GetModelOrigin() + toAttack * Whip.kRange
+    end
+    
+    return attackPoint, inRange
+    
 end
 
 function Whip:StrikeTarget()
@@ -70,11 +88,17 @@ function Whip:StrikeTarget()
         self:DamageTarget(target)
         
         // Try to hit other targets close by
-        local nearbyEnts = self.targetSelector:AcquireTargets(1000, Whip.kAreaEffectRadius, target:GetModelOrigin())
+        local closestAttackPoint = self:GetClosestAttackPoint(target)
+        local nearbyEnts = self.targetSelector:AcquireTargets(1000, Whip.kAreaEffectRadius, closestAttackPoint)
         for index, ent in ipairs(nearbyEnts) do
         
             if ent ~= target then
-                ent:TakeDamage(Whip.kDamage, self, self, target:GetOrigin(), direction)
+            
+                local direction = ent:GetModelOrigin() - closestAttackPoint
+                direction:Normalize()
+                
+                ent:TakeDamage(Whip.kDamage, self, self, closestAttackPoint, direction)
+                
             end
             
         end
@@ -87,12 +111,17 @@ end
 
 function Whip:DamageTarget(target)
 
-    local direction = target:GetModelOrigin() - self:GetOrigin()
+    // Do damage to target if still within range
+    local attackPoint, inRange = self:GetClosestAttackPoint(target)
+    if inRange then
     
-    direction:Normalize()
-
-    target:TakeDamage(Whip.kDamage, self, self, target:GetOrigin(), direction)
-
+        local direction = attackPoint - self:GetOrigin()
+        direction:Normalize()
+        
+        target:TakeDamage(Whip.kDamage, self, self, attackPoint, direction)
+        
+    end
+    
 end
 
 function Whip:SetDesiredMode(mode)
@@ -196,7 +225,7 @@ function Whip:UpdateAttack(deltaTime)
                 end
                 
                 // Update our attackYaw to aim at our current target
-                local attackDir = GetNormalizedVector(target:GetEngagementPoint() - self:GetModelOrigin())
+                local attackDir = GetNormalizedVector(self:GetClosestAttackPoint(target) - self:GetModelOrigin())
                 
                 // This is negative because of how model is set up (spins clockwise)
                 local attackYawRadians = -math.atan2(attackDir.x, attackDir.z)

@@ -40,7 +40,7 @@ GUIAlienBuyMenu.kResearchTextSize = GUIScale(24)
 
 GUIAlienBuyMenu.kEvolveButtonWidth = GUIScale(250)
 GUIAlienBuyMenu.kEvolveButtonHeight = GUIScale(80)
-GUIAlienBuyMenu.kEvolveButtonYOffset = GUIScale(10)
+GUIAlienBuyMenu.kEvolveButtonYOffset = GUIScale(20)
 GUIAlienBuyMenu.kEvolveButtonTextSize = GUIScale(22)
 GUIAlienBuyMenu.kEvolveButtonNeedResourcesTextureCoordinates = { 87, 429, 396, 511 }
 GUIAlienBuyMenu.kEvolveButtonTextureCoordinates = { 396, 428, 706, 511 }
@@ -48,9 +48,7 @@ GUIAlienBuyMenu.kEvolveButtonVeinsTextureCoordinates = { 600, 341, 915, 428 }
 
 GUIAlienBuyMenu.kCurrentAlienSize = GUIScale(200)
 GUIAlienBuyMenu.kCurrentAlienTitleTextSize = GUIScale(32)
-GUIAlienBuyMenu.kCurrentAlienInfoTextSize = GUIScale(20)
-GUIAlienBuyMenu.kCurrentAlienInfoOffset = Vector(GUIScale(20), 0, 0)
-GUIAlienBuyMenu.kCurrentAlienTitleOffset = Vector(GUIScale(-60), GUIScale(-50), 0)
+GUIAlienBuyMenu.kCurrentAlienTitleOffset = Vector(0, GUIScale(25), 0)
 
 GUIAlienBuyMenu.kResourceDisplayBackgroundTextureCoordinates = { 711, 295, 824, 346 }
 GUIAlienBuyMenu.kResourceDisplayWidth = GUIScale((GUIAlienBuyMenu.kResourceDisplayBackgroundTextureCoordinates[3] - GUIAlienBuyMenu.kResourceDisplayBackgroundTextureCoordinates[1]) * 1.2)
@@ -62,17 +60,20 @@ GUIAlienBuyMenu.kResourceIconTextureCoordinates = { 825, 309, 858, 342 }
 GUIAlienBuyMenu.kResourceIconWidth = GUIScale(GUIAlienBuyMenu.kResourceIconTextureCoordinates[3] - GUIAlienBuyMenu.kResourceIconTextureCoordinates[1])
 GUIAlienBuyMenu.kResourceIconHeight = GUIScale(GUIAlienBuyMenu.kResourceIconTextureCoordinates[4] - GUIAlienBuyMenu.kResourceIconTextureCoordinates[2])
 
+GUIAlienBuyMenu.kMouseOverInfoTextSize = GUIScale(20)
+GUIAlienBuyMenu.kMouseOverInfoOffset = Vector(GUIScale(-30), GUIScale(-20), 0)
+GUIAlienBuyMenu.kMouseOverInfoResIconOffset = Vector(GUIScale(-40), GUIScale(-60), 0)
+
 GUIAlienBuyMenu.kDisabledColor = Color(0.5, 0.5, 0.5, 0.5)
 GUIAlienBuyMenu.kCannotBuyColor = Color(1, 0, 0, 0.5)
 GUIAlienBuyMenu.kEnabledColor = Color(1, 1, 1, 1)
 
-GUIAlienBuyMenu.kMaxNumberOfUpgradeButtons = 6
+GUIAlienBuyMenu.kMaxNumberOfUpgradeButtons = 8
 GUIAlienBuyMenu.kUpgradeButtonSize = GUIScale(54)
-GUIAlienBuyMenu.kUpgradeButtonDistance = GUIScale(194)
+GUIAlienBuyMenu.kUpgradeButtonDistance = GUIScale(198)
 // The distance in pixels to move the button inside the embryo when selected.
-GUIAlienBuyMenu.kUpgradeButtonDistanceInside = GUIScale(70)
+GUIAlienBuyMenu.kUpgradeButtonDistanceInside = GUIScale(74)
 GUIAlienBuyMenu.kUpgradeButtonTextureSize = 80
-GUIAlienBuyMenu.kUpgradeButtonHoverTextSize = GUIScale(16)
 GUIAlienBuyMenu.kUpgradeButtonBackgroundTextureCoordinates = { 15, 434, 85, 505 }
 GUIAlienBuyMenu.kUpgradeButtonMoveTime = 0.5
 
@@ -87,7 +88,7 @@ GUIAlienBuyMenu.kSmokeBigTextureCoordinates = { { 620, 1, 759, 146 }, { 765, 1, 
 GUIAlienBuyMenu.kSmokeSmallTextureCoordinates = { { 916, 4, 1020, 108 }, { 916, 15, 1020, 219 }, { 916, 227, 1020, 332 }, { 916, 332, 1020, 436 } }
 
 GUIAlienBuyMenu.kCornerPulseTime = 4
-GUIAlienBuyMenu.kCornerTextureCoordinates = { TopLeft = { 605, 1, 765, 145 },  BottomLeft = { 605, 145, 765, 290 }, TopRight = { 755, 1, 910, 145 }, BottomRight = { 765, 145, 910, 290 } }
+GUIAlienBuyMenu.kCornerTextureCoordinates = { TopLeft = { 605, 1, 765, 145 },  BottomLeft = { 605, 145, 765, 290 }, TopRight = { 765, 1, 910, 145 }, BottomRight = { 765, 145, 910, 290 } }
 GUIAlienBuyMenu.kCornerWidths = { }
 GUIAlienBuyMenu.kCornerHeights = { }
 for location, texCoords in pairs(GUIAlienBuyMenu.kCornerTextureCoordinates) do
@@ -106,6 +107,7 @@ function GUIAlienBuyMenu:Initialize()
     self:_InitializeUpgradeButtons()
     self:_InitializeAlienButtons()
     self:_InitializeCurrentAlienDisplay()
+    self:_InitializeMouseOverInfo()
     self:_InitializeEvolveButton()
     self:_InitializeCloseButton()
     self:_InitializeGlowieParticles()
@@ -123,6 +125,7 @@ function GUIAlienBuyMenu:Uninitialize()
     self:_UninitializeUpgradeButtons()
     self:_UninitializeAlienButtons()
     self:_UninitializeCurrentAlienDisplay()
+    self:_UninitializeMouseOverInfo()
     self:_UninitializeEvolveButton()
     self:_UninitializeCloseButton()
     self:_UninitializeGlowieParticles()
@@ -202,7 +205,7 @@ function GUIAlienBuyMenu:_InitializeResourceDisplay()
                           Position = Vector(0, 0, 0),
                           EmitOffsetLimits = { Min = Vector(-25, -5, 0),
                                                Max = Vector(5, 5, 0) },
-                          SizeLimits = { MinX = 60, MaxX = 60, MinY = 40, MaxY = 40 },
+                          SizeLimits = { MinX = 50, MaxX = 50, MinY = 30, MaxY = 30 },
                           VelocityLimits = { Min = Vector(-2, -0.5, 0), Max = Vector(10, 0.5, 0) },
                           AccelLimits = { Min = Vector(-0.01, -0.5, 0), Max = Vector(0.05, 0.5, 0) },
                           RateLimits = { Min = 0.1, Max = 0.2 },
@@ -337,44 +340,93 @@ function GUIAlienBuyMenu:_InitializeCurrentAlienDisplay()
     self.currentAlienDisplay.Icon:SetParentRenders(false)
     self.background:AddChild(self.currentAlienDisplay.Icon)
     
+    self.currentAlienDisplay.TitleShadow = GUIManager:CreateTextItem()
+    self.currentAlienDisplay.TitleShadow:SetAnchor(GUIItem.Middle, GUIItem.Top)
+    self.currentAlienDisplay.TitleShadow:SetPosition(GUIAlienBuyMenu.kCurrentAlienTitleOffset)
+    self.currentAlienDisplay.TitleShadow:SetFontName(GUIAlienBuyMenu.kFont)
+    self.currentAlienDisplay.TitleShadow:SetFontSize(GUIAlienBuyMenu.kCurrentAlienTitleTextSize)
+    self.currentAlienDisplay.TitleShadow:SetTextAlignmentX(GUIItem.Align_Center)
+    self.currentAlienDisplay.TitleShadow:SetTextAlignmentY(GUIItem.Align_Min)
+    self.currentAlienDisplay.TitleShadow:SetText(string.upper(GUIAlienBuyMenu.kAlienTypes[AlienBuy_GetCurrentAlien()].Name))
+    self.currentAlienDisplay.TitleShadow:SetColor(Color(0, 0, 0, 1))
+    self.background:AddChild(self.currentAlienDisplay.TitleShadow)
+    
     self.currentAlienDisplay.Title = GUIManager:CreateTextItem()
-    self.currentAlienDisplay.Title:SetAnchor(GUIItem.Right, GUIItem.Center)
-    self.currentAlienDisplay.Title:SetPosition(GUIAlienBuyMenu.kCurrentAlienTitleOffset)
+    self.currentAlienDisplay.Title:SetAnchor(GUIItem.Left, GUIItem.Top)
+    self.currentAlienDisplay.Title:SetPosition(Vector(-2, -2, 0))
     self.currentAlienDisplay.Title:SetFontName(GUIAlienBuyMenu.kFont)
     self.currentAlienDisplay.Title:SetFontSize(GUIAlienBuyMenu.kCurrentAlienTitleTextSize)
-    self.currentAlienDisplay.Title:SetTextAlignmentX(GUIItem.Align_Min)
-    self.currentAlienDisplay.Title:SetTextAlignmentY(GUIItem.Align_Center)
+    self.currentAlienDisplay.Title:SetTextAlignmentX(GUIItem.Align_Center)
+    self.currentAlienDisplay.Title:SetTextAlignmentY(GUIItem.Align_Min)
     self.currentAlienDisplay.Title:SetText(string.upper(GUIAlienBuyMenu.kAlienTypes[AlienBuy_GetCurrentAlien()].Name))
     self.currentAlienDisplay.Title:SetColor(ColorIntToColor(kAlienTeamColor))
-    self.background:AddChild(self.currentAlienDisplay.Title)
-    
-    self.currentAlienDisplay.Info = GUIManager:CreateTextItem()
-    self.currentAlienDisplay.Info:SetAnchor(GUIItem.Left, GUIItem.Bottom)
-    self.currentAlienDisplay.Info:SetPosition(GUIAlienBuyMenu.kCurrentAlienInfoOffset)
-    self.currentAlienDisplay.Info:SetFontName(GUIAlienBuyMenu.kFont)
-    self.currentAlienDisplay.Info:SetFontSize(GUIAlienBuyMenu.kCurrentAlienInfoTextSize)
-    self.currentAlienDisplay.Info:SetTextAlignmentX(GUIItem.Align_Min)
-    self.currentAlienDisplay.Info:SetTextAlignmentY(GUIItem.Align_Min)
-    self.currentAlienDisplay.Info:SetText(string.upper(GUIAlienBuyMenu.kAlienTypes[AlienBuy_GetCurrentAlien()].Name))
-    self.currentAlienDisplay.Info:SetColor(ColorIntToColor(kAlienTeamColor))
-    self.currentAlienDisplay.Title:AddChild(self.currentAlienDisplay.Info)
+    self.currentAlienDisplay.TitleShadow:AddChild(self.currentAlienDisplay.Title)
 
 end
 
 function GUIAlienBuyMenu:_UninitializeCurrentAlienDisplay()
 
-    GUI.DestroyItem(self.currentAlienDisplay.Info)
     GUI.DestroyItem(self.currentAlienDisplay.Title)
+    GUI.DestroyItem(self.currentAlienDisplay.TitleShadow)
     GUI.DestroyItem(self.currentAlienDisplay.Icon)
     self.currentAlienDisplay = nil
     
+end
+
+function GUIAlienBuyMenu:_InitializeMouseOverInfo()
+
+    self.mouseOverInfo = GUIManager:CreateTextItem()
+    self.mouseOverInfo:SetAnchor(GUIItem.Right, GUIItem.Center)
+    self.mouseOverInfo:SetPosition(GUIAlienBuyMenu.kMouseOverInfoOffset)
+    self.mouseOverInfo:SetFontName(GUIAlienBuyMenu.kFont)
+    self.mouseOverInfo:SetFontSize(GUIAlienBuyMenu.kMouseOverInfoTextSize)
+    self.mouseOverInfo:SetTextAlignmentX(GUIItem.Align_Min)
+    self.mouseOverInfo:SetTextAlignmentY(GUIItem.Align_Min)
+    self.mouseOverInfo:SetText(string.upper(GUIAlienBuyMenu.kAlienTypes[AlienBuy_GetCurrentAlien()].Name))
+    self.mouseOverInfo:SetColor(ColorIntToColor(kAlienTeamColor))
+    // Only visible on mouse over.
+    self.mouseOverInfo:SetIsVisible(false)
+    self.background:AddChild(self.mouseOverInfo)
+    
+    self.mouseOverInfoResIcon = GUIManager:CreateGraphicItem()
+    self.mouseOverInfoResIcon:SetSize(Vector(GUIAlienBuyMenu.kResourceIconWidth, GUIAlienBuyMenu.kResourceIconHeight, 0))
+    self.mouseOverInfoResIcon:SetAnchor(GUIItem.Right, GUIItem.Center)
+    self.mouseOverInfoResIcon:SetPosition(GUIAlienBuyMenu.kMouseOverInfoResIconOffset)
+    self.mouseOverInfoResIcon:SetTexture(GUIAlienBuyMenu.kBuyMenuTexture)
+    self.mouseOverInfoResIcon:SetTexturePixelCoordinates(unpack(GUIAlienBuyMenu.kResourceIconTextureCoordinates))
+    self.mouseOverInfoResIcon:SetIsVisible(false)
+    self.background:AddChild(self.mouseOverInfoResIcon)
+    
+    self.mouseOverInfoResAmount = GUIManager:CreateTextItem()
+    self.mouseOverInfoResAmount:SetAnchor(GUIItem.Right, GUIItem.Center)
+    self.mouseOverInfoResAmount:SetPosition(Vector(0, 0, 0))
+    self.mouseOverInfoResAmount:SetFontName(GUIAlienBuyMenu.kFont)
+    self.mouseOverInfoResAmount:SetFontSize(GUIAlienBuyMenu.kMouseOverInfoTextSize)
+    self.mouseOverInfoResAmount:SetTextAlignmentX(GUIItem.Align_Min)
+    self.mouseOverInfoResAmount:SetTextAlignmentY(GUIItem.Align_Center)
+    self.mouseOverInfoResAmount:SetColor(ColorIntToColor(kAlienTeamColor))
+    self.mouseOverInfoResIcon:AddChild(self.mouseOverInfoResAmount)
+
+end
+
+function GUIAlienBuyMenu:_UninitializeMouseOverInfo()
+
+    GUI.DestroyItem(self.mouseOverInfoResAmount)
+    self.mouseOverInfoResAmount = nil
+    
+    GUI.DestroyItem(self.mouseOverInfoResIcon)
+    self.mouseOverInfoResIcon = nil
+    
+    GUI.DestroyItem(self.mouseOverInfo)
+    self.mouseOverInfo = nil
+
 end
 
 function GUIAlienBuyMenu:_InitializeUpgradeButtons()
 
     // There are purchased and unpurchased buttons. Both are managed in this list.
     self.upgradeButtons = { }
-    for i = 1, GUIAlienBuyMenu.kMaxNumberOfUpgradeButtons do
+    for i = 1, GUIAlienBuyMenu.kMaxNumberOfUpgradeButtons + 1 do
 
         // Every upgrade has an icon.
         local buttonIcon = GUIManager:CreateGraphicItem()
@@ -382,6 +434,9 @@ function GUIAlienBuyMenu:_InitializeUpgradeButtons()
         buttonIcon:SetSize(Vector(GUIAlienBuyMenu.kUpgradeButtonSize, GUIAlienBuyMenu.kUpgradeButtonSize, 0))
         buttonIcon:SetPosition(Vector(-GUIAlienBuyMenu.kUpgradeButtonSize / 2, GUIAlienBuyMenu.kUpgradeButtonSize, 0))
         buttonIcon:SetTexture(GUIAlienBuyMenu.kBuyHUDTexture)
+        // Render above the Alien image.
+        buttonIcon:SetLayer(kGUILayerPlayerHUDForeground3)
+        buttonIcon:SetParentRenders(false)
         buttonIcon:SetIsVisible(false)
         self.background:AddChild(buttonIcon)
         
@@ -394,73 +449,8 @@ function GUIAlienBuyMenu:_InitializeUpgradeButtons()
         buttonBackground:SetStencilFunc(GUIItem.NotEqual)
         buttonBackground:SetIsVisible(false)
         buttonIcon:AddChild(buttonBackground)
-        
-        // This text display when the player mouses over the icon.
-        local buttonHoverText = GUIManager:CreateTextItem()
-        buttonHoverText:SetAnchor(GUIItem.Middle, GUIItem.Top)
-        buttonHoverText:SetPosition(Vector(0, -60, 0))
-        buttonHoverText:SetTextAlignmentX(GUIItem.Align_Center)
-        buttonHoverText:SetTextAlignmentY(GUIItem.Align_Max)
-        buttonHoverText:SetFontName(GUIAlienBuyMenu.kFont)
-        buttonHoverText:SetFontSize(GUIAlienBuyMenu.kUpgradeButtonHoverTextSize)
-        buttonHoverText:SetColor(ColorIntToColor(kAlienTeamColor))
-        // Only visible when the mouse is over the buttonIcon.
-        buttonHoverText:SetIsVisible(false)
-        buttonHoverText:SetParentRenders(false)
-        buttonHoverText:SetLayer(kGUILayerPlayerHUDForeground4)
-        buttonIcon:AddChild(buttonHoverText)
-        
-        local upgradeResIcon = GUIManager:CreateGraphicItem()
-        upgradeResIcon:SetSize(Vector(GUIAlienBuyMenu.kResourceIconWidth, GUIAlienBuyMenu.kResourceIconHeight, 0))
-        upgradeResIcon:SetAnchor(GUIItem.Left, GUIItem.Bottom)
-        upgradeResIcon:SetPosition(Vector(-GUIAlienBuyMenu.kResourceIconWidth / 2, -10, 0))
-        upgradeResIcon:SetTexture(GUIAlienBuyMenu.kBuyMenuTexture)
-        upgradeResIcon:SetTexturePixelCoordinates(unpack(GUIAlienBuyMenu.kResourceIconTextureCoordinates))
-        upgradeResIcon:SetIsVisible(false)
-        buttonHoverText:AddChild(upgradeResIcon)
-        
-        local upgradeResAmount = GUIManager:CreateTextItem()
-        upgradeResAmount:SetAnchor(GUIItem.Right, GUIItem.Center)
-        upgradeResAmount:SetPosition(Vector(0, 0, 0))
-        upgradeResAmount:SetFontName(GUIAlienBuyMenu.kFont)
-        upgradeResAmount:SetFontSize(GUIAlienBuyMenu.kUpgradeButtonHoverTextSize)
-        upgradeResAmount:SetTextAlignmentX(GUIItem.Align_Min)
-        upgradeResAmount:SetTextAlignmentY(GUIItem.Align_Center)
-        upgradeResAmount:SetColor(ColorIntToColor(kAlienTeamColor))
-        upgradeResIcon:AddChild(upgradeResAmount)
-        
-        local buttonHoverSmoke = GUIParticleSystem()
-        buttonHoverSmoke:Initialize()
-        
-        buttonHoverSmoke:AddParticleType("Smoke",
-                                              { SetTexture = { GUIAlienBuyMenu.kBuyMenuTexture },
-                                                SetTexturePixelCoordinates = GUIAlienBuyMenu.kSmokeSmallTextureCoordinates })
-        
-        local fadeInFunc = function(particle, lifetime) if lifetime <= 0.5 then particle.Item:SetColor(Color(0.75, 0.75, 0.75, lifetime / 2)) end end
-        local fadeOutFunc = function(particle, lifetime) if lifetime > 0.5 then particle.Item:SetColor(Color(0.75, 0.75, 0.75, (1 - lifetime) / 2)) end end
-        local scaleFunc = function(particle, lifetime) particle.Item:SetScale(Vector(0.5 + (1 - lifetime * 0.5), 0.5 + (1 - lifetime * 0.5), 0)) end
-        local mainEmitter = { Name = "Main",
-                              Position = Vector(0, 20, 0),
-                              EmitOffsetLimits = { Min = Vector(GUIScale(-60), GUIScale(-60), 0), Max = Vector(GUIScale(20), 0, 0) },
-                              SizeLimits = { MinX = GUIScale(100), MaxX = GUIScale(100), MinY = GUIScale(75), MaxY = GUIScale(75) },
-                              VelocityLimits = { Min = Vector(-2.5, -2.5, 0), Max = Vector(10, 2.5, 0) },
-                              AccelLimits = { Min = Vector(-0.025, -2.5, 0), Max = Vector(0.2, 2.5, 0) },
-                              RateLimits = { Min = 0.025, Max = 0.05 },
-                              LifeLimits = { Min = 9, Max = 15 },
-                              LifeTimeFuncs = { fadeInFunc, fadeOutFunc, scaleFunc } }
-        buttonHoverSmoke:AddEmitter(mainEmitter)
-        
-        buttonHoverSmoke:AddParticleTypeToEmitter("Smoke", "Main")
-        
-        buttonHoverSmoke:AttachToItem(buttonHoverText)
-        buttonHoverSmoke:SetAnchor(GUIItem.Left, GUIItem.Top)
-        buttonHoverSmoke:SetLayer(kGUILayerPlayerHUDForeground3)
-        buttonHoverSmoke:SetIsVisible(false)
-        
-        // Fast forward so particles already exist when the player first sees the menu.
-        buttonHoverSmoke:FastForward(3)
-        table.insert(self.upgradeButtons, { Background = buttonBackground, Icon = buttonIcon, Name = buttonHoverText, Smoke = buttonHoverSmoke,
-                                            UpgradeResIcon = upgradeResIcon, UpgradeResAmount = upgradeResAmount,
+
+        table.insert(self.upgradeButtons, { Background = buttonBackground, Icon = buttonIcon,
                                             Selected = false, SelectedMovePercent = 0, Cost = 0, Purchased = false, Index = nil })
         
     end
@@ -473,9 +463,6 @@ end
 function GUIAlienBuyMenu:_UninitializeUpgradeButtons()
 
     for i, currentButton in ipairs(self.upgradeButtons) do
-        GUI.DestroyItem(currentButton.UpgradeResAmount)
-        GUI.DestroyItem(currentButton.upgradeResIcon)
-        GUI.DestroyItem(currentButton.Name)
         GUI.DestroyItem(currentButton.Icon)
         GUI.DestroyItem(currentButton.Background)
     end
@@ -833,6 +820,9 @@ end
 
 function GUIAlienBuyMenu:Update(deltaTime)
 
+    // Assume there is no mouse over info to start.
+    self:_HideMouseOverInfo()
+    
     self:_UpdateResourceDisplay(deltaTime)
     
     self.currentAlienDisplay.Icon:SetTexture("ui/" .. GUIAlienBuyMenu.kAlienTypes[self.selectedAlienType].Name .. ".dds")
@@ -841,9 +831,8 @@ function GUIAlienBuyMenu:Update(deltaTime)
     self.currentAlienDisplay.Icon:SetSize(Vector(width, height, 0))
     self.currentAlienDisplay.Icon:SetPosition(Vector((-width / 2), -height / 2, 0))
     
+    self.currentAlienDisplay.TitleShadow:SetText(string.upper(GUIAlienBuyMenu.kAlienTypes[self.selectedAlienType].Name))
     self.currentAlienDisplay.Title:SetText(string.upper(GUIAlienBuyMenu.kAlienTypes[self.selectedAlienType].Name))
-    local classStats = AlienBuy_GetClassStats(GUIAlienBuyMenu.kAlienTypes[self.selectedAlienType].Index)
-    self.currentAlienDisplay.Info:SetText(ToString(classStats[2]) .. " Health\n" .. ToString(classStats[3]) .. " Armor\n" .. ToString(classStats[4]) .. " Resources")
     
     self:_UpdateAlienButtons()
     
@@ -999,6 +988,13 @@ function GUIAlienBuyMenu:_UpdateAlienButtons()
             end
             
             local mouseOver = self:_GetIsMouseOver(alienButton.Button)
+            
+            if mouseOver then
+                local classStats = AlienBuy_GetClassStats(GUIAlienBuyMenu.kAlienTypes[alienButton.TypeData.Index].Index)
+                local mouseOverName = string.upper(GUIAlienBuyMenu.kAlienTypes[alienButton.TypeData.Index].Name)
+                self:_ShowMouseOverInfo(mouseOverName .. "\n" .. ToString(classStats[2]) .. " Health\n" .. ToString(classStats[3]) .. " Armor", classStats[4])
+            end
+            
             // Only show the background if the mouse is over this button.
             alienButton.SelectedBackground:SetColor(Color(1, 1, 1, ((mouseOver and 1) or 0)))
 
@@ -1026,7 +1022,7 @@ function GUIAlienBuyMenu:_UpdateUpgrades(deltaTime)
     
     local allUpgrades = { }
     
-    local numElementsPerPurchasedUpgrades = 3
+    local numElementsPerPurchasedUpgrades = 4
     local purchasedUpgrades = AlienBuy_GetPurchasedUpgrades(self.selectedAlienType)
     local numPurchasedUpgrades = table.count(purchasedUpgrades) / numElementsPerPurchasedUpgrades
     for i = 0, numPurchasedUpgrades - 1 do
@@ -1035,11 +1031,12 @@ function GUIAlienBuyMenu:_UpdateUpgrades(deltaTime)
         currentUpgrade.IconXOffset = purchasedUpgrades[currentIndex] * GUIAlienBuyMenu.kUpgradeButtonTextureSize
         currentUpgrade.IconYOffset = purchasedUpgrades[currentIndex + 1] * GUIAlienBuyMenu.kUpgradeButtonTextureSize
         currentUpgrade.Name = purchasedUpgrades[currentIndex + 2]
+        currentUpgrade.Tooltip = purchasedUpgrades[currentIndex + 3]
         currentUpgrade.Purchased = true
         table.insert(allUpgrades, currentUpgrade)
     end
     
-    local numElementsPerUnpurchasedUpgrades = 5
+    local numElementsPerUnpurchasedUpgrades = 6
     local unpurchasedUpgrades = AlienBuy_GetUnpurchasedUpgrades(self.selectedAlienType)
     local numUnpurchasedUpgrades = table.count(unpurchasedUpgrades) / numElementsPerUnpurchasedUpgrades
     for i = 0, numUnpurchasedUpgrades - 1 do
@@ -1048,8 +1045,9 @@ function GUIAlienBuyMenu:_UpdateUpgrades(deltaTime)
         currentUpgrade.IconXOffset = unpurchasedUpgrades[currentIndex] * GUIAlienBuyMenu.kUpgradeButtonTextureSize
         currentUpgrade.IconYOffset = unpurchasedUpgrades[currentIndex + 1] * GUIAlienBuyMenu.kUpgradeButtonTextureSize
         currentUpgrade.Name = unpurchasedUpgrades[currentIndex + 2]
-        currentUpgrade.ResearchPercent = unpurchasedUpgrades[currentIndex + 3]
-        currentUpgrade.Cost = unpurchasedUpgrades[currentIndex + 4]
+        currentUpgrade.Tooltip = unpurchasedUpgrades[currentIndex + 3]
+        currentUpgrade.ResearchPercent = unpurchasedUpgrades[currentIndex + 4]
+        currentUpgrade.Cost = unpurchasedUpgrades[currentIndex + 5]
         currentUpgrade.Purchased = false
         currentUpgrade.Index = i + 1
         table.insert(allUpgrades, currentUpgrade)
@@ -1058,8 +1056,12 @@ function GUIAlienBuyMenu:_UpdateUpgrades(deltaTime)
     local numberOfUpgrades = table.count(allUpgrades)
     ASSERT(numberOfUpgrades <= GUIAlienBuyMenu.kMaxNumberOfUpgradeButtons)
 
-    local currentAngle = math.pi / 2
-    local offsetAmount = math.pi / 8
+    local offsetAmount = math.pi / 7
+    local buttonAngles = { math.pi / 2, math.pi / 2 + offsetAmount, math.pi / 2 - offsetAmount,
+                           math.pi / 2 + offsetAmount * 2, math.pi / 2 - offsetAmount * 2,
+                           math.pi / 2 + offsetAmount * 3, math.pi / 2 + offsetAmount * 4,
+                           math.pi / 2 + offsetAmount * 5 }
+
     for i, currentUpgrade in ipairs(allUpgrades) do
         local currentButton = self.upgradeButtons[i + 1]
         currentButton.Cost = (currentUpgrade.Cost ~= nil and currentUpgrade.Cost) or 0
@@ -1084,9 +1086,7 @@ function GUIAlienBuyMenu:_UpdateUpgrades(deltaTime)
             movementScaleAdjust = -(distanceToCenterPercent * 0.5)
             buttonDistance = buttonDistance - GUIAlienBuyMenu.kUpgradeButtonDistanceInside * currentButton.SelectedMovePercent
         end
-        local positionOffset = Vector(math.cos(currentAngle) * buttonDistance, math.sin(currentAngle) * buttonDistance, 0)
-        currentAngle = currentAngle + offsetAmount
-        offsetAmount = -offsetAmount * 2
+        local positionOffset = Vector(math.cos(buttonAngles[i]) * buttonDistance, math.sin(buttonAngles[i]) * buttonDistance, 0)
         local buttonPosition = Vector(positionOffset.x - GUIAlienBuyMenu.kUpgradeButtonSize / 2, positionOffset.y - GUIAlienBuyMenu.kUpgradeButtonSize / 2, 0)
         currentButton.Icon:SetPosition(buttonPosition)
         
@@ -1100,22 +1100,14 @@ function GUIAlienBuyMenu:_UpdateUpgrades(deltaTime)
         local mouseOverScale = ((mouseOverButton and not currentUpgrade.Purchased) and Vector(1.1, 1.1, 0)) or Vector(1, 1, 0)
         currentButton.Icon:SetScale(mouseOverScale + Vector(movementScaleAdjust, movementScaleAdjust, 0))
         
-        currentButton.Smoke:Update(deltaTime)
-        
         if mouseOverButton then
-            currentButton.Name:SetIsVisible(true)
-            currentButton.Smoke:SetIsVisible(true)
-            local upgradeCostString = ""
-            currentButton.UpgradeResIcon:SetIsVisible(currentUpgrade.Cost ~= nil)
-            if currentUpgrade.Cost then
-                currentButton.UpgradeResAmount:SetText(ToString(currentUpgrade.Cost))
+            local currentUpgradeInfoText = currentUpgrade.Name
+            if string.len(currentUpgrade.Tooltip) > 0 then
+                currentUpgradeInfoText = currentUpgradeInfoText .. "\n" .. currentUpgrade.Tooltip
             end
-            currentButton.Name:SetText(currentUpgrade.Name .. upgradeCostString)
-            
+            self:_ShowMouseOverInfo(currentUpgradeInfoText, currentUpgrade.Cost)
             currentButton.Background:SetScale(mouseOverScale)
         else
-            currentButton.Name:SetIsVisible(false)
-            currentButton.Smoke:SetIsVisible(false)
             currentButton.Background:SetScale(Vector(1, 1, 0))
         end
         i = i + 1
@@ -1151,6 +1143,27 @@ function GUIAlienBuyMenu:_UpdateCorners(deltaTime)
         end)
 
 end
+
+function GUIAlienBuyMenu:_ShowMouseOverInfo(infoText, costAmount)
+
+    self.mouseOverInfo:SetIsVisible(true)
+    self.mouseOverInfo:SetText(infoText)
+    
+    self.mouseOverInfoResIcon:SetIsVisible(costAmount ~= nil)
+    if costAmount then
+        self.mouseOverInfoResAmount:SetText(ToString(costAmount))
+    end
+
+end
+AddFunctionContract(GUIAlienBuyMenu._ShowMouseOverInfo, { Arguments = { "GUIAlienBuyMenu", "string", { "number", "nil" } }, Returns = { } })
+
+function GUIAlienBuyMenu:_HideMouseOverInfo()
+
+    self.mouseOverInfo:SetIsVisible(false)
+    self.mouseOverInfoResIcon:SetIsVisible(false)
+    
+end
+AddFunctionContract(GUIAlienBuyMenu._HideMouseOverInfo, { Arguments = { "GUIAlienBuyMenu" }, Returns = { } })
 
 function GUIAlienBuyMenu:SendKeyEvent(key, down)
 

@@ -6,7 +6,7 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-function ResourcePoint:OnReset()
+function ResourcePoint:Reset()
     
     self:OnInit()
     

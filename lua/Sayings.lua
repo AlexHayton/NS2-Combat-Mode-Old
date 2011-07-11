@@ -20,6 +20,27 @@ marineGroupRequestActions = {kTechId.None, kTechId.None, kTechId.None, kTechId.M
 alienGroupSayingsText  = {"1. Need healing", "2. Follow me", "3. Chuckle"}
 alienGroupSayingsSounds = {"sound/ns2.fev/alien/voiceovers/need_healing", "sound/ns2.fev/alien/voiceovers/follow_me", "sound/ns2.fev/alien/voiceovers/chuckle"}
 alienRequestActions = {kTechId.AlienAlertNeedHealing, kTechId.None, kTechId.None}
+alienBlipTypes = {kBlipType.NeedHealing, kBlipType.FollowMe, kBlipType.Chuckle}
+
+function GetHUDTextForBlipType(blipType)
+
+    local text = ""
+    
+    // Custom blip text
+    if blipType == kBlipType.NeedHealing then
+        text = "needs healing"
+    elseif blipType == kBlipType.FollowMe then
+        text = "wants you to follow"
+    elseif blipType == kBlipType.Chuckle then
+        text = "chuckles"
+    // Regular blip status
+    elseif blipType == kBlipType.FriendlyUnderAttack then
+        text = "under attack"
+    end
+    
+    return text
+    
+end
 
 // Populate dynamically via ScoreboardUI_GetOrderedCommanderNames() (for voting down commander)
 voteActionsText = {}

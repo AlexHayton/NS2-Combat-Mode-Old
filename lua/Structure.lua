@@ -81,6 +81,14 @@ function Structure:OnCreate()
 
 end
 
+/**
+ * The eye position for a structure is where it "sees" other entities from for
+ * purposes such as targeting.
+ */
+function Structure:GetEyePos()
+    return self:GetOrigin() + self:GetViewOffset()
+end
+
 function Structure:GetEffectsActive()
     return self.effectsActive
 end
@@ -114,30 +122,24 @@ function Structure:GetResearchProgress()
     return self.researchProgress
 end
 
-function Structure:GetDescription()
-
-    local description = LiveScriptActor.GetDescription(self)
-    
-    // Add "unpowered" if 
-    if self:GetRequiresPower() and not self:GetIsPowered() then
-        description = description .. " - Unpowered"
-    end
-    
-    return description
-    
-end
-
 function Structure:GetResearchTechAllowed(techNode)
 
+    // Return true unless it's it's specified that it can only be triggered for specific tech id (ie, an upgraded version of a structure)
+    local addOnRequirementMet = true
+    local addOnTechId = techNode:GetAddOnTechId()
+    if addOnTechId ~= kTechId.None then        
+        addOnRequirementMet = (self:GetTechId() == addOnTechId)
+    end
+
     // Return false if we're researching, or if tech is being researched
-    return not (self.researchingId ~= kTechId.None or techNode.researched or techNode.researching)
+    return not (self.researchingId ~= kTechId.None or techNode.researched or techNode.researching or not addOnRequirementMet)
     
 end
 
 // Children should override this when they have upgrade tech attached to them. Allow upgrading
 // if we're not busy researching something.
 function Structure:GetUpgradeTechAllowed(techId)
-    return (self.researchingId == kTechId.None)
+    return not self:GetIsResearching()
 end
 
 function Structure:GetCanBeUsed(player)
@@ -148,6 +150,10 @@ end
 // Assumes all structures are marine or alien
 function Structure:GetIsAlienStructure()
     return false
+end
+
+function Structure:GetInfestationRadius()
+    return kStructureInfestationRadius
 end
 
 function Structure:GetDeployAnimation()
@@ -175,7 +181,7 @@ function Structure:GetTechAllowed(techId, techNode, player)
         return (self:GetTeamType() == kMarineTeamType)
     end
     
-    if (self.researchingId ~= kTechId.None) then
+    if not self:GetIsBuilt() then
         return false
     end
     

@@ -11,6 +11,9 @@
 local chatMessages = { }
 local enteringChatMessage = false
 local teamOnlyChat = false
+// Note: Nothing clears this out but it is probably safe to assume the player won't
+// mute enough clients to run out of memory.
+local mutedClients = { }
 
 /**
  * Returns true if the user is currently holding down the button to record for
@@ -18,6 +21,57 @@ local teamOnlyChat = false
  */
 function ChatUI_IsVoiceChatActive()
     return Client.IsVoiceRecordingActive()
+end
+
+/**
+ * Returns true if the passed in client is currently speaking.
+ */
+function ChatUI_GetIsClientSpeaking(clientIndex)
+
+    // Handle the local client specially.
+    local localPlayer = Client.GetLocalPlayer()
+    if localPlayer and localPlayer:GetClientIndex() == clientIndex then
+        return ChatUI_IsVoiceChatActive()
+    end
+    
+    return Client.GetIsClientSpeaking(clientIndex)
+
+end
+
+function ChatUI_SetClientMuted(muteClientIndex, setMute)
+
+    // Player cannot mute themselves.
+    local localPlayer = Client.GetLocalPlayer()
+    if localPlayer and localPlayer:GetClientIndex() == muteClientIndex then
+        return
+    end
+    
+    local message = BuildMutePlayerMessage(muteClientIndex, setMute)
+    Client.SendNetworkMessage("MutePlayer", message, true)
+    mutedClients[muteClientIndex] = setMute
+
+end
+
+function ChatUI_GetClientMuted(clientIndex)
+
+    return mutedClients[clientIndex] == true
+
+end
+
+function ChatUI_Encode(msg)
+	if (msg) then
+		msg = string.gsub(msg, '"', '&#34')
+		msg = string.gsub(msg, "'", '&#39')
+	end
+	return msg
+end
+
+function ChatUI_Decode(msg)
+	if (msg) then
+		msg = string.gsub(msg, '&#34', '"')
+		msg = string.gsub(msg, '&#39', "'")
+	end
+	return msg
 end
 
 function ChatUI_GetMessages()
@@ -51,14 +105,6 @@ function ChatUI_GetChatMessageType()
     
 end
 
-function ChatUI_GetChatMessageTypeColor()
-    return kChatPrefixTextColor
-end
-
-function ChatUI_GetChatMessageBodyColor()
-    return kChatTextColor
-end
-
 // Called when player hits return after entering a chat message. Send it 
 // to the server.
 function ChatUI_SubmitChatMessageBody(chatMessage)
@@ -66,7 +112,7 @@ function ChatUI_SubmitChatMessageBody(chatMessage)
     // Quote string so spacing doesn't come through as multiple arguments
     if chatMessage ~= nil and string.len(chatMessage) > 0 then
     
-        Client.ConsoleCommand(string.format("%s \"%s\"", ConditionalValue(teamOnlyChat, "teamsay", "say"), chatMessage))
+        Client.ConsoleCommand(ConditionalValue(teamOnlyChat, 'teamsay', 'say') .. ' "' .. ChatUI_Encode(chatMessage) .. '"')
 
         teamOnlyChat = false
         
@@ -86,13 +132,6 @@ function ChatUI_EnterChatMessage(teamOnly)
         
     end
     
-end
-
-/**
- * Called when chat message is clicked on commander screen
- */
-function ChatUI_ClickedChatMessage(entityId)
-
 end
 
 /**
@@ -142,58 +181,9 @@ function OnCommandChat(teamOnly, playerName, locationId, teamNumber, message)
             if tonumber(teamOnly) == 1 then
                 prefixText = "Chat Team " .. tostring(teamNumber)
             end
-            Shared.Message(prefixText .. " - " .. DecodeStringFromNetwork(playerName) .. ": " .. message)
+            Shared.Message(prefixText .. " - " .. DecodeStringFromNetwork(playerName) .. ": " .. ChatUI_Decode(message))
         end
     end
 end
 
-/**
- * Returns true if in commander mode, false otherwise
- */
-function ChatUI_IsCommanderMode()
-    local player = Client.GetLocalPlayer()
-    return player ~= nil and player:isa("Commander")
-end
-
-function PlayerUI_ChatIconsImage()
-    return "chat_icons"
-end
-
-function PlayerUI_ChatIconWidth()
-    return 16
-end
-
-function PlayerUI_ChatIconHeight()
-    return 16
-end
-
-function PlayerUI_GetChatMessageText(messageIndex)
-    return chatMessages[messageIndex].message
-end
-
-function PlayerUI_GetChatMessageFrom(messageIndex)
-    return chatMessages[messageIndex].name
-end
-
-function PlayerUI_HasChatMessageIcon(messageIndex)
-    return false
-end
-
-function PlayerUI_GetChatIconXOffset(messageIndex)
-    return 0
-end
-
-function PlayerUI_GetChatIconYOffset(messageIndex)
-    return 0
-end
-
-function PlayerUI_GetNumAvailableChatMessages()
-    return table.maxn( chatMessages )
-end
-
-function PlayerUI_GetChatColor(messageIndex)
-    return 0xFFFFFF
-end
-
 Event.Hook("Console_chat", OnCommandChat)
-

@@ -28,7 +28,7 @@ function MedPack:OnTouch(player)
         // If player has less than full health or is parasited
         if( (player:GetHealth() < player:GetMaxHealth()) or (player:GetArmor() < player:GetMaxArmor()) or player:GetGameEffectMask(kGameEffect.Parasite) ) then
 
-            player:AddHealth(MedPack.kHealth)
+            player:AddHealth(MedPack.kHealth, false, true)
             
             player:SetGameEffectMask(kGameEffect.Parasite, false)
             

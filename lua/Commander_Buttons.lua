@@ -320,17 +320,17 @@ function Commander:ComputeMenuTechAvailability()
             
                 for index, entityId in ipairs(self.selectedSubGroupEntityIds) do
                 
-                    local entity = Shared.GetEntity(entityId)                
-                    if entity and entity:GetTechAllowed(techId, techNode, self) then
-                        
-                        // if we have anything that is being built then bail
-                        if (techId ~= kTechId.Recycle and isSelect and (entity:isa("Structure") and not entity:GetIsBuilt())) then                            
-                            menuTechButtonAllowed = false
-                            break
-                        
-                        end
+                    local entity = Shared.GetEntity(entityId)
+                    local isTechAllowed = false
                     
-                        menuTechButtonAllowed = true
+                    if entity then
+                        if isSelect then
+                            isTechAllowed = entity:GetTechAllowed(techId, techNode, self)
+                        else
+                            isTechAllowed = self:GetTechAllowed(techId, techNode, self)
+                        end
+                        
+                        menuTechButtonAllowed = isTechAllowed
                         break
                     
                     end

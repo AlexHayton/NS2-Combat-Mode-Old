@@ -21,8 +21,13 @@ function Weapon:Dropped(prevOwner)
     self:SetWeaponWorldState(true)
     
     // So we can see the result
-    local viewCoords = prevOwner:GetViewCoords()
-    self:AddImpulse(viewCoords.origin, viewCoords.zAxis)
+    if (self.physicsModel) then
+
+        // Doesn't appear to be working    
+        local viewCoords = prevOwner:GetViewCoords()
+        self.physicsModel:AddImpulse(self:GetOrigin(), viewCoords.zAxis)
+        
+    end
     
 end
 
@@ -81,28 +86,34 @@ end
 
 // Should only be called when dropped
 function Weapon:OnCollision(targetHit)
-    
-    // Don't hit owner - shooter
-    if targetHit == nil then
+
+    // $AS - FIXME: So this is a total hack really because some of these will lead to weird behavior
+    // such as I can bounce a weapon of a structure and pick it up but I think that is okay for now 
+    // until we come up with a better solution.
+    local isLegalHit = (targetHit == nil) or (targetHit:isa("Structure") or targetHit:isa("ResourcePoint")
+    or targetHit:isa("PowerPoint"))
+
+    if isLegalHit then
         
         // Play weapon drop sound
         if not self.hitGround then
-            Shared.PlayWorldSound(nil, Weapon.kDropSound, nil, self:GetOrigin())
-        end
         
-        self.hitGround = true
+            self:TriggerEffects("weapon_dropped")
+            self.hitGround = true
+            
+        end
    
-    elseif targetHit and targetHit:isa("Player") and  targetHit.GetTeamNumber and targetHit:GetTeamNumber() == self:GetTeamNumber() then
+    elseif targetHit and targetHit:isa("Player") and targetHit.GetTeamNumber and targetHit:GetTeamNumber() == self:GetTeamNumber() then
+    
         // Don't allow dropper to pick it up until it hits the ground            
         if (targetHit:GetId() ~= self.prevOwnerId) or self.hitGround then
-        
-            if targetHit.AddWeapon and targetHit:AddWeapon(self) then
+
+            // Sets it active also        
+            if targetHit.AddWeapon and targetHit:AddWeapon(self, true) then
 
                 self:SetWeaponWorldState(false)
                 
                 targetHit:ClearActivity()
-                
-                targetHit:SetActiveWeapon(self:GetMapName())
                 
             end
             

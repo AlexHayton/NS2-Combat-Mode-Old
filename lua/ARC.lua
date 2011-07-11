@@ -30,7 +30,7 @@ ARC.kStartDistance          = 4
 ARC.kAttackInterval         = 8.0               // Must be greater than fireToHitInterval
 ARC.kFireToHitInterval      = kARCFireDelay     // How long ARC must be on target before firing
 ARC.kAttackDamage           = kARCDamage
-ARC.kFireRange              = 22.86             // 75 feet, from mockup
+ARC.kFireRange              = kARCRange         // From NS1
 ARC.kSplashRadius           = 10
 ARC.kUpgradedSplashRadius   = 13
 ARC.kMoveSpeed              = 2.5               // units per second
@@ -42,7 +42,7 @@ ARC.kCapsuleHeight = .05
 ARC.kCapsuleRadius = .5
  
 
-ARC.kMode = enum( {'UndeployedStationary', 'Moving', 'Deploying', 'Deployed', 'Targeting', 'Firing', 'FireCooldown', 'Undeploying'} )
+ARC.kMode = enum( {'UndeployedStationary', 'Moving', 'Deploying', 'Deployed', 'Targeting', 'Firing', 'FireCooldown', 'Undeploying', 'Destroyed'} )
 
 if Server then
     Script.Load("lua/ARC_Server.lua")
@@ -217,7 +217,11 @@ function ARC:GetCanFireAtTarget(target, targetPoint)
     end
     
     if not target:isa("Structure") then      
-      return false
+        return false
+    end
+    
+    if not target:GetIsSighted() then
+        return false
     end
                     
     if (((target:GetOrigin() - self:GetOrigin()):GetLengthXZ() > ARC.kFireRange)) then        
@@ -227,7 +231,11 @@ function ARC:GetCanFireAtTarget(target, targetPoint)
     return true
 end
 
-function ARC:UpdateAngles(deltaTime)    
+function ARC:UpdateAngles(deltaTime)
+    if not self:GetInAttackMode() or (not self:GetIsAlive()) then
+        return
+    end
+         
     if (self.mode == ARC.kMode.Firing or self.mode == ARC.kMode.Targeting or self.mode == ARC.kMode.FireCooldown) then        
         if self.targetDirection then
             local yawDiffRadians = GetAnglesDifference(GetYawFromVector(self.targetDirection), self:GetAngles().yaw)
@@ -236,7 +244,7 @@ function ARC:UpdateAngles(deltaTime)
             
             local pitchDiffRadians = GetAnglesDifference(GetPitchFromVector(self.targetDirection), self:GetAngles().pitch)
             local pitchDegrees = DegreesTo360(math.deg(pitchDiffRadians))
-            self.desiredPitchDegrees = Clamp(pitchDegrees, -ARC.kMaxPitch, ARC.kMaxPitch)       
+            self.desiredPitchDegrees = -Clamp(pitchDegrees, -ARC.kMaxPitch, ARC.kMaxPitch)       
             
             self.barrelYawDegrees = Slerp(self.barrelYawDegrees, self.desiredYawDegrees, ARC.kBarrelMoveRate*deltaTime)
         end
@@ -261,6 +269,7 @@ function ARC:UpdatePoseParameters(deltaTime)
 end
 
 function ARC:OnUpdate(deltaTime)
+
    LiveScriptActor.OnUpdate(self, deltaTime)
    
    if Server then 
@@ -268,7 +277,7 @@ function ARC:OnUpdate(deltaTime)
     self:UpdateMode()
    end
    
-   if self.mode ~= ARC.kMode.UndeployedStationary and self.mode ~= ARC.kMode.Moving and self.mode ~= ARC.kMode.Deploying and self.mode ~= ARC.kMode.Undeploying then
+   if self.mode ~= ARC.kMode.UndeployedStationary and self.mode ~= ARC.kMode.Moving and self.mode ~= ARC.kMode.Deploying and self.mode ~= ARC.kMode.Undeploying and self.mode ~= ARC.kMode.Destroyed then
     
     self:UpdateAngles(deltaTime)
    end
@@ -276,7 +285,24 @@ function ARC:OnUpdate(deltaTime)
    self:UpdatePoseParameters(deltaTime)
 end
 
+function ARC:OnKill(damage, attacker, doer, point, direction)
+    // HACK!
+    self:TriggerEffects("arc_stop_effects")
+    
+if Server then  
+    self:ClearTargetDirection()
+    self:ClearOrders()
+    
+    self:SetDesiredMode(ARC.kMode.Destroyed)
+    self:SetMode(ARC.kMode.Destroyed)
+end 
+
+    LiveScriptActor.OnKill(self, damage, killer, doer, point, direction)    
+end
+
+
 function ARC:GetVisualRadius()
+
     if (self.mode == ARC.kMode.UndeployedStationary or self.mode == ARC.kMode.Moving) then
         return nil
     end

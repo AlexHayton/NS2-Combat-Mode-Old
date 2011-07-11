@@ -9,6 +9,9 @@ Script.Load("lua/Utility.lua")
 Script.Load("lua/Weapons/Alien/BiteLeap.lua")
 Script.Load("lua/Weapons/Alien/Parasite.lua")
 Script.Load("lua/Alien.lua")
+Script.Load("lua/Mixins/GroundMoveMixin.lua")
+Script.Load("lua/Mixins/CameraHolderMixin.lua")
+Script.Load("lua/StunMixin.lua")
 
 class 'Skulk' (Alien)
 
@@ -25,7 +28,7 @@ elseif Client then
     Script.Load("lua/Skulk_Client.lua", true)
 end
 
-local networkVars = 
+Skulk.networkVars = 
 {
     wallWalking                 = "compensated boolean",
     timeLastWallWalkCheck       = "float",
@@ -57,7 +60,7 @@ Skulk.kMass = 45 // ~100 pounds
 Skulk.kWallWalkCheckInterval = .2
 // This is how quickly the 3rd person model will adjust to the new normal.
 Skulk.kWallWalkNormalSmoothRate = 6
-// How big the spheres are they are casted out to find walls, "feelers".
+// How big the spheres are that are casted out to find walls, "feelers".
 Skulk.kWallWalkingFeelerSize = 0.1
 Skulk.kNormalWallWalkRange = 0.2
 Skulk.kStickyWallWalkRange = 0.5
@@ -70,16 +73,31 @@ Skulk.kAnimStartLeap = "leap_start"
 Skulk.kAnimEndLeap = "leap_end"
 Skulk.kAnimLeap = "leap"
 
+PrepareClassForMixin(Skulk, GroundMoveMixin)
+PrepareClassForMixin(Skulk, CameraHolderMixin)
+// The Skulk can be stunned in melee attacked while it is in the air.
+// See GetIsKnockbackAllowed() below for more.
+PrepareClassForMixin(Skulk, StunMixin)
+
 function Skulk:OnInit()
 
+    InitMixin(self, GroundMoveMixin, { kGravity = Player.kGravity })
+    InitMixin(self, CameraHolderMixin, { kFov = Skulk.kFov })
+    InitMixin(self, StunMixin)
+    
     Alien.OnInit(self)
-
+    
     // Idle always plays and has a speed param updated below
     Shared.PlaySound(self, Skulk.kIdleSound)
     
     self.wallWalking = false
     self.wallWalkingNormalCurrent = Vector.yAxis
     self.wallWalkingNormalGoal    = Vector.yAxis
+    
+    if Client then
+        self.currentCameraRoll = 0
+        self.goalCameraRoll    = 0
+    end
     
     self.leaping = false
     self.leapingAnimationPlaying = false
@@ -113,10 +131,6 @@ end
 
 function Skulk:GetCrouchShrinkAmount()
     return 0
-end
-
-function Skulk:GetStartFov()
-    return Skulk.kFov
 end
 
 // The Skulk movement should factor in the vertical velocity
@@ -218,9 +232,9 @@ function Skulk:GetCustomAnimationName(animName)
 end
 
 // Update wall-walking from current origin
-function Skulk:PreUpdateMovePhysics(input, runningPrediction)
+function Skulk:PreUpdateMove(input, runningPrediction)
 
-    PROFILE("Skulk:PreUpdateMovePhysics")
+    PROFILE("Skulk:PreUpdateMove")
 
     local angles = Angles(self:GetAngles())
     
@@ -425,7 +439,7 @@ function Skulk:GetMaxSpeed()
         maxspeed = ConditionalValue(self.movementModiferState, Skulk.kMaxWalkSpeed, Skulk.kMaxSpeed)
     end
     
-    return maxspeed
+    return maxspeed * self:GetSlowSpeedModifier()
     
 end
 
@@ -551,15 +565,11 @@ function Skulk:GetFrictionForce(input, velocity)
     
 end
 
-function Skulk:GetGravityForce()
+function Skulk:AdjustGravityForce(input, gravity)
 
-    local gravity = Player.GetGravityForce(self)
-
-    // No gravity when we're sticking to a wall    
+    // No gravity when we're sticking to a wall.
     if self:GetIsWallWalking() then
-    
         gravity = 0
-        
     end
     
     return gravity
@@ -618,13 +628,13 @@ function Skulk:ClampSpeed(input, velocity)
     
 end
 
-function Skulk:GetGroundPosition(position)
+function Skulk:GetIsCloseToGround(distanceToGround)
 
     if self:GetIsWallWalking() then
         return false
     end
     
-    return Alien.GetGroundPosition(self, position)
+    return Alien.GetIsCloseToGround(self, distanceToGround)
     
 end
 
@@ -698,8 +708,6 @@ function Skulk:UpdateHelp()
         return true
     elseif self:AddTooltipOnce("Sneak up on enemies and press left-click to bite them.") then
         return true
-    elseif not self:GetHasUpgrade(kTechId.Leap) and self:AddTooltipOnce("Press right-click to leap from a standstill!") then
-        return true
     elseif self:GetHasUpgrade(kTechId.Leap) and self:AddTooltipOnce("Press right-click to do a running leap!") then
         return true
     elseif self:AddTooltipOnce("You can walk on walls and ceilings! Just look up a wall and press forward!") then
@@ -724,4 +732,13 @@ function Skulk:GetIsOnGround()
     
 end
 
-Shared.LinkClassToMap( "Skulk", Skulk.kMapName, networkVars )
+/**
+ * Knockback only allowed while the Skulk is in the air (jumping or leaping).
+ */
+function Skulk:GetIsKnockbackAllowed()
+
+    return not self:GetIsOnGround() and not self:GetIsWallWalking()
+
+end
+
+Shared.LinkClassToMap( "Skulk", Skulk.kMapName, Skulk.networkVars )

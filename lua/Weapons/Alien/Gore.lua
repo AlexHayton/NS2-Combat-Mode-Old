@@ -103,6 +103,8 @@ function Gore:PerformPrimaryAttack(player)
         
     end
     
+    return true
+    
 end
 
 function Gore:PerformSecondaryAttack(player)

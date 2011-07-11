@@ -82,7 +82,7 @@ function AlienBuy_GetClassStats(idx)
     
 end
 
-// iconx, icony, name, research, cost
+// iconx, icony, name, tooltip, research, cost
 function GetUnpurchasedUpgradeInfoArray(techIdTable)
 
     local t = {}
@@ -97,6 +97,8 @@ function GetUnpurchasedUpgradeInfoArray(techIdTable)
             table.insert(t, iconY)
             
             table.insert(t, LookupTechData(techId, kTechDataDisplayName, string.format("<name not found - %s>", EnumToString(kTechId, techId))))
+            
+            table.insert(t, LookupTechData(techId, kTechDataTooltipInfo, ""))
             
             table.insert(t, GetTechTree():GetResearchProgressForBuyNode(techId))
             
@@ -122,7 +124,7 @@ function GetUnpurchasedTechIds(techId)
     if techTree ~= nil then
     
         // Use upgrades for our lifeform, plus global upgrades 
-        addOnUpgrades = techTree:GetAddOnsForTechId(techTree:GetAddOnsForTechId(techId))
+        addOnUpgrades = techTree:GetAddOnsForTechId(techId)
         
         table.copy(techTree:GetAddOnsForTechId(kTechId.AllAliens), addOnUpgrades, true)        
         
@@ -153,7 +155,7 @@ end
 
 /**
  * Return 1-d array of all unpurchased upgrades for this class index
- * Format is x icon offset, y icon offset, name, 
+ * Format is x icon offset, y icon offset, name, tooltip,
  * research pct [0.0 - 1.0], and cost
  */
 function AlienBuy_GetUnpurchasedUpgrades(idx)
@@ -166,26 +168,56 @@ function AlienBuy_GetUnpurchasedUpgrades(idx)
 end
 
 function GetPurchasedUpgradeInfoArray(techIdTable)
+
     local t = {}
     
-    for index, id in ipairs(techIdTable) do
-    
-        local success, iconX, iconY = GetAlienUpgradeIconXY(id)
-        
-        if success then
+    for index, techId in ipairs(techIdTable) do
+
+        local iconX, iconY = GetMaterialXYOffset(techId, false)
+        if iconX and iconY then
         
             table.insert(t, iconX)
             table.insert(t, iconY)
-            table.insert(t, LookupTechData(id, kTechDataDisplayName, string.format("<not found - %s>", EnumToString(kTechId, id))))
+            table.insert(t, LookupTechData(techId, kTechDataDisplayName, string.format("<not found - %s>", EnumToString(kTechId, techId))))
+            table.insert(t, LookupTechData(techId, kTechDataTooltipInfo, ""))
             
         else
         
-            Print("GetPurchasedUpgradeInfoArray():GetAlienUpgradeIconXY(%s): Couldn't find upgrade icon.", ToString(id))
+            Print("GetPurchasedUpgradeInfoArray():GetAlienUpgradeIconXY(%s): Couldn't find upgrade icon.", ToString(techId))
             
         end
     end
     
     return t
+    
+end
+
+/**
+ * Filter out tech Ids that don't apply to this specific Alien or all Aliens.
+ */
+local function FilterInvalidUpgradesForPlayer(player, forAlienTechId)
+
+    local techIdTable = player:GetUpgrades()
+    local techTree = GetTechTree()
+    // We can't check if there is no tech tree, assume everything is ok.
+    if not techTree then
+        return techIdTable
+    end
+    
+    local validAddons = techTree:GetAddOnsForTechId(forAlienTechId)
+    table.copy(techTree:GetAddOnsForTechId(kTechId.AllAliens), validAddons, true)  
+
+    local validIds = { }
+    for index, upgradeTechId in ipairs(techIdTable) do
+    
+        if table.contains(validAddons, upgradeTechId) then
+            table.insert(validIds, upgradeTechId)
+        end
+    
+    end
+    
+    return validIds
+
 end
 
 /**
@@ -194,10 +226,8 @@ end
  */
 function AlienBuy_GetPurchasedUpgrades(idx)
 
-    // If this is us
     local player = Client.GetLocalPlayer()
-    local techId = player:GetTechId()
-    return GetPurchasedUpgradeInfoArray(player:GetUpgrades())
+    return GetPurchasedUpgradeInfoArray(FilterInvalidUpgradesForPlayer(player, IndexToAlienTechId(idx)))
     
 end
 

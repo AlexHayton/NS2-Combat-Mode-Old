@@ -252,11 +252,20 @@ end
  */
 function LiveScriptActor:GetGroundAt(position, physicsGroupMask)
 
-    local topOffset = self:GetExtents().y
+    local topOffset      = self:GetExtents().y
     local startPosition = position + Vector(0, topOffset, 0)
-    local endPosition = position - Vector(0, 100, 0)
+    local endPosition   = position - Vector(0, 1000, 0)
+    
     local trace = Shared.TraceRay(startPosition, endPosition, physicsGroupMask, EntityFilterOne(self))
-    return trace.endPoint
+    
+    // If we didn't hit anything, then use our existing position. This
+    // prevents objects from constantly moving downward if they get outside
+    // of the bounds of the map.
+    if trace.fraction < 1 then
+        return trace.endPoint
+    else
+        return position
+    end
 
 end
 

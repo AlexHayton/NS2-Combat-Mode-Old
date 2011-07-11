@@ -11,6 +11,10 @@
 
 class 'GUIScoreboard' (GUIScript)
 
+GUIScoreboard.kClickForMouseBackgroundSize = Vector(GUIScale(200), GUIScale(32), 0)
+GUIScoreboard.kClickForMouseTextSize = GUIScale(22)
+GUIScoreboard.kClickForMouseText = "Click for mouse"
+
 // Shared constants.
 GUIScoreboard.kFontName = "Calibri"
 GUIScoreboard.kLowPingThreshold = 100
@@ -20,6 +24,8 @@ GUIScoreboard.kMedPingColor = Color(1, 1, 0, 1)
 GUIScoreboard.kHighPingThreshold = 499
 GUIScoreboard.kHighPingColor = Color(1, 0.5, 0, 1)
 GUIScoreboard.kInsanePingColor = Color(1, 0, 0, 1)
+GUIScoreboard.kVoiceMuteColor = Color(1, 0, 0, 0.5)
+GUIScoreboard.kVoiceDefaultColor = Color(1, 1, 1, 0.5)
 
 // Team constants.
 GUIScoreboard.kTeamNameFontSize = 26
@@ -35,6 +41,7 @@ GUIScoreboard.kPlayerStatsFontSize = 16
 GUIScoreboard.kPlayerItemWidthBuffer = 10
 GUIScoreboard.kPlayerItemHeight = 32
 GUIScoreboard.kPlayerSpacing = 4
+GUIScoreboard.kPlayerVoiceChatIconSize = 20
 
 // Color constants.
 GUIScoreboard.kBlueColor = ColorIntToColor(kMarineTeamColor)
@@ -54,11 +61,12 @@ function GUIScoreboard:Initialize()
     table.insert(self.teams, { GUIs = self:CreateTeamBackground(GUIScoreboard.kBlueColor), TeamName = ScoreboardUI_GetBlueTeamName(),
                                Color = GUIScoreboard.kBlueColor, PlayerList = { }, HighlightColor = GUIScoreboard.kBlueHighlightColor,
                                GetScores = ScoreboardUI_GetBlueScores, TeamNumber = kTeam1Index})
+
     // Red team.
     table.insert(self.teams, { GUIs = self:CreateTeamBackground(GUIScoreboard.kRedColor), TeamName = ScoreboardUI_GetRedTeamName(),
                                Color = GUIScoreboard.kRedColor, PlayerList = { }, HighlightColor = GUIScoreboard.kRedHighlightColor,
                                GetScores = ScoreboardUI_GetRedScores, TeamNumber = kTeam2Index })
-    
+
     // Spectator team.
     table.insert(self.teams, { GUIs = self:CreateTeamBackground(GUIScoreboard.kSpectatorColor), TeamName = ScoreboardUI_GetSpectatorTeamName(),
                                Color = GUIScoreboard.kSpectatorColor, PlayerList = { }, HighlightColor = GUIScoreboard.kSpectatorHighlightColor,
@@ -71,6 +79,24 @@ function GUIScoreboard:Initialize()
     self.playerHighlightItem:SetTexture("ui/hud_elements.dds")
     self.playerHighlightItem:SetTextureCoordinates(0, 0.16, 0.558, 0.32)
     self.playerHighlightItem:SetIsVisible(false)
+    
+    self.clickForMouseBackground = GUIManager:CreateGraphicItem()
+    self.clickForMouseBackground:SetSize(GUIScoreboard.kClickForMouseBackgroundSize)
+    self.clickForMouseBackground:SetPosition(Vector(-GUIScoreboard.kClickForMouseBackgroundSize.x / 2, 10, 0))
+    self.clickForMouseBackground:SetAnchor(GUIItem.Middle, GUIItem.Top)
+    self.clickForMouseBackground:SetIsVisible(false)
+    
+    self.clickForMouseIndicator = GUIManager:CreateTextItem()
+    self.clickForMouseIndicator:SetFontName(GUIScoreboard.kFontName)
+    self.clickForMouseIndicator:SetFontSize(GUIScoreboard.kClickForMouseTextSize)
+    self.clickForMouseIndicator:SetAnchor(GUIItem.Middle, GUIItem.Center)
+    self.clickForMouseIndicator:SetTextAlignmentX(GUIItem.Align_Center)
+    self.clickForMouseIndicator:SetTextAlignmentY(GUIItem.Align_Center)
+    self.clickForMouseIndicator:SetColor(Color(0, 0, 0, 1))
+    self.clickForMouseIndicator:SetText(GUIScoreboard.kClickForMouseText)
+    self.clickForMouseBackground:AddChild(self.clickForMouseIndicator)
+    
+    self.mousePressed = { LMB = { Down = nil }, RMB = { Down = nil } }
 
 end
 
@@ -86,10 +112,10 @@ function GUIScoreboard:Uninitialize()
     end
     self.reusePlayerItems = { }
     
-end
-
-function GUIScoreboard:CreateHeader()
-    
+    GUI.DestroyItem(self.clickForMouseIndicator)
+    self.clickForMouseIndicator = nil
+    GUI.DestroyItem(self.clickForMouseBackground)
+    self.clickForMouseBackground = nil
     
     
 end
@@ -220,6 +246,19 @@ function GUIScoreboard:Update(deltaTime)
     
     ASSERT(teamsVisible ~= nil)
     
+    if not teamsVisible then
+        self:_SetMouseVisible(false)
+    end
+    
+    if not self.mouseVisible then
+        // Click for mouse only visible when not a commander and when the scoreboard is visible.
+        local clickForMouseBackgroundVisible = (not PlayerUI_IsACommander()) and teamsVisible
+        self.clickForMouseBackground:SetIsVisible(clickForMouseBackgroundVisible)
+        local backgroundColor = PlayerUI_GetTeamColor()
+        backgroundColor.a = 0.8
+        self.clickForMouseBackground:SetColor(backgroundColor)
+    end
+    
     //First, update teams.
     for index, team in ipairs(self.teams) do
     
@@ -278,7 +317,7 @@ function GUIScoreboard:UpdateTeam(updateTeam)
     end
 
     // How many items per player.
-    local numElementsPerPlayerRecord = 7 + 2
+    local numElementsPerPlayerRecord = 10
     local numPlayers = table.count(teamScores) / numElementsPerPlayerRecord
     
     // Update the team name text.
@@ -299,17 +338,19 @@ function GUIScoreboard:UpdateTeam(updateTeam)
     local currentY = GUIScoreboard.kTeamNameFontSize + GUIScoreboard.kTeamInfoFontSize
     local currentPlayerIndex = 1
     for index, player in pairs(playerList) do
-        // GetScores table format: Name, score, kills, deaths, ping.
+        // GetScores table format: Name, client index, score, kills, deaths, ping.
         local playerName = teamScores[currentPlayerIndex]
-        local score = tostring(teamScores[currentPlayerIndex + 1])
-        local kills = tostring(teamScores[currentPlayerIndex + 2])
-        local deaths = tostring(teamScores[currentPlayerIndex + 3])
-        local resourcesStr = ConditionalValue(isLocalTeam, tostring(teamScores[currentPlayerIndex + 5]), "-")
-        local ping = teamScores[currentPlayerIndex + 6]
+        local clientIndex = teamScores[currentPlayerIndex + 1]
+        local score = tostring(teamScores[currentPlayerIndex + 2])
+        local kills = tostring(teamScores[currentPlayerIndex + 3])
+        local deaths = tostring(teamScores[currentPlayerIndex + 4])
+        local isCommander = teamScores[currentPlayerIndex + 5]
+        local resourcesStr = ConditionalValue(isLocalTeam, tostring(teamScores[currentPlayerIndex + 6]), "-")
+        local ping = teamScores[currentPlayerIndex + 7]
         local pingStr = tostring(ping)
         local currentPosition = Vector(player["Background"]:GetPosition())
-        local playerStatus = teamScores[currentPlayerIndex + 7]
-        local isSpectator = teamScores[currentPlayerIndex + 8]
+        local playerStatus = teamScores[currentPlayerIndex + 8]
+        local isSpectator = teamScores[currentPlayerIndex + 9]
         
         currentPosition.y = currentY
         player["Background"]:SetPosition(currentPosition)
@@ -328,6 +369,19 @@ function GUIScoreboard:UpdateTeam(updateTeam)
         end
         
         player["Name"]:SetText(playerName)
+        
+        // Needed to determine who to (un)mute when voice icon is clicked.
+        player["ClientIndex"] = clientIndex
+        
+        // Voice icon.
+        local playerVoiceColor = GUIScoreboard.kVoiceDefaultColor
+        if ChatUI_GetClientMuted(clientIndex) then
+            playerVoiceColor = GUIScoreboard.kVoiceMuteColor
+        elseif ChatUI_GetIsClientSpeaking(clientIndex) then
+            playerVoiceColor = teamColor
+        end
+        player["Voice"]:SetColor(playerVoiceColor)
+
         player["Score"]:SetText(score)
         player["Kills"]:SetText(kills)
         player["Deaths"]:SetText(deaths)
@@ -392,9 +446,17 @@ function GUIScoreboard:CreatePlayerItem()
     playerNameItem:SetAnchor(GUIItem.Left, GUIItem.Top)
     playerNameItem:SetTextAlignmentX(GUIItem.Align_Min)
     playerNameItem:SetTextAlignmentY(GUIItem.Align_Min)
-    playerNameItem:SetPosition(Vector(5, 5, 0))
+    playerNameItem:SetPosition(Vector(30, 5, 0))
     playerNameItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(playerNameItem)
+    
+    // Player voice icon item.
+    local playerVoiceIcon = GUIManager:CreateGraphicItem()
+    playerVoiceIcon:SetSize(Vector(GUIScoreboard.kPlayerVoiceChatIconSize, GUIScoreboard.kPlayerVoiceChatIconSize, 0))
+    playerVoiceIcon:SetAnchor(GUIItem.Left, GUIItem.Top)
+    playerVoiceIcon:SetPosition(Vector(-GUIScoreboard.kPlayerVoiceChatIconSize - 5, 0, 0))
+    playerVoiceIcon:SetTexture("ui/speaker.dds")
+    playerNameItem:AddChild(playerVoiceIcon)
     
     local currentColumnX = GUIScoreboard.kTeamScoreColumnStartX
     
@@ -474,6 +536,57 @@ function GUIScoreboard:CreatePlayerItem()
     pingItem:SetColor(Color(1, 1, 1, 1))
     playerItem:AddChild(pingItem)
     
-    return { Background = playerItem, Name = playerNameItem, Status = statusItem, Score = scoreItem, Kills = killsItem, Deaths = deathsItem, Resources = resItem, Ping = pingItem }
+    return { Background = playerItem, Name = playerNameItem, Voice = playerVoiceIcon, Status = statusItem, Score = scoreItem, Kills = killsItem, Deaths = deathsItem, Resources = resItem, Ping = pingItem }
     
+end
+
+function GUIScoreboard:SendKeyEvent(key, down)
+
+    if not ScoreboardUI_GetVisible() then
+        return
+    end
+    
+    if key == InputKey.MouseButton0 and self.mousePressed["LMB"]["Down"] ~= down then
+        self.mousePressed["LMB"]["Down"] = down
+        if down then
+            // A commander already has the mouse visible so skip this step.
+            if not self.mouseVisible and not PlayerUI_IsACommander() then
+                self:_SetMouseVisible(true)
+            else
+                self:_HandlePlayerVoiceClicked()
+            end
+        end
+    end
+    
+end
+
+function GUIScoreboard:_HandlePlayerVoiceClicked()
+
+    local mouseX, mouseY = Client.GetCursorPosScreen()
+    for index, team in ipairs(self.teams) do
+        local playerList = team["PlayerList"]
+        for playerIndex, playerItem in ipairs(playerList) do
+            if GUIItemContainsPoint(playerItem["Voice"], mouseX, mouseY) then
+                local clientIndex = playerItem["ClientIndex"]
+                ChatUI_SetClientMuted(clientIndex, not ChatUI_GetClientMuted(clientIndex))
+            end
+        end
+    end
+    
+end
+
+function GUIScoreboard:_SetMouseVisible(setVisible)
+
+    if self.mouseVisible ~= setVisible then
+        self.mouseVisible = setVisible
+        // Don't take away the mouse if the player is a commander.
+        if not PlayerUI_IsACommander() then
+            Client.SetMouseVisible(self.mouseVisible)
+            Client.SetMouseCaptured(not self.mouseVisible)
+            if self.mouseVisible then
+                self.clickForMouseBackground:SetIsVisible(false)
+            end
+        end
+    end
+
 end

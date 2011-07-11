@@ -80,6 +80,11 @@ end
 function Pistol:CreatePrimaryAttackEffect(player)
 end
 
+function Pistol:GetWeight()
+    // From NS1 
+    return .04 + ((self:GetAmmo() + self:GetClip()) / self:GetClipSize()) * 0.01
+end
+
 function Pistol:GetClipSize()
     return Pistol.kClipSize
 end

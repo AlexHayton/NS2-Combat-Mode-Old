@@ -17,7 +17,7 @@ class 'SpectatingTeam' (Team)
  */
 function SpectatingTeam:ReplaceRespawnPlayer(player, origin, angles)
     
-    local spectatorPlayer = player:Replace(Spectator.kMapName)
+    local spectatorPlayer = player:Replace(Spectator.kMapName, self:GetTeamNumber())
     
     spectatorPlayer:ClearGameEffects()
    

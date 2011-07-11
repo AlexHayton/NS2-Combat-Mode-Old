@@ -49,7 +49,7 @@ function SpitSpray:GetEnergyCost(player)
     return kSpitEnergyCost
 end
 
-function SpitSpray:GetHasSecondary()
+function SpitSpray:GetHasSecondary(player)
     return true
 end
 
@@ -75,7 +75,7 @@ function SpitSpray:CreateSpitProjectile(player)
         
         local viewAngles = player:GetViewAngles()
         local viewCoords = viewAngles:GetCoords()
-        local startPoint = player:GetViewOffset() + player:GetOrigin() + viewCoords.zAxis * 1
+        local startPoint = player:GetEyePos() + viewCoords.zAxis * 1
         
         local spit = CreateEntity(Spit.kMapName, startPoint, player:GetTeamNumber())
         SetAnglesFromVector(spit, viewCoords.zAxis)
@@ -109,8 +109,9 @@ function SpitSpray:PerformPrimaryAttack(player)
     
     player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
 
-    self:CreateSpitProjectile(player)               
+    self:CreateSpitProjectile(player)
     
+    return true
 end
 
 // Find friendly players and structures in front of us, in cone and heal them by a 
@@ -261,16 +262,16 @@ function SpitSpray:PerformSecondaryAttack(player)
     if Server then           
     
         // Trace to see if we hit a wall - if so, spray infestation. Otherwise, heal/attack.
-        local coords, valid = self:GetPositionForInfestation(player)        
+        /*local coords, valid = self:GetPositionForInfestation(player)        
         if valid then
         
             success = self:SprayInfestation(player, coords)
             
         else
-        
+        */
             self:HealEntities( player )
             
-        end
+        //end
         
     end        
     

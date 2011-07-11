@@ -6,6 +6,8 @@
 //    
 // ========= For more information, visit us at http://www.unknownworlds.com =====================    
 
+Script.Load("lua/FunctionContracts.lua")
+
 TimedCallbackMixin = { }
 TimedCallbackMixin.type = "TimedCallback"
 
@@ -20,6 +22,7 @@ function TimedCallbackMixin:AddTimedCallback(addFunction, callRate)
     table.insert(self.timedCallbacks, { Function = addFunction, Rate = callRate, Time = 0 })
 
 end
+AddFunctionContract(TimedCallbackMixin.AddTimedCallback, { Arguments = { "Entity", "function", "number" }, Returns = { } })
 
 function TimedCallbackMixin:UpdateTimedCallbacks(deltaTime)
     
@@ -55,3 +58,4 @@ function TimedCallbackMixin:UpdateTimedCallbacks(deltaTime)
     end
 
 end
+AddFunctionContract(TimedCallbackMixin.UpdateTimedCallbacks, { Arguments = { "Entity", "number" }, Returns = { } })

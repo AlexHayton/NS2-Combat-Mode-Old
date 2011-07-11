@@ -23,7 +23,7 @@ function Marine:MakeSpecialEdition()
     self:SetModel(Marine.kSpecialModelName)
 end
 
-function Marine:AddWeapon(weapon)
+function Marine:AddWeapon(weapon, setActive)
 
     local success = false
     
@@ -36,11 +36,11 @@ function Marine:AddWeapon(weapon)
         
         if not weaponInSlot or (weapon:GetCost() > weaponInSlot:GetCost()) then
         
-            if weaponInSlot then
-                self:Drop(weaponInSlot)
+            if weaponInSlot and not self:Drop(weaponInSlot) then
+                return false                
             end
             
-            success = Player.AddWeapon(self, weapon)
+            success = Player.AddWeapon(self, weapon, setActive)
             
         end
         
@@ -120,7 +120,8 @@ end
 
 function Marine:OnKill(damage, attacker, doer, point, direction)
 
-    // Will become "drop" soon
+    // Drop main weapon, delete the others
+    self:Drop(self:GetWeaponInHUDSlot(kPrimaryWeaponSlot))
     self:KillWeapons()
     
     Player.OnKill(self, damage, attacker, doer, point, direction)
@@ -136,7 +137,6 @@ function Marine:OnKill(damage, attacker, doer, point, direction)
     
 end
 
-// Will become DropWeapons soon
 function Marine:KillWeapons()
 
     local weapons = self:GetHUDOrderedWeaponList()
@@ -145,44 +145,11 @@ function Marine:KillWeapons()
     
         local weapon = weapons[index]
         if weapon then
-            //self:Drop(weapon)
             DestroyEntity(weapon)
         end
         
     end
     
-end
-
-function Marine:Drop(weapon)
-
-    local activeWeapon = self:GetActiveWeapon()
-    
-    if not weapon then
-        weapon = activeWeapon
-    end
-
-    if weapon == activeWeapon then
-        self:SelectNextWeapon()
-    end
-    
-    if( weapon ~= nil and weapon.GetIsDroppable and weapon:GetIsDroppable() ) then
-    
-        weapon:OnPrimaryAttackEnd(self)
-    
-        // Remove from player's inventory
-        self:RemoveWeapon(weapon)
-        
-        // Make sure we're ready to deploy new weapon so we switch to it properly
-        self:ClearActivity()
-        
-        local weaponSpawnPoint = self:GetAttachPointOrigin(Weapon.kHumanAttachPoint)
-        weapon:SetOrigin(weaponSpawnPoint)
-        
-        // Tell weapon not to be picked up again for a bit
-        weapon:Dropped(self)
-        
-    end
-
 end
 
 function Marine:OnResearchComplete(structure, researchId)

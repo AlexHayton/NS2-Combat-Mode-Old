@@ -65,7 +65,7 @@ function Spikes:GetEnergyCost(player)
     return ConditionalValue(self.zoomedIn, Spikes.kSnipeEnergy, Spikes.kSpikeEnergy)
 end
 
-function Spikes:GetHasSecondary()
+function Spikes:GetHasSecondary(player)
     return true
 end
 
@@ -107,7 +107,8 @@ function Spikes:PerformPrimaryAttack(player)
     end
 
     player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
-
+    
+    return true
 end
 
 function Spikes:FireSpikeProjectile(player)
@@ -147,7 +148,7 @@ function Spikes:FireSpikeProjectile(player)
         local spread = Spikes.kSpread2Degrees 
         local direction = viewCoords.zAxis + x * spread.x * viewCoords.xAxis + y * spread.y * viewCoords.yAxis
 
-        spike:SetVelocity(direction * 40)
+        spike:SetVelocity(direction * 20)
         
         spike:SetOrientationFromVelocity()
         
@@ -171,7 +172,7 @@ function Spikes:PerformZoomedAttack(player)
 
     // Trace line to attack
     local viewCoords = player:GetViewAngles():GetCoords()    
-    local startPoint = Vector(player:GetViewOffset() + Vector(player:GetOrigin()))
+    local startPoint = player:GetEyePos()
     local endPoint = startPoint + viewCoords.zAxis * 1000
 
     // Filter ourself out of the trace so that we don't hit ourselves.

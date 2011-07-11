@@ -31,10 +31,14 @@ kTechDataDamageType                     = "damagetype"
 // Class that structure must be placed on top of (resource towers on resource points)
 // If adding more attach classes, add them to GetIsAttachment()
 kStructureAttachClass                   = "attachclass"
-// Structure must be placed within kStructureAttachRange of this class, but it isn't actually attached
+// Structure must be placed within kStructureAttachRange of this class, but it isn't actually attached.
+// This can be a table of strings as well.
 kStructureBuildNearClass                = "buildnearclass"
+// Structure attaches to wall/roof
+kStructureBuildOnWall                   = "buildonwall"
 // If specified along with attach class, this entity can only be built within this range of an attach class (infantry portal near Command Station)
 // If specified, you must also specify the tech id of the attach class.
+// This can be a table of ids as well.
 kStructureAttachRange                   = "attachrange"
 // If specified, draw a range indicator for the commander when selected.
 kVisualRange                            = "visualrange"
@@ -91,6 +95,10 @@ kTechDataEngagementDistance             = "engagementdist"
 kTechDataRequiresInfestation            = "requiresinfestation"
 // Cannot be built on infestation (cannot be specified with kTechDataRequiresInfestation)
 kTechDataNotOnInfestation               = "notoninfestation"
+// Special ghost-guide method. Called with commander as argument, returns a map of entities with ranges to lit up.
+kTechDataGhostGuidesMethod               = "ghostguidesmethod"
+// Special requirements for building. Called with techId, the origin and normal for building location and the commander. Returns true if the special requirement is met.
+kTechDataBuildRequiresMethod            = "buildrequiresmethod"
 
 function BuildTechData()
     
@@ -107,8 +115,12 @@ function BuildTechData()
         { [kTechDataId] = kTechId.SetRally,              [kTechDataDisplayName] = "Set rally point", [kTechDataHotkey] = Move.L, [kTechDataTooltipInfo] = "New helper units automatically move here"},
         { [kTechDataId] = kTechId.SetTarget,             [kTechDataDisplayName] = "Set target", [kTechDataHotkey] = Move.T, [kTechDataTooltipInfo] = "Set target direction"},
         
-        // Ready room player is the default player, hence the Player.kMapName
-        { [kTechDataId] = kTechId.ReadyRoomPlayer,        [kTechDataDisplayName] = "Ready room player", [kTechDataMapName] = Player.kMapName, [kTechDataModel] = Marine.kModelName },
+        // Ready room player is the default player, hence the ReadyRoomPlayer.kMapName
+        { [kTechDataId] = kTechId.ReadyRoomPlayer,        [kTechDataDisplayName] = "Ready room player", [kTechDataMapName] = ReadyRoomPlayer.kMapName, [kTechDataModel] = Marine.kModelName },
+        
+        // Spectators classes.
+        { [kTechDataId] = kTechId.Spectator,              [kTechDataModel] = "" },
+        { [kTechDataId] = kTechId.AlienSpectator,         [kTechDataModel] = "" },
         
         // Marine classes
         { [kTechDataId] = kTechId.Marine,              [kTechDataDisplayName] = "Marine", [kTechDataMapName] = Marine.kMapName, [kTechDataModel] = Marine.kModelName, [kTechDataMaxExtents] = Vector(Player.kXZExtents, Player.kYExtents, Player.kXZExtents), [kTechDataMaxHealth] = Marine.kHealth, [kTechDataEngagementDistance] = kPlayerEngagementDistance, [kTechDataPointValue] = kMarinePointValue},
@@ -154,7 +166,7 @@ function BuildTechData()
         { [kTechDataId] = kTechId.Door,                  [kTechDataDisplayName] = "Door", [kTechDataMapName] = Door.kMapName, [kTechDataModel] = Door.kModelName},
         { [kTechDataId] = kTechId.DoorOpen,              [kTechDataDisplayName] = "Open door", [kTechDataHotkey] = Move.O, [kTechDataTooltipInfo] = "Open door"},
         { [kTechDataId] = kTechId.DoorClose,             [kTechDataDisplayName] = "Close door", [kTechDataHotkey] = Move.C, [kTechDataTooltipInfo] = "Close door"},
-        { [kTechDataId] = kTechId.DoorLock,              [kTechDataDisplayName] = "Lock door", [kTechDataHotkey] = Move.L, [kTechDataTooltipInfo] = "Locked doors can be destroyed by infestation"},
+        { [kTechDataId] = kTechId.DoorLock,              [kTechDataDisplayName] = "Lock door", [kTechDataHotkey] = Move.L, [kTechDataTooltipInfo] = "Locked doors can be destroyed by croach"},
         { [kTechDataId] = kTechId.DoorUnlock,            [kTechDataDisplayName] = "Unlock door", [kTechDataHotkey] = Move.U, [kTechDataTooltipInfo] = "Unlock door"},
         
         // Commander abilities
@@ -162,10 +174,6 @@ function BuildTechData()
         
         // Command station and its buildables
         { [kTechDataId] = kTechId.CommandStation,  [kTechDataMapName] = CommandStation.kLevel1MapName,     [kTechDataDisplayName] = "Command Station",     [kTechDataBuildTime] = kCommandStationBuildTime, [kTechDataCostKey] = kCommandStationCost, [kTechDataModel] = CommandStation.kModelName,             [kTechDataMaxHealth] = kCommandStationHealth, [kTechDataMaxArmor] = kCommandStationArmor,            [kStructureAttachClass] = "TechPoint",         [kTechDataSpawnHeightOffset] = 0, [kTechDataEngagementDistance] = kCommandStationEngagementDistance, [kTechDataInitialEnergy] = kCommandStationInitialEnergy,      [kTechDataMaxEnergy] = kCommandStationMaxEnergy, [kTechDataPointValue] = kCommandStationPointValue, [kTechDataHotkey] = Move.C, [kTechDataTooltipInfo] = "Allows another player to become Commander"},
-        //{ [kTechDataId] = kTechId.CommandFacilityUpgrade,  [kTechDataDisplayName] = "Upgrade to Command Facility",     [kTechDataCostKey] = kCommandFacilityUpgradeCost, [kTechDataResearchTimeKey] = kCommandFacilityUpgradeTime, [kTechDataHotkey] = Move.F, [kTechDataTooltipInfo] = "Gives access to second tier technology"},
-        //{ [kTechDataId] = kTechId.CommandFacility,  [kTechDataMapName] = CommandStationL2.kMapName,     [kTechDataDisplayName] = "Command Facility",     [kTechDataModel] = CommandStation.kModelName,  [kTechDataUpgradeTech] = kTechId.CommandStation,      [kStructureAttachClass] = "TechPoint",      [kTechDataMaxHealth] = kCommandFacilityHealth, [kTechDataMaxArmor] = kCommandFacilityArmor, [kTechDataMaxEnergy] = kCommandFacilityMaxEnergy, [kTechDataEngagementDistance] = kCommandStationEngagementDistance, [kTechDataPointValue] = kCommandFacilityPointValue},
-        //{ [kTechDataId] = kTechId.CommandCenterUpgrade,  [kTechDataDisplayName] = "Upgrade to Command Center",     [kTechDataCostKey] = kCommandCenterUpgradeCost,   [kTechDataResearchTimeKey] = kCommandCenterUpgradeTime, [kTechDataHotkey] = Move.C, [kTechDataTooltipInfo] = "Gives access to third tier technology"},        
-        //{ [kTechDataId] = kTechId.CommandCenter,  [kTechDataMapName] = CommandStationL3.kMapName,     [kTechDataDisplayName] = "Command Center",     [kTechDataModel] = CommandStation.kModelName,             [kTechDataMaxHealth] = kCommandCenterHealth,     [kTechDataEngagementDistance] = kCommandStationEngagementDistance,  [kTechDataMaxArmor] = kCommandCenterArmor,       [kStructureAttachClass] = "TechPoint",         [kTechDataSpawnHeightOffset] = 0, [kTechDataMaxEnergy] = kCommandCenterMaxEnergy, [kTechDataResearchTimeKey] = kCommandCenterUpgradeTime,    [kTechDataMaxEnergy] = kCommandStationMaxEnergy,      [kTechDataMaxEnergy] = kCommandStationMaxEnergy, [kTechDataUpgradeTech] = kTechId.CommandFacility, [kTechDataPointValue] = kCommandCenterPointValue },       
         //{ [kTechDataId] = kTechId.TwoCommandStations,  [kTechDataDisplayName] = "Two Command Stations" },        
         //{ [kTechDataId] = kTechId.ThreeCommandStations,  [kTechDataDisplayName] = "Three Command Stations" },        
 
@@ -266,6 +274,7 @@ function BuildTechData()
         { [kTechDataId] = kTechId.Parasite,              [kTechDataMapName] = Parasite.kMapName,        [kTechDataDamageType] = kParasiteDamageType,    [kTechDataModel] = "", [kTechDataDisplayName] = "Parasite"},
         { [kTechDataId] = kTechId.Spit,                  [kTechDataMapName] = SpitSpray.kMapName,       [kTechDataDamageType] = kSpitDamageType,        [kTechDataModel] = "", [kTechDataDisplayName] = "Spit"},
         { [kTechDataId] = kTechId.Spray,                 [kTechDataMapName] = SpitSpray.kMapName,       [kTechDataDamageType] = kHealsprayDamageType,   [kTechDataModel] = "", [kTechDataDisplayName] = "Spray"},
+        { [kTechDataId] = kTechId.BileBomb,              [kTechDataMapName] = BileBomb.kMapName,        [kTechDataDamageType] = kBileBombDamageType,    [kTechDataModel] = "", [kTechDataDisplayName] = "BileBomb", [kTechDataCostKey] = kBileBombCost },
         { [kTechDataId] = kTechId.Spikes,                [kTechDataMapName] = Spikes.kMapName,          [kTechDataDamageType] = kSpikeDamageType,       [kTechDataModel] = "", [kTechDataDisplayName] = "Spikes"},
         { [kTechDataId] = kTechId.SpikesAlt,             [kTechDataMapName] = Spikes.kMapName,          [kTechDataDamageType] = kSpikesAltDamageType,   [kTechDataModel] = "", [kTechDataDisplayName] = "Spikes Alt"},
         { [kTechDataId] = kTechId.Spores,                [kTechDataMapName] = Spores.kMapName,          [kTechDataDamageType] = kSporesDamageType,      [kTechDataModel] = "", [kTechDataDisplayName] = "Spores"},
@@ -276,10 +285,6 @@ function BuildTechData()
         
         // Alien structures (spawn hive at 110 units off ground = 2.794 meters)
         { [kTechDataId] = kTechId.Hive,                [kTechDataMapName] = Hive.kLevel1MapName,                   [kTechDataDisplayName] = "Hive", [kTechDataCostKey] = kHiveCost,                     [kTechDataBuildTime] = kHiveBuildTime, [kTechDataModel] = Hive.kModelName,  [kTechDataHotkey] = Move.V,                [kTechDataMaxHealth] = kHiveHealth,  [kTechDataMaxArmor] = kHiveArmor,              [kStructureAttachClass] = "TechPoint",         [kTechDataSpawnHeightOffset] = 2.494,    [kTechDataInitialEnergy] = kHiveInitialEnergy,      [kTechDataMaxEnergy] = kHiveMaxEnergy, [kTechDataPointValue] = kHivePointValue, [kTechDataTooltipInfo] = "Allows another player to become Commander and grants access to next tier"},
-        //{ [kTechDataId] = kTechId.HiveMassUpgrade,     [kTechDataDisplayName] = "Upgrade to Hive Mass", [kTechDataCostKey] = kHiveMassUpgradeCost,               [kTechDataBuildTime] = kHiveBuildTime, [kTechDataResearchTimeKey] = kHiveMassUpgradeTime, [kTechDataModel] = Hive.kModelName,                  [kTechDataHotkey] = Move.U, [kTechDataMaxHealth] = kHiveMassHealth,                    [kStructureAttachClass] = "TechPoint",         [kTechDataInitialEnergy] = kHiveInitialEnergy,      [kTechDataUpgradeTech] = kTechId.Hive, [kTechDataDisplayName] = "Gives access to Tier 2 research"},
-        //{ [kTechDataId] = kTechId.HiveMass,            [kTechDataMapName] = HiveL2.kMapName,                   [kTechDataDisplayName] = "Hive Mass",  [kTechDataModel] = Hive.kModelName, [kTechDataMaxHealth] = kHiveMassHealth,   [kTechDataMaxArmor] = kHiveMassArmor,  [kTechDataMaxEnergy] = kHiveMassMaxEnergy, [kTechDataSpawnHeightOffset] = 2.494, [kTechDataUpgradeTech] = kTechId.Hive, [kTechDataPointValue] = kHiveMassPointValue},
-        //{ [kTechDataId] = kTechId.HiveColonyUpgrade,   [kTechDataDisplayName] = "Upgrade to Hive Colony", [kTechDataCostKey] = kHiveColonyUpgradeCost,  [kTechDataResearchTimeKey] = kHiveColonyUpgradeTime, [kTechDataModel] = Hive.kModelName,                  [kTechDataMaxHealth] = kHiveColonyHealth,                    [kStructureAttachClass] = "TechPoint",  [kTechDataUpgradeTech] = kTechId.HiveMass},
-        //{ [kTechDataId] = kTechId.HiveColony,          [kTechDataMapName] = HiveL3.kMapName,                   [kTechDataDisplayName] = "Hive Colony", [kTechDataModel] = Hive.kModelName, [kTechDataMaxHealth] = kHiveColonyHealth, [kTechDataMaxArmor] = kHiveColonyArmor, [kTechDataMaxEnergy] = kHiveColonyMaxEnergy, [kTechDataSpawnHeightOffset] = 2.494, [kTechDataUpgradeTech] = kTechId.HiveMass, [kTechDataPointValue] = kHiveColonyPointValue},
         { [kTechDataId] = kTechId.TwoHives,            [kTechDataDisplayName] = "Two Hives" },        
         { [kTechDataId] = kTechId.ThreeHives,          [kTechDataDisplayName] = "Three Hives" },        
         
@@ -304,7 +309,7 @@ function BuildTechData()
         { [kTechDataId] = kTechId.UpgradeCrag,           [kTechDataMapName] = Crag.kMapName,                         [kTechDataDisplayName] = "Upgrade to Mature Crag",  [kTechDataCostKey] = kMatureCragCost, [kTechDataResearchTimeKey] = kMatureCragResearchTime, [kTechDataHotkey] = Move.U, [kTechDataModel] = Crag.kModelName,  [kTechDataMaxHealth] = kMatureCragHealth, [kTechDataMaxArmor] = kMatureCragArmor,[kTechDataTooltipInfo] = "Increase Crag health and gain Babbler ability", [kTechDataGrows] = true },
         { [kTechDataId] = kTechId.MatureCrag,            [kTechDataMapName] = MatureCrag.kMapName,                   [kTechDataDisplayName] = "Mature Crag",             [kTechDataModel] = Crag.kModelName, [kTechDataCostKey] = kMatureCragCost, [kTechDataRequiresInfestation] = true, [kTechDataBuildTime] = kMatureCragBuildTime, [kTechDataMaxHealth] = kMatureCragHealth, [kTechDataInitialEnergy] = kCragInitialEnergy, [kTechDataMaxEnergy] = kMatureCragMaxEnergy, [kTechDataPointValue] = kMatureCragPointValue, [kVisualRange] = Crag.kHealRadius, [kTechDataTooltipInfo] = "Defensive healing structure with babbler capabilities", [kTechDataGrows] = true, [kTechDataUpgradeTech] = kTechId.Crag},         
          
-        { [kTechDataId] = kTechId.Whip,                  [kTechDataMapName] = Whip.kMapName,                         [kTechDataDisplayName] = "Whip",  [kTechDataCostKey] = kWhipCost,    [kTechDataRequiresInfestation] = true, [kTechDataHotkey] = Move.W,        [kTechDataBuildTime] = kWhipBuildTime, [kTechDataModel] = Whip.kModelName,           [kTechDataMaxHealth] = kWhipHealth, [kTechDataMaxArmor] = kWhipArmor,   [kTechDataDamageType] = kDamageType.Light, [kTechDataInitialEnergy] = kWhipInitialEnergy,      [kTechDataMaxEnergy] = kWhipMaxEnergy, [kVisualRange] = Whip.kRange, [kTechDataPointValue] = kWhipPointValue, [kTechDataTooltipInfo] = "Attacks nearby enemies and allows offensive upgrades", [kTechDataGrows] = true},
+        { [kTechDataId] = kTechId.Whip,                  [kTechDataMapName] = Whip.kMapName,                         [kTechDataDisplayName] = "Whip",  [kTechDataCostKey] = kWhipCost,    [kTechDataRequiresInfestation] = true, [kTechDataHotkey] = Move.W,        [kTechDataBuildTime] = kWhipBuildTime, [kTechDataModel] = Whip.kModelName,           [kTechDataMaxHealth] = kWhipHealth, [kTechDataMaxArmor] = kWhipArmor,   [kTechDataDamageType] = kDamageType.Structural, [kTechDataInitialEnergy] = kWhipInitialEnergy,      [kTechDataMaxEnergy] = kWhipMaxEnergy, [kVisualRange] = Whip.kRange, [kTechDataPointValue] = kWhipPointValue, [kTechDataTooltipInfo] = "Attacks nearby enemies and allows offensive upgrades", [kTechDataGrows] = true},
         { [kTechDataId] = kTechId.UpgradeWhip,           [kTechDataMapName] = Whip.kMapName,                         [kTechDataDisplayName] = "Upgrade to Mature Whip",  [kTechDataCostKey] = kMatureWhipCost, [kTechDataResearchTimeKey] = kMatureWhipResearchTime, [kTechDataHotkey] = Move.U, [kTechDataModel] = Whip.kModelName, [kTechDataTooltipInfo] = "Increase Whip health and gain Bombard ability", [kTechDataGrows] = true },
         { [kTechDataId] = kTechId.MatureWhip,            [kTechDataMapName] = MatureWhip.kMapName,                   [kTechDataDisplayName] = "Mature Whip",  [kTechDataModel] = Whip.kModelName, [kTechDataCostKey] = kMatureWhipCost, [kTechDataRequiresInfestation] = true, [kTechDataBuildTime] = kMatureWhipBuildTime,       [kTechDataMaxHealth] = kMatureWhipHealth,  [kTechDataMaxArmor] = kMatureWhipArmor,  [kTechDataInitialEnergy] = kMatureWhipInitialEnergy,      [kTechDataMaxEnergy] = kMatureWhipMaxEnergy, [kTechDataPointValue] = kMatureWhipPointValue, [kVisualRange] = Whip.kRange, [kTechDataTooltipInfo] = "Offensive structure with Bombard ability", [kTechDataGrows] = true, [kTechDataUpgradeTech] = kTechId.Whip },
         
@@ -317,7 +322,9 @@ function BuildTechData()
         { [kTechDataId] = kTechId.MatureShade,           [kTechDataMapName] = MatureShade.kMapName,                  [kTechDataDisplayName] = "Mature Shade",  [kTechDataModel] = Shade.kModelName,  [kTechDataCostKey] = kMatureShadeCost, [kTechDataImplemented] = false,   [kTechDataBuildTime] = kMatureShadeBuildTime,      [kTechDataMaxHealth] = kMatureShadeHealth,  [kTechDataMaxArmor] = kMatureShadeArmor,  [kTechDataInitialEnergy] = kMatureShadeInitialEnergy,      [kTechDataMaxEnergy] = kMatureShadeMaxEnergy, [kTechDataPointValue] = kMatureShadePointValue, [kTechDataHotkey] = Move.M, [kTechDataTooltipInfo] = "Shade with Phantasm ability", [kTechDataGrows] = true },
         
         { [kTechDataId] = kTechId.Hydra,                 [kTechDataMapName] = Hydra.kMapName,                        [kTechDataDisplayName] = "Hydra",           [kTechDataCostKey] = kHydraCost,       [kTechDataBuildTime] = kHydraBuildTime, [kTechDataMaxHealth] = kHydraHealth, [kTechDataMaxArmor] = kHydraArmor, [kTechDataModel] = Hydra.kModelName, [kVisualRange] = Hydra.kRange, [kTechDataRequiresInfestation] = true, [kTechDataPointValue] = kHydraPointValue, [kTechDataGrows] = true},
-        
+        { [kTechDataId] = kTechId.Cyst,                 [kTechDataMapName] = Cyst.kMapName,                      [kTechDataDisplayName] = "Cyst",         [kTechDataCostKey] = kCystCost,       [kTechDataBuildTime] = kCystBuildTime, [kTechDataMaxHealth] = kCystHealth, [kTechDataMaxArmor] = kCystArmor, [kTechDataModel] = Cyst.kModelName, [kVisualRange] = Cyst.kInfestRadius, [kTechDataRequiresInfestation] = false, [kTechDataPointValue] = kCystPointValue, [kTechDataGrows] = false,  [kTechDataBuildRequiresMethod]=GetCystParentAvailable, [kTechDataGhostGuidesMethod]=GetCystGhostGuides, /* [kStructureBuildNearClass] = {"Hive", "Cyst"},  [kStructureAttachId] = {kTechId.Hive, kTechId.Cyst}, [kStructureAttachRange] = kHiveCystParentRange */} ,
+        { [kTechDataId] = kTechId.MiniCyst,           [kTechDataMapName] = MiniCyst.kMapName,                  [kTechDataDisplayName] = "Mini cyst",    [kTechDataCostKey] = kMiniCystCost,   [kTechDataBuildTime] = kMiniCystBuildTime, [kTechDataMaxHealth] = kMiniCystHealth, [kTechDataMaxArmor] = kMiniCystArmor, [kTechDataModel] = MiniCyst.kModelName, [kVisualRange] = MiniCyst.kInfestRadius, [kTechDataRequiresInfestation] = false, [kTechDataPointValue] = kMiniCystPointValue, [kTechDataGrows] = false},
+
         // Alien structure abilities and their energy costs
         { [kTechDataId] = kTechId.CragHeal,              [kTechDataDisplayName] = "Heal",    [kTechDataHotkey] = Move.H,                       [kTechDataCostKey] = kCragHealCost, [kTechDataTooltipInfo] = string.format("Heals players and structures (%d per %s, max %d targets)", Crag.kHealAmount, Pluralize(Crag.kHealInterval, "second"), Crag.kMaxTargets) },
         { [kTechDataId] = kTechId.CragUmbra,             [kTechDataDisplayName] = "Umbra",    [kTechDataHotkey] = Move.M,                      [kTechDataCostKey] = kCragUmbraCost, [kVisualRange] = Crag.kHealRadius, [kTechDataTooltipInfo] = string.format("Creates protective cloud for units inside (blocks 1 out of %d bullets)", Crag.kUmbraBulletChance)},
@@ -356,14 +363,16 @@ function BuildTechData()
         { [kTechDataId] = kTechId.AlienArmor1Tech,             [kTechDataDisplayName] = string.format("Armor #1 (additional alien armor)"), [kTechDataHotkey] = Move.A, [kTechDataCostKey] = kAlienArmor1ResearchCost, [kTechDataResearchTimeKey] = kAlienArmor1ResearchTime},        
         { [kTechDataId] = kTechId.AlienArmor2Tech,             [kTechDataDisplayName] = string.format("Armor #2 (additional alien armor)"), [kTechDataHotkey] = Move.A, [kTechDataCostKey] = kAlienArmor2ResearchCost, [kTechDataResearchTimeKey] =  kAlienArmor2ResearchTime},        
         { [kTechDataId] = kTechId.AlienArmor3Tech,             [kTechDataDisplayName] = string.format("Armor #3 (additional alien armor)"), [kTechDataHotkey] = Move.A, [kTechDataCostKey] = kAlienArmor3ResearchCost, [kTechDataResearchTimeKey] =  kAlienArmor3ResearchTime},
-
-        // Lifeform research
+        
         { [kTechDataId] = kTechId.FrenzyTech,             [kTechDataDisplayName] = string.format("Frenzy (heals alien on kill)"), [kTechDataCostKey] = kFrenzyResearchCost, [kTechDataResearchTimeKey] =  kFrenzyResearchTime},
         { [kTechDataId] = kTechId.SwarmTech,             [kTechDataDisplayName] = string.format("Swarm (extra damage when multiples attack)"), [kTechDataCostKey] = kSwarmResearchCost, [kTechDataResearchTimeKey] =  kSwarmResearchTime},
         
         { [kTechDataId] = kTechId.CarapaceTech,                   [kTechDataDisplayName] = "Carapace", [kTechDataImplemented] = false,  [kTechDataCostKey] = kCarapaceResearchCost, [kTechDataResearchTimeKey] = kCarapaceResearchTime },                
         { [kTechDataId] = kTechId.RegenerationTech,               [kTechDataDisplayName] = "Regeneration", [kTechDataImplemented] = false,  [kTechDataCostKey] = kRegenerationResearchCost, [kTechDataResearchTimeKey] = kRegenerationResearchTime },                
-        
+
+        // Lifeform research
+        { [kTechDataId] = kTechId.BileBombTech,                 [kTechDataDisplayName] = "Bile bomb (Gorge)", [kTechDataCostKey] = kBileBombResearchCost, [kTechDataResearchTimeKey] = kBileBombResearchTime },                
+        { [kTechDataId] = kTechId.LeapTech,                 [kTechDataDisplayName] = "Leap (Skulk)", [kTechDataCostKey] = kLeapResearchCost, [kTechDataResearchTimeKey] = kLeapResearchTime },                
         { [kTechDataId] = kTechId.AdrenalineTech,                 [kTechDataDisplayName] = "Adrenaline", [kTechDataImplemented] = false,  [kTechDataCostKey] = kAdrenalineResearchCost, [kTechDataResearchTimeKey] = kAdrenalineResearchTime },                
         { [kTechDataId] = kTechId.PiercingTech,                 [kTechDataDisplayName] = "Piercing", [kTechDataImplemented] = false,  [kTechDataCostKey] = kPiercingResearchCost, [kTechDataResearchTimeKey] = kPiercingResearchTime },        
         
@@ -377,7 +386,7 @@ function BuildTechData()
         { [kTechDataId] = kTechId.Carapace,                  [kTechDataDisplayName] = "Carapace",  [kTechDataCostKey] = kCarapaceCost },        
         { [kTechDataId] = kTechId.Regeneration,              [kTechDataDisplayName] = "Regeneration",  [kTechDataCostKey] = kRegenerationCost },        
         { [kTechDataId] = kTechId.Leap,                  [kTechDataDisplayName] = "Leap", [kTechDataCostKey] = kLeapCost },        
-        { [kTechDataId] = kTechId.Corpulence,                  [kTechDataDisplayName] = "Corpulence", [kTechDataImplemented] = false,  [kTechDataCostKey] = kCorpulenceCost },        
+        { [kTechDataId] = kTechId.BileBomb,                  [kTechDataDisplayName] = "BileBomb", [kTechDataCostKey] = kBileBombCost },        
         { [kTechDataId] = kTechId.HydraAbility,                  [kTechDataDisplayName] = "Build Hydra",  [kTechDataCostKey] = kHydraAbilityCost /* cost for purchasing ability */ },        
         { [kTechDataId] = kTechId.Piercing,                  [kTechDataDisplayName] = "Piercing ", [kTechDataTooltipInfo] = string.format("Increases spike damage by %d%%", math.floor((kPiercingDamageScalar - 1)*100)), [kTechDataCostKey] = kPiercingCost },        
         { [kTechDataId] = kTechId.Adrenaline,                  [kTechDataDisplayName] = "Adrenaline", [kTechDataImplemented] = false,  [kTechDataCostKey] = kAdrenalineCost },        
@@ -386,8 +395,8 @@ function BuildTechData()
         { [kTechDataId] = kTechId.Gore,                  [kTechDataDisplayName] = "Gore", [kTechDataDamageType] = kDamageType.Door, [kTechDataModel] = Onos.kViewModelName },        
         { [kTechDataId] = kTechId.Stomp,                  [kTechDataDisplayName] = "Stomp", [kTechDataImplemented] = false,  [kTechDataCostKey] = kStompCost },        
         { [kTechDataId] = kTechId.BoneShield,                  [kTechDataDisplayName] = "Bone shield", [kTechDataImplemented] = false,  [kTechDataCostKey] = kBoneShieldCost },        
-        { [kTechDataId] = kTechId.Swarm,                  [kTechDataDisplayName] = string.format("Swarm (+%.0f damage if target just hit)", (kSwarmDamageBonus - 1)*100), [kTechDataCostKey] = kSwarmCost },        
-        { [kTechDataId] = kTechId.Frenzy,                  [kTechDataDisplayName] = "Frenzy (gain health on kill)", [kTechDataCostKey] = kFrenzyCost },        
+        { [kTechDataId] = kTechId.Swarm,                  [kTechDataDisplayName] = "Swarm", [kTechDataTooltipInfo] = string.format("+%.0f damage if target just hit", (kSwarmDamageBonus - 1)*100), [kTechDataCostKey] = kSwarmCost },
+        { [kTechDataId] = kTechId.Frenzy,                  [kTechDataDisplayName] = "Frenzy", [kTechDataTooltipInfo] = "Gain health on kill", [kTechDataCostKey] = kFrenzyCost },
         
         // Alien markers
         { [kTechDataId] = kTechId.ThreatMarker,                  [kTechDataDisplayName] = "Mark threat", [kTechDataImplemented] = false},
@@ -395,9 +404,7 @@ function BuildTechData()
         { [kTechDataId] = kTechId.NeedHealingMarker,             [kTechDataDisplayName] = "Need healing here", [kTechDataImplemented] = false},
         { [kTechDataId] = kTechId.WeakMarker,                    [kTechDataDisplayName] = "Weak here", [kTechDataImplemented] = false},
         { [kTechDataId] = kTechId.ExpandingMarker,               [kTechDataDisplayName] = "Expanding here", [kTechDataImplemented] = false},
-        
-        // Commander abilities
-        { [kTechDataId] = kTechId.Grow,             [kTechDataDisplayName] = "Grow infestation", [kTechDataCostKey] = Infestation.kEnergyCost, [kTechDataTooltipInfo] = "Extend infestation at point"},        
+
         { [kTechDataId] = kTechId.MetabolizeTech,   [kTechDataDisplayName] = "Research Metabolize", [kTechDataCostKey] = kMetabolizeTechCost, [kTechDataImplemented] = false, [kTechDataResearchTimeKey] = kMetabolizeTechResearchTime, [kTechDataTooltipInfo] = "Temporarily boosts player movement speed or research speed"},
         { [kTechDataId] = kTechId.Metabolize,       [kTechDataDisplayName] = "Metabolize", [kTechDataCostKey] = kHiveMetabolizeCost, [kTechDataTooltipInfo] = "Temporarily boosts gestation or research speed" },     
         
@@ -538,7 +545,7 @@ function LookupTechData(techId, fieldName, default)
         end
         
         Print("LookupTechData(%s, %s, %s) called improperly.", tostring(techIdString), tostring(fieldName), tostring(default))
-        return nil
+        return default
         
     end
 

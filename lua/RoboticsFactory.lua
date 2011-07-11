@@ -69,7 +69,7 @@ end
 
 function RoboticsFactory:GetPositionForEnity()
     
-    local harvesterFacing = Vector(self:GetViewAngles():GetCoords().xAxis)    
+    local harvesterFacing = Vector(self:GetAngles():GetCoords().xAxis)    
     VectorCopy(self:GetAngles():GetCoords().zAxis, harvesterFacing)           
     
     return BuildCoords(Vector(0, 1, 0), harvesterFacing, self:GetOrigin())

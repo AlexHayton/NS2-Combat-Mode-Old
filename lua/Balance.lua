@@ -12,8 +12,6 @@ Script.Load("lua/BalanceMisc.lua")
 
 // MARINE COSTS
 kCommandStationCost = 20
-kCommandFacilityUpgradeCost = 30
-kCommandCenterUpgradeCost = 40
 
 kExtractorCost = 10
 kResourceUpgradeResearchCost = 5
@@ -22,7 +20,7 @@ kInfantryPortalCost = 10
 
 kArmoryCost = 10
 kAmmoPackCost = 1
-kMedPackCost = 2
+kMedPackCost = 1
 kArmsLabCost = 20
 
 kAdvancedArmoryUpgradeCost = 30
@@ -34,16 +32,16 @@ kSentryCost = 10
 kSentryTechCost = 5
 kPowerPackCost = 15
 
-kMACCost = 10
+kMACCost = 5
 kMACMineCost = 5
 kTechMinesResearchCost = 10
 kTechEMPResearchCost = 10
 kTechMACSpeedResearchCost = 5
 
-kShotgunCost = 25
+kShotgunCost = 15
 kShotgunTechResearchCost = 15
 
-kGrenadeLauncherCost = 30
+kGrenadeLauncherCost = 20
 kGrenadeLauncherTechResearchCost = 15
 kNerveGasTechResearchCost = 15
 
@@ -51,7 +49,7 @@ kFlamethrowerCost = 30
 kFlamethrowerTechResearchCost = 20
 
 kRoboticsFactoryCost = 20
-kARCCost = 25
+kARCCost = 20
 kARCSplashTechResearchCost = 15
 kARCArmorTechResearchCost = 15
 
@@ -88,8 +86,6 @@ kPhaseTechResearchCost = 15
 
 
 kHiveCost = 50
-kHiveMassUpgradeCost = 30
-kHiveColonyUpgradeCost = 40
 
 kMetabolizeTechCost = 10
 
@@ -113,12 +109,14 @@ kGorgeCost = 10
 kLerkCost = 30
 kFadeCost = 50
 kOnosCost = 75
+
 kHydraCost = 10
+kMiniCystCost = 3
 
 kFrenzyResearchCost = 10
 kSwarmResearchCost = 10
 
-kLeapResearchCost = 5
+kLeapResearchCost = 10
 
 kCarapaceResearchCost = 10
 kRegenerationResearchCost = 10
@@ -141,7 +139,7 @@ kLeapCost = 2
 kFrenzyCost = 2
 kSwarmCost = 2
 kHydraAbilityCost = 2
-kHarvesterAbilityCost = 2
+kBileBombCost = 2
 kPiercingCost = 2
 kAdrenalineCost = 2
 kFeintCost = 2
@@ -168,6 +166,28 @@ kPlayerResPerInterval = 0.25
 kKillRewardMin = 1
 kKillRewardMax = 3
 kKillTeamReward = 0
+
+kCommanderTax = 0.4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -208,8 +228,8 @@ kGrenadeLauncherClipSize = 4
 kGrenadeLauncherDamageRadius = 8
 kGrenadeLifetime = 3
 
-kShotgunMaxDamage = 18
-kShotgunMinDamage = 14
+kShotgunMaxDamage = 20
+kShotgunMinDamage = 1
 kShotgunDamageType = kDamageType.Normal
 kShotgunFireDelay = 0.9
 kShotgunClipSize = 8
@@ -244,11 +264,28 @@ kSentryAttackBulletsPerSalvo = 1
 kARCDamage = 400
 kARCDamageType = kDamageType.StructuresOnly
 kARCFireDelay = 3
-
+kARCRange = 26
 
 kWeapons1DamageScalar = 1.1
 kWeapons2DamageScalar = 1.2
 kWeapons3DamageScalar = 1.3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // ALIEN DAMAGE
@@ -256,6 +293,8 @@ kBiteDamage = 75
 kBiteDamageType = kDamageType.Normal
 kBiteFireDelay = 0.45
 kBiteEnergyCost = 3
+
+kLeapEnergyCost = 40
 
 kParasiteDamage = 10
 kParasiteDamageType = kDamageType.Normal
@@ -272,9 +311,14 @@ kHealsprayDamageType = kDamageType.Light
 kHealsprayFireDelay = 0.8
 kHealsprayEnergyCost = 15
 
-kSpikeMaxDamage = 20
-kSpikeMinDamage = 10
-kSpikeDamageType = kDamageType.Normal
+kBileBombDamage = 200
+kBileBombDamageType = kDamageType.StructuresOnly
+kBileBombFireDelay = 1
+kBileBombEnergyCost = 15
+
+kSpikeMaxDamage = 30
+kSpikeMinDamage = 8
+kSpikeDamageType = kDamageType.Light
 kSpikeFireDelay = 0.1
 kSpikeEnergyCost = 1.5
 kPiercingDamageScalar = 1.4
@@ -289,16 +333,16 @@ kSporesDamageType = kDamageType.Normal
 kSporesFireDelay = 0.8
 kSporesEnergyCost = 20
 
-kSwipeDamage = 80
-kSwipeDamageType = kDamageType.Normal
-kSwipeFireDelay = 0.5
-kSwipeEnergyCost = 6
+kSwipeDamage = 85
+kSwipeDamageType = kDamageType.Puncture
+kSwipeFireDelay = 0.75
+kSwipeEnergyCost = 14
 
 kStabDamage = 160
 kStabDamageType = kDamageType.Puncture
 kStabFireDelay = 1.5
 kStabEnergyCost = 20
-kBlinkEnergyCost = 25
+kBlinkEnergyCost = 45
 
 kGoreDamage = 90
 kGoreDamageType = kDamageType.Normal
@@ -323,6 +367,13 @@ kDrifterAttackFireDelay = 0.6
 kMelee1DamageScalar = 1.1
 kMelee2DamageScalar = 1.2
 kMelee3DamageScalar = 1.3
+
+
+
+
+
+
+
 
 
 
@@ -355,13 +406,11 @@ kDualMinigunTechResearchTime = 20
 kGrenadeLauncherTechResearchTime = 20
 
 kCommandStationBuildTime = 15
-kCommandFacilityUpgradeTime = 100
-kCommandCenterUpgradeTime = 120
 
 kPowerPointBuildTime = 15
 kPowerPackBuildTime = 13
 
-kRoboticsFactoryBuildTime = 40
+kRoboticsFactoryBuildTime = 30
 kARCBuildTime = 20
 kARCSplashTechResearchTime = 30
 kARCArmorTechResearchTime = 30
@@ -402,8 +451,6 @@ kArmor3ResearchTime = 120
 
 
 kHiveBuildTime = 180
-kHiveMassUpgradeTime = 180
-kHiveColonyUpgradeTime = 180
 
 kDrifterBuildTime = 4
 kHarvesterBuildTime = 20
@@ -423,6 +470,8 @@ kShadeBuildTime = 20
 kMatureShadeResearchTime = 30
 
 kHydraBuildTime = 12
+kCystBuildTime = 1
+kMiniCystBuildTime = 1
 
 kSkulkGestateTime = 3
 kGorgeGestateTime = 10
@@ -465,16 +514,27 @@ kAlienArmor3ResearchTime = 40
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ENERGY COSTS
 kCommandStationInitialEnergy = 50  kCommandStationMaxEnergy = 200
-kCommandFacilityMaxEnergy = 250
-kCommandCenterMaxEnergy = 300
 kCommandCenterNanoGridCost = 50  
 
 kHiveInitialEnergy = 100  kHiveMaxEnergy = 200
-kHiveMassMaxEnergy = 250
-kHiveColonyMaxEnergy = 300
-kGrowCost = 25  
+kCystCost = 20
 kMetabolizeCost = 25  
 
 kObservatoryInitialEnergy = 25  kObservatoryMaxEnergy = 100
@@ -507,6 +567,10 @@ kShadePhantasmCost = 75
 kMatureShadeMaxEnergy = 150
 
 kEnergyUpdateRate = 0.5
+
+
+
+
 
 
 

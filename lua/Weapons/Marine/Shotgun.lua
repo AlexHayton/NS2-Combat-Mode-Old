@@ -113,6 +113,11 @@ function Shotgun:GetSecondaryAttackDelay()
     return Shotgun.kSecondaryFireDelay
 end
 
+function Shotgun:GetWeight()
+    // From NS1 
+    return .08 + ((self:GetAmmo() + self:GetClip()) / self:GetClipSize()) * 0.03
+end
+
 function Shotgun:EnterReloadPhase(player, phase)
 
     local blockActivity = true

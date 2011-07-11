@@ -9,6 +9,7 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
 Script.Load("lua/GUIScanlines.lua")
+Script.Load("lua/FunctionContracts.lua")
 
 class 'GUIMinimap' (GUIScript)
 
@@ -23,7 +24,7 @@ GUIMinimap.kBackgroundTextureMarine = "ui/marine_commander_background.dds"
 GUIMinimap.kBackgroundTextureCoords = { X1 = 473, Y1 = 0, X2 = 793, Y2 = 333 }
 
 GUIMinimap.kBigSizeScale = 2
-GUIMinimap.kBackgroundSize = GUIScale(256)
+GUIMinimap.kBackgroundSize = GUIScale(300)
 GUIMinimap.kBackgroundWidth = GUIMinimap.kBackgroundSize
 GUIMinimap.kBackgroundHeight = GUIMinimap.kBackgroundSize
 
@@ -33,7 +34,7 @@ GUIMinimap.kMapRatio = function() return ConditionalValue(Client.minimapExtentSc
 GUIMinimap.kMinimapSize = Vector(GUIMinimap.kBackgroundWidth, GUIMinimap.kBackgroundHeight, 0)
 GUIMinimap.kMinimapBigSize = Vector(GUIMinimap.kBackgroundWidth * GUIMinimap.kBigSizeScale, GUIMinimap.kBackgroundHeight * GUIMinimap.kBigSizeScale, 0)
 
-GUIMinimap.kBlipSize = GUIScale(20)
+GUIMinimap.kBlipSize = GUIScale(30)
 GUIMinimap.kUnpoweredNodeBlipSize = GUIScale(32)
 GUIMinimap.kCameraIconLineSize = 4
 
@@ -70,165 +71,97 @@ GUIMinimap.kAttackBlipFadeOutTime = 1
 
 GUIMinimap.kLocationFontSize = 12
 
-function GUIMinimap.GetSpriteGridByClass(class)
+local ClassToGrid = { }
 
-	--Returns Column & Row
+ClassToGrid["TechPoint"] = { 1, 1 }
+ClassToGrid["ResourcePoint"] = { 2, 1 }
+ClassToGrid["Door"] = { 3, 1 }
+ClassToGrid["DoorLocked"] = { 4, 1 }
+ClassToGrid["DoorWelded"] = { 5, 1 }
+ClassToGrid["Grenade"] = { 6, 1 }
+ClassToGrid["PowerPoint"] = { 7, 1 }
 
-	if class == 'TechPoint' then
-		return 1,1
-	elseif class == 'ResourcePoint' then
-		return 2,1
-	elseif class == 'Door' then
-		return 3,1
-	elseif class == 'DoorLocked' then
-		return 4,1
-	elseif class == 'DoorWelded' then
-		return 5,1
-	elseif class == 'Grenade' then
-		return 6,1
-	elseif class == 'PowerPoint' then
-		return 7,1
+ClassToGrid["ReadyRoomPlayer"] = { 1, 2 }
+ClassToGrid["Marine"] = { 1, 2 }
+ClassToGrid["Heavy"] = { 2, 2 }
+ClassToGrid["Jetpack"] = { 3, 2 }
+ClassToGrid["Mac"] = { 4, 2 }
+ClassToGrid["CommandStationOccupied"] = { 5, 2 }
+ClassToGrid["CommandStationOccupied2"] = { 6, 2 }
+ClassToGrid["CommandStationOccupied3"] = { 7, 2 }
+ClassToGrid["Death"] = { 8, 2 }
 
-	elseif class == 'Marine' then
-		return 1,2
-	elseif class == 'Heavy' then
-		return 2,2
-	elseif class == 'Jetpack' then
-		return 3,2
-	elseif class == 'Mac' then
-		return 4,2
-	elseif class == 'CommandStationOccupied' then
-		return 5,2
-	elseif class == 'CommandStationOccupied2' then
-		return 6,2
-	elseif class == 'CommandStationOccupied3' then
-		return 7,2
-	elseif class == 'Death' then
-		return 8,2
+ClassToGrid["Skulk"] = { 1, 3 }
+ClassToGrid["Gorge"] = { 2, 3 }
+ClassToGrid["Lerk"] = { 3, 3 }
+ClassToGrid["Fade"] = { 4, 3 }
+ClassToGrid["Onos"] = { 5, 3 }
+ClassToGrid["Drifter"] = { 6, 3 }
+ClassToGrid["HiveOccupied"] = { 7, 3 }
+ClassToGrid["Kill"] = { 8, 3 }
 
-	elseif class == 'Skulk' then
-		return 1,3
-	elseif class == 'Gorge' then
-		return 2,3
-	elseif class == 'Lerk' then
-		return 3,3
-	elseif class == 'Fade' then
-		return 4,3
-	elseif class == 'Onos'	then
-		return 5,3
-	elseif class == 'Drifter' then
-		return 6,3
-	elseif class == 'HiveOccupied' then
-		return 7,3
-	elseif class == 'Kill' then
-		return 8,3
+ClassToGrid["CommandStation"] = { 1, 4 }
+ClassToGrid["CommandStation2"] = { 2, 4 }
+ClassToGrid["CommandStation3"] = { 3, 4 }
+ClassToGrid["ResourceTower"] = { 4, 4 }
+ClassToGrid["Turret"] = { 5, 4 }
+ClassToGrid["Arc"] = { 6, 4 }
+ClassToGrid["ArcDeployed"] = { 7, 4 }
 
-	elseif class == 'CommandStation' then
-		return 1,4
-	elseif class == 'CommandStation2' then
-		return 2,4
-	elseif class == 'CommandStation3' then
-		return 3,4
-	elseif class == 'ResourceTower' then
-		return 4,4
-	elseif class == 'Turret' then
-		return 5,4
-	elseif class == 'Arc' then
-		return 6,4
-	elseif class == 'ArcDeployed' then
-		return 7,4
+ClassToGrid["InfantryPortal"] = { 1, 5 }
+ClassToGrid["Armory"] = { 2, 5 }
+ClassToGrid["AdvancedArmory"] = { 3, 5 }
+ClassToGrid["AdvancedArmoryModule"] = { 4, 5 }
+ClassToGrid["Observatory"] = { 6, 5 }
 
-	elseif class == 'InfantryPortal' then
-		return 1,5
-	elseif class == 'Armory' then
-		return 2,5
-	elseif class == 'AdvancedArmory' then
-		return 3,5
-	elseif class == 'AdvancedArmoryModule' then
-		return 4,5
-	elseif class == 'Observatory' then
-		return 6,5
+ClassToGrid["HiveBuilding"] = { 1, 6 }
+ClassToGrid["Hive"] = { 2, 6 }
+ClassToGrid["Hive2"] = { 3, 6 }
+ClassToGrid["Hive3"] = { 4, 6 }
+ClassToGrid["Harvester"] = { 5, 6 }
+ClassToGrid["Hydra"] = { 6, 6 }
+ClassToGrid["Egg"] = { 7, 6 }
 
-	elseif class == 'HiveBuilding' then
-		return 1,6
-	elseif class == 'Hive' then
-		return 2,6
-	elseif class == 'Hive2' then
-		return 3,6
-	elseif class == 'Hive3' then
-		return 4,6
-	elseif class == 'Harvester' then
-		return 5,6
-	elseif class == 'Hydra' then
-		return 6,6
-	elseif class == 'Egg' then
-		return 7,6
+ClassToGrid["Crag"] = { 1, 7 }
+ClassToGrid["MatureCrag"] = { 2, 7 }
+ClassToGrid["Whip"] = { 3, 7 }
+ClassToGrid["MatureWhip"] = { 4, 7 }
 
-	elseif class == 'Crag' then
-		return 1,7
-	elseif class == 'MatureCrag' then
-		return 2,7
-	elseif class == 'Whip' then
-		return 3,7
-	elseif class == 'MatureWhip' then
-		return 4,7
+ClassToGrid["WaypointMove"] = { 1, 8 }
+ClassToGrid["WaypointDefend"] = { 2, 8 }
+ClassToGrid["PlayerFOV"] = { 4, 8 }
 
-	elseif class == 'WaypointMove' then
-		return 1,8
-	elseif class == 'WaypointDefend' then
-		return 2,8
-	elseif class == 'PlayerFOV' then
-		return 4,8
-	end
+/**
+ * Returns Column and Row to find the minimap icon for the passed in class.
+ */
+local function GetSpriteGridByClass(class)
 
-	return 0,0
+    // This really shouldn't happen but lets return something just in case.
+    if not ClassToGrid[class] then
+        return 8, 1
+    end
+    
+    return unpack(ClassToGrid[class])
+    
+end
+AddFunctionContract(GetSpriteGridByClass, { Arguments = { "string" }, Returns = { "number", "number" } })
+
+local function PlotToMap(posX, posZ)
+
+    local adjustedX = posX - Client.minimapExtentOrigin.x
+    local adjustedZ = posZ - Client.minimapExtentOrigin.z
+    
+    local xFactor = 4
+    local zFactor = xFactor / GUIMinimap.kMapRatio()
+
+    local plottedX = (adjustedX / (Client.minimapExtentScale.x / xFactor)) * GUIMinimap.kBackgroundSize
+    local plottedY = (adjustedZ / (Client.minimapExtentScale.z / zFactor)) * GUIMinimap.kBackgroundSize
+    
+    // The world space is oriented differently from the GUI space, adjust for that here.
+    return plottedY, -plottedX
 
 end
-
-function GUIMinimap:PlotToMap(posX, posY)
-
-	local scale = Client.minimapExtentScale.z / GUIMinimap.kMapMinMax
-
-	-- Plot everything to 0,0 and work out %-/+ distance from World 0,0 to map extent border then translate % to distance from GUI 0,0 to Minimap canvas size
-	posX = ((posX - Client.minimapExtentOrigin.z) / Client.minimapExtentScale.z) * GUIMinimap.kBackgroundSize
-	posY = ((posY - Client.minimapExtentOrigin.x) / Client.minimapExtentScale.x) * GUIMinimap.kBackgroundSize
-
-	-- Equate to item position the X,Y differance image was resized to fit into 1:1 canvas
-	if Client.minimapExtentScale.z >= Client.minimapExtentScale.x then
-
-		posX = (posX * GUIMinimap.kMapRatio())
-
-	else
-
-		posY = (posY * GUIMinimap.kMapRatio())
-
-	end
-
-	-- Equate to item position the scale the image was reszied to fit 256x256
-	if scale < 1 then
-
-		local modify = Client.minimapExtentScale.x / GUIMinimap.kMapMinMax
-
-		-- If the level was small, its image was enlarged
-		posX = (posX * modify)
-		posY = (posY * modify)
-
-	else
-
-		if GUIMinimap.kMapRatio() > 1 then
-			-- If the level was big, its image was shrunk
-			posX = (posX / scale)
-			posY = (posY / scale)
-
-		end
-
-		-- Nothing extra needs to happen if the image is already to scale
-
-	end
-
-	return posX, -posY
-
-end
+AddFunctionContract(PlotToMap, { Arguments = { "number", "number" }, Returns = { "number", "number" } })
 
 function GUIMinimap:Initialize()
 
@@ -239,7 +172,7 @@ function GUIMinimap:Initialize()
     
     self:InitializeLocationNames()
     
-    GUIMinimap.ComMode = nil
+    self.comMode = nil
     self:SetBackgroundMode(GUIMinimap.kModeMini)
     self.minimap:SetTexture("maps/overviews/" .. Shared.GetMapName() .. ".tga")
     self.minimap:SetColor(PlayerUI_GetTeamColor())
@@ -308,30 +241,29 @@ function GUIMinimap:InitializeCameraIcon()
 end
 
 function GUIMinimap:InitializePlayerIcon()
-
-	self.playerIconFov = GUIManager:CreateGraphicItem()
-	self.playerIconFov:SetSize(Vector(GUIMinimap.kBlipSize*2, GUIMinimap.kBlipSize, 0))
-	self.playerIconFov:SetAnchor(GUIItem.Middle, GUIItem.Center)
-	self.playerIconFov:SetTexture(GUIMinimap.kIconFileName)
-	iconCol, iconRow = GUIMinimap.GetSpriteGridByClass('PlayerFOV')
-	local gridPosX, gridPosY, gridWidth, gridHeight = GUIGetSprite(iconCol,iconRow,GUIMinimap.kIconWidth,GUIMinimap.kIconHeight)
-	self.playerIconFov:SetTexturePixelCoordinates(gridPosX-GUIMinimap.kIconWidth, gridPosY, gridWidth, gridHeight)
-	self.playerIconFov:SetRotationOffset(Vector(-GUIMinimap.kIconWidth/4, 0, 0))
-	self.playerIconFov:SetIsVisible(false)
-	self.playerIconFov:SetLayer(GUIMinimap.kCameraIconLayer)
-	self.minimap:AddChild(self.playerIconFov)
 	
     self.playerIcon = GUIManager:CreateGraphicItem()
     self.playerIcon:SetSize(Vector(GUIMinimap.kBlipSize, GUIMinimap.kBlipSize, 0))
 	self.playerIcon:SetAnchor(GUIItem.Middle, GUIItem.Center)
     self.playerIcon:SetTexture(GUIMinimap.kIconFileName)
-	local iconCol, iconRow = GUIMinimap.GetSpriteGridByClass(PlayerUI_GetPlayerClass())
-    self.playerIcon:SetTexturePixelCoordinates(GUIGetSprite(iconCol,iconRow,GUIMinimap.kIconWidth,GUIMinimap.kIconHeight))
+	iconCol, iconRow = GetSpriteGridByClass(PlayerUI_GetPlayerClass())
+    self.playerIcon:SetTexturePixelCoordinates(GUIGetSprite(iconCol, iconRow, GUIMinimap.kIconWidth, GUIMinimap.kIconHeight))
     self.playerIcon:SetIsVisible(false)
     self.playerIcon:SetLayer(GUIMinimap.kCameraIconLayer)
-	self.playerIcon:SetColor(Color(0,1,0,1))
-	--self.playerIcon:SetRotationOffset(Vector(0, 0, 0))
+	self.playerIcon:SetColor(Color(0, 1, 0, 1))
     self.minimap:AddChild(self.playerIcon)
+    
+    self.playerIconFov = GUIManager:CreateGraphicItem()
+	self.playerIconFov:SetSize(Vector(GUIMinimap.kBlipSize*2, GUIMinimap.kBlipSize, 0))
+	self.playerIconFov:SetAnchor(GUIItem.Middle, GUIItem.Top)
+	self.playerIconFov:SetPosition(Vector(-GUIMinimap.kBlipSize, -GUIMinimap.kBlipSize, 0))
+	self.playerIconFov:SetTexture(GUIMinimap.kIconFileName)
+	local iconCol, iconRow = GetSpriteGridByClass('PlayerFOV')
+	local gridPosX, gridPosY, gridWidth, gridHeight = GUIGetSprite(iconCol, iconRow, GUIMinimap.kIconWidth, GUIMinimap.kIconHeight)
+	self.playerIconFov:SetTexturePixelCoordinates(gridPosX-GUIMinimap.kIconWidth, gridPosY, gridWidth, gridHeight)
+	self.playerIconFov:SetIsVisible(false)
+	self.playerIconFov:SetLayer(GUIMinimap.kCameraIconLayer)
+	self.playerIcon:AddChild(self.playerIconFov)
 
 end
 
@@ -344,24 +276,34 @@ function GUIMinimap:InitializeLocationNames()
     // multiple times.
     local multipleLocationsData = { }
     for i, location in ipairs(locationData) do
+    
         // Filter out the ready room.
         if location.Name ~= "Ready Room" then
+        
             local locationTable = multipleLocationsData[location.Name]
             if locationTable == nil then
+            
                 locationTable = { }
                 multipleLocationsData[location.Name] = locationTable
+                
             end
             table.insert(locationTable, location.Origin)
+            
         end
+        
     end
+    
     local uniqueLocationsData = { }
     for name, origins in pairs(multipleLocationsData) do
+    
         local averageOrigin = Vector(0, 0, 0)
         table.foreachfunctor(origins, function (origin) averageOrigin = averageOrigin + origin end)
         table.insert(uniqueLocationsData, { Name = name, Origin = averageOrigin / table.count(origins) })
+        
     end
     
     for i, location in ipairs(uniqueLocationsData) do
+    
         local locationItem = GUIManager:CreateTextItem()
         locationItem:SetFontSize(GUIMinimap.kLocationFontSize)
         locationItem:SetFontIsBold(true)
@@ -369,7 +311,7 @@ function GUIMinimap:InitializeLocationNames()
         locationItem:SetTextAlignmentX(GUIItem.Align_Center)
         locationItem:SetTextAlignmentY(GUIItem.Align_Center)
 
-	local posX, posY = GUIMinimap:PlotToMap(location.Origin.z, location.Origin.x)
+	    local posX, posY = PlotToMap(location.Origin.x, location.Origin.z)
 
         // Locations only supported on the big mode.
         locationItem:SetPosition(Vector(posX, posY, 0))
@@ -377,6 +319,7 @@ function GUIMinimap:InitializeLocationNames()
         locationItem:SetText(location.Name)
         self.minimap:AddChild(locationItem)
         table.insert(self.locationItems, locationItem)
+        
     end
 
 end
@@ -429,7 +372,7 @@ function GUIMinimap:Update(deltaTime)
         else
             self.background:SetTexture(GUIMinimap.kBackgroundTextureMarine)
         end
-    elseif GUIMinimap.ComMode == GUIMinimap.kModeMini then
+    elseif self.comMode == GUIMinimap.kModeMini then
         // No minimap for non-commaders
         self.background:SetIsVisible(false)
     end
@@ -466,44 +409,44 @@ function GUIMinimap:UpdateIcon()
             return
         end
         
-		local topLeftX, topLeftY = GUIMinimap:PlotToMap(topLeftPoint.z, topLeftPoint.x)
-		local bottomRightX, bottomRightY = GUIMinimap:PlotToMap(bottomRightPoint.z, bottomRightPoint.x)
+		local topLeftX, topLeftY = PlotToMap(topLeftPoint.x, topLeftPoint.z)
+		local bottomRightX, bottomRightY = PlotToMap(bottomRightPoint.x, bottomRightPoint.z)
 
-		local iconWidth = 25
-		local iconHeight = 20
+		local iconWidth = (bottomRightX - topLeftX) * (self:GetMinimapSize().x / GUIMinimap.kMinimapBigSize.x)
+		local iconHeight = (bottomRightY - topLeftY) * (self:GetMinimapSize().y / GUIMinimap.kMinimapBigSize.y)
         self.cameraIconMask:SetSize(Vector(iconWidth, iconHeight, 0))
         // The icon is always slightly bigger than the mask to draw the outline.
 		local sizeX = iconWidth + 4
 		local sizeY = iconHeight + 4
         self.cameraIcon:SetSize(Vector(sizeX, sizeY, 0))
-		self.cameraIcon:SetPosition(Vector(-sizeX/2, -sizeY/2, 0))
+		self.cameraIcon:SetPosition(Vector(-sizeX / 2, -sizeY / 2, 0))
 
-		local iconX = topLeftX * GUIMinimap:GetMinimapSize()/2
-		local iconY = topLeftY * GUIMinimap:GetMinimapSize()/2
-		self.cameraIconMask:SetPosition(Vector((bottomRightX/2)-sizeX, (bottomRightY/2)-sizeY, 0))
+		local iconX = topLeftX * (self:GetMinimapSize().x / GUIMinimap.kMinimapBigSize.x)
+		local iconY = topLeftY * (self:GetMinimapSize().y / GUIMinimap.kMinimapBigSize.y)
+		self.cameraIconMask:SetPosition(Vector(iconX, iconY, 0))
 
     elseif PlayerUI_IsAReadyRoomPlayer() then
+    
         // No icons for ready room players.
         self.cameraIconMask:SetIsVisible(false)
         self.playerIcon:SetIsVisible(false)
 		self.playerIconFov:SetIsVisible(false)
 
     else
+    
         // Draw a player icon representing this player's position.
 		local playerOrigin = PlayerUI_GetOrigin()
 		local playerRotation = PlayerUI_GetMinimapPlayerDirection()
 
-		local posX, posY = GUIMinimap:PlotToMap(playerOrigin.z, playerOrigin.x)
+		local posX, posY = PlotToMap(playerOrigin.x, playerOrigin.z)
 
         self.cameraIconMask:SetIsVisible(false)
         self.playerIcon:SetIsVisible(true)
-		self.playerIconFov:SetIsVisible(true)
+        // Disabled until rotation is correct.
+		//self.playerIconFov:SetIsVisible(true)
 
-		posX = posX - (GUIMinimap.kIconWidth / 4)
-		posY = posY - (GUIMinimap.kIconHeight / 4)
-
-		self.playerIconFov:SetPosition(Vector(posX, posY, 0))
-		self.playerIconFov:SetRotation(Vector(0, 0, playerRotation))
+		posX = posX - (GUIMinimap.kIconWidth / 2)
+		posY = posY - (GUIMinimap.kIconHeight / 2)
 
         self.playerIcon:SetPosition(Vector(posX, posY, 0))
 		self.playerIcon:SetRotation(Vector(0, 0, playerRotation))
@@ -511,8 +454,8 @@ function GUIMinimap:UpdateIcon()
 		local playerClass = PlayerUI_GetPlayerClass()
 		if GUIMinimap.playerClass ~= playerClass then
 
-			local iconCol, iconRow = GUIMinimap.GetSpriteGridByClass(playerClass)
-			self.playerIcon:SetTexturePixelCoordinates(GUIGetSprite(iconCol,iconRow,GUIMinimap.kIconWidth,GUIMinimap.kIconHeight))
+			local iconCol, iconRow = GetSpriteGridByClass(playerClass)
+			self.playerIcon:SetTexturePixelCoordinates(GUIGetSprite(iconCol, iconRow, GUIMinimap.kIconWidth, GUIMinimap.kIconHeight))
 
 			GUIMinimap.playerClass = playerClass
 
@@ -530,23 +473,24 @@ function GUIMinimap:UpdateStaticBlips(deltaTime)
     end
     
     local staticBlips = PlayerUI_GetStaticMapBlips()
-    local blipItemCount = 6
+    local blipItemCount = 7
     local numBlips = table.count(staticBlips) / blipItemCount
     local currentIndex = 1
     while numBlips > 0 do
-		xPos,yPos = GUIMinimap:PlotToMap(staticBlips[currentIndex],staticBlips[currentIndex + 1])
-        xTexture = staticBlips[currentIndex + 2]
-        yTexture = staticBlips[currentIndex + 3]
-        blipType = staticBlips[currentIndex + 4]
-        blipTeam = staticBlips[currentIndex + 5]
-        self:SetStaticBlip(xPos, yPos, xTexture, yTexture, blipType, blipTeam)
+		local xPos, yPos = PlotToMap(staticBlips[currentIndex], staticBlips[currentIndex + 1])
+		local rotation = staticBlips[currentIndex + 2]
+        local xTexture = staticBlips[currentIndex + 3]
+        local yTexture = staticBlips[currentIndex + 4]
+        local blipType = staticBlips[currentIndex + 5]
+        local blipTeam = staticBlips[currentIndex + 6]
+        self:SetStaticBlip(xPos, yPos, rotation, xTexture, yTexture, blipType, blipTeam)
         currentIndex = currentIndex + blipItemCount
         numBlips = numBlips - 1
     end
     
 end
 
-function GUIMinimap:SetStaticBlip(xPos, yPos, xTexture, yTexture, blipType, blipTeam)
+function GUIMinimap:SetStaticBlip(xPos, yPos, rotation, xTexture, yTexture, blipType, blipTeam)
     
     // Find a free static blip to reuse or create a new one.
     local foundBlip = nil
@@ -570,43 +514,29 @@ function GUIMinimap:SetStaticBlip(xPos, yPos, xTexture, yTexture, blipType, blip
     local blendTechnique = GUIItem.Default
     local blipSize = GUIMinimap.kBlipSize
 
-    if blipType == kMinimapBlipType.TechPoint then
-
-        iconCol, iconRow = GUIMinimap.GetSpriteGridByClass('TechPoint')
-
-    elseif blipType == kMinimapBlipType.ResourcePoint then
-
-        iconCol, iconRow = GUIMinimap.GetSpriteGridByClass('ResourcePoint')
-
-	elseif blipType == kMinimapBlipType.Door then
-
-		iconCol, iconRow = GUIMinimap.GetSpriteGridByClass('Door')
-
-    elseif blipType == kMinimapBlipType.Player then
-
-		iconCol, iconRow = GUIMinimap.GetSpriteGridByClass('Marine')
-
-    elseif blipType == kMinimapBlipType.PowerPoint then
+    // Special case for PowerPoint.
+    if blipType == kMinimapBlipType.PowerPoint then
 
         // Only unpowered node blips are sent.
         blipColor = GUIMinimap.kUnpoweredNodeColor
         local pulseAmount = (math.sin(Shared.GetTime()) + 1) / 2
         blipColor.a = 0.5 + (pulseAmount * 0.5)
     
-		iconCol, iconRow = GUIMinimap.GetSpriteGridByClass('PowerPoint')
+		iconCol, iconRow = GetSpriteGridByClass('PowerPoint')
 
-    else
-
-		textureName = ''
+    // Everything else is handled here.
+    elseif table.contains(kMinimapBlipType, blipType) ~= nil then
+    
+        iconCol, iconRow = GetSpriteGridByClass(EnumToString(kMinimapBlipType, blipType))
 
     end
     
-	if GUIMinimap.ComMode == GUIMinimap.kModeMini then
+	if self.comMode == GUIMinimap.kModeMini then
 	
-		xPos = xPos/GUIMinimap.kBigSizeScale
-		yPos = yPos/GUIMinimap.kBigSizeScale
+		xPos = xPos / GUIMinimap.kBigSizeScale
+		yPos = yPos / GUIMinimap.kBigSizeScale
 		
-		blipSize = blipSize/2
+		blipSize = blipSize / 2
 		
 	end
 
@@ -615,6 +545,7 @@ function GUIMinimap:SetStaticBlip(xPos, yPos, xTexture, yTexture, blipType, blip
     foundBlip:SetIsVisible(true)
     foundBlip:SetSize(Vector(blipSize, blipSize, 0))
 	foundBlip:SetPosition(Vector(xPos - (blipSize / 2), yPos - (blipSize / 2), 0))
+	foundBlip:SetRotation(Vector(0, 0, rotation))
     foundBlip:SetColor(blipColor)
     foundBlip:SetBlendTechnique(blendTechnique)
     
@@ -639,7 +570,7 @@ function GUIMinimap:UpdateDynamicBlips(deltaTime)
         local numBlips = table.count(newDynamicBlips) / blipItemCount
         local currentIndex = 1
         while numBlips > 0 do
-			xPos,yPos = GUIMinimap:PlotToMap(newDynamicBlips[currentIndex],newDynamicBlips[currentIndex + 1])
+			xPos, yPos = PlotToMap(newDynamicBlips[currentIndex], newDynamicBlips[currentIndex + 1])
             blipType = newDynamicBlips[currentIndex + 2]
             self:AddDynamicBlip(xPos, yPos, blipType)
             currentIndex = currentIndex + blipItemCount
@@ -804,9 +735,10 @@ end
 
 function GUIMinimap:SetBackgroundMode(setMode)
 
-    if GUIMinimap.ComMode ~= setMode then
-        GUIMinimap.ComMode = setMode
-        local modeIsMini = GUIMinimap.ComMode == GUIMinimap.kModeMini
+    if self.comMode ~= setMode then
+    
+        self.comMode = setMode
+        local modeIsMini = self.comMode == GUIMinimap.kModeMini
         
         // Locations only visible in the big mode
         table.foreachfunctor(self.locationItems, function (item) item:SetIsVisible(not modeIsMini) end)
@@ -832,13 +764,14 @@ function GUIMinimap:SetBackgroundMode(setMode)
         local defaultPosition = Vector(borderExtraWidth / 2, borderExtraHeight / 2, 0)
         local modePosition = ConditionalValue(modeIsMini, defaultPosition, Vector(0, 0, 0))
         self.minimap:SetPosition(modePosition)
+        
     end
     
 end
 
 function GUIMinimap:GetMinimapSize()
 
-    return ConditionalValue(GUIMinimap.ComMode == GUIMinimap.kModeMini, GUIMinimap.kMinimapSize, GUIMinimap.kMinimapBigSize)
+    return ConditionalValue(self.comMode == GUIMinimap.kModeMini, GUIMinimap.kMinimapSize, GUIMinimap.kMinimapBigSize)
     
 end
 
@@ -857,7 +790,16 @@ function GUIMinimap:ShowMap(showMap)
     if not PlayerUI_IsACommander() then
         self.background:SetIsVisible(showMap)
     end
+    
+    local previousComMode = self.comMode
+    
     self:SetBackgroundMode(ConditionalValue(showMap, GUIMinimap.kModeBig, GUIMinimap.kModeMini))
+
+    // Only call Update when the state changes 
+    if previousComMode ~= self.comMode then
+        // Make sure everything is in sync in case this function is called after GUIMinimap:Update() is called.
+        self:Update(0)
+    end
 
 end
 

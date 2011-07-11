@@ -8,6 +8,10 @@
 // Aliens change into this while evolving into a new lifeform. Looks like an egg.
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
+
+Script.Load("lua/Mixins/GroundMoveMixin.lua")
+Script.Load("lua/Mixins/CameraHolderMixin.lua")
+
 class 'Embryo' (Alien)
 
 Embryo.kMapName = "embryo"
@@ -19,13 +23,19 @@ Embryo.kYExtents = .25
 Embryo.kZExtents = .25
 Embryo.kEvolveSpawnOffset = 0.2
 
-local networkVars = 
+Embryo.networkVars = 
 {
     evolvePercentage = "float"
 }
 
+PrepareClassForMixin(Embryo, GroundMoveMixin)
+PrepareClassForMixin(Embryo, CameraHolderMixin)
+
 function Embryo:OnInit()
 
+    InitMixin(self, GroundMoveMixin, { kGravity = Player.kGravity })
+    InitMixin(self, CameraHolderMixin, { kFov = Skulk.kFov })
+    
     Alien.OnInit(self)
     
     self:SetModel(Embryo.kModelName)
@@ -77,28 +87,42 @@ function Embryo:GetMaxViewOffsetHeight()
     return .2
 end
 
-function Embryo:SetGestationTechIds(techIds, previousTechId)
+function Embryo:SetGestationData(techIds, previousTechId, healthScalar, armorScalar)
 
-    local alienTypeTechId = nil
+    // Save upgrades so they can be given when spawned
+    self.evolvingUpgrades = {}
+    table.copy(techIds, self.evolvingUpgrades)
+
     self.gestationClass = nil
+    
     for i, techId in ipairs(techIds) do
-        alienTypeTechId = techId
         self.gestationClass = LookupTechData(techId, kTechDataGestateName)
-        if self.gestationClass then break end
+        if self.gestationClass then 
+            // Remove gestation tech id from "upgrades"
+            self.gestationTypeTechId = techId
+            table.removevalue(self.evolvingUpgrades, self.gestationTypeTechId)
+            break 
+        end
     end
+    
     // Upgrades don't have a gestate name, we want to gestate back into the
     // current alien type, previousTechId.
     if not self.gestationClass then
-        alienTypeTechId = previousTechId
+        self.gestationTypeTechId = previousTechId
         self.gestationClass = LookupTechData(previousTechId, kTechDataGestateName)
     end
     self.gestationStartTime = Shared.GetTime()
     
-    self.gestationTime = ConditionalValue(Shared.GetCheatsEnabled(), 2, LookupTechData(alienTypeTechId, kTechDataGestateTime))
+    local lifeformTime = ConditionalValue(self.gestationTypeTechId ~= previousTechId, LookupTechData(self.gestationTypeTechId, kTechDataGestateTime), 0)
+    self.gestationTime = ConditionalValue(Shared.GetCheatsEnabled(), 2, lifeformTime + table.count(self.evolvingUpgrades) * kUpgradeGestationTime)
     self.evolveTime = 0
     
     self:SetHealth(Embryo.kBaseHealth)
-    self.maxHealth = LookupTechData(alienTypeTechId, kTechDataMaxHealth)
+    self.maxHealth = LookupTechData(self.gestationTypeTechId, kTechDataMaxHealth)
+    
+    // Use this amount of health when we're done evolving
+    self.healthScalar = healthScalar
+    self.armorScalar = armorScalar
     
 end
 
@@ -109,6 +133,8 @@ end
 // Allow players to rotate view, chat, scoreboard, etc. but not move
 function Embryo:OverrideInput(input)
 
+    self:_CheckInputInversion(input)
+    
     // Completely override movement and commands
     input.move.x = 0
     input.move.y = 0
@@ -130,7 +156,7 @@ function Embryo:ConstrainMoveVelocity(moveVelocity)
     
 end
 
-function Embryo:PostUpdateMovePhysics(input, runningPrediction)
+function Embryo:PostUpdateMove(input, runningPrediction)
     self:SetAngles(self.originalAngles)
 end
 
@@ -155,14 +181,25 @@ if Server then
                 self:SetOrigin( self:GetOrigin() + Vector(0, Embryo.kEvolveSpawnOffset, 0) )
             
                 // Replace player with new player
-                self:Replace(self.gestationClass)
+                local newPlayer = self:Replace(self.gestationClass)
                 
-                self:DropToFloor()
+                newPlayer:DropToFloor()
                 
                 self:TriggerEffects("player_end_gestate")
                 
                 self:TriggerEffects("egg_death")
                 
+                // Now give new player all the upgrades they purchased
+                for index, upgradeId in ipairs(self.evolvingUpgrades) do
+                
+                    if newPlayer:GiveUpgrade(upgradeId) then
+                        newPlayer:OnGiveUpgrade(upgradeId)
+                    end
+                    
+                end    
+
+                newPlayer:SetHealth( self.healthScalar * LookupTechData(self.gestationTypeTechId, kTechDataMaxHealth) )
+                newPlayer:SetArmor( self.armorScalar * LookupTechData(self.gestationTypeTechId, kTechDataMaxArmor) )
 
             end
             
@@ -190,4 +227,4 @@ function Embryo:GetCanDoDamage()
     return false
 end
 
-Shared.LinkClassToMap("Embryo", Embryo.kMapName, networkVars)
+Shared.LinkClassToMap("Embryo", Embryo.kMapName, Embryo.networkVars)

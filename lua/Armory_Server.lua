@@ -88,37 +88,33 @@ function Armory:ResupplyPlayer(player)
 
         player:AddHealth(Armory.kHealAmount)
 
-        player:TriggerEffects("armory_health")
+        self:TriggerEffects("armory_health", {effecthostcoords = Coords.GetTranslation(player:GetOrigin())})
         
         resuppliedPlayer = true
         
     end
 
     // Give ammo to all their weapons, one clip at a time, starting from primary
-    if not resuppliedPlayer then
+    local weapons = player:GetHUDOrderedWeaponList()
     
-        local weapons = player:GetHUDOrderedWeaponList()
+    for index, weapon in ipairs(weapons) do
+    
+        if weapon:isa("ClipWeapon") then
         
-        for index, weapon in ipairs(weapons) do
-        
-            if weapon:isa("ClipWeapon") then
+            if weapon:GiveAmmo(1) then
             
-                if weapon:GiveAmmo(1) then
+                self:TriggerEffects("armory_ammo", {effecthostcoords = Coords.GetTranslation(player:GetOrigin())})
                 
-                    player:TriggerEffects("armory_ammo")
-                    
-                    resuppliedPlayer = true
-                    
-                    break
-                    
-                end 
-                       
-            end
-            
+                resuppliedPlayer = true
+                
+                break
+                
+            end 
+                   
         end
         
     end
-    
+        
     if resuppliedPlayer then
     
         // Insert/update entry in table

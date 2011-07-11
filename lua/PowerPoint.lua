@@ -34,8 +34,6 @@ PowerPoint.kOfflineEffect = PrecacheAsset("cinematics/common/powerpoint_offline.
 
 PowerPoint.kTakeDamageSound = PrecacheAsset("sound/ns2.fev/marine/power_node/take_damage")
 PowerPoint.kDamagedSound = PrecacheAsset("sound/ns2.fev/marine/power_node/damaged")
-PowerPoint.kDestroyedSound = PrecacheAsset("sound/ns2.fev/marine/power_node/destroyed")
-PowerPoint.kDestroyedPowerDownSound = PrecacheAsset("sound/ns2.fev/marine/power_node/destroyed_powerdown")
 PowerPoint.kAuxPowerBackupSound = PrecacheAsset("sound/ns2.fev/marine/power_node/backup")
 
 PowerPoint.kHealth = kPowerPointHealth
@@ -53,8 +51,8 @@ PowerPoint.kLowPowerCycleTime = 1
 PowerPoint.kLowPowerMinIntensity = .4
 PowerPoint.kDamagedCycleTime = .8
 PowerPoint.kDamagedMinIntensity = .7
-PowerPoint.kAuxPowerCycleTime = 2
-PowerPoint.kAuxPowerMinIntensity = .25
+PowerPoint.kAuxPowerCycleTime = 3
+PowerPoint.kAuxPowerMinIntensity = 0
 
 local networkVars =
 {
@@ -98,11 +96,11 @@ function PowerPoint:OnInit()
     
 end
 
-function PowerPoint:OnReset()
+function PowerPoint:Reset()
 
     self:OnInit()  
     
-    Structure.OnReset(self)
+    Structure.Reset(self)
     
 end
 
@@ -139,6 +137,10 @@ function PowerPoint:GetLightMode()
     return self.lightMode
 end
 
+function PowerPoint:GetIsBlipValid()
+    return self.lightMode == kLightMode.NoPower
+end
+
 function PowerPoint:GetTimeOfLightModeChange()
     return self.timeOfLightModeChange
 end
@@ -157,7 +159,7 @@ function PowerPoint:ProcessEntityHelp(player)
         end
     else
         if player:isa("Marine") then
-            return player:AddTooltipOncePer("This power node is destroyed and must be repaired by the Commander before nearby structures work again.")
+            return player:AddTooltipOncePer("This power node is destroyed and must be repaired before nearby structures work again.")
         elseif player:isa("Alien") then
             return player:AddTooltipOncePer("The marine power node has been destroyed!")
         end

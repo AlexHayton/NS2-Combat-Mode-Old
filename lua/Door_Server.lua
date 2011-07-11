@@ -7,7 +7,7 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-function Door:OnReset()
+function Door:Reset()
     
     self:OnInit()
     

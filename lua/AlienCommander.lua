@@ -21,6 +21,10 @@ AlienCommander.kHarvesterUnderAttackSound = PrecacheAsset("sound/ns2.fev/alien/v
 AlienCommander.kLifeformUnderAttackSound = PrecacheAsset("sound/ns2.fev/alien/voiceovers/lifeform_under_attack")
 AlienCommander.kCommanderEjectedSoundName = PrecacheAsset("sound/ns2.fev/alien/voiceovers/commander_ejected")
 
+function AlienCommander:GetSelectionSound()
+    return AlienCommander.kSelectSound
+end
+
 function AlienCommander:GetTeamType()
     return kAlienTeamType
 end
@@ -55,18 +59,6 @@ function AlienCommander:SetSelectionCircleMaterial(entity)
         
     end
    
-end
-
-function AlienCommander:OnSelectionChanged()
-
-    Commander.OnSelectionChanged(self)
-    
-    if(table.maxn(self.selectedEntities) > 0) then
-    
-        Shared.PlayPrivateSound(self, AlienCommander.kSelectSound, nil, 1.0, self:GetOrigin())
-        
-    end
-
 end
 
 function AlienCommander:GetChatSound()

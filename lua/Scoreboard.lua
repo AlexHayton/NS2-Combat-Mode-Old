@@ -238,8 +238,8 @@ function GetScoreData(teamNumberTable)
     
         if(table.find(teamNumberTable, playerRecord[kScoreboardDataIndexEntityTeamNumber])) then
         
-            // Name, score, kills, deaths, isCommander, ping
             table.insert(scoreData, playerRecord[kScoreboardDataIndexName])
+            table.insert(scoreData, playerRecord[kScoreboardDataIndexClientIndex])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexScore])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexKills])
             table.insert(scoreData, playerRecord[kScoreboardDataIndexDeaths])

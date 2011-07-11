@@ -11,6 +11,7 @@
 Script.Load("lua/LiveScriptActor.lua")
 Script.Load("lua/DoorMixin.lua")
 Script.Load("lua/EnergyMixin.lua")
+Script.Load("lua/BuildingMixin.lua")
 
 class 'Drifter' (LiveScriptActor)
 
@@ -65,6 +66,8 @@ function Drifter:OnInit()
 
     InitMixin(self, DoorMixin)
     InitMixin(self, EnergyMixin )
+    InitMixin(self, BuildingMixin )
+    
     
     self:SetModel(Drifter.kModelName)
     
@@ -83,6 +86,7 @@ function Drifter:OnInit()
         self:SetNextThink(Drifter.kMoveThinkInterval)
         
         self:SetUpdates(true)
+        self:UpdateIncludeRelevancyMask()
         
     end
     
@@ -288,7 +292,7 @@ function Drifter:ProcessBuildOrder(moveSpeed)
         
         // Create structure here
         local commander = self:GetOwner()
-        if (not commander or not commander:isa("Commander")) then
+        if (not commander) then
             self:ResetOrders(false)            
             return
         end
@@ -299,7 +303,7 @@ function Drifter:ProcessBuildOrder(moveSpeed)
         
         // We want to Eval the build even before we do this animation it seems wasteful to do the animation if we already
         // know its going to fail and to be honest we should never get to this point anyways
-        legalBuildPosition, position, attachEntity = commander:EvalBuildIsLegal(techId, groundLocation, self, Vector(0, 1, 0))
+        legalBuildPosition, position, attachEntity = self:EvalBuildIsLegal(techId, groundLocation, self, Vector(0, 1, 0))
         if (not legalBuildPosition) then
             self:ResetOrders(false)
             return
@@ -333,7 +337,7 @@ function Drifter:ProcessBuildOrder(moveSpeed)
                             
                     local success = false
                     local createdStructureId = -1
-                    success, createdStructureId = commander:AttemptToBuild(techId, groundLocation, Vector(0, 1, 0), currentOrder:GetOrientation(), nil, nil, self)
+                    success, createdStructureId = self:AttemptToBuild(techId, groundLocation, Vector(0, 1, 0), currentOrder:GetOrientation(), nil, nil, self)
                                     
                     if(success) then
                         team:AddTeamResources(-cost)
@@ -556,6 +560,10 @@ end
 
 function Drifter:OnOverrideDoorInteraction(inEntity)
     return true, 4
+end
+
+function Drifter:UpdateIncludeRelevancyMask()
+    self:SetAlwaysRelevantToCommander(true)
 end
 
 Shared.LinkClassToMap("Drifter", Drifter.kMapName, Drifter.networkVars)

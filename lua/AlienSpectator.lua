@@ -37,6 +37,10 @@ function AlienSpectator:OnInit()
 
 end
 
+function AlienSpectator:GetTechId()
+    return kTechId.AlienSpectator
+end
+
 // Returns egg we're currently spawning in or nil if none
 function AlienSpectator:GetHostEgg()
 

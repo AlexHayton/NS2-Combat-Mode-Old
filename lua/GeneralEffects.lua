@@ -15,6 +15,15 @@ kGeneralEffectData =
             {parented_sound = "sound/ns2.fev/marine/structures/mac/hover", classname = "MAC", done = true},
         },
     },
+    
+    join_team =
+    {
+        joinTeamEffects =
+        {
+            {sound = "sound/ns2.fev/alien/common/join_team", isalien = true, done = true},
+            {sound = "sound/ns2.fev/marine/common/join_team", isalien = false, done = true},
+        },
+    },
 
     // Called for structures, infestation, MACs and Drifters
     spawn =
@@ -59,7 +68,12 @@ kGeneralEffectData =
             {sound = "sound/ns2.fev/alien/structures/deploy_small", classname = "Hydra", done = true},
             {sound = "sound/ns2.fev/alien/structures/deploy_large", isalien = true, done = true},
             {sound = "sound/ns2.fev/marine/structures/generic_deploy", isalien = false, done = true},            
-        },        
+        },
+        
+        marineStructure =
+        {
+            {parented_sound = "sound/ns2.fev/marine/structures/armory_idle", classname = "Armory", done = true},
+        },
     },
 
     idle =
@@ -75,6 +89,7 @@ kGeneralEffectData =
             {animation = {{1.5, "idle"}, {.1, "idle2"}}, classname = "Hydra", done = true},
             {animation = {{1, "idle"}, {.4, "idle2"}, {.3, "idle3"}, {.2, "idle4"}}, classname = "Whip", done = true},
             {animation = {{1, "idle"}, {.1, "idle2"}}, classname = "MAC", done = true},
+            {animation = {{1, "idle"}, {.01, "idle2"}, {.01, "idle3"}}, classname = "PhaseGate", done = true},
             {animation = {{1, "idle_deployed"}, {1, "idle_deployed2"}, {1, "idle_deployed3"}, {.3, "idle_deployed4"}}, classname = "ARC", deployed = true, done = true},
             {animation = {{1, "idle_undeployed"}, {1, "idle_undeployed2"}, {1, "idle_undeployed3"}, {.3, "idle_undeployed4"}}, classname = "ARC", deployed = false, done = true},
             {animation = {{2.0, "idle"}, {.1, "idle2"}}, classname = "RoboticsFactory", done = true},
@@ -185,7 +200,7 @@ kGeneralEffectData =
             {ragdoll = "", from_animation = "death_flames", classname = "Drifter", death_time = 3, done = true},
             {ragdoll = "", from_animation = "death_spawn", classname = "Extractor", death_time = 3, done = true},
             {ragdoll = "", from_animation = "death_deployed", classname = "Extractor", death_time = 3, done = true},
-            {ragdoll = "", from_animation = "death", classname = "Structure", death_time = 0, done = true},            
+            {ragdoll = "", from_animation = "death", classname = "Structure", death_time = 3, done = true},            
             //{ragdoll = "", from_animation = "death_deployed", classname = "ARC", deployed = true, death_time = 3, done = true},          
             //{ragdoll = "", from_animation = "death_undeployed", classname = "ARC", deployed = false, death_time = 3, done = true},          
         },
@@ -242,6 +257,8 @@ kGeneralEffectData =
             {stop_sound = "sound/ns2.fev/marine/structures/mac/hover", classname = "MAC"},
             {stop_sound = "sound/ns2.fev/marine/structures/mac/thrusters", classname = "MAC"},
             
+            {stop_sound = "sound/ns2.fev/marine/structures/arc/fire", classname = "ARC"},
+            
             {stop_sound = "sound/ns2.fev/alien/infestation/build", classname = "Infestation", done = true},
             
             {sound = "sound/ns2.fev/marine/structures/mac/death", classname = "MAC", done = true},
@@ -254,6 +271,7 @@ kGeneralEffectData =
             {sound = "sound/ns2.fev/alien/onos/death", classname = "Onos", done = true},
             {sound = "sound/ns2.fev/marine/common/death", classname = "Marine", done = true},
             {sound = "sound/ns2.fev/marine/structures/extractor_death", classname = "Extractor", done = true},
+            {sound = "sound/ns2.fev/marine/structures/arc/death", classname = "ARC", done = true},
             
             // Note: PowerPoints are in game script
             

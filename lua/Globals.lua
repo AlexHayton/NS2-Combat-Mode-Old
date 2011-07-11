@@ -118,9 +118,9 @@ kDamageTypeDesc = {
 }
 
 // Death message indices 
-kDeathMessageIcon = enum( {'None', 'Rifle', 'RifleButt', 'Pistol', 'Axe', 'Shotgun', 'Flamethrower', 'ARC', 'Grenade', 'Sentry', 'MAC', 'Bite', 'HydraSpike', 'Spit', 'Spikes', 'SpikesAlt', 'SporeCloud', 'SwipeBlink', 'Drifter', 'Whip', 'Spray'} )
+kDeathMessageIcon = enum( {'None', 'Rifle', 'RifleButt', 'Pistol', 'Axe', 'Shotgun', 'Flamethrower', 'ARC', 'Grenade', 'Sentry', 'MAC', 'Bite', 'HydraSpike', 'Spit', 'Spikes', 'SpikesAlt', 'SporeCloud', 'SwipeBlink', 'Drifter', 'Whip', 'Spray', 'BileBomb'} )
 
-kMinimapBlipType = enum( { 'TechPoint', 'ResourcePoint', 'Structure', 'Player', 'Door', 'PowerPoint'} )
+kMinimapBlipType = enum( { 'TechPoint', 'ResourcePoint', 'Structure', 'Marine', 'Heavy', 'Jetpack', 'ARC', 'Drifter', 'MAC', 'Skulk', 'Lerk', 'Onos', 'Fade', 'Gorge', 'Door', 'PowerPoint'} )
 
 // Friendly IDs
 // 0 = friendly
@@ -180,8 +180,16 @@ kHiveSightMaxRange = 50
 kHiveSightMinRange = 3
 kHiveSightDamageTime = 8
 
+// Bit masks for relevancy checking
+kRelevantToTeam1Unit        = 1
+kRelevantToTeam2Unit        = 2
+kRelevantToTeam1Commander   = 4
+kRelevantToTeam2Commander   = 8
+kRelevantToTeam1            = bit.bor(kRelevantToTeam1Unit, kRelevantToTeam1Commander)
+kRelevantToTeam2            = bit.bor(kRelevantToTeam2Unit, kRelevantToTeam2Commander)
+
 // Hive sight constants
-kBlipType = enum( {'Undefined', 'Friendly', 'FriendlyUnderAttack', 'Sighted', 'TechPointStructure'} )
+kBlipType = enum( {'Undefined', 'Friendly', 'FriendlyUnderAttack', 'Sighted', 'TechPointStructure', 'NeedHealing', 'FollowMe', 'Chuckle'} )
 
 kFeedbackURL = "http://getsatisfaction.com/unknownworlds/feedback/topics/new?product=unknownworlds_natural_selection_2&display=layer&style=idea&custom_css=http://www.unknownworlds.com/game_scripts/ns2/styles.css"
 

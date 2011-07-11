@@ -26,7 +26,7 @@ SwipeBlink.kHitMarineSound = PrecacheAsset("sound/ns2.fev/alien/fade/swipe_hit_m
 SwipeBlink.kScrapeMaterialSound = "sound/ns2.fev/materials/%s/scrape"
 PrecacheMultipleAssets(SwipeBlink.kScrapeMaterialSound, kSurfaceList)
 
-// Swipe
+// Make sure to keep damage vs. structures less then Skulk
 SwipeBlink.kSwipeEnergyCost = kSwipeEnergyCost
 SwipeBlink.kPrimaryAttackDelay = kSwipeFireDelay
 SwipeBlink.kDamage = kSwipeDamage
@@ -44,7 +44,7 @@ function SwipeBlink:GetEnergyCost(player)
     return SwipeBlink.kSwipeEnergyCost
 end
 
-function SwipeBlink:GetHasSecondary()
+function SwipeBlink:GetHasSecondary(player)
     return true
 end
 
@@ -83,6 +83,8 @@ function SwipeBlink:PerformPrimaryAttack(player)
     if didHit and trace and trace.entity then
         self.lastSwipedEntityId = trace.entity:GetId()
     end
+    
+    return true
     
 end
 

@@ -32,8 +32,6 @@ function Projectile:OnCreate()
     self.mass   = 1.0
     self.linearDamping = 0
     self.restitution = 0.5
-    
-    self.gravityEnabled = true
 
     if (Client) then
         self.oldModelIndex = 0

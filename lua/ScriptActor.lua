@@ -76,6 +76,9 @@ function ScriptActor:OnCreate()
     self.pathingFlags = 0
     
     if(Server) then
+        
+        self.selectedCount   = 0
+        self.hotgroupedCount = 0
     
         if not self:GetIsMapEntity() then
             self:SetTeamNumber(kTeamReadyRoom)
@@ -102,16 +105,13 @@ function ScriptActor:OnLoad()
     
     local teamNumber = GetAndCheckValue(self.teamNumber, 0, 3, "teamNumber", 0)
     
-    // Set to nil to prevent OnTeamChange() from being called before it's set for the first time
-    self.teamNumber = -1
-    
     self:SetTeamNumber(teamNumber)
     
 end
 
 // Called when entity is created via CreateEntity(), after OnCreate(). Team number and origin will be set properly before it's called.
 // Also called on client each time the entity gets created locally, due to proximity. This won't be called on the server for 
-// pre-placed map entities.
+// pre-placed map entities. Generally reset-type functionality will want to be placed in here and then called inside :Reset().
 function ScriptActor:OnInit()
 
     local techId = self:GetTechId()
@@ -148,20 +148,12 @@ end
 
 // Called when the game ends and a new game begins (or when the reset command is typed in console).
 function ScriptActor:Reset()
-    self:OnReset()   
+    self:ComputeLocation()  
 end
 
 function ScriptActor:SetOrigin(origin)
     BlendedActor.SetOrigin(self, origin)
     self:ComputeLocation()
-end
-
-function ScriptActor:OnReset()
-    self:ComputeLocation()    
-end
-
-// Called when player entities are moved to a team location in the world. This is often after the player entity is created, but not always.
-function ScriptActor:OnRespawn()
 end
 
 function ScriptActor:GetTeamType()
@@ -170,13 +162,6 @@ end
 
 function ScriptActor:GetTeamNumber()
     return self.teamNumber
-end
-
-/**
- * Gets the view angles for entity.
- */
-function ScriptActor:GetViewAngles(viewAngles)
-    return self:GetAngles()
 end
 
 function ScriptActor:GetCanSeeEntity(targetEntity)
@@ -226,7 +211,7 @@ function ScriptActor:GetTechAllowed(techId, techNode, player)
         // Let child override this
         return self:GetUpgradeTechAllowed(techId) and (techNode:GetCost() <= player:GetTeamResources())
         
-    elseif techNode:GetIsEnergyBuild() then
+    elseif techNode:GetIsEnergyManufacture() then
         
         local energy = 0
         if self.GetEnergy then
@@ -307,15 +292,6 @@ end
 
 function ScriptActor:GetViewOffset()
     return Vector(0, 0, 0)
-end
-
-function ScriptActor:GetFov()
-    return 90
-end
-
-// TODO: Remove this (it should only be called by players)
-function ScriptActor:GetEyePos()
-    return self:GetOrigin() + self:GetViewOffset()
 end
 
 function ScriptActor:GetDescription()

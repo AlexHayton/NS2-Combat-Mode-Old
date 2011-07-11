@@ -66,13 +66,21 @@ function Hive:OnTouch(player)
     
 end
 
+function Hive:GetInfestationRadius()
+    return kHiveInfestationRadius
+end
+
+function Hive:GetCystParentRange()
+    return kHiveCystParentRange
+end
+
 function Hive:GetTechButtons(techId)
 
     local techButtons = nil
     
     if(techId == kTechId.RootMenu) then 
     
-        techButtons = { kTechId.Grow, kTechId.Drifter, kTechId.MarkersMenu, kTechId.UpgradesMenu, kTechId.SetRally, kTechId.Metabolize }
+        techButtons = { kTechId.Cyst, kTechId.Drifter, kTechId.MarkersMenu, kTechId.UpgradesMenu, kTechId.SetRally, kTechId.Metabolize }
         
     elseif(techId == kTechId.MarkersMenu) then 
         techButtons = {kTechId.RootMenu, kTechId.ThreatMarker, kTechId.LargeThreatMarker, kTechId.NeedHealingMarker, kTechId.WeakMarker, kTechId.ExpandingMarker}
@@ -103,16 +111,7 @@ function Hive:PerformActivation(techId, position, normal, commander)
 
     local success = false
     
-    if techId == kTechId.Grow then
-    
-        // Create infestation for team
-        local infestation = CreateEntity(Infestation.kMapName, position, commander:GetTeamNumber())
-        
-        commander:TriggerEffects("create_infestation_local")
-
-        success = true
-        
-    elseif techId == kTechId.Metabolize then
+    if techId == kTechId.Metabolize then
     
         self:TriggerMetabolize(position)
         success = true

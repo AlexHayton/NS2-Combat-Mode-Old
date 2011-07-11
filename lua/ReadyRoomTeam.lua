@@ -20,8 +20,9 @@ function ReadyRoomTeam:ReplaceRespawnPlayer(player, origin, angles)
     local mapName = player.kMapName
     
     // no Spectator model, Embryo can't move, and Marine class doesn't play well with Player.InitWeapons(newPlayer)
-    if (mapName == Spectator.kMapName) or (mapName == Marine.kMapName) or (mapName == Embryo.kMapName) then 
-        mapName = Player.kMapName
+    if (mapName == MarineCommander.kMapName) or (mapName == AlienCommander.kMapName) or (mapName == Spectator.kMapName) or (mapName == AlienSpectator.kMapName) or (mapName == Marine.kMapName) or (mapName == Embryo.kMapName) then 
+        // Default to the basic ReadyRoomPlayer type.
+        mapName = ReadyRoomPlayer.kMapName
     end
     
     local newPlayer = player:Replace(mapName, self:GetTeamNumber(), false)

@@ -40,8 +40,8 @@ kTechId = enum({
     // Marines //
     /////////////
     
-    // Marine classes
-    'Marine', 'Heavy', "MarineCommander",
+    // Marine classes + spectators
+    'Marine', 'Heavy', 'MarineCommander', 'Spectator', 'AlienSpectator',
     
     // Marine alerts (specified alert sound and text in techdata if any)
     'MarineAlertAcknowledge', 'MarineAlertNeedMedpack', 'MarineAlertNeedAmmo', 'MarineAlertNeedOrder', 'MarineAlertHostiles', 'MarineCommanderEjected',
@@ -57,9 +57,9 @@ kTechId = enum({
     'SquadMove', 'SquadAttack', 'SquadDefend', 'SquadSeekAndDestroy', 'SquadHarass', 'SquadRegroup', 
     
     // Marine tech 
-    'CommandStation', 'CommandFacility', 'CommandCenter', 'MAC', 'Armory', 'InfantryPortal', 'Extractor', 'ExtractorUpgrade', 'PowerPack', 'SentryTech', 'Sentry', 'ARC', 'InfantryPortalTransponderTech', 'InfantryPortalTransponderUpgrade', 'InfantryPortalTransponder',
+    'CommandStation', 'MAC', 'Armory', 'InfantryPortal', 'Extractor', 'ExtractorUpgrade', 'PowerPack', 'SentryTech', 'Sentry', 'ARC', 'InfantryPortalTransponderTech', 'InfantryPortalTransponderUpgrade', 'InfantryPortalTransponder',
     'Scan', 'AmmoPack', 'MedPack', 'CatPack', 'CatPackTech', 'PowerPoint', 'AdvancedArmoryUpgrade', 'Observatory', 'ObservatoryEnergy', 'DistressBeacon', 'PhaseGate', 'RoboticsFactory', 'ArmsLab',
-    'WeaponsModule', 'PrototypeLab', 'AdvancedArmory', 'CommandFacilityUpgrade', 'CommandCenterUpgrade', 
+    'WeaponsModule', 'PrototypeLab', 'AdvancedArmory', 
     
     // Weapon tech
     'RifleUpgradeTech', 'ShotgunTech', 'GrenadeLauncherTech', 'FlamethrowerTech', 'NerveGasTech', 'FlamethrowerAltTech', 'DualMinigunTech',
@@ -99,10 +99,10 @@ kTechId = enum({
     'Skulk', 'Gorge', 'Lerk', 'Fade', 'Onos', "AlienCommander", "AllAliens",
     
     // Alien abilities (not all are needed, only ones with damage types)
-    'Bite', 'Parasite', 'Spit', 'Spray', 'Spikes', 'SpikesAlt', 'Spores', 'HydraSpike', 'SwipeBlink', 'StabBlink', 'Gore',
+    'Bite', 'Parasite', 'Spit', 'Spray', 'BileBomb', 'Spikes', 'SpikesAlt', 'Spores', 'HydraSpike', 'SwipeBlink', 'StabBlink', 'Gore', 
     
     // Alien structures 
-    'Hive', /*'HiveMass', 'HiveColony',*/ 'Harvester', 'HarvesterUpgrade', 'Drifter', 'Egg', 'Cocoon', 'Embryo', 'Hydra', 'HiveMassUpgrade', 'HiveColonyUpgrade',
+    'Hive', 'Harvester', 'HarvesterUpgrade', 'Drifter', 'Egg', 'Cocoon', 'Embryo', 'Hydra', 'Cyst', 'MiniCyst',
 
     // Upgrade buildings and abilities (structure, upgraded structure, passive, triggered, targeted)
     'Crag', 'UpgradeCrag', 'MatureCrag', 'CragHeal', 'CragUmbra', 'CragBabblers',
@@ -116,7 +116,7 @@ kTechId = enum({
     // Alien abilities and upgrades - BabblerTech
     'BabblerTech', 'EchoTech', 'PhantasmTech', 
     'Melee1Tech', 'Melee2Tech', 'Melee3Tech', 'AlienArmor1Tech', 'AlienArmor2Tech', 'AlienArmor3Tech',
-    'AdrenalineTech', 'CorpulenceTech', 'BacteriaTech', 'FeintTech', 'SapTech', 'StompTech', 'BoneShieldTech', 'CarapaceTech', 'PiercingTech',
+    'AdrenalineTech', 'BileBombTech', 'LeapTech', 'BacteriaTech', 'FeintTech', 'SapTech', 'StompTech', 'BoneShieldTech', 'CarapaceTech', 'PiercingTech',
     'FrenzyTech', 'SwarmTech', 'RegenerationTech', 
     
     // Global upgrades
@@ -143,7 +143,7 @@ kTechId = enum({
     'Infestation',
     
     // Commander abilities
-    'Grow', 'MetabolizeTech', 'Metabolize',
+    'MetabolizeTech', 'Metabolize',
     
     // Voting commands
     'VoteDownCommander1', 'VoteDownCommander2', 'VoteDownCommander3', 
@@ -157,7 +157,7 @@ kTechId = enum({
 kTechIdMax  = kTechId.Max
 
 // Tech types
-kTechType = enum({ 'Invalid', 'Order', 'Research', 'Upgrade', 'Action', 'Buy', 'Build', 'Manufacture', 'Activation', 'Menu', 'EnergyBuild', 'Special' })
+kTechType = enum({ 'Invalid', 'Order', 'Research', 'Upgrade', 'Action', 'Buy', 'Build', 'EnergyBuild', 'Manufacture', 'Activation', 'Menu', 'EnergyManufacture', 'Special' })
 
 // Button indices
 kRecycleCancelButtonIndex   = 12

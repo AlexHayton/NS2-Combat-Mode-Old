@@ -252,15 +252,15 @@ function Structure:OnResearchComplete(structure, researchId)
     if structure and (structure:GetId() == self:GetId()) then
     
         local researchNode = self:GetTeam():GetTechTree():GetTechNode(researchId)
-        if researchNode and researchNode:GetIsEnergyBuild() then        
+        if researchNode and researchNode:GetIsEnergyManufacture() then        
 
-            // Handle energybuild actions        
+            // Handle energymanufacture actions        
             local mapName = LookupTechData(researchId, kTechDataMapName)
-            local energyBuildEntity = CreateEntity(mapName, self:GetOrigin(), structure:GetTeamNumber())
+            local energyManufactureEntity = CreateEntity(mapName, self:GetOrigin(), structure:GetTeamNumber())
             
             // Set owner to commander that issued the order 
             local owner = Shared.GetEntity(self.researchingPlayerId)
-            energyBuildEntity:SetOwner(owner)
+            energyManufactureEntity:SetOwner(owner)
             
         elseif researchId == kTechId.Recycle then
         
@@ -280,7 +280,12 @@ function Structure:OnResearchComplete(structure, researchId)
             local amount = GetRecycleAmount(self:GetTechId(), upgradeLevel)
             local scalar = self:GetRecycleScalar()
             
-            self:GetTeam():AddTeamResources(amount * scalar)
+            // We round it up to the nearest value thus not having weird
+            // fracts of costs being returned which is not suppose to be 
+            // the case.
+            local finalRecycleAmount = math.round(amount * scalar)
+            
+            self:GetTeam():AddTeamResources(finalRecycleAmount)
             
             self:SafeDestroy()  
         
@@ -360,6 +365,13 @@ function Structure:OnInit()
         self:SetConstructionComplete()
     end
     
+    local team = self:GetTeam()
+    if team then
+        team:StructureCreated(self)
+    end
+    
+    self:SetPhysicsGroup(PhysicsGroup.StructuresGroup)
+    
 end
 
 /**
@@ -430,33 +442,12 @@ function Structure:GetTeam()
     
 end
 
-function Structure:OnTeamChange(teamNumber)
-
-    LiveScriptActor.OnTeamChange(self, teamNumber)
-    
-    // Remove tech from old team and add to new team (for autobuilding, etc.)
-    local oldTeam = self:GetTeam()
-    if(oldTeam ~= nil) then
-        oldTeam:TechRemoved(self)
-    end
-
-    local newTeam = GetGamerules():GetTeam(teamNumber)
-    if(newTeam ~= nil) then
-        newTeam:TechAdded(self)
-    end
-
-end
-
 function Structure:OnDestroy()
 
     local team = self:GetTeam()
     if(team ~= nil) then
         team:TechRemoved(self)
-    end
-    
-    if self.structureInfestationId then
-        Server.DestroyEntity(Shared.GetEntity(self.structureInfestationId))
-        self.structureInfestationId = nil
+        team:StructureDestroyed(self)
     end
     
     LiveScriptActor.OnDestroy(self)
@@ -482,7 +473,7 @@ function Structure:OnKill(damage, killer, doer, point, direction)
     
 end
 
-function Structure:OnReset()
+function Structure:Reset()
 
     // OnCreate will reset the team number, so preseve it here
     local teamNumber = self.teamNumber
@@ -495,7 +486,7 @@ function Structure:OnReset()
     
     self:OnInit()
     
-    LiveScriptActor.OnReset(self)
+    LiveScriptActor.Reset(self)
     
     if self.startsBuilt then
         self:SetConstructionComplete()
@@ -757,7 +748,7 @@ function Structure:SetConstructionComplete()
     
     local team = self:GetTeam()
     if(team ~= nil) then
-        team:TechBuilt(self)
+        team:TechAdded(self)
     end
     
 end

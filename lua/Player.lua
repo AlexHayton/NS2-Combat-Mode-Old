@@ -17,6 +17,10 @@ Script.Load("lua/TooltipMixin.lua")
 Script.Load("lua/WeaponOwnerMixin.lua")
 Script.Load("lua/DoorMixin.lua")
 
+/**
+ * Player should not be instantiated directly. Only instantiate a Player through
+ * one of the derived types.
+ */
 class 'Player' (LiveScriptActor)
 
 Player.kTooltipSound    = PrecacheAsset("sound/ns2.fev/common/tooltip")
@@ -53,13 +57,15 @@ Player.kRunIdleSpeed = 1
 
 Player.kLoginBreakingDistance = 150
 Player.kUseRange  = 1.6
+Player.kDownwardUseRange = 2.2
 Player.kUseHolsterTime = .5
 Player.kDefaultBuildTime = .2
     
 Player.kGravity = -24
 Player.kMass = 90.7 // ~200 pounds (incl. armor, weapons)
 Player.kWalkBackwardSpeedScalar = 0.4
-Player.kJumpHeight =  1   
+Player.kJumpHeight =  1
+Player.kOnGroundDistance = 0.05
 
 // The physics shapes used for player collision have a "skin" that makes them appear to float, this makes the shape
 // smaller so they don't appear to float anymore
@@ -96,6 +102,9 @@ Player.kTauntMovementScalar = .05           // Players can only move a little wh
 
 Player.kDamageIndicatorDrawTime = 1
 
+// The slowest scalar of our max speed we can go to because of damage
+Player.kMinSlowSpeedScalar = .5
+
 // kMaxHotkeyGroups is defined at a global level so that NetworkMessages.lua can access the constant.
 Player.kMaxHotkeyGroups = kMaxHotkeyGroups
 
@@ -110,6 +119,9 @@ Player.kUnstickOffsets = {
 
 Player.stepTotalTime    = 0.1   // Total amount of time to interpolate up a step
 
+// Assumes the "ups" are listed in order after the "downs"
+Player.kTapMode = enum( {'None', 'LeftDown', 'LeftUp', 'RightDown', 'RightUp', 'ForwardDown', 'ForwardUp', 'BackDown', 'BackUp'} )
+
 // When changing these, make sure to update Player:CopyPlayerDataFrom. Any data which 
 // needs to survive between player class changes needs to go in here.
 // Compensated variables are things that you want reverted when processing commands
@@ -117,26 +129,14 @@ Player.stepTotalTime    = 0.1   // Total amount of time to interpolate up a step
 // for the player this is anything that can affect the hit boxes, like the animation that's playing,
 // the current animation time, pose parameters, etc (not for the player firing but for the
 // player being shot). 
-local networkVars =
+Player.networkVars =
 {
-    // Compensated means backed up and restored between calls to OnProcessMove, but only for other players, not yourself. 
-    viewYaw                 = "compensated interpolated angle",
-    viewPitch               = "compensated interpolated angle",
-    viewRoll                = "compensated interpolated angle",
-
     cameraDistance          = "float",
     desiredCameraDistance   = "float",
     thirdPerson             = "boolean",
-    smoothCamera            = "boolean", 
     
     // Controlling client index. -1 for not being controlled by a live player (ragdoll, fake player)
     clientIndex             = "integer",
-    
-    // In degrees
-    fov                     = "integer (0 to 255)",
-    
-    velocity                = "compensated interpolated vector",
-    gravityEnabled          = "boolean",
     
     // 0 means no active weapon, 1 means first child weapon, etc.
     activeWeaponIndex       = "integer (0 to 10)",
@@ -155,8 +155,7 @@ local networkVars =
    
     timeOfLastWeaponSwitch  = "float",
     crouching               = "compensated boolean",
-    timeOfCrouchChange      = "compensated interpolated float",
-    timeLegalCrouchTime     = "compensated interpolated float",
+    timeOfCrouchChange      = "compensated float",
     
     flareStartTime          = "float",
     flareStopTime           = "float",
@@ -221,8 +220,14 @@ local networkVars =
     stepStartTime           = "float",
     stepAmount              = "float",
     
-    isUsing                 = "boolean"
-
+    isUsing                 = "boolean",
+    
+    // Slow on damage
+    slowOnDamageAmount      = "float",
+    
+    // For double-tapping moves
+    tapMode                 = "enum Player.kTapMode",
+    tapModeTime             = "float",
 }
 
 function Player:OnCreate()
@@ -241,23 +246,17 @@ function Player:OnCreate()
     // Just use default values for the capsule size for now. Player will update to correct
     // values when they are known.
     self:CreateController(PhysicsGroup.PlayerControllersGroup, 1, 0.5)
-        
-    self.viewYaw        = 0
-    self.viewPitch      = 0
-    self.viewRoll       = 0
+
     self.maxExtents     = Vector( LookupTechData(self:GetTechId(), kTechDataMaxExtents, Vector(Player.kXZExtents, Player.kYExtents, Player.kXZExtents)) )
     self.viewOffset     = Vector( 0, 0, 0 )
 
     self.desiredCameraDistance = 0
     self.thirdPerson = false
-    self.smoothCamera = false
     self.clientIndex = -1
     self.client = nil
 
     self.cameraDistance = 0
-    
-    self.velocity = Vector(0, 0, 0)
-    self.gravityEnabled = true
+
     self.activeWeaponIndex = 0
     self.activeWeaponHolstered = false
    
@@ -306,7 +305,6 @@ function Player:OnCreate()
     self.timeOfDeath = nil
     self.crouching = false
     self.timeOfCrouchChange = 0
-    self.timeLegalCrouchTime = 0
     self.onGroundNeedsUpdate = true
     self.onGround = false
     
@@ -333,18 +331,18 @@ function Player:OnCreate()
     self.waypointType = kTechId.None
     
     self.isUsing = false
+    self.slowOnDamageAmount = 0
+
+    self.tapMode = Player.kTapMode.None
+    self.tapModeTime = nil
     
 end
 
 function Player:OnInit()
     
-    // Add the functionality from TooltipMixin to this instance of Player.
+    // Add the functionality from various mixins to this instance of Player.
     InitMixin(self, TooltipMixin, { kTooltipSound = Player.kTooltipSound, kToolTipInterval = Player.kToolTipInterval })
-
-    // Add the functionality from WeaponOwnerMixin to this instance of Player.
     InitMixin(self, WeaponOwnerMixin)
-    
-    // Add functionality from DoorMixin to this instance of Player
     InitMixin(self, DoorMixin)
     
     LiveScriptActor.OnInit(self)
@@ -362,9 +360,6 @@ function Player:OnInit()
     self:SetScoreboardChanged(true)
     
     self:SetViewOffsetHeight(self:GetMaxViewOffsetHeight())
-    self:SetFov(self:GetStartFov())
-    
-    self:SetFov(self:GetStartFov())
     
     self:UpdateControllerFromEntity()
         
@@ -398,7 +393,7 @@ function Player:OnEntityChange(oldEntityId, newEntityId)
 
     LiveScriptActor.OnEntityChange(self, oldEntityId, newEntityId)
     
-    if Server then
+    if Server and self.hotkeyGroups then
 
         // Loop through hotgroups and update accordingly
         for i = 1, Player.kMaxHotkeyGroups do
@@ -441,6 +436,11 @@ function Player:OnEntityChange(oldEntityId, newEntityId)
 
 end
 
+/**
+ * Returns text describing the current status of the Player. Returns nil
+ * as the second parameter as this is used as a progress indicator for
+ * some entities (the Player doesn't have any progress to report on).
+ */
 function Player:GetStatusDescription()
     return string.format("%s - %s", self:GetName(), self:GetClassName()), nil
 end
@@ -483,17 +483,6 @@ function Player:SetOffsetAngles(offsetAngles)
 
 end
 
-/**
- * Gets the view angles for the player.
- */
-function Player:GetViewAngles()
-    return Angles(self.viewPitch, self.viewYaw, self.viewRoll)
-end
-
-function Player:GetViewAnglesCoords()
-    return self:GetViewAngles():GetCoords( self:GetOrigin() + self:GetViewOffset() )
-end
-
 function Player:SetBaseViewAngles(viewAngles)
 
     self.baseYaw = viewAngles.yaw
@@ -512,13 +501,19 @@ function Player:ConvertToViewAngles(forPitch, forYaw, forRoll)
 
 end
 
-function Player:OverrideInput(input)
+function Player:_CheckInputInversion(input)
 
-    // Invert mouse if specified in options
-    local invertMouse = Client.GetOptionBoolean ( kInvertedMouseOptionsKey, false )
+    // Invert mouse if specified in options.
+    local invertMouse = Client.GetOptionBoolean(kInvertedMouseOptionsKey, false)
     if invertMouse then
         input.pitch = -input.pitch
     end
+
+end
+
+function Player:OverrideInput(input)
+
+    self:_CheckInputInversion(input)
     
     local maxPitch = Math.Radians(89.9)
     input.pitch = Math.Clamp(input.pitch, -maxPitch, maxPitch)
@@ -552,9 +547,9 @@ function Player:OverrideSayingsMenu(input)
 
             local newMenu = 1
             if bit.band(input.commands, Move.ToggleSayings2) ~= 0 then
-                newMenu = 2
+                newMenu = ConditionalValue(self:isa("Alien"), 1, 2)
             elseif bit.band(input.commands, Move.ToggleVoteMenu) ~= 0 then
-                newMenu = 3
+                newMenu = ConditionalValue(self:isa("Alien"), 2, 3)
             end
 
             // If not visible, bring up menu
@@ -608,25 +603,6 @@ function Player:OverrideSayingsMenu(input)
 
 end
 
-// Returns current FOV
-function Player:GetFov()
-    return self.fov
-end
-
-function Player:SetFov(fov)
-    self.fov = fov
-end
-
-function Player:SetGravityEnabled(state)
-    self.gravityEnabled = state
-end
-
-// Initial FOV when spawning as class. Can change through console
-// commands, weapons, etc. but this is the base.
-function Player:GetStartFov()
-    return Player.kFov
-end
-
 function Player:SetDesiredCameraDistance(distance)
     self.desiredCameraDistance = math.max(distance, 0)
     self.thirdPerson = ((self.desiredCameraDistance > 0) or (self.cameraDistance > 0))
@@ -673,9 +649,19 @@ function Player:GetCameraDistance()
     return self.cameraDistance
 end
 
-// Also specifies listener position
+/**
+ * Returns the current view offset based on crouch.
+ * Also specifies listener position.
+ */
 function Player:GetViewOffset()
-    
+    return self.viewOffset
+end
+
+/**
+ * Returns the view offset with the step smoothing factored in.
+ */
+function Player:GetSmoothedViewOffset()
+
     local deltaTime = Shared.GetTime() - self.stepStartTime
     
     if deltaTime < Player.stepTotalTime then
@@ -686,16 +672,11 @@ function Player:GetViewOffset()
     
 end
 
-
-// Stores the player's current view offset. Calculated from GetMaxViewOffset() and crouch state.
+/**
+ * Stores the player's current view offset. Calculated from GetMaxViewOffset() and crouch state.
+ */
 function Player:SetViewOffsetHeight(newViewOffsetHeight)
-
-    VectorCopy(Vector(0, newViewOffsetHeight, 0), self.viewOffset)
-    
-end
-
-function Player:GetEyePos()
-    return self:GetOrigin() + self.viewOffset    
+    self.viewOffset.y = newViewOffsetHeight
 end
 
 function Player:GetMaxViewOffsetHeight()
@@ -751,6 +732,19 @@ function Player:GetMapXY(worldX, worldZ)
 
 end
 
+// Return modifier to our max speed (1 is none, 0 is full)
+function Player:GetSlowSpeedModifier()
+
+    // Never drop to 0 speed
+    local scalar = Player.kMinSlowSpeedScalar + Clamp(Player.kMinSlowSpeedScalar - Player.kMinSlowSpeedScalar * self.slowOnDamageAmount, 0, Player.kMinSlowSpeedScalar)
+    //if scalar ~= 1 then
+    //    Print("%s:GetSlowSpeedModifier(): %.2f", self:GetClassName(), scalar)
+    //end
+    
+    return scalar
+    
+end
+
 // Plays view model animation, given a string or a table of weighted entries.
 // Returns length of animation or 0 if animation wasn't found. 
 function Player:SetViewAnimation(animName, noForce, blend, speed)
@@ -766,7 +760,7 @@ function Player:SetViewAnimation(animName, noForce, blend, speed)
         local viewModel = self:GetViewModelEntity()
         if (viewModel ~= nil) then
 
-            local force = ConditionalValue(noForce, false, true)
+            local force = not noForce
             local success = false
             
             if blend then
@@ -826,21 +820,6 @@ function Player:SetViewOverlayAnimation(overlayAnim)
     
 end
 
-function Player:GetVelocity()
-    return self.velocity
-end
-
-function Player:SetVelocity(velocity)
-
-    self.velocity = velocity
-
-    // Snap to 0 when close to zero for network performance and our own sanity
-    if (math.abs(self.velocity:GetLength()) < Player.kMinimumPlayerVelocity) then
-        self.velocity:Scale(0)
-    end
-    
-end
-
 function Player:GetController()
 
     return self.controller
@@ -884,15 +863,13 @@ function Player:SecondaryAttackEnd()
 end
 
 function Player:SelectNextWeapon()
-
+    PROFILE("Player:SelectNextWeapon")
     self:SelectWeaponWithFinder(self.FindChildEntity)
-    
 end
 
 function Player:SelectPrevWeapon()
-
+    PROFILE("Player:SelectPrevWeapon")
     self:SelectWeaponWithFinder(self.FindChildEntityReverse)
-    
 end
 
 function Player:SelectWeaponWithFinder(finderFunction)
@@ -939,16 +916,29 @@ end
  */
 function Player:Use(timePassed)
 
+    PROFILE("Player:Use")
+
     ASSERT(timePassed >= 0)
     
     local success = false
     
-    local startPoint = self:GetViewOffset() + self:GetOrigin()
+    local startPoint = self:GetEyePos()
     local viewCoords = self:GetViewAngles():GetCoords()
+    
+    // To make building low objects like an infantry portal easier, increase the use range
+    // as we look downwards. This effectively makes use trace in a box shape when looking down.
+    local useRange = Player.kUseRange
+    local sinAngle = viewCoords.zAxis:GetLengthXZ()
+    if viewCoords.zAxis.y < 0 and sinAngle > 0 then
+        useRange = Player.kUseRange / sinAngle
+        if -viewCoords.zAxis.y * useRange > Player.kDownwardUseRange then
+            useRange = Player.kDownwardUseRange / -viewCoords.zAxis.y
+        end
+    end
     
     // Get entities in radius
     
-    local ents = GetEntitiesForTeamWithinRange("LiveScriptActor", self:GetTeamNumber(), self:GetOrigin(), Player.kUseRange)
+    local ents = GetEntitiesForTeamWithinRange("LiveScriptActor", self:GetTeamNumber(), self:GetOrigin(), useRange)
     for index, entity in ipairs(ents) do
     
         // Look for attach point
@@ -958,7 +948,7 @@ function Player:Use(timePassed)
 
             local attachPoint = entity:GetAttachPointOrigin(attachPointName)
             local toAttachPoint = attachPoint - startPoint
-            local legalUse = toAttachPoint:GetLength() < Player.kUseRange and viewCoords.zAxis:DotProduct(GetNormalizedVector(toAttachPoint)) > .8
+            local legalUse = toAttachPoint:GetLength() < useRange and viewCoords.zAxis:DotProduct(GetNormalizedVector(toAttachPoint)) > .8
             
             if(legalUse and entity:OnUse(self, timePassed, true, attachPoint)) then
             
@@ -975,19 +965,16 @@ function Player:Use(timePassed)
     // If failed, do a regular trace with entities that don't have use attach points
     if not success then
 
-        local endPoint = startPoint + viewCoords.zAxis * Player.kUseRange
-        local trace = Shared.TraceRay(startPoint, endPoint, PhysicsMask.AllButPCs, EntityFilterOne(self))
+        local endPoint = startPoint + viewCoords.zAxis * useRange
+        local activeWeapon = self:GetActiveWeapon()
         
-        if(trace.fraction < 1 and trace.entity ~= nil) then
+        local trace = Shared.TraceRay(startPoint, endPoint, PhysicsMask.AllButPCs, EntityFilterTwo(self, activeWeapon))
         
+        if trace.fraction < 1 and trace.entity ~= nil then
             local entityName = trace.entity:GetMapName()
-            
             if trace.entity:GetCanBeUsed(self) then
-
                 success = trace.entity:OnUse(self, timePassed, false, trace.endPoint)
-                
             end
-
         end
         
     end
@@ -1064,7 +1051,11 @@ function Player:GetWeaponHolstered()
 end
 
 function Player:GetExtents()
-    return self:GetExtentsFromCrouch(self:GetCrouchAmount())
+    local extents = self:GetMaxExtents()
+    if self.crouching then
+        extents.y = extents.y * (1 - self:GetCrouchShrinkAmount())
+    end
+    return extents
 end
 
 function Player:GetMaxExtents()
@@ -1135,29 +1126,10 @@ function Player:GetTeamResources()
     return self.teamResources
 end
 
-function Player:GetMoveDirection(moveVelocity)
-
-    if(self:GetIsOnLadder()) then
-    
-        return GetNormalizedVector(moveVelocity)
-
-    end
-    
-    local up = Vector(0, 1, 0)
-    local right = GetNormalizedVector(moveVelocity):CrossProduct(up)
-    local moveDirection = up:CrossProduct(right)
-    moveDirection:Normalize()
-    
-    return moveDirection
-    
-end
-
-// Compute the desired velocity based on the input. Make sure that going off at 45 degree 
-// angles doesn't make us faster. Also make sure that moving forward while looking down
-// doesn't slow us down.
+// MoveMixin callbacks.
+// Compute the desired velocity based on the input. Make sure that going off at 45 degree angles
+// doesn't make us faster.
 function Player:ComputeForwardVelocity(input)
-
-    PROFILE("Player:ComputeForwardVelocity")
 
     local forwardVelocity = Vector(0, 0, 0)
 
@@ -1181,13 +1153,58 @@ function Player:ComputeForwardVelocity(input)
         if(not ValidateValue(moveDirection)) then
             moveDirection = Vector(0, -1, 0)
         end
-            
+        
         forwardVelocity = moveDirection * moveVelocityLength
         
     end
     
     return forwardVelocity
 
+end
+
+function Player:GetFrictionForce(input, velocity)
+    
+    local frictionScalar = 0
+
+    // Don't apply friction when we're moving on the ground,
+    // it affects our max speed too much. Just bring us to a stop
+    // when we stop trying to move.
+    if(self:GetIsOnGround() and input.move:GetLength() == 0) then
+        frictionScalar = 8
+    end
+    
+    local scaleVelY = 0
+    if(self:GetIsOnLadder()) then
+        frictionScalar = 8
+        scaleVelY = -velocity.y
+    end
+    
+    return Vector(-velocity.x, scaleVelY, -velocity.z) * frictionScalar
+    
+end
+
+function Player:GetGravityAllowed()
+
+    // No gravity when on ladders or on the ground.
+    return not self:GetIsOnLadder() and not self:GetIsOnGround()
+    
+end
+
+function Player:GetMoveDirection(moveVelocity)
+
+    if(self:GetIsOnLadder()) then
+    
+        return GetNormalizedVector(moveVelocity)
+
+    end
+    
+    local up = Vector(0, 1, 0)
+    local right = GetNormalizedVector(moveVelocity):CrossProduct(up)
+    local moveDirection = up:CrossProduct(right)
+    moveDirection:Normalize()
+    
+    return moveDirection
+    
 end
 
 function Player:UpdateEnergy(input)
@@ -1199,7 +1216,7 @@ function Player:EndUse(deltaTime)
     end        
     
     // Pull out weapon again if we haven't built for a bit
-    if self:GetWeaponHolstered() and self:isa("Marine") and ((Shared.GetTime() - self.timeOfLastUse) > (Structure.kUseInterval + .1)) then
+    if self:GetWeaponHolstered() and self:isa("Marine") and ((Shared.GetTime() - self.timeOfLastUse) > Structure.kUseInterval) then
         // $AS - So its possible that when this code gets his there might be an activity going 
         if (self:Draw()) then
             self:SetIsUsing(false)
@@ -1255,9 +1272,9 @@ end
 
 // Allow child classes to alter player's move at beginning of frame. Alter amount they
 // can move by scaling input.move, remove key presses, etc.
-function Player:UpdateMove(input)
+function Player:AdjustMove(input)
 
-    PROFILE("Player:UpdateMove")
+    PROFILE("Player:AdjustMove")
     
     // Don't allow movement when frozen in place
     if(self.frozen) then
@@ -1320,76 +1337,12 @@ function Player:UpdateViewAngles(input)
     local viewY = self:GetMaxViewOffsetHeight()
     viewY = viewY - viewY * self:GetCrouchShrinkAmount() * self:GetCrouchAmount()
 
-    // Don't set new view offset height unless needed (avoids Vector churn)        
-    local lastViewOffsetHeight = self:GetViewOffset().y
+    // Don't set new view offset height unless needed (avoids Vector churn).
+    local lastViewOffsetHeight = self:GetSmoothedViewOffset().y
     if math.abs(viewY - lastViewOffsetHeight) > kEpsilon then
         self:SetViewOffsetHeight(viewY)
     end
     
-end
-
-function Player:PreUpdateMovePhysics(input, runningPrediction)
-end
-
-function Player:DrawDevLine(p0, p1, r, g, b, a)
-
-    /*if Shared.GetDevMode() then
-        DebugLine(p0, p1, .1, r, g, b, a)
-    end*/
-    
-end
-
-// Update origin and velocity from move
-function Player:UpdateMovePhysics(input)
-
-    PROFILE("Player:UpdateMovePhysics")
-    
-    // Accelerate the movement by the velocity.
-    local forwardVelocity = self:ComputeForwardVelocity(input)
-    local velocity = self:GetVelocity() + forwardVelocity * input.time
-    
-    // Add in the friction force.
-    local friction = self:GetFrictionForce(input, velocity) * input.time
-
-    // If the friction force will cancel out the velocity completely, then just
-    // zero it out so that the velocity doesn't go "negative".
-    if ( math.abs(friction.x) >= math.abs(velocity.x) ) then
-        velocity.x = 0
-    else
-        velocity.x = friction.x + velocity.x
-    end    
-    if ( math.abs(friction.y) >= math.abs(velocity.y) ) then
-        velocity.y = 0
-    else
-        velocity.y = friction.y + velocity.y
-    end    
-    if ( math.abs(friction.z) >= math.abs(velocity.z) ) then
-        velocity.z = 0
-    else
-        velocity.z = friction.z + velocity.z
-    end    
-    
-    if self.gravityEnabled and not self:GetIsOnLadder() and not self:GetIsOnGround() then
-        // Update velocity with gravity after we update our position (it accounts for gravity and varying frame rates)
-        velocity.y = velocity.y + self:GetGravityForce(input) * input.time
-    end
-    
-    // Add additional velocity according to specials
-    self:ModifyVelocity(input, velocity)
-    
-    // The position doesn't need to be updated if there is no velocity.
-    if(velocity:GetLengthSquared() > Vector.kEpsilon) then
-        // Clamp speed to max speed
-        velocity = self:ClampSpeed(input, velocity)
-        velocity = self:UpdatePosition(velocity, input.time)
-    end
-
-    self:SetVelocity(velocity)
-
-end
-
-// Allow children to update state after setting origin/velocity
-function Player:PostUpdateMovePhysics(input, runningPrediction)
 end
 
 function Player:SetDesiredRoll(roll)
@@ -1422,31 +1375,22 @@ function Player:OnProcessMove(input)
         // Force an update to whether or not we're on the ground in case something
         // has moved out from underneath us.
         self.onGroundNeedsUpdate = true
-    
-        local runningPrediction = Shared.GetIsRunningPrediction()
-      
+
         // Allow children to alter player's move before processing. To alter the move
         // before it's sent to the server, use OverrideInput
-        input = self:UpdateMove(input)
-
-        // Before UpdateViewAngles and UpdateMovePhysics
-        self:UpdateCrouch()
+        input = self:AdjustMove(input)
 
         // Update player angles and view angles smoothly from desired angles if set. 
         // But visual effects should only be calculated when not predicting.
-        self:UpdateViewAngles(input)    
+        self:UpdateViewAngles(input)
         
         // Check for jumping, attacking, etc.
         self:HandleButtons(input)
-       
-        // Allow child to update its own internal state before changing position
-        self:PreUpdateMovePhysics(input, runningPrediction)
-        
-        // Update origin and velocity from move (main physics behavior)
-        self:UpdateMovePhysics(input)
-        
-        // Allow children to update state after setting origin/velocity
-        self:PostUpdateMovePhysics(input, runningPrediction)
+
+        if HasMixin(self, "Move") then
+            // Update origin and velocity from input move (main physics behavior).
+            self:UpdateMove(input)
+        end
         
         // Animation transitions (walking, jumping, etc.)
         self:UpdateAnimationTransitions(input.time)
@@ -1488,7 +1432,7 @@ function Player:OnProcessMove(input)
         // the end of the use operation (or else with lag we can get rogue weapon
         // drawing while holding down use)
         self:EndUse(input.time)
-    end        
+    end
     
     SetRunningProcessMove(nil)
     
@@ -1735,9 +1679,9 @@ function Player:UpdateBreathing(timePassed)
     local movementSpeedScalar = 1.5//math.max(1, self:GetVelocity():GetLength())
     local currentBreathingHeight = self:GetBreathingHeight() * math.cos( Shared.GetTime() * movementSpeedScalar )
     
-    local viewOffset = self:GetViewOffset()
+    local viewOffset = self:GetSmoothedViewOffset()
     viewOffset.y = viewOffset.y + currentBreathingHeight
-    self:SetViewOffsetHeight(viewOffset.y) 
+    self:SetViewOffsetHeight(viewOffset.y)
     
     // Update out of breath scalar if we've been running
     local moveScalar = self:GetVelocity():GetLength()/self:GetMaxSpeed()
@@ -1757,9 +1701,9 @@ function Player:GetCrouchAmount()
      
     // Get 0-1 scalar of time since crouch changed        
     local crouchScalar = 0
-    if(self.timeOfCrouchChange > 0 and self.timeLegalCrouchTime > 0) then
+    if self.timeOfCrouchChange > 0 then
     
-        crouchScalar = math.min(self.timeLegalCrouchTime - self.timeOfCrouchChange, Player.kCrouchAnimationTime)/Player.kCrouchAnimationTime
+        crouchScalar = math.min(Shared.GetTime() - self.timeOfCrouchChange, Player.kCrouchAnimationTime)/Player.kCrouchAnimationTime
         
         if(self.crouching) then
             crouchScalar = math.sin(crouchScalar * math.pi/2)
@@ -1768,8 +1712,6 @@ function Player:GetCrouchAmount()
         end
         
     end
-    
-    //Print("%s:GetCrouchAmount(): timeCrouchChange: %s timeLegalCrouchTime: %s => scalar: %.2f (crouching: %s)", self:GetClassName(), tostring(self.timeOfCrouchChange), tostring(self.timeLegalCrouchTime), crouchScalar, tostring(self.crouching))
     
     return crouchScalar
 
@@ -1781,57 +1723,6 @@ end
 
 function Player:GetCrouchShrinkAmount()
     return Player.kCrouchShrinkAmount
-end
-
-function Player:GetExtentsFromCrouch(crouchScalar)
-
-    local extents = self:GetMaxExtents()
-    extents.y = extents.y - (extents.y * self:GetCrouchShrinkAmount() * crouchScalar) / 2
-    return extents
-
-end
-
-function Player:UpdateCrouch()
-
-    PROFILE("Player:UpdateCrouch")
-    
-    local crouchScalar = self:GetCrouchAmount()
-    
-    // If crouch doesn't require updating, return early.
-    if((self.crouching == false and crouchScalar <= kEpsilon) or (self.crouching == true and crouchScalar >= (1-kEpsilon))) then
-        return
-    end
-    
-    local lastExtents = self:GetExtents()
-
-    // Increment crouch scalar if it doesn't get us stuck
-    local lastLegalCrouchTime = self.timeLegalCrouchTime
-    self.timeLegalCrouchTime = Shared.GetTime()
-    
-    self:UpdateControllerFromEntity()
-    
-    if(self:GetIsStuck()) then
-    
-        // Standing up in a vent, for instance
-        
-        self.timeLegalCrouchTime = lastLegalCrouchTime
-        
-        self:UpdateControllerFromEntity()
-        
-    end
-    
-    // Update extents and possibly origin to make sure we're not stuck in the world
-    local newExtents = self:GetExtentsFromCrouch(crouchScalar)
-    
-    // Update y position in case we're in something (move you up as you stand up)
-    local yExtentsDiff = newExtents.y - lastExtents.y
-
-    if yExtentsDiff > 0 then
-    
-        self:SetOrigin(self:GetOrigin() + Vector(0, yExtentsDiff, 0))
-        
-    end
-
 end
 
 // Returns true if the player is currently standing on top of something solid. Recalculates
@@ -1846,7 +1737,7 @@ function Player:GetIsOnGround()
         // We're not on ground for a short time after we jump
         if (self:GetOverlayAnimation() ~= self:GetCustomAnimationName(Player.kAnimStartJump) or self:GetOverlayAnimationFinished()) then
 
-            self.onGround = self:GetGroundPosition()
+            self.onGround = self:GetIsCloseToGround(Player.kOnGroundDistance)
             
             if self.onGround then
                 self.timeLastOnGround = Shared.GetTime()
@@ -1892,21 +1783,14 @@ function Player:SetOrigin(origin)
     
 end
 
-// Returns boolean indicating if we're on the ground now or not (but always false with +y velocity).
-// If position parameter passed, set it to ground if right below us to avoid unnecessary falling.
-// If no position passed, use current origin.
-function Player:GetGroundPosition(position)
+// Returns boolean indicating if we're at least the passed in distance from the ground.
+function Player:GetIsCloseToGround(distanceToGround)
 
     if self.controller == nil then
         return false
     end
 
-    // Try to move the controller downward a small amount to determine if
-    // we're on the ground.
-    local offset = Vector(0, -0.05, 0)
-    local trace = self.controller:Trace(offset, self:GetMovePhysicsMask())
-
-    if (self.velocity.y > 0 and self.timeOfLastJump ~= nil and (Shared.GetTime() - self.timeOfLastJump < .2)) then
+    if (self:GetVelocity().y > 0 and self.timeOfLastJump ~= nil and (Shared.GetTime() - self.timeOfLastJump < .2)) then
     
         // If we are moving away from the ground, don't treat
         // us as standing on it.
@@ -1914,19 +1798,17 @@ function Player:GetGroundPosition(position)
         
     end
     
+    // Try to move the controller downward a small amount to determine if
+    // we're on the ground.
+    local offset = Vector(0, -distanceToGround, 0)
+    local trace = self.controller:Trace(offset, self:GetMovePhysicsMask())
+    
     if (trace.fraction < 1 and trace.normal.y < Player.kMaxWalkableNormal) then
         return false
     end
 
     if trace.fraction < 1 then
-    
-        // If position parameter passed in, set it to point on ground
-        if position ~= nil then
-            VectorCopy(trace.endPoint, position)
-        end
-        
         return true
-        
     end
     
     return false
@@ -1953,7 +1835,9 @@ function Player:UpdateControllerFromEntity()
     
     if (self.controller ~= nil) then
         
-        local extents = self:GetExtentsFromCrouch(self:GetCrouchAmount())
+        local extents = self:GetExtents()
+        
+        
         local controllerHeight, controllerRadius = self:GetTraceCapsule()
         
         if controllerHeight ~= self.controllerHeight or controllerRadius ~= self.controllerRadius then
@@ -1965,7 +1849,7 @@ function Player:UpdateControllerFromEntity()
             // slide down as we walk up stairs or over other lips. The curved
             // edges of the cylinder allows players to slide off when we hit them,
             self.controller:SetupCylinder( controllerRadius * Player.kSkinCompensation,
-                (controllerHeight + controllerRadius * 2) * Player.kSkinCompensation, self.controller:GetCoords() )
+                controllerHeight * Player.kSkinCompensation, self.controller:GetCoords() )
                 
         end
         
@@ -2017,7 +1901,8 @@ end
 
 function Player:GetCanIdle()
     local groundSpeed = self:GetVelocity():GetLengthXZ()
-    return groundSpeed < .5 and self:GetIsOnGround()
+    local stunned = HasMixin(self, "Stun") and self:GetIsStunned()
+    return groundSpeed < .5 and self:GetIsOnGround() and not stunned
 end
 
 /**
@@ -2043,7 +1928,7 @@ function Player:UpdateAnimationTransitions(timePassed)
             self:SetOverlayAnimation(self:GetCustomAnimationName(Player.kAnimJump))
             
         // If we're about to land, play land animation
-        elseif (overlayAnim == self:GetCustomAnimationName(Player.kAnimJump) and (self.fallReadyForPlay == 1) and (((velocity.y < 0) and self:GetGroundPosition()) or self:GetIsOnGround())) then
+        elseif (overlayAnim == self:GetCustomAnimationName(Player.kAnimJump) and (self.fallReadyForPlay == 1) and (((velocity.y < 0) and self:GetIsCloseToGround(Player.kOnGroundDistance)) or self:GetIsOnGround())) then
 
             // Play special fall sounds depending on material
             self:TriggerEffects("fall", {surface = self:GetMaterialBelowPlayer()})
@@ -2091,6 +1976,7 @@ function Player:UpdateScoreboard(input)
 end
 
 function Player:UpdateShowMap(input)
+    PROFILE("Player:UpdateShowMap")
     if Client then
         self:ShowMap(bit.band(input.commands, Move.ShowMap) ~= 0)
     end
@@ -2111,7 +1997,10 @@ function Player:UpdatePoseParameters(deltaTime)
 
     PROFILE("Player:UpdatePoseParameters")
     
-    SetPlayerPoseParameters(self, self:GetViewAngles(), self.velocity, self:GetMaxSpeed(), self:GetMaxBackwardSpeedScalar(), self:GetCrouchAmount())    
+    // A Move mixins is needed for GetViewAngles().
+    ASSERT(HasMixin(self, "Move"))
+    
+    SetPlayerPoseParameters(self, self:GetViewAngles(), self:GetVelocity(), self:GetMaxSpeed(), self:GetMaxBackwardSpeedScalar(), self:GetCrouchAmount())    
 
 end
 
@@ -2198,7 +2087,7 @@ function Player:HandleJump(input, velocity)
     
         // Compute the initial velocity to give us the desired jump
         // height under the force of gravity.
-        velocity.y = math.sqrt(-2 * self:GetJumpHeight() * self:GetGravityForce(input))         
+        velocity.y = math.sqrt(-2 * self:GetJumpHeight() * self:GetGravityForce(input))
 
         if not Shared.GetIsRunningPrediction() then
             self:TriggerEffects("jump", {surface = self:GetMaterialBelowPlayer()})
@@ -2261,6 +2150,9 @@ function Player:CanDrawWeapon()
 end
 
 function Player:HandleAttacks(input)
+
+    PROFILE("Player:HandleAttacks")
+
     if (self:GetIsUsing()) then
         return
     end
@@ -2299,6 +2191,86 @@ function Player:HandleAttacks(input)
     
 end
 
+// Look at keys hold down and return integer representing the direction we're going 
+function Player:GetDesiredTapDirection(input)
+
+    local newDirection = Player.kTapMode.None
+    
+    if input.move.z == 0 then
+        if input.move.x == 1 then
+            newDirection = Player.kTapMode.LeftDown
+        elseif input.move.x == -1 then
+            newDirection = Player.kTapMode.RightDown
+        end
+    elseif input.move.x == 0 then
+        if input.move.z == 1 then
+            newDirection = Player.kTapMode.ForwardDown
+        elseif input.move.z == -1 then
+            newDirection = Player.kTapMode.BackDown
+        end
+    end
+    
+    return newDirection
+    
+end
+
+function Player:HandleDoubleTap(input)
+
+    PROFILE("Player:HandleDoubleTap")
+    
+    // Max time interval between down and up, and up then down
+    local kTapInterval = .2
+    local newDirectionEnum = self:GetDesiredTapDirection(input)
+    local newIsTapDown = (self.tapMode == Player.kTapMode.LeftDown or self.tapMode == Player.kTapMode.RightDown or self.tapMode == Player.kTapMode.ForwardDown or self.tapMode == Player.kTapMode.BackDown)
+    local currentIsTapDown = (self.tapMode == Player.kTapMode.LeftDown or self.tapMode == Player.kTapMode.RightDown or self.tapMode == Player.kTapMode.ForwardDown or self.tapMode == Player.kTapMode.BackDown)
+    
+    // Check if we're releasing key after pressing it previously
+    if (newDirectionEnum == Player.kTapMode.None) and (Shared.GetTime() < self.tapModeTime + kTapInterval) and currentIsTapDown then
+    
+        if self.tapMode == Player.kTapMode.LeftDown then
+            self:SetTapMode(Player.kTapMode.LeftUp)
+        elseif self.tapMode == Player.kTapMode.RightDown then
+            self:SetTapMode(Player.kTapMode.RightUp)
+        elseif self.tapMode == Player.kTapMode.ForwardDown then
+            self:SetTapMode(Player.kTapMode.ForwardUp)
+        elseif self.tapMode == Player.kTapMode.BackDown then
+            self:SetTapMode(Player.kTapMode.BackUp)
+        end
+
+    // Check if we just pressed in the same direction after we previously released it
+    elseif (self.tapMode == Player.kTapMode.LeftUp or self.tapMode == Player.kTapMode.RightUp or self.tapMode == Player.kTapMode.ForwardUp or self.tapMode == Player.kTapMode.BackUp) and
+            // Make sure the down is matched to the up and happening quickly
+           (newDirectionEnum == (self.tapMode - 1)) and (Shared.GetTime() < (self.tapModeTime + kTapInterval)) then
+    
+        if (newDirectionEnum == (self.tapMode - 1)) then
+        
+            self:OnDoubleTap(newDirectionEnum)
+        
+            self:SetTapMode(Player.kTapMode.None)
+            
+        end
+    
+    elseif newDirectionEnum ~= Player.kTapMode.None or (Shared.GetTime() > self.tapModeTime + kTapInterval) then
+        self:SetTapMode(newDirectionEnum)        
+    end
+    
+end
+
+function Player:SetTapMode(mode)
+
+    if self.tapMode ~= mode then    
+        
+        self.tapMode = mode
+        self.tapModeTime = Shared.GetTime()            
+        
+    end
+    
+end
+
+// Pass view model direction
+function Player:OnDoubleTap(tapDirectionEnum)
+end
+
 function Player:GetPrimaryAttackLastFrame()
     return self.primaryAttackLastFrame
 end
@@ -2319,8 +2291,6 @@ function Player:ModifyVelocity(input, velocity)
         self.jumpHandled = true
     
     elseif self:GetIsOnGround() then
-    
-        //Print("Setting velocity y to 0 (was %.2f)", velocity.y)
 
         velocity.y = 0
     
@@ -2360,6 +2330,8 @@ function Player:HandleButtons(input)
     end
     
     self:HandleAttacks(input)
+    
+    self:HandleDoubleTap(input)
         
     if (bit.band(input.commands, Move.NextWeapon) ~= 0) then
         self:SelectNextWeapon()
@@ -2401,51 +2373,48 @@ function Player:HandleButtons(input)
     if (bit.band(input.commands, Move.Weapon5) ~= 0) then
         self:SwitchWeapon(5)
     end
-
-    local newCrouchState = (bit.band(input.commands, Move.Crouch) ~= 0)
-    if(self.crouching ~= newCrouchState) then
-        self:SetCrouchState(newCrouchState)
+    
+    local crouching = bit.band(input.commands, Move.Crouch) ~= 0
+    
+    if self.crouching and not crouching then
+        // Attempt to stop crouching
+        self:SetCrouchState(crouching)
+    elseif not self.crouching and crouching then
+        // Start crouching
+        self:SetCrouchState(crouching)
     end
     
     self:UpdateShowMap(input)
         
 end
 
-function Player:SetCrouchState(newCrouchState)
+function Player:SetCrouchState(crouching)
+
+    PROFILE("Player:SetCrouchState")
+
+    if crouching == self.crouching then
+        return
+    end
    
-    self.crouching = newCrouchState
-    self.timeOfCrouchChange = Shared.GetTime()
-    self.timeLegalCrouchTime = Shared.GetTime()
-
-end
-
-function Player:GetFrictionForce(input, velocity)
-    
-    local frictionScalar = 0
-
-    // Don't apply friction when we're moving on the ground,
-    // it affects our max speed too much. Just bring us to a stop
-    // when we stop trying to move.
-    if(self:GetIsOnGround() and input.move:GetLength() == 0) then
-        frictionScalar = 8
+    if not crouching then
+        
+        // Check if there is room for us to stand up.
+        self.crouching = crouching
+        self:UpdateControllerFromEntity()
+        
+        if self:GetIsStuck() then
+            self.crouching = true
+            self:UpdateControllerFromEntity()
+        else
+            self.timeOfCrouchChange = Shared.GetTime()
+        end
+        
+    else
+        self.crouching = crouching
+        self.timeOfCrouchChange = Shared.GetTime()
+        self:UpdateControllerFromEntity()
     end
-    
-    local scaleVelY = 0
-    if(self:GetIsOnLadder()) then
-        frictionScalar = 8
-        scaleVelY = -velocity.y
-    end
-    
-    //if(self.mode ~= kPlayerMode.Default) then
-    //    frictionScalar = 10
-    //end
-    
-    return Vector(-velocity.x, scaleVelY, -velocity.z) * frictionScalar
-    
-end
 
-function Player:GetGravityForce(input)
-    return Player.kGravity 
 end
 
 function Player:OnBuy()
@@ -2494,7 +2463,8 @@ end
 function Player:SetViewModel(viewModelName, weapon)
     local viewModel = self:GetViewModelEntity()
     if viewModel then
-        viewModel:SetModel(viewModelName, weapon)
+        viewModel:SetWeapon(weapon)
+        viewModel:SetModel(viewModelName)
     else
         Print("%s:SetViewModel(%s): View model nil", self:GetClassName(), ToString(viewModelName))
     end
@@ -2645,6 +2615,7 @@ function Player:GetVisibleWaypoint()
 end
 
 // Player is incapacitated briefly
+// Note: This is an old version of Knockback. See how it is handled in Weapon.lua.
 function Player:Knockback(velocity)
 
     // Apply force
@@ -2684,4 +2655,4 @@ function Player:GetIsUsing ()
   return self.isUsing
 end
 
-Shared.LinkClassToMap("Player", Player.kMapName, networkVars )
+Shared.LinkClassToMap("Player", Player.kMapName, Player.networkVars )

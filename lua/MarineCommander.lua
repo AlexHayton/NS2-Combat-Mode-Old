@@ -62,6 +62,10 @@ function MarineCommander:OnInit()
     
 end
 
+function MarineCommander:GetSelectionSound()
+    return MarineCommander.kSelectSound
+end
+
 function MarineCommander:GetNumSquads()
     return self.numSquads
 end
@@ -72,18 +76,6 @@ end
 
 function MarineCommander:GetOrderConfirmedEffect()
     return MarineCommander.kOrderClickedEffect
-end
-
-function MarineCommander:OnSelectionChanged()
-
-    Commander.OnSelectionChanged(self)
-    
-    if(table.maxn(self.selectedEntities) > 0) then
-    
-        Shared.PlayPrivateSound(self, MarineCommander.kSelectSound, nil, 1.0, self:GetOrigin())
-        
-    end
-
 end
 
 // Top row always the same. Alien commander can override to replace. 
@@ -131,7 +123,7 @@ function MarineCommander:GetCurrentTechButtons(techId, entity)
     if not inQuickMenu and entity then
     
         // Allow selected entities to add/override buttons in the menu (but not top row)
-        local selectedTechButtons = entity:GetTechButtons(techId)
+        local selectedTechButtons = entity:GetTechButtons(techId, self:GetTeamType())
         if selectedTechButtons then
             for index, id in pairs(selectedTechButtons) do
                techButtons[4 + index] = id 

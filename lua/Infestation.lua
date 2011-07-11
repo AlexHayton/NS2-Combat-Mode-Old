@@ -16,8 +16,9 @@ Infestation.kMapName = "infestation"
 Infestation.kEnergyCost = kGrowCost
 Infestation.kInitialHealth = 50
 Infestation.kMaxHealth = 500
-Infestation.kVerticalSize = 1.0
-Infestation.kGrowthRateScalar = .45
+Infestation.kVerticalSize = 1
+Infestation.kDecalVerticalSize = 1
+Infestation.kGrowthRateScalar = 1
 
 Infestation.kInitialRadius = .05
 Infestation.kModelName = PrecacheAsset("models/alien/pustule/pustule.model")
@@ -33,9 +34,9 @@ local networkVars =
     // 0 to kMaxRadius
     radius                  = "interpolated float",
     maxRadius               = "float",
-    connected               = "boolean",
-    fullyGrown              = "boolean",
-    pustuleAlive            = "boolean",
+    
+    // Host hive or cyst
+    hostAlive               = "boolean",
 }
 
 function Infestation:OnCreate()
@@ -46,23 +47,19 @@ function Infestation:OnCreate()
     self.maxHealth = Infestation.kMaxHealth
     self.maxRadius = kInfestationRadius
     
-    // Set to true if it sustains other infestation (hive)
-    self.generatorState = false
-    
-    self.connectedToHive = true
+    self.hostAlive = true
     
     // False when created, turns true once it has reached full radius
     // Doesn't need to be connected to hive until it has reached full radius
     self.fullyGrown = false
     
-    // ids of other infestation nodes we're connected to
-    self.connections = {}
+    // how fast it is growing
+    self.growthRate = 0
+    
+    self.growthRateScalar = Infestation.kGrowthRateScalar
     
     // Start visible
     self.radius = Infestation.kInitialRadius
-    
-    // Connection-dependent growth rate
-    self.growthRateScalar = Infestation.kGrowthRateScalar
     
     // track when we last thought
     self.lastThinkTime = Shared.GetTime()
@@ -74,7 +71,7 @@ function Infestation:OnCreate()
         self.decal = Client.CreateRenderDecal()
         self.decal:SetMaterial("materials/infestation/infestation_decal.material")
     else 
-        self.lastUpdateThinkTime = self.lastThinkTime
+        self.lastUpdateThinkTime = 0
     end
     
     self:SetPhysicsGroup(PhysicsGroup.InfestationGroup)
@@ -84,11 +81,6 @@ end
 function Infestation:SetGrowthRateScalar(scalar)
     self.growthRateScalar = scalar
 end
-
-/*
-function Infestation:GetIsAliveOverride()
-end
-*/
 
 function Infestation:OnDestroy()
 
@@ -115,26 +107,6 @@ function Infestation:OnInit()
     
     self:SetNextThink(0.01)
     
-end
-
-function Infestation:GetGeneratorState()
-    return self.generatorState
-end
-
-function Infestation:ClearConnections()
-    self.connections = {}
-end
-
-function Infestation:GetConnections()
-    return self.connections
-end
-
-function Infestation:GetConnectedToHive()
-    return self.connectedToHive
-end
-
-function Infestation:SetConnections(connections)
-    table.copy(connections, self.connections)
 end
 
 function Infestation:GetRadius()
@@ -181,7 +153,7 @@ function Infestation:OnThink()
         LiveScriptActor.OnThink(self)
         // avoid clumping and vary the thinkTime individually for each infestation patch (with 0-100ms)
         self.lastThinkTime = self.lastThinkTime + self.thinkTime
-        // lastThinktime is now "now". Add in another does of delta to find when we want to run next
+        // lastThinktime is now "now". Add in another dose of delta to find when we want to run next
         local nextThinkTime = self.lastThinkTime + self.thinkTime
         
         self:SetNextThink(nextThinkTime - now)
@@ -222,12 +194,8 @@ function Infestation:UpdateRenderModel()
     
     if self.decal then
         self.decal:SetCoords( self:GetCoords() )
-        self.decal:SetExtents( Vector(self.radius, Infestation.kVerticalSize, self.radius) )
+        self.decal:SetExtents( Vector(self.radius, Infestation.kDecalVerticalSize, self.radius) )
     end
-    
-    //DebugLine(self:GetOrigin(), self:GetOrigin() + self:GetCoords().xAxis * self.radius, .1, 1, 0, 0, 1)
-    //DebugLine(self:GetOrigin(), self:GetOrigin() + self:GetCoords().yAxis, .1, 0, 1, 0, 1)    
-    //DebugLine(self:GetOrigin(), self:GetOrigin() + self:GetCoords().zAxis * self.radius, .1, 0, 0, 1, 1)
     
 end
 

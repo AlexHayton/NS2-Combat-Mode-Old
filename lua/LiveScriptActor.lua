@@ -249,6 +249,9 @@ function LiveScriptActor:GiveUpgrade(techId)
     
 end
 
+function LiveScriptActor:OnGiveUpgrade(techId)
+end
+
 function LiveScriptActor:GetUpgrades()
     local upgrades = {}
     

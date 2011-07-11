@@ -212,7 +212,7 @@ function GetEntitiesMatchAnyTypes(typeList)
 end
 
 // Fades damage linearly from center point to radius (0 at far end of radius)
-function RadiusDamage(entities, centerOrigin, radius, fullDamage, attacker)
+function RadiusDamage(entities, centerOrigin, radius, fullDamage, attacker, ignoreLOS)
 
     // Do damage to every target in range
     for index, target in ipairs(entities) do
@@ -231,8 +231,8 @@ function RadiusDamage(entities, centerOrigin, radius, fullDamage, attacker)
             targetOrigin = target:GetEngagementPoint()
         end
         
-        if not GetWallBetween(centerOrigin, targetOrigin, attacker) then
-        
+        if ignoreLOS or not GetWallBetween(centerOrigin, targetOrigin, attacker) then
+            
             target:TakeDamage(damage, attacker, attacker, target:GetOrigin(), damageDirection)
 
         end
@@ -359,4 +359,18 @@ function GetClearSpawnPointNearest(player, spawnPoints, position)
     
     return nil
 
+end
+
+/**
+ * Not all Entities have eyes. Play it safe.
+ */
+function GetEntityEyePos(entity)
+    return (entity.GetEyePos and entity:GetEyePos()) or entity:GetOrigin()
+end
+
+/**
+ * Not all Entities have view angles. Play it safe.
+ */
+function GetEntityViewAngles(entity)
+    return (entity.GetViewAngles and entity:GetViewAngles()) or entity:GetAngles()
 end

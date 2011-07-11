@@ -6,10 +6,15 @@
 //    
 // ========= For more information, visit us at http://www.unknownworlds.com =====================    
 
+Script.Load("lua/FunctionContracts.lua")
+
 LiveMixin = { }
 LiveMixin.type = "Live"
 // Whatever uses the LiveMixin needs to implement the following callback functions.
-LiveMixin.expectedCallbacks = { "GetCanTakeDamage", "OnTakeDamage", "OnKill" }
+LiveMixin.expectedCallbacks = {
+    GetCanTakeDamage = "Should return false if the object cannot take damage.",
+    OnTakeDamage = "A callback to alert when the object has taken damage.",
+    OnKill = "A callback to alert when the object has been killed." }
 
 LiveMixin.kHealth = 100
 LiveMixin.kArmor = 0
@@ -42,10 +47,12 @@ function LiveMixin:__initmixin()
 
     self.alive = true
     
-    self.health = LookupTechData(self:GetTechId(), kTechDataMaxHealth, self.__mixindata.kHealth)
+    self.health = LookupTechData(self:GetTechId(), kTechDataMaxHealth, self:GetMixinConstants().kHealth)
+    ASSERT(self.health ~= nil)
     self.maxHealth = self.health
 
-    self.armor = LookupTechData(self:GetTechId(), kTechDataMaxArmor, self.__mixindata.kArmor)
+    self.armor = LookupTechData(self:GetTechId(), kTechDataMaxArmor, self:GetMixinConstants().kArmor)
+    ASSERT(self.armor ~= nil)
     self.maxArmor = self.armor
     
     self.timeOfLastDamage = nil
@@ -70,6 +77,7 @@ function LiveMixin:GetHealthDescription()
     return string.format("Health  %s/%s%s", ToString(math.ceil(self:GetHealth())), ToString(math.ceil(self:GetMaxHealth())), armorString), self:GetHealthScalar()
     
 end
+AddFunctionContract(LiveMixin.GetHealthDescription, { Arguments = { "Entity" }, Returns = { "string", "number" } })
 
 function LiveMixin:GetHealthScalar()
 
@@ -83,22 +91,27 @@ function LiveMixin:GetHealthScalar()
     return current / max
     
 end
+AddFunctionContract(LiveMixin.GetHealthScalar, { Arguments = { "Entity" }, Returns = { "number" } })
 
 function LiveMixin:GetHealth()
     return self.health
 end
+AddFunctionContract(LiveMixin.GetHealth, { Arguments = { "Entity" }, Returns = { "number" } })
 
 function LiveMixin:SetHealth(health)
     self.health = math.min(self:GetMaxHealth(), health)
 end
+AddFunctionContract(LiveMixin.SetHealth, { Arguments = { "Entity", "number" }, Returns = { } })
 
 function LiveMixin:GetMaxHealth()
     return self.maxHealth
 end
+AddFunctionContract(LiveMixin.GetMaxHealth, { Arguments = { "Entity" }, Returns = { "number" } })
 
 function LiveMixin:SetMaxHealth(setMax)
     self.maxHealth = setMax
 end
+AddFunctionContract(LiveMixin.SetMaxHealth, { Arguments = { "Entity", "number" }, Returns = { } })
 
 function LiveMixin:GetArmorScalar()
     if self:GetMaxArmor() == 0 then
@@ -106,30 +119,37 @@ function LiveMixin:GetArmorScalar()
     end
     return self:GetArmor() / self:GetMaxArmor()
 end
+AddFunctionContract(LiveMixin.GetArmorScalar, { Arguments = { "Entity" }, Returns = { "number" } })
 
 function LiveMixin:GetArmor()
     return self.armor
 end
+AddFunctionContract(LiveMixin.GetArmor, { Arguments = { "Entity" }, Returns = { "number" } })
 
 function LiveMixin:SetArmor(armor)
     self.armor = math.min(self:GetMaxArmor(), armor)
 end
+AddFunctionContract(LiveMixin.SetArmor, { Arguments = { "Entity", "number" }, Returns = { } })
 
 function LiveMixin:GetMaxArmor()
     return self.maxArmor
 end
+AddFunctionContract(LiveMixin.GetMaxArmor, { Arguments = { "Entity" }, Returns = { "number" } })
 
 function LiveMixin:SetMaxArmor(setMax)
     self.maxArmor = setMax
 end
+AddFunctionContract(LiveMixin.SetMaxArmor, { Arguments = { "Entity", "number" }, Returns = { } })
 
 function LiveMixin:SetOverkillHealth(health)
     self.overkillHealth = health
 end
+AddFunctionContract(LiveMixin.SetOverkillHealth, { Arguments = { "Entity", "number" }, Returns = { } })
 
 function LiveMixin:GetOverkillHealth()
     return self.overkillHealth
 end
+AddFunctionContract(LiveMixin.GetOverkillHealth, { Arguments = { "Entity" }, Returns = { "number" } })
 
 function LiveMixin:Heal(amount)
 
@@ -146,6 +166,7 @@ function LiveMixin:Heal(amount)
     return healed
     
 end
+AddFunctionContract(LiveMixin.Heal, { Arguments = { "Entity", "number" }, Returns = { "boolean" } })
 
 function LiveMixin:GetIsAlive()
 
@@ -155,6 +176,7 @@ function LiveMixin:GetIsAlive()
     return self.alive
     
 end
+AddFunctionContract(LiveMixin.GetIsAlive, { Arguments = { "Entity" }, Returns = { "boolean" } })
 
 function LiveMixin:SetIsAlive(state)
 
@@ -162,6 +184,7 @@ function LiveMixin:SetIsAlive(state)
     self.alive = state
     
 end
+AddFunctionContract(LiveMixin.SetIsAlive, { Arguments = { "Entity", "boolean" }, Returns = { } })
 
 function LiveMixin:GetHealthPerArmor(damageType)
 
@@ -180,6 +203,7 @@ function LiveMixin:GetHealthPerArmor(damageType)
     return healthPerArmor
     
 end
+AddFunctionContract(LiveMixin.GetHealthPerArmor, { Arguments = { "Entity", "number" }, Returns = { "number" } })
 
 /**
  * Damage to marine armor could show sparks and debris and castings for aliens
@@ -204,6 +228,7 @@ function LiveMixin:GetArmorAbsorbPercentage(damageType)
     return armorAbsorbPercentage
     
 end
+AddFunctionContract(LiveMixin.GetArmorAbsorbPercentage, { Arguments = { "Entity", "number" }, Returns = { "number" } })
 
 function LiveMixin:ComputeDamageFromUpgrades(attacker, damage, damageType, time)
 
@@ -220,6 +245,8 @@ function LiveMixin:ComputeDamageFromUpgrades(attacker, damage, damageType, time)
             
                 damage = damage * kSwarmDamageBonus
                 
+                attacker:TriggerEffects("swarm")
+                
             end
             
         end
@@ -229,6 +256,7 @@ function LiveMixin:ComputeDamageFromUpgrades(attacker, damage, damageType, time)
     return damage, damageType
 
 end
+AddFunctionContract(LiveMixin.ComputeDamageFromUpgrades, { Arguments = { "Entity", "Entity", "number", "number", { "number", "nil" } }, Returns = { "number", "number" } })
 
 function LiveMixin:ComputeDamage(attacker, damage, damageType, time)
 
@@ -265,14 +293,17 @@ function LiveMixin:ComputeDamage(attacker, damage, damageType, time)
     return damage, armorPointsUsed, healthPointsUsed
 
 end
+AddFunctionContract(LiveMixin.ComputeDamage, { Arguments = { "Entity", "Entity", "number", "number", { "number", "nil" } }, Returns = { "number", "number", "number" } })
 
 function LiveMixin:SetLastDamage(time, attacker)
 
     if attacker and attacker.GetId then
         self.timeOfLastDamage = time
         self.lastDamageAttackerId = attacker:GetId()
-    end    
+    end
+    
 end
+AddFunctionContract(LiveMixin.SetLastDamage, { Arguments = { "Entity", "number", { "Entity", "nil" } }, Returns = { } })
 
 /**
  * Returns true if the damage has killed the entity.
@@ -296,6 +327,7 @@ function LiveMixin:TakeDamage(damage, attacker, doer, point, direction)
     return killed
     
 end
+AddFunctionContract(LiveMixin.TakeDamage, { Arguments = { "Entity", "number", "Entity", "Entity", { "Vector", "nil" }, { "Vector", "nil" } }, Returns = { "boolean" } })
 
 /**
  * Client version just calls OnTakeDamage() for pushing around ragdolls and such.
@@ -312,6 +344,7 @@ function LiveMixin:TakeDamageClient(damage, attacker, doer, point, direction)
     return false
     
 end
+AddFunctionContract(LiveMixin.TakeDamageClient, { Arguments = { "Entity", "number", "Entity", "Entity", { "Vector", "nil" }, { "Vector", "nil" } }, Returns = { "boolean" } })
 
 function LiveMixin:TakeDamageServer(damage, attacker, doer, point, direction)
 
@@ -356,7 +389,8 @@ function LiveMixin:TakeDamageServer(damage, attacker, doer, point, direction)
             end
             if doerPlayer and doerPlayer:isa("Player") then
                 // Not sent reliably as this notification is just an added bonus.
-                Server.SendNetworkMessage(doerPlayer, "GiveDamageIndicator", BuildGiveDamageIndicatorMessage(damage), false)
+                // GetDeathIconIndex used to identify the attack type.
+                Server.SendNetworkMessage(doerPlayer, "GiveDamageIndicator", BuildGiveDamageIndicatorMessage(damage, doer:GetDeathIconIndex()), false)
             end
                 
             if (oldHealth > 0 and self:GetHealth() == 0) then
@@ -379,6 +413,7 @@ function LiveMixin:TakeDamageServer(damage, attacker, doer, point, direction)
     return (self.justKilled == true)
     
 end
+AddFunctionContract(LiveMixin.TakeDamageServer, { Arguments = { "Entity", "number", "Entity", "Entity", { "Vector", "nil" }, { "Vector", "nil" } }, Returns = { "boolean" } })
 
 //
 // How damaged this entity is, ie how much healing it can receive.
@@ -386,9 +421,10 @@ end
 function LiveMixin:AmountDamaged() 
     return (self:GetMaxHealth() - self:GetHealth()) + (self:GetMaxArmor() - self:GetArmor())
 end
+AddFunctionContract(LiveMixin.AmountDamaged, { Arguments = { "Entity" }, Returns = { "number" } })
 
 // Return the amount of health we added 
-function LiveMixin:AddHealth(health, playSound)
+function LiveMixin:AddHealth(health, playSound, noArmor)
 
     // TakeDamage should be used for negative values.
     ASSERT( health >= 0 )
@@ -401,11 +437,16 @@ function LiveMixin:AddHealth(health, playSound)
         local healthAdded = math.min(health, self:GetMaxHealth() - self:GetHealth())
         self:SetHealth(math.min(math.max(0, self:GetHealth() + healthAdded), self:GetMaxHealth()))
 
-        local healthToAddToArmor = health - healthAdded
-        if(healthToAddToArmor > 0) then
-            local armorMultiplier = self:GetHealthPerArmor(kDamageType.Normal)
-            local armorPoints = healthToAddToArmor / armorMultiplier            
-            self:SetArmor(math.min(math.max(0, self:GetArmor() + armorPoints), self:GetMaxArmor()))
+        local healthToAddToArmor = 0
+        if not noArmor then
+        
+            healthToAddToArmor = health - healthAdded
+            if(healthToAddToArmor > 0) then
+                local armorMultiplier = self:GetHealthPerArmor(kDamageType.Normal)
+                local armorPoints = healthToAddToArmor / armorMultiplier            
+                self:SetArmor(math.min(math.max(0, self:GetArmor() + armorPoints), self:GetMaxArmor()))
+            end
+            
         end
         
         total = healthAdded + healthToAddToArmor
@@ -419,6 +460,7 @@ function LiveMixin:AddHealth(health, playSound)
     return total
     
 end
+AddFunctionContract(LiveMixin.AddHealth, { Arguments = { "Entity", "number", "boolean" }, Returns = { "number" } })
 
 function LiveMixin:ProcessFrenzy(attacker, targetEntity)
 
@@ -429,8 +471,9 @@ function LiveMixin:ProcessFrenzy(attacker, targetEntity)
         
         local overkillHealth = targetEntity:GetOverkillHealth()        
         local healthToGiveBack = math.max(overkillHealth, kFrenzyMinHealth)
-        attacker:AddHealth(healthToGiveBack)
+        attacker:AddHealth(healthToGiveBack, false)
         
     end
     
 end
+AddFunctionContract(LiveMixin.ProcessFrenzy, { Arguments = { "Entity", "Entity", "Entity" }, Returns = { } })

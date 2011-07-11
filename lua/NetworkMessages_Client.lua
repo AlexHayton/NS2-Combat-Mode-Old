@@ -39,6 +39,13 @@ function OnCommandDebugLine(debugLineMessage)
     DebugLine(ParseDebugLineMessage(debugLineMessage))
 end
 
+function OnCommandMinimapAlert(message)
+    local player = Client.GetLocalPlayer()
+    if player:isa("Commander") then
+        player:AddAlert(message.techId, message.worldX, message.worldZ, message.entityId, message.entityTechId)
+    end
+end
+
 Client.HookNetworkMessage("Ping",               OnCommandPing)
 Client.HookNetworkMessage("Scores",             OnCommandScores)
 Client.HookNetworkMessage("EntityChanged",      OnCommandEntityChanged)
@@ -46,6 +53,8 @@ Client.HookNetworkMessage("EntityChanged",      OnCommandEntityChanged)
 Client.HookNetworkMessage("ClearTechTree",      OnCommandClearTechTree)
 Client.HookNetworkMessage("TechNodeBase",       OnCommandTechNodeBase)
 Client.HookNetworkMessage("TechNodeUpdate",     OnCommandTechNodeUpdate)
+
+Client.HookNetworkMessage("MinimapAlert",       OnCommandMinimapAlert)
 
 Client.HookNetworkMessage("ResetMouse",         OnCommandResetMouse)
 Client.HookNetworkMessage("Tracer",             OnCommandTracer)

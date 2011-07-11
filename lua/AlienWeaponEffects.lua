@@ -19,6 +19,10 @@ kAlienWeaponEffects =
             {player_cinematic = "cinematics/materials/%s/bash.cinematic", doer = "BiteLeap", done = true}, 
             {player_cinematic = "cinematics/alien/skulk/parasite_hit.cinematic", doer = "Parasite", done = true},
             {player_cinematic = "cinematics/alien/gorge/spit_impact.cinematic", doer = "Spit", done = true},        
+            
+            // Brian TODO: Change to something cooler
+            {player_cinematic = "cinematics/alien/gorge/bilebomb_impact.cinematic", doer = "Bomb", done = true},        
+            
             {player_cinematic = "cinematics/alien/lerk/spike_impact.cinematic", doer = "Spike", done = true},
             {player_cinematic = "cinematics/alien/hydra/spike_impact.cinematic", doer = "HydraSpike", done = true},
             {player_cinematic = "cinematics/materials/%s/scrape.cinematic", doer = "SwipeBlink", done = true},
@@ -33,6 +37,7 @@ kAlienWeaponEffects =
             {sound = "sound/ns2.fev/alien/skulk/bite_hit_%s", doer = "BiteLeap", done = true},
             {sound = "sound/ns2.fev/alien/skulk/parasite_hit", doer = "Parasite", done = true},
             {sound = "sound/ns2.fev/alien/gorge/spit_hit", doer = "Spit", done = true},
+            {sound = "sound/ns2.fev/alien/gorge/bilebomb_hit", doer = "Bomb", done = true},
             {sound = "sound/ns2.fev/materials/%s/spike_ricochet", doer = "Spike", done = true},
             {sound = "sound/ns2.fev/materials/%s/spike_ricochet", doer = "Spikes", done = true},
             {sound = "sound/ns2.fev/materials/%s/spikes_ricochet", doer = "HydraSpike", done = true},
@@ -47,6 +52,7 @@ kAlienWeaponEffects =
         hitEffectLocalEffects =
         {
             {private_sound = "sound/ns2.fev/alien/gorge/spit_hit", doer = "Spit", volume = .3, done = true},
+            {private_sound = "sound/ns2.fev/alien/gorge/bilebomb_hit", doer = "Bomb", volume = .3, done = true},
             {private_sound = "sound/ns2.fev/alien/common/spikes_ricochet", doer = "Spike", volume = .3, done = true},
         },
     },
@@ -116,9 +122,9 @@ kAlienWeaponEffects =
             viewmodel_animation = 
               {
               {1, "bite_attack"},
-              {.2, "bite_attack2"},
-              {.5, "bite_attack3"},
-              {.5, "bite_attack4"},
+              //{.5, "bite_attack2"},
+              //{.5, "bite_attack3"},
+              //{.5, "bite_attack4"},
               },
             },
             {overlay_animation = "bite", force = true},
@@ -192,6 +198,27 @@ kAlienWeaponEffects =
         },
     },
     
+    bilebomb_attack =
+    {
+        bilebombFireEffects = 
+        {
+            {sound = "sound/ns2.fev/alien/gorge/bilebomb"},
+            {viewmodel_animation = "spit_attack", blend_time = .2, force = true},
+            //{cinematic = "cinematics/alien/gorge/spit_fire.cinematic"},
+            {overlay_animation = "spit", force = true},
+        },
+    },
+
+    bilebomb_hit =
+    {
+        bilebombHitEffects = 
+        {
+            {sound = "sound/ns2.fev/alien/gorge/bilebomb_hit"},
+            // TODO: Change to something else
+            {cinematic = "cinematics/alien/gorge/bilebomb_impact.cinematic", done = true},
+        },
+    },
+    
     // When creating a structure
     gorge_create =
     {
@@ -239,7 +266,7 @@ kAlienWeaponEffects =
             {sound = "sound/ns2.fev/alien/gorge/create_structure_start"},
             {viewmodel_animation = "chamber_attack"},
             {player_cinematic = "cinematics/alien/gorge/create.cinematic", attach_point = "Head"},
-            {viewmodel_cinematic = "cinematics/alien/gorge/create_view.cinematic"},
+            {viewmodel_cinematic = "cinematics/alien/gorge/create_view.cinematic", attach_point = ""},
         },
     },
     
@@ -247,6 +274,24 @@ kAlienWeaponEffects =
     create_hydra =
     {
         hydraEffects =
+        {   
+        },
+    },
+    
+    start_create_cyst =
+    {
+        startCystCreate = 
+        {
+            {sound = "sound/ns2.fev/alien/gorge/create_structure_start"},
+            {viewmodel_animation = "chamber_attack"},
+            {player_cinematic = "cinematics/alien/gorge/create.cinematic", attach_point = "Head"},
+            {viewmodel_cinematic = "cinematics/alien/gorge/create_view.cinematic", attach_point = ""},
+        },
+    },
+    
+    create_cyst =
+    {
+        cystEffects =
         {   
         },
     },
@@ -423,6 +468,22 @@ kAlienWeaponEffects =
         visionModeOnEffects = 
         {
             {sound = "sound/ns2.fev/alien/common/vision_off"},
+        },
+    },
+    
+    swarm =
+    {
+        swarmEffects =
+        {
+            {sound = "sound/ns2.fev/alien/common/swarm"},
+        },
+    },
+    
+    frenzy =
+    {
+        frenzyEffects =
+        {
+            {sound = "sound/ns2.fev/alien/common/frenzy"},
         },
     },
 }

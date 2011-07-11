@@ -43,6 +43,8 @@ end
 // Physics models and controllers can only be in ONE group (SetGroup()).
 PhysicsGroup = enum
     { 
+        'DefaultGroup',             // Default Group Entities are created with
+        'StructuresGroup',          // All of the commander built structures.
         'RagdollGroup',             // Ragdolls are in this group
         'PlayerControllersGroup',   // Bullets will not collide with this group.
         'PlayerGroup',              // Ignored for movement
@@ -59,6 +61,12 @@ PhysicsGroup = enum
 // Pre-defined physics group masks.
 PhysicsMask = enum
     {
+        // Don't filter out anything
+        FilterNone = 0,
+        
+        // Don't collide with anything
+        FilterAll = 0xFFFFFFFF,
+        
         // Filters anything that should not be collided with for player movement.
         Movement = CreateGroupsFilterMask(PhysicsGroup.RagdollGroup, PhysicsGroup.PlayerGroup, PhysicsGroup.ProjectileGroup, PhysicsGroup.WeaponGroup),
         

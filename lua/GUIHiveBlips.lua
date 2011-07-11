@@ -19,6 +19,9 @@ GUIHiveBlips.kBlipTextureTypeYOffset[kBlipType.FriendlyUnderAttack] = 1
 GUIHiveBlips.kBlipTextureTypeYOffset[kBlipType.TechPointStructure] = 2
 GUIHiveBlips.kBlipTextureTypeYOffset[kBlipType.Sighted] = 3
 GUIHiveBlips.kBlipTextureTypeYOffset[kBlipType.Undefined] = 4
+GUIHiveBlips.kBlipTextureTypeYOffset[kBlipType.NeedHealing] = 1
+GUIHiveBlips.kBlipTextureTypeYOffset[kBlipType.FollowMe] = 0
+GUIHiveBlips.kBlipTextureTypeYOffset[kBlipType.Chuckle] = 0
 
 GUIHiveBlips.kNumberFramesForBlipType = { }
 GUIHiveBlips.kNumberFramesForBlipType[kBlipType.Friendly] = 10
@@ -26,6 +29,9 @@ GUIHiveBlips.kNumberFramesForBlipType[kBlipType.FriendlyUnderAttack] = 7
 GUIHiveBlips.kNumberFramesForBlipType[kBlipType.TechPointStructure] = 10
 GUIHiveBlips.kNumberFramesForBlipType[kBlipType.Sighted] = 11
 GUIHiveBlips.kNumberFramesForBlipType[kBlipType.Undefined] = 10
+GUIHiveBlips.kNumberFramesForBlipType[kBlipType.NeedHealing] = 7
+GUIHiveBlips.kNumberFramesForBlipType[kBlipType.FollowMe] = 10
+GUIHiveBlips.kNumberFramesForBlipType[kBlipType.Chuckle] = 10
 
 GUIHiveBlips.kBlipTextureSize = 64
 GUIHiveBlips.kDefaultBlipSize = 25
@@ -33,6 +39,9 @@ GUIHiveBlips.kMaxBlipSize = 200
 
 GUIHiveBlips.kBlipObstructedColor = Color(1, 1, 1, .75)
 GUIHiveBlips.kBlipVisibleColor = Color(1, 1, 1, 0)
+
+GUIHiveBlips.kFont = "Candara"
+GUIHiveBlips.kBlipTextFontSize = GUIScale(24)
 
 // How fast the animations are for the blips.
 GUIHiveBlips.kFrameChangeRate = 0.1
@@ -50,6 +59,7 @@ function GUIHiveBlips:Uninitialize()
 
     for i, blip in ipairs(self.activeBlipList) do
         GUI.DestroyItem(blip.GraphicsItem)
+        GUI.DestroyItem(blip.TextItem)
     end
     self.activeBlipList = { }
     
@@ -97,13 +107,18 @@ function GUIHiveBlips:UpdateAnimations(deltaTime)
         local newAlpha = Slerp(currentColor.a, destAlpha, deltaTime * 2)
         currentColor.a = newAlpha
         blip.GraphicsItem:SetColor(currentColor)
+        blip.TextItem:SetColor(currentColor)
+        
+        // Dynmically set text positino so it displays at bottom of blip artwork
+        blip.TextItem:SetPosition( Vector(blip.GraphicsItem:GetSize().x / 2, blip.GraphicsItem:GetSize().y, 0) )
+        
     end
     
 end
 
 function GUIHiveBlips:UpdateBlipList(activeBlips)
     
-    local numElementsPerBlip = 5
+    local numElementsPerBlip = 6
     local numBlips = table.count(activeBlips) / numElementsPerBlip
     
     while numBlips > table.count(self.activeBlipList) do
@@ -127,6 +142,17 @@ function GUIHiveBlips:UpdateBlipList(activeBlips)
         updateBlip.Radius = activeBlips[currentIndex + 2]
         updateBlip.Type = activeBlips[currentIndex + 3]
         updateBlip.Obstructed = activeBlips[currentIndex + 4]
+        
+        // "(player name) (status)"
+        // "(tech name) (status")
+        // Like "Squeal Like a Pig needs healing" or "Harvester under attack"
+        local customText = GetHUDTextForBlipType(updateBlip.Type)
+        if customText ~= "" then
+            updateBlip.TextItem:SetText( activeBlips[currentIndex + 5] .. " " .. customText )
+        else
+            updateBlip.TextItem:SetText( "" )
+        end
+        
         numBlips = numBlips - 1
         currentIndex = currentIndex + numElementsPerBlip
     end
@@ -140,6 +166,7 @@ function GUIHiveBlips:CreateBlipItem()
         local returnBlip = self.reuseBlips[1]
         table.remove(self.reuseBlips, 1)
         returnBlip.GraphicsItem:SetIsVisible(true)
+        returnBlip.TextItem:SetIsVisible(true)
         return returnBlip
     end
 
@@ -149,6 +176,17 @@ function GUIHiveBlips:CreateBlipItem()
     newBlip.GraphicsItem:SetTexture(GUIHiveBlips.kBlipImageName)
     newBlip.GraphicsItem:SetColor(GUIHiveBlips.kBlipVisibleColor)
     newBlip.GraphicsItem:SetBlendTechnique(GUIItem.Add)
+    
+    newBlip.TextItem = GUIManager:CreateTextItem()
+    newBlip.TextItem:SetAnchor(GUIItem.Center, GUIItem.Top)
+    newBlip.TextItem:SetFontName(GUIHiveBlips.kFont)
+    newBlip.TextItem:SetFontSize(GUIHiveBlips.kBlipTextFontSize)
+    newBlip.TextItem:SetTextAlignmentX(GUIItem.Align_Center)
+    newBlip.TextItem:SetTextAlignmentY(GUIItem.Align_Min)
+    newBlip.TextItem:SetColor(ColorIntToColor(kAlienTeamColor))
+    
+    newBlip.GraphicsItem:AddChild(newBlip.TextItem)
+
     return newBlip
     
 end

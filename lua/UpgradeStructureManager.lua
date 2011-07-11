@@ -33,6 +33,7 @@ function UpgradeStructureManager:Initialize(supportingStructureClassNameTable, u
     
 end
 
+// Called when structures are created and when they finish building
 function UpgradeStructureManager:AddStructure(entity)
 
     if self:_GetIsSupportingStructure(entity) then
@@ -141,7 +142,7 @@ function UpgradeStructureManager:_GetIsSupportingStructure(entity)
 end
 
 function UpgradeStructureManager:_GetIsUpgradeStructure(entity)
-    return _GetIsInStructureTable(self.kUpgradeStructureClassNameTable, entity) and entity:GetIsBuilt()
+    return _GetIsInStructureTable(self.kUpgradeStructureClassNameTable, entity) // don't check for built or active - they count even before they are built
 end
 
 // Returns true and entityId if true, false and nil otherwise

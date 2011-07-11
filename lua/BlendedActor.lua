@@ -88,6 +88,8 @@ function BlendedActor:SetAnimation(sequenceName, force, animSpeed)
             end
         
         end
+        
+        self.prevAnimationSequence = Model.invalidSequence
 
         return true
         

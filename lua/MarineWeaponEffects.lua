@@ -8,19 +8,30 @@
 
 kMarineWeaponEffects =
 {
+    // When marine weapon hits ground
+    weapon_dropped =
+    {
+        weaponDropEffects = 
+        {
+            {sound = "sound/ns2.fev/marine/common/drop_weapon"},
+        },
+    },
+
     hit_effect =
     {
         // For hit effects, classname is the target
         generalHitEffects =
         {
+            // An alien has it's own hit effects when it takes damage so we only need the sound.
+            {sound = "sound/ns2.fev/marine/rifle/alt_hit_living", isalien = true, done = true},
+            
+            // The Rifle has it's own special cinematic and sound.
+            {player_cinematic = "cinematics/materials/%s/bash.cinematic", doer = "Rifle"},
+            {sound = "sound/ns2.fev/materials/%s/bash", doer = "Rifle", done = true},
+            
+            // More general cases.
             {player_cinematic = "cinematics/materials/%s/ricochet.cinematic", doer = "ClipWeapon"},
             {player_cinematic = "cinematics/materials/%s/scrape.cinematic", doer = "Axe"},
-           //rifle alt is below
-           //grenade is below
-           //add flamethrower searing hit effect/sound
-        },
-        generalHitSounds = 
-        {
             {sound = "sound/ns2.fev/materials/%s/ricochet", doer = "ClipWeapon", done = true},
             {sound = "sound/ns2.fev/materials/%s/metal_scrape", doer = "Axe", surface = "metal", done = true},
         },
@@ -164,6 +175,7 @@ kMarineWeaponEffects =
         rifleAltAttackEffects = 
         {
             {sound = "sound/ns2.fev/marine/rifle/alt_swing"},
+            // Note: The speed has been increased here.
             {viewmodel_animation = {
                                     {1, "attack_secondary"},
                                     //{1, "attack_secondary2"}, hit needs to be faster
@@ -171,20 +183,9 @@ kMarineWeaponEffects =
                                     {1, "attack_secondary4"},
                                     {1, "attack_secondary5"},
                                     //{1, "attack_secondary6"}, hit needs to be faster
-                                    }, force = true},
+                                    }, force = true, speed = 2},
             {overlay_animation = "rifle_alt"},
         },
-    },
-    
-    // Bash hit something (classname is nil or target)
-    rifle_alt_attack_hit = 
-    {
-        rifleAltAttackHitSoundEffects = 
-        {   
-            {cinematic = "cinematics/materials/%s/bash.cinematic"},
-            {sound = "sound/ns2.fev/materials/%s/bash", done = true},
-        },
-        
     },
     
     pistol_attack = 

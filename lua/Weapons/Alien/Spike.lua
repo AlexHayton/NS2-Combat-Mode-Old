@@ -68,7 +68,8 @@ if (Server) then
                     // hanging back and sniping
                     if self:GetOwner() then
                         local damageScalar = ConditionalValue(self:GetOwner():GetHasUpgrade(kTechId.Piercing), kPiercingDamageScalar, 1)
-                        local damage = Spike.kMaxDamage - Clamp( (Shared.GetTime() - self.createTime) / Spike.kDamageFalloffInterval, 0, 1) * (Spike.kMaxDamage - Spike.kMinDamage)
+                        local damageTimeScalar = 1 - Clamp( (Shared.GetTime() - self.createTime) / Spike.kDamageFalloffInterval, 0, 1)
+                        local damage = Spike.kMinDamage + damageTimeScalar * (Spike.kMaxDamage - Spike.kMinDamage)
                         targetHit:TakeDamage(damage * damageScalar, self:GetOwner(), self, self:GetOrigin(), nil)
                         didDamage = true
                     end

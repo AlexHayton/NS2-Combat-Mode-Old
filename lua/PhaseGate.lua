@@ -11,7 +11,7 @@ class 'PhaseGate' (Structure)
 
 PhaseGate.kMapName = "phasegate"
 
-PhaseGate.kThinkInterval = 0.25
+PhaseGate.kUpdateInterval = 0.25
 PhaseGate.kModelName = PrecacheAsset("models/marine/phase_gate/phase_gate.model")
 
 // Can only teleport a player every so often
@@ -19,7 +19,8 @@ PhaseGate.kDepartureRate = .5
 
 PhaseGate.networkVars =
 {
-    linked      = "boolean"
+    linked              = "boolean",
+    destLocationId      = "entityid",
 }
 
 function PhaseGate:OnInit()
@@ -30,10 +31,13 @@ function PhaseGate:OnInit()
     
     // Compute link state on server and propagate to client for looping effects
     self.linked = false
+    self.destLocationId = Entity.invalidId
     
     if Server then
-    self:SetNextThink(PhaseGate.kThinkInterval)
-    self.timeOfLastPhase = nil
+    
+        self:AddTimedCallback(PhaseGate.Update, PhaseGate.kUpdateInterval)
+        self.timeOfLastPhase = nil
+    
     end
     
 end
@@ -54,12 +58,14 @@ function PhaseGate:GetRequiresPower()
     return true
 end
 
+function PhaseGate:GetDestLocationId()
+    return self.destLocationId
+end
+
 if Server then
 
-function PhaseGate:OnThink()
+function PhaseGate:Update()
 
-    Structure.OnThink(self)
-    
     local destinationPhaseGate = self:GetDestinationGate()
     
     // If built and active 
@@ -101,7 +107,28 @@ function PhaseGate:OnThink()
     // Update linked state
     self.linked = self:GetIsBuilt() and self:GetIsActive() and (destinationPhaseGate ~= nil)
     
-    self:SetNextThink(PhaseGate.kThinkInterval)
+    // Update destination id for displaying in description
+    self.destLocationId = self:ComputeDestinationLocationId()
+    
+    return true
+    
+end
+
+function PhaseGate:ComputeDestinationLocationId()
+
+    local destLocationId = Entity.invalidId
+    
+    local destGate = self:GetDestinationGate()
+    if destGate then
+    
+        local name, location = GetLocationForPoint(destGate:GetOrigin())
+        if location then
+            destLocationId = location:GetId()
+        end
+        
+    end
+    
+    return destLocationId
     
 end
 
@@ -134,7 +161,7 @@ function PhaseGate:GetDestinationGate()
     return nil
     
 end
-        
+
 end
 
 if Client then

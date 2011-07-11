@@ -73,6 +73,18 @@ function TechTree:AddBuildNode(techId, prereq1, prereq2)
     
 end
 
+// Contains a bunch of tech nodes
+function TechTree:AddEnergyBuildNode(techId, prereq1, prereq2)
+
+    local techNode = TechNode()
+
+    techNode:Initialize(techId, kTechType.EnergyBuild, prereq1, prereq2)
+    techNode.requiresTarget = true
+    
+    self:AddNode(techNode)    
+    
+end
+
 function TechTree:AddManufactureNode(techId, prereq1, prereq2)
 
     local techNode = TechNode()
@@ -117,7 +129,23 @@ function TechTree:AddTargetedBuyNode(techId, prereq1, prereq2, addOnTechId)
 
 end
 
-function TechTree:AddResearchNode(techId, prereq1, prereq2)
+function TechTree:AddTargetedEnergyNode(techId, prereq1, prereq2, addOnTechId)
+
+    local techNode = TechNode()
+    
+    techNode:Initialize(techId, kTechType.ActionEnergy, prereq1, prereq2)
+    
+    if addOnTechId ~= nil then
+        techNode.addOnTechId = addOnTechId
+    end
+    
+    techNode.requiresTarget = true        
+    
+    self:AddNode(techNode)    
+
+end
+
+function TechTree:AddResearchNode(techId, prereq1, prereq2, addOnTechId)
 
     local techNode = TechNode()
     
@@ -125,6 +153,10 @@ function TechTree:AddResearchNode(techId, prereq1, prereq2)
     
     local researchTime = LookupTechData(techId, kTechDataResearchTimeKey)
     techNode.time = ConditionalValue(researchTime ~= nil, researchTime, 0)
+    
+    if addOnTechId ~= nil then
+        techNode.addOnTechId = addOnTechId
+    end
 
     self:AddNode(techNode)    
     
@@ -198,12 +230,11 @@ function TechTree:AddMenu(techId)
 
 end
 
-function TechTree:AddEnergyBuildNode(techId, prereq1, prereq2)
+function TechTree:AddEnergyManufactureNode(techId, prereq1, prereq2)
 
     local techNode = TechNode()
 
-    techNode:Initialize(techId, kTechType.EnergyBuild, prereq1, prereq2)
-    techNode.energyBuild = true
+    techNode:Initialize(techId, kTechType.EnergyManufacture, prereq1, prereq2)
     
     local researchTime = LookupTechData(techId, kTechDataResearchTimeKey)
     techNode.time = ConditionalValue(researchTime ~= nil, researchTime, 0)

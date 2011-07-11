@@ -57,8 +57,8 @@ GUISelectionPanel.kResourceTextXOffset = 2
 GUISelectionPanel.kSelectedHealthTextFontSize = 15 * kCommanderGUIsGlobalScale
 
 GUISelectionPanel.kSelectedCustomTextFontSize = 16 * kCommanderGUIsGlobalScale
-GUISelectionPanel.kSelectedCustomTextXOffset = -20
-GUISelectionPanel.kSelectedCustomTextYOffset = 20
+GUISelectionPanel.kSelectedCustomTextXOffset = -183 * kCommanderGUIsGlobalScale
+GUISelectionPanel.kSelectedCustomTextYOffset = 125 * kCommanderGUIsGlobalScale
 
 GUISelectionPanel.kStatusBarWidth = 200 * kCommanderGUIsGlobalScale
 GUISelectionPanel.kStatusBarHeight = 6 * kCommanderGUIsGlobalScale

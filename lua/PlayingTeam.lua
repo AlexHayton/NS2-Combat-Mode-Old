@@ -9,12 +9,15 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Team.lua")
+Script.Load("lua/Entity.lua")
 
 class 'PlayingTeam' (Team)
 
 PlayingTeam.kObliterateVictoryTeamResourcesNeeded = 500
 PlayingTeam.kUnitMaxLOSDistance = 30
-PlayingTeam.kUnitMinLOSDistance = 8
+PlayingTeam.kUnitMinLOSDistance = 1.5
+PlayingTeam.kStructureMinLOSDistance = 10
+
 PlayingTeam.kTooltipHelpInterval = 1
 
 // How often to compute LOS visibility for entities (seconds)
@@ -48,12 +51,11 @@ end
 
 function PlayingTeam:AddPlayer(player)
 
-    Team.AddPlayer(self, player)
+    local added = Team.AddPlayer(self, player)
     
     player.teamResources = self.teamResources
     
-    // TODO: Make sure players don't leave server and come back to get resources
-    player:SetResources( kPlayerInitialIndivRes )
+    return added
     
 end
 
@@ -62,7 +64,6 @@ function PlayingTeam:OnCreate()
     Team.OnCreate(self)
     
     self.structures = {}
-    self.towers = {}
       
 end
 
@@ -74,7 +75,6 @@ function PlayingTeam:OnInit()
     self.timeOfLastTechTreeUpdate = nil
     
     table.clear(self.structures)
-    table.clear(self.towers)
     
     self.lastPlayedTeamAlertName = nil
     self.timeOfLastPlayedTeamAlert = nil
@@ -486,17 +486,24 @@ function PlayingTeam:RespawnPlayer(player, origin, angles)
 
 end
 
-function PlayingTeam:TechAdded(entity)
+function PlayingTeam:StructureCreated(entity)
 
     if(entity:isa("Structure")) then
         table.insertunique(self.structures, entity)
     end
     
-    // If a resource tower, add it to a list
-    if(entity:isa("ResourceTower")) then
-        table.insertunique(self.towers, entity)
+end
+
+function PlayingTeam:StructureDestroyed(entity)
+
+    if(entity:isa("Structure")) then
+        table.removevalue(self.structures, entity)
     end
-   
+
+end
+
+function PlayingTeam:TechAdded(entity)
+
     // Tell tech tree to recompute availability next think
     if(self.techTree ~= nil) then
         self.techTree:SetTechChanged()
@@ -505,29 +512,9 @@ end
 
 function PlayingTeam:TechRemoved(entity)
 
-    if(entity:isa("Structure")) then
-        table.removevalue(self.structures, entity)
-    end
-    
-    // If a resource tower, remove it to a list
-    if(entity:isa("ResourceTower")) then
-        table.removevalue(self.towers, entity)
-    end
-    
     // Tell tech tree to recompute availability next think
     if(self.techTree ~= nil) then
         self.techTree:SetTechChanged()
-    end
-    
-end
-
-function PlayingTeam:TechBuilt(structure)
-
-    // Tell tech tree to recompute availability next think
-    if(self.techTree ~= nil) then
-    
-        self.techTree:SetTechChanged()
-        
     end
     
 end
@@ -544,7 +531,10 @@ function PlayingTeam:ComputeLOS()
         if(entity:GetTeamNumber() == self:GetTeamNumber()) then
         
             // Scan entities are structures
-            if( (entity:isa("Player") and not entity:GetIsCommander()) or entity:isa(teamBuilderName) or entity:isa("Structure") or entity:isa("ARC") ) then
+            if( (entity:isa("Player") and not entity:GetIsCommander()) or 
+                (entity:isa(teamBuilderName)) or 
+                (entity:isa("Structure") and not entity:isa("PowerPoint") and not entity:isa("Door") and not entity:isa("Egg")) or 
+                (entity:isa("ARC")) ) then
             
                 return true
                 
@@ -586,9 +576,19 @@ function PlayingTeam:ComputeLOS()
         for seeingIndex, seeingUnit in ipairs(seeingUnits) do
 
             local distance = seeingUnit:GetDistanceXZ(entity)
-            if(distance < PlayingTeam.kUnitMinLOSDistance) then
+            
+            // Structures give LOS to other structures and infestation within range, esp. so command stations can see infestation
+            if seeingUnit:isa("Structure") and seeingUnit:GetIsActive() and (entity:isa("Structure") or entity:isa("Infestation")) and distance < PlayingTeam.kStructureMinLOSDistance then
+            
+                // Check to make sure view isn't blocked by the level or big visible entities (add in a little height in case infestation is on ground)
+                local trace = Shared.TraceRay(seeingUnit:GetModelOrigin(), entity:GetModelOrigin() + Vector(0, 1, 0), PhysicsMask.AllButPCs, EntityFilterTwo(seeingUnit, entity))                
+                if trace.fraction == 1 then
+                    entity.sighted = true
+                end
+                
+            elseif(distance < PlayingTeam.kUnitMinLOSDistance) then
 
-                // TODO: Check to make sure view isn't blocked by the level or big visible entities?
+                // Don't need to check for collision because distance so low
                 entity.sighted = true
                 break
                 
@@ -611,6 +611,22 @@ function PlayingTeam:ComputeLOS()
             end
 
         end
+
+        // Entities are only relevant to the enemy's commander if they are sighted
+                
+        local mask = bit.bor(kRelevantToTeam1Unit, kRelevantToTeam2Unit)
+        
+        if entity.sighted then
+            mask = bit.bor(mask, kRelevantToTeam1Commander, kRelevantToTeam2Commander)
+        else
+            if entity:GetTeamNumber() == 1 then
+                mask = bit.bor(mask, kRelevantToTeam1Commander)
+            elseif entity:GetTeamNumber() == 2 then
+                mask = bit.bor(mask, kRelevantToTeam2Commander)
+            end
+        end
+            
+        entity:SetExcludeRelevancyMask( mask )
             
     end
 
@@ -637,8 +653,24 @@ function PlayingTeam:Update(timePassed)
     PROFILE("PlayingTeam:Update")
 
     // Update structure research/energy
-    for index, structure in ipairs(self.structures) do    
+    for index, structure in ipairs(self.structures) do
         structure:UpdateStructure(timePassed)        
+    end
+
+    // Give new players starting resources. Mark players as "having played" the game (so they don't get starting res if 
+    // they join a team again, etc.)    
+    local gamerules = GetGamerules()
+    for index, player in ipairs(self:GetPlayers()) do
+    
+        local success, played = gamerules:GetUserPlayedInGame(player)
+        if success and not played then
+            player:SetResources( kPlayerInitialIndivRes )
+        end
+        
+        if gamerules:GetGameStarted() then
+            gamerules:SetUserPlayedInGame(player)
+        end
+        
     end
     
     self:UpdateHelp()
@@ -759,7 +791,7 @@ function PlayingTeam:ProcessGeneralHelp(player)
         return true
     elseif(player:isa("Commander") and player:AddTooltipOnce("You can leave Commander mode by clicking Logout in the upper right (or logout in console).")) then
         return true
-    elseif(not player:isa("Commander") and GetGamerules():GetGameStarted() and player:AddTooltipOnce("Press your C key to bring up your sayings menu.")) then
+    elseif(not player:isa("Commander") and GetGamerules():GetGameStarted() and player:AddTooltipOnce("Press your Z key to bring up your sayings menu.")) then
         return true
     end
         

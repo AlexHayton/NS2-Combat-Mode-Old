@@ -139,17 +139,12 @@ function GUIManager:GetGUIScriptSingle(scriptName)
 end
 
 function GUIManager:NotifyGUIItemDestroyed(destroyedItem)
-    
-    // Remove any animations that reference the destroyed item.
-    local removeAnimations = { }
-    for i, animation in ipairs(self.animations) do
-        if animation.Item == destroyedItem then
-            table.insert(removeAnimations, animation)
+
+    // Remove all animations that reference the destroyed item.
+    for i = table.count(self.animations), 1, -1 do
+        if self.animations[i].Item == destroyedItem then
+            table.remove(self.animations, i)
         end
-    end
-    
-    for i, removeAnimation in ipairs(removeAnimations) do
-        table.removevalue(self.animations, removeAnimation)
     end
 
 end
@@ -319,6 +314,17 @@ function GUIManager:SendCharacterEvent(character)
     end
     return false
     
+end
+
+function GUIManager:OnResolutionChanged(oldX, oldY, newX, newY)
+
+    for index, script in ipairs(self.scripts) do
+        script:OnResolutionChanged(oldX, oldY, newX, newY)
+    end
+    for index, script in ipairs(self.scriptsSingle) do
+        script[1]:OnResolutionChanged(oldX, oldY, newX, newY)
+    end
+
 end
 
 function GUIManager:CreateGraphicItem()

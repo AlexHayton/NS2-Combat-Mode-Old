@@ -34,7 +34,7 @@ Blink.kSecondaryAttackDelay = 0
 Blink.kBlinkEnergyCost = kBlinkEnergyCost
 Blink.kBlinkDistance = 20
 Blink.kOrientationScanRadius = 2.5
-Blink.kStartEtherealForce = 20
+Blink.kStartEtherealForce = 15
 // The amount of time that must pass before the player can enter the ether again.
 Blink.kMinEnterEtherealTime = 0.5
 
@@ -78,7 +78,7 @@ function Blink:OnHolster(player)
     
 end
 
-function Blink:GetHasSecondary()
+function Blink:GetHasSecondary(player)
     return true
 end
 
@@ -322,7 +322,8 @@ function Blink:PerformBlink(player)
             local destCoords = coords
             destCoords.origin = destCoords.origin + player:GetViewOffset()
             
-            self:SetBlinkCamera(player:GetViewAnglesCoords(), destCoords, blinkTime)             
+            local viewAngleCoords = self:GetViewAngles():GetCoords( self:GetOrigin() + self:GetViewOffset() )
+            self:SetBlinkCamera(viewAngleCoords, destCoords, blinkTime)
             
         end
         
@@ -356,19 +357,16 @@ end
 function Blink:PerformPrimaryAttack(player)
 
     self.showingGhost = false
-    
+    return true
 end
 
 function Blink:OnSecondaryAttack(player)
 
     if not self.etherealStartTime or Shared.GetTime() - self.etherealStartTime >= Blink.kMinEnterEtherealTime then
     
-        // Enter "ether" fast movement mode
-        if player.GetBlinkModifier and player:GetBlinkModifier() then
-            // Blink instantly
-            self:ToggleGhostMode(player)
-        // Don't keep going ethereal when button still held down after running out of energy
-        elseif not self.blinkButtonDown then
+        // Enter "ether" fast movement mode, but don't keep going ethereal when button still held down after
+        // running out of energy
+        if not self.blinkButtonDown then
             self:SetEthereal(player, true)
             self.blinkButtonDown = true
         end
@@ -412,22 +410,32 @@ function Blink:SetEthereal(player, state)
         // Set player visibility state
         player:SetIsVisible(not self.ethereal)
         player:SetGravityEnabled(not self.ethereal)
-        player:SetVelocity(Vector(0, 0, 0))
         
         player:SetEthereal(state)
         
-        // Give player velocity boost
+        // Give player initial velocity in direction we're pressing, or forward if 
         if self.ethereal then
         
-            local velocity = player:GetVelocity()
-
-            local forwardVec = player:GetViewAngles():GetCoords().zAxis
-            local newVelocity = velocity + forwardVec * Blink.kStartEtherealForce
+            local initialBoostDirection = player:GetViewAngles():GetCoords().zAxis
+            if player.desiredMove and player.desiredMove:GetLength() > .01 then
             
+                // Transform desired move into direction
+                local initialDirection = player:GetViewAngles():GetCoords():TransformVector( player.desiredMove )
+                VectorCopy(initialDirection, initialBoostDirection)
+                initialBoostDirection:Normalize()
+                
+            end
+        
+            // If desired velocity is quite opposite of our current velocity, don't 
+            local velocity = player:GetVelocity() 
+            local newVelocity = /*velocity * .3 +*/ initialBoostDirection * Blink.kStartEtherealForce            
             player:SetVelocity(newVelocity)
 
         else
-            player:SetVelocity(Vector(0, 0, 0))
+        
+            // Mute current velocity when coming out of blink
+            player:SetVelocity( player:GetVelocity() * .3 )
+            
         end
         
     end
@@ -463,7 +471,7 @@ function Blink:OnProcessMove(player, input)
     if self:GetIsActive() and self.ethereal then
     
         // Decrease energy while in blink mode
-        player:DeductAbilityEnergy(input.time * Fade.kBlinkContinuousEnergyCost)
+        player:DeductAbilityEnergy(input.time * kBlinkEnergyCost)
         
     end
     

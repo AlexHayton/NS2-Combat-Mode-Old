@@ -42,7 +42,9 @@ function CommanderUI_GetHotkeyIconOffset(idx)
         if entity ~= nil then
         
             local xOffset, yOffset = GetMaterialXYOffset(entity:GetTechId(), player:isa("MarineCommander"))
-            return {xOffset, yOffset}
+            if xOffset ~= nil and yOffset ~= nil then
+                return {xOffset, yOffset}
+            end
             
         end
         

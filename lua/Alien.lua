@@ -8,6 +8,7 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
 Script.Load("lua/Player.lua")
+
 class 'Alien' (Player)
 Alien.kMapName = "alien"
 
@@ -42,7 +43,10 @@ Alien.kInnateRegenerationPercentage = 0.02
 Alien.kEnergyRecuperationRate = 10.0
 Alien.kEnergyBreathScalar = .5
 
-local networkVars = 
+// How long our "need healing" text gets displayed under our blip
+Alien.kCustomBlipDuration = 10
+
+Alien.networkVars = 
 {
     // Energy used for all alien weapons and abilities (instead of ammo).
     // Regenerates on its own over time. Not called energy because used in base class.
@@ -62,6 +66,17 @@ function Alien:OnCreate()
     self.darkVisionOn   = false
     self.darkVisionTime = 0
     self.darkVisionEndTime = 0
+
+end
+
+function Alien:OnInit()
+
+    Player.OnInit(self)
+    
+    self.abilityEnergy = Ability.kMaxEnergy
+
+    self.armor = self:GetArmorAmount()
+    self.maxArmor = self.armor
 
 end
 
@@ -253,10 +268,42 @@ function Alien:ExecuteSaying(index, menu)
                 self:GetTeam():TriggerAlert(techId, self)
             end
             
+            // Remember this as a custom blip type so we can display 
+            // appropriate text ("needs healing")
+            self:SetCustomBlip( alienBlipTypes[index] )
+            
         end
         
     end
         
+end
+
+function Alien:SetCustomBlip(blipType)
+
+    self.customBlipType = blipType
+    
+    if blipType ~= kBlipType.Undefined then
+        self.customBlipTime = Shared.GetTime()
+    else
+        self.customBlipTime = nil
+    end
+
+end
+
+function Alien:GetCustomBlip()
+
+    if self.customBlipType ~= nil and self.customBlipType ~= kBlipType.Undefined then
+    
+        if self.customBlipTime and Shared.GetTime() < (self.customBlipTime + Alien.kCustomBlipDuration) then
+        
+            return self.customBlipType
+            
+        end
+        
+    end
+    
+    return kBlipType.Undefined
+    
 end
 
 function Alien:GetChatSound()
@@ -286,4 +333,4 @@ function Alien:GetPlayerStatusDesc()
 
 end
 
-Shared.LinkClassToMap( "Alien", Alien.kMapName, networkVars )
+Shared.LinkClassToMap( "Alien", Alien.kMapName, Alien.networkVars )

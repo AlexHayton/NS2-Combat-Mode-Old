@@ -10,18 +10,18 @@
 
 class 'GUIChat' (GUIScript)
 
-GUIChat.kOffset = Vector(100, -400, 0)
+GUIChat.kOffset = Vector(GUIScale(100), GUIScale(-400), 0)
 GUIChat.kInputModeOffset = Vector(-5, 0, 0)
-GUIChat.kInputOffset = Vector(0, -50, 0)
+GUIChat.kInputOffset = Vector(0, GUIScale(-50), 0)
 GUIChat.kBackgroundColor = Color(0.4, 0.4, 0.4, 0.0)
 // This is the buffer x space between a player name and their chat message.
 GUIChat.kChatTextBuffer = 5
-GUIChat.kFontSize = 18
+GUIChat.kFontSize = GUIScale(18)
 GUIChat.kTimeStartFade = 6
 GUIChat.kTimeEndFade = 7
 
 GUIChat.kVoiceChatIconOffset = Vector(20, 0, 0)
-GUIChat.kVoiceChatIconSize = 32
+GUIChat.kVoiceChatIconSize = GUIScale(32)
 
 function GUIChat:Initialize()
 
@@ -80,6 +80,7 @@ end
 function GUIChat:Update(deltaTime)
 
     self.voiceChatIcon:SetIsVisible(ChatUI_IsVoiceChatActive())
+    self.voiceChatIcon:SetColor(PlayerUI_GetTeamColor())
     
     local addChatMessages = ChatUI_GetMessages()
     local numberElementsPerMessage = 8
@@ -179,6 +180,7 @@ end
 function GUIChat:AddMessage(playerColor, playerName, messageColor, messageText)
     
     local insertMessage = { Background = nil, Player = nil, Message = nil, Time = 0 }
+    messageText = ChatUI_Decode(messageText)
     
     // Check if we can reuse an existing message.
     if table.count(self.reuseMessages) > 0 then

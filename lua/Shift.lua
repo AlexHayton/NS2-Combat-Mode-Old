@@ -47,13 +47,13 @@ function Shift:GetTechButtons(techId)
         local upgradeIndex = table.maxn(techButtons) + 1
         
         if(self:GetTechId() == kTechId.Shift) then
-            techButtons[upgradeIndex] = kTechId.MatureShift
+            techButtons[upgradeIndex] = kTechId.UpgradeShift
         else
             techButtons[upgradeIndex] = kTechId.ShiftEcho
         end
        
     elseif(techId == kTechId.UpgradesMenu) then 
-        techButtons = {kTechId.AdrenalineTech, kTechId.StompTech, kTechId.None, kTechId.None}
+        techButtons = {kTechId.AdrenalineTech, kTechId.StompTech, kTechId.None, kTechId.None}        
         techButtons[kAlienBackButtonIndex] = kTechId.RootMenu
     end
     

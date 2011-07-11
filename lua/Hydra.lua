@@ -33,9 +33,11 @@ function Hydra:GetFov()
     return Hydra.kFov
 end
 
-// put the eye up roughly 90 cm
-function Hydra:GetEyePos()
-    return self:GetOrigin() + self:GetCoords().yAxis * 0.9
+/**
+ * Put the eye up roughly 90 cm.
+ */
+function Hydra:GetViewOffset()
+    return self:GetCoords().yAxis * 0.9
 end
 
 function Hydra:GetIsAlienStructure()

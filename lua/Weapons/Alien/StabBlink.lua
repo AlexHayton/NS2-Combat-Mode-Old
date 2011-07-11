@@ -60,7 +60,7 @@ function StabBlink:PerformPrimaryAttack(player)
     player:SetActivityEnd(player:AdjustFuryFireDelay(self:GetPrimaryAttackDelay()))
 
     player:SetAnimAndMode(chooseWeightedEntry(Fade.kAnimStabTable), kPlayerMode.FadeStab)
-    
+    return true
 end
 
 function StabBlink:OnTag(tagName)

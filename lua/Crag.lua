@@ -38,8 +38,6 @@ function Crag:OnConstructionComplete()
 
     Structure.OnConstructionComplete(self)
     
-    self:SpawnInfestation()
-    
     self:SetNextThink(Crag.kThinkInterval)
     
 end
@@ -60,10 +58,10 @@ function Crag:PerformHealing()
         entsHealed = entsHealed + ((healAmount > 0 and 1) or 0)
     end
     
-    if entsHealed ~= #targets then
-        // should never happen
-        Log("WARNING! UNHEALABLE TARGETS FOUND! %s", targets)
-    end
+   // if entsHealed ~= #targets then
+   //     // should never happen
+   //     Log("WARNING! UNHEALABLE TARGETS FOUND! %s", targets)
+   // end
 
     if entsHealed > 0 then   
         local energyCost = LookupTechData(kTechId.CragHeal, kTechDataCostKey, 0)  
@@ -75,7 +73,7 @@ end
 
 function Crag:TryHeal(target, sqRange)
     local amountHealed = target:AddHealth(Crag.kHealAmount)
-    if (amountHealed > 0) then
+    if amountHealed > 0 then
         target:TriggerEffects("crag_target_healed")           
     end
     return amountHealed
@@ -85,7 +83,7 @@ function Crag:UpdateHealing()
 
     local time = Shared.GetTime()
     
-    if (self.timeOfLastHeal == nil or (time > self.timeOfLastHeal + Crag.kHealInterval)) then
+    if self.timeOfLastHeal == nil or (time > self.timeOfLastHeal + Crag.kHealInterval) then
     
         // Only heal if it has the energy to do so
         local energyCost = LookupTechData(kTechId.CragHeal, kTechDataCostKey, 0)

@@ -13,7 +13,9 @@
 function Alien:Evolve(techIds)
 
     local success = false
-
+    local healthScalar = 1
+    local armorScalar = 1
+    
     // Check for room
     local eggExtents = LookupTechData(kTechId.Embryo, kTechDataMaxExtents)
     local newAlienExtents = nil
@@ -22,19 +24,23 @@ function Alien:Evolve(techIds)
         newAlienExtents = LookupTechData(techId, kTechDataMaxExtents)
         if newAlienExtents then break end
     end
+    
     // In case we aren't evolving to a new alien, using the current's extents.
     if not newAlienExtents then
         newAlienExtents = LookupTechData(self:GetTechId(), kTechDataMaxExtents)
+        // Preserve existing health/armor when we're not changing lifeform
+        healthScalar = self:GetHealth() / self:GetMaxHealth()
+        armorScalar = self:GetArmor() / self:GetMaxArmor() 
     end
     
     local physicsMask = PhysicsMask.AllButPCsAndRagdolls
-    local position = Vector(self:GetGroundAt(self:GetOrigin(), physicsMask))                        
+    local position = self:GetOrigin()
     
     if not self:GetIsOnGround() then
     
         Print("You must be on the ground to evolve.")
         // Pop up tooltip
-        self:AddTooltipOncePer("You must be on the ground to evolve.", 3)
+        self:AddTooltip("You must be on the ground to evolve.")
 
     //elseif not self:GetGameEffectMask(kGameEffect.OnInfestation) then
     //    self:AddTooltipOncePer("You must be on infestation to evolve.", 3)
@@ -53,7 +59,7 @@ function Alien:Evolve(techIds)
             if not LookupTechData(techId, kTechDataGestateName) then
                 // If we don't already have this upgrade, buy it.
                 if not self:GetHasUpgrade(techId) then
-                    bought = self:GiveUpgrade(techId)
+                    bought = true
                 else
                     bought = false
                     Print("%s:AttemptToBuy(%s) - Player already has tech.", self:GetClassName(), EnumToString(kTechId, techId))
@@ -77,13 +83,11 @@ function Alien:Evolve(techIds)
         newPlayer:SetAngles(angles)
         
         // Eliminate velocity so that we don't slide or jump as an egg
-        newPlayer.velocity.x = 0
-        newPlayer.velocity.y = 0
-        newPlayer.velocity.z = 0
+        newPlayer:SetVelocity(Vector(0, 0, 0))
         
         newPlayer:DropToFloor()
         
-        newPlayer:SetGestationTechIds(techIds, self:GetTechId())
+        newPlayer:SetGestationData(techIds, self:GetTechId(), healthScalar, armorScalar)
         
         success = true
 
@@ -91,7 +95,7 @@ function Alien:Evolve(techIds)
     
         // Pop up tooltip
         Print("You need more room to evolve.")
-        self:AddTooltipOncePer("You need more room to evolve.", 3)
+        self:AddTooltip("You need more room to evolve.")
         
     end
 
@@ -104,17 +108,6 @@ function Alien:AttemptToBuy(techIds)
 
     return self:Evolve(techIds)
     
-end
-
-function Alien:OnInit()
-
-    Player.OnInit(self)
-    
-    self.abilityEnergy = Ability.kMaxEnergy
-    
-    self.armor = self:GetArmorAmount()
-    self.maxArmor = self.armor
-
 end
 
 // Increase armor absorption the depending on our defensive upgrade level
@@ -154,4 +147,8 @@ end
 
 function Alien:MakeSpecialEdition()
     // Currently there's no alient special edition visual difference
+end
+
+function Alien:SetEnergy(energy)
+    self.abilityEnergy = energy
 end

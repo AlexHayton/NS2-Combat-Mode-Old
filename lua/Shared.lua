@@ -30,6 +30,7 @@ Script.Load("lua/Order.lua")
 Script.Load("lua/PropDynamic.lua")
 Script.Load("lua/Blip.lua")
 Script.Load("lua/MapBlip.lua")
+Script.Load("lua/TrackYZ.lua")
 
 // Neutral structures
 Script.Load("lua/Structure.lua")
@@ -86,6 +87,8 @@ Script.Load("lua/Shift.lua")
 Script.Load("lua/Shade.lua")
 Script.Load("lua/HydraSpike.lua")
 Script.Load("lua/Hydra.lua")
+Script.Load("lua/Cyst.lua")
+Script.Load("lua/MiniCyst.lua")
 Script.Load("lua/Drifter.lua")
 Script.Load("lua/Egg.lua")
 Script.Load("lua/Embryo.lua")
@@ -94,6 +97,7 @@ Script.Load("lua/Phantasm.lua")
 Script.Load("lua/OnosPhantasm.lua")
 
 // Base players
+Script.Load("lua/ReadyRoomPlayer.lua")
 Script.Load("lua/Spectator.lua")
 Script.Load("lua/AlienSpectator.lua")
 Script.Load("lua/Ragdoll.lua")
@@ -208,6 +212,73 @@ function OnPhysicsTrigger(enterObject, triggerObject, enter)
         
     end
 
+end
+
+
+// turn on to show outline of view box trace.
+Shared.DbgTraceViewBox = false
+
+/**
+ * Support view aligned box traces. The world-axis aligned box traces doesn't work as soon as you have the
+ * least tilt or yaw on the box (such as placing structures on tilted surfaces (like walls). This is a
+ * better-than-nothing replacement until engine support comes along.
+ *
+ * The view aligned box places the view along the z-axis. You specify the x,y extents, the roll around the z-axis and
+ * the start and endpoints.
+ *
+ * 9 traces are used, one on each corner, one in the middle of each side and one in the middle.
+ *
+ * A possible expansion would be to add more traces for larger boxes to keep an upper limit of the size of a missed object.
+ *
+ * It returns a trace look-alike (ie a table containing an endPoint, fraction and normal)
+ */ 
+function Shared.TraceViewBox(x, y, roll, startPoint, endPoint, mask, filter)
+
+    // find the shortest trace of the 9 traces that we are going to do
+    local shortestTrace = nil
+
+    // first start by doing a simple ray trace though the middle
+    local trace = Shared.TraceRay(startPoint, endPoint, mask, filter)
+    if trace.fraction < 1 then
+        shortestTrace = trace
+    end 
+    if Shared.DbgTraceViewBox then
+        DebugLine(startPoint,trace.endPoint,30,trace.fraction < 1 and 1 or 0,1,0,1)
+    end
+
+    local coords = BuildCoordsFromDirection(GetNormalizedVector(endPoint - startPoint), startPoint)
+    local angles = Angles()
+    angles:BuildFromCoords(coords)
+    angles.roll = roll
+    coords = angles:GetCoords()
+    local points = {}
+
+    for dx =-1,1 do
+        for dy = -1,1 do
+            local v1 = Vector(dx * x,dy * y, 0)
+            local p1 = startPoint + coords:TransformVector(v1)
+            local p2 = endPoint + coords:TransformVector(v1)
+            trace = Shared.TraceRay(p1, p2, mask, filter)
+            if trace.fraction < 1 then
+                if shortestTrace == nil or shortestTrace.fraction > trace.fraction then
+                    shortestTrace = trace
+                end
+            end
+            if Shared.DbgTraceViewBox then
+                DebugLine(p1,trace.endPoint,30,trace.fraction < 1 and 1 or 0,1,0,1)
+            end
+        end 
+    end
+    
+    local makeResult = function(fraction, endPoint, normal, entity)
+        return { fraction=fraction, endPoint=endPoint, normal=normal, entity=entity }
+    end
+    
+    if shortestTrace then 
+        return makeResult(shortestTrace.fraction, startPoint + (endPoint - startPoint) * shortestTrace.fraction, shortestTrace.normal, shortestTrace.entity)
+    end
+    // Make the normal non-nil to be consistent with the engine's trace results.
+    return makeResult(1, endPoint, Vector.yAxis)
 end
 
 // Set the callback functon when there's a trigger

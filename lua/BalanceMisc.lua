@@ -14,7 +14,7 @@ kMACConstructEfficacy = .3
 kStopFireProbability = .10       // 10% chance per second
 kFlamethrowerAltTechResearchCost = 20
 kDefaultFOV = 90
-kStructureWarmupTime = 1.0
+kStructureWarmupTime = 1.5
 kDefaultStructureCost = 10
 kStructureCircleRange = 4
 kInfantryPortalUpgradeCost = 10
@@ -25,12 +25,12 @@ kInfantryPortalMinSpawnDistance = 4
 kWeaponStayTime = 30    // NS1
 kInfestCost = 10
 // For power points
-kMarineRepairHealthPerSecond = 100
+kMarineRepairHealthPerSecond = 150
 // The base weapons need to cost a small amount otherwise they can
 // be spammed.
-kRifleCost = 10
-kPistolCost = 5
-kAxeCost = 5
+kRifleCost = 0
+kPistolCost = 0
+kAxeCost = 0
 // % use per second
 kJetpackUseFuelRate = .2
 // % gain every second whether in use or not
@@ -53,6 +53,7 @@ kSentryEngagementDistance = 2
 kPlayerEngagementDistance = 1
 kHeavyEngagementDistance = 1.5
 kOnosEngagementDistance = 2
+kLerkSporeShootRange = 10
 
 // Marine buy costs
 kFlamethrowerAltCost = 5
@@ -75,15 +76,32 @@ kFuryROFIncrease = .15
 kSprayDouseOnFireChance = .5
 
 // Players and structures get energy back at this rate when on fire 
-kOnFireEnergyRecuperationScalar = .2
+kOnFireEnergyRecuperationScalar = .1
 
 // Infestation
 kStructureInfestationRadius = 2
 kHiveInfestationRadius = 20
-kInfestationRadius = 6
+kInfestationRadius = 7.5 // should be kMiniCystParentRange/2
 kGorgeInfestationLifetime = 60
 
 // Alien upgrades
 kFrenzyMinHealth = 10
 kSwarmInterval = 2
 kSwarmDamageBonus = 1.25
+
+kDamageVelocityScalar = 2.5
+
+// Each upgrade costs this much extra evolution time
+kUpgradeGestationTime = 2
+
+// Cyst parent ranges, how far a cyst can support another cyst
+//
+// NOTE: I think the range is a bit long for kCystParentRange, there will be gaps between the
+// infestation patches if the range is > kInfestationRadius * 1.75 (about).
+// 
+kHiveCystParentRange = 20 // distance from a hive a cyst can be connected
+kCystParentRange = 20 // distance from a cyst another cyst (or minicyst) can be placed
+kMiniCystParentRange = 15 // distance from a minicyst a cyst can be placed
+
+// Damage over time that all cysts take when not connected
+kCystUnconnectedDamage = 12

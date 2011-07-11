@@ -6,6 +6,8 @@
 //    
 // ========= For more information, visit us at http://www.unknownworlds.com =====================    
 
+Script.Load("lua/FunctionContracts.lua")
+
 DoorMixin = { }
 DoorMixin.type = "Door"
 
@@ -24,8 +26,10 @@ function DoorMixin:OverrideDoorInteraction(inEntity)
     end
     return false, 0
 end
+AddFunctionContract(DoorMixin.OverrideDoorInteraction, { Arguments = { "Entity", "Entity" }, Returns = { "boolean", "number" } })
 
 // Function to check and see if this object can interact
 function DoorMixin:GetCanDoorInteract(inEntity)
     return self:OverrideDoorInteraction(inEntity)
 end
+AddFunctionContract(DoorMixin.GetCanDoorInteract, { Arguments = { "Entity", "Entity" }, Returns = { "boolean", "number" } })

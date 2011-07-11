@@ -6,7 +6,7 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-PowerPoint.kRedColor = Color(1, 0, 0)
+PowerPoint.kDisabledColor = Color(1, 0, 0)
 // chance of a aux light flickering when powering up
 PowerPoint.kAuxFlickerChance = 0
 // chance of a full light flickering when powering up
@@ -110,6 +110,13 @@ function PowerPoint:UpdatePoweredLight(renderLight)
     local color = renderLight.originalColor
     local intensity = renderLight.originalIntensity
     
+    local color_right = renderLight.originalRight
+    local color_left = renderLight.originalLeft
+    local color_up = renderLight.originalUp
+    local color_down = renderLight.originalDown
+    local color_forward = renderLight.originalForward
+    local color_backward = renderLight.originalBackward
+    
     // Don't affect lights that have this set in editor
     if not renderLight.ignorePowergrid then
     
@@ -122,7 +129,13 @@ function PowerPoint:UpdatePoweredLight(renderLight)
                 self:SetupFlicker(renderLight, PowerPoint.kFullFlickerChance) 
                 // keep the current color/intensity  
                 color = nil
-                intensity = nil   
+                intensity = nil 
+                color_right = nil
+                color_left = nil
+                color_up = nil
+                color_down = nil
+                color_forward = nil
+                color_backward = nil  
           
             elseif timePassed < fullFullLightTime then
             
@@ -171,16 +184,29 @@ function PowerPoint:UpdatePoweredLight(renderLight)
                 //    Shared.Message("SAT t " .. t .. ", sc " .. scalar.. ", int " .. intensity)
                 //end
                 
-                color = PowerPoint.kRedColor
+                color = PowerPoint.kDisabledColor
+                
+                if renderLight:GetType() == RenderLight.Type_AmbientVolume then
+                    color_right = PowerPoint.kDisabledColor
+                    color_left = PowerPoint.kDisabledColor
+                    color_up = PowerPoint.kDisabledColor
+                    color_down = PowerPoint.kDisabledColor
+                    color_forward = PowerPoint.kDisabledColor
+                    color_backward = PowerPoint.kDisabledColor
+                end
          
             elseif not PowerPoint.kAuxLightsFail or timePassed < totalAuxLightFailTime then
                 do
-                    // Fade red in and out to make it very clear that the power is out        
+                    // Fade disabled color in and out to make it very clear that the power is out        
                     local t = timePassed - fullAuxLightTime               
                     local scalar = math.cos((t / (PowerPoint.kAuxPowerCycleTime/2)) * math.pi / 2)
                     local halfAmplitude = (1 - PowerPoint.kAuxPowerMinIntensity)/2
                     
-                    intensity = intensity * (PowerPoint.kAuxPowerMinIntensity + halfAmplitude + scalar * halfAmplitude)
+                    local disabledIntensity = (PowerPoint.kAuxPowerMinIntensity + halfAmplitude + scalar * halfAmplitude)
+                    intensity = intensity * disabledIntensity
+                    //Print("Setting light intensity: %.2f (disabled intensity: %.2f)", intensity, disabledIntensity)
+                    color = PowerPoint.kDisabledColor    
+                    
                     //if renderLight == self.lightList[1] then
                     //    Shared.Message("FAT t " .. t .. ", sc " .. scalar .. ", int " .. intensity)
                     //end
@@ -195,9 +221,20 @@ function PowerPoint:UpdatePoweredLight(renderLight)
                     //    Shared.Message("ALF t " .. t .. ", sc " .. scalar.. ", int " .. intensity)
                     //end  
                 end
-                color = PowerPoint.kRedColor
+                
+                color = PowerPoint.kDisabledColor
+                
+                if renderLight:GetType() == RenderLight.Type_AmbientVolume then
+                    color_right = PowerPoint.kDisabledColor
+                    color_left = PowerPoint.kDisabledColor
+                    color_up = PowerPoint.kDisabledColor
+                    color_down = PowerPoint.kDisabledColor
+                    color_forward = PowerPoint.kDisabledColor
+                    color_backward = PowerPoint.kDisabledColor
+                end
+                
             else
-                // completly dead...
+                // completely dead...
                 intensity = 0
                 self.unchangingLights[renderLight] = true
 
@@ -227,6 +264,15 @@ function PowerPoint:UpdatePoweredLight(renderLight)
     if color then
         renderLight:SetColor( color )
     end 
+    if color_right then
+        renderLight:SetDirectionalColor(RenderLight.Direction_Right,    color_right)
+        renderLight:SetDirectionalColor(RenderLight.Direction_Left,     color_left)
+        renderLight:SetDirectionalColor(RenderLight.Direction_Up,       color_up)
+        renderLight:SetDirectionalColor(RenderLight.Direction_Down,     color_down)
+        renderLight:SetDirectionalColor(RenderLight.Direction_Forward,  color_forward)
+        renderLight:SetDirectionalColor(RenderLight.Direction_Backward, color_backward)
+    end
+    
 end
 
 function PowerPoint:SetupFlicker(renderLight, chance)

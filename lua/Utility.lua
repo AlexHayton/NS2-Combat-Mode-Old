@@ -23,6 +23,11 @@ function EntityFilterOnly(entity)
     return function(test) return entity ~= test end
 end
 
+// filter out all entities
+function EntityFilterAll(entity)
+    return function(test) return test ~= nil end
+end
+
 // Splits string into array, along whitespace boundaries. First element indexed at 1.
 function StringToArray(instring)
 
@@ -330,20 +335,14 @@ function Print(formatString, ...)
 
     local result = string.format(formatString, ...)
 
-    //if Shared.GetDevMode() or gPrintEnabled then
-    
-        if(not Shared.GetIsRunningPrediction()) then
-            if(Client) then
-                Shared.Message(result .. " - Client " .. gPrintPostfix)
-                printed = true
-            else
-                Shared.Message(result .. " - Server " .. gPrintPostfix)
-            end
+    if(Shared and not Shared.GetIsRunningPrediction()) then
+        if(Client) then
+            Shared.Message(result .. " - Client " .. gPrintPostfix)
+            printed = true
+        else
+            Shared.Message(result .. " - Server " .. gPrintPostfix)
         end
-        
-        print(result)    
-        
-    //end
+    end
     
     return result
     
@@ -373,6 +372,61 @@ end
 function PrintToLog(formatString, ...)
     Print(formatString, ...)
 end
+
+
+//
+// Wraps all arguments in ToString() before passing them to Print(). Very convinient.
+//
+function Log(formatString, ...)
+    local args = {}
+    for i = 1, select('#', ...) do
+        local v = select(i, ...)
+        table.insert(args, ToString(v))
+    end
+    if #args > 0 then 
+        PrintToLog(formatString, unpack(args))
+    else
+        PrintToLog(formatString)
+    end
+end
+
+// 
+// Enable a logger that can be turned on /off
+// Usage:
+// self.logTable = {}
+// self.logStats = Logger("stats", self.logTable, false)
+// self.logStats = Logger("base", self.logTable, true)
+// self.enabledLogs.stats = true
+// self.logStats("logs %s", msg)
+// 
+function Logger(name, logTable, enabled)
+    local result = function(format, ...) if logTable[name] then Log(format, ...) end end
+    logTable[name] = enabled and true or false
+    return result
+end
+
+//
+// Allow turning on/off loggers belonging to the given logTable.
+// It returns a description of changed logs and the available logs.
+//
+function LogCtrl(prefix, on, logTable)
+    local msg = nil
+    if prefix and string.len(prefix) > 0 then
+        for name,v in pairs(logTable) do
+            if prefix == "all" or prefix == "*" or string.find(name, prefix) == 1 then
+                logTable[name] = on
+                msg = (msg and msg .. ", " .. name) or "Set " .. name
+            end
+        end
+    end
+    msg = msg or "No logs changed"   
+    for name,v in pairs(logTable) do
+        msg = msg .. "\n" .. name .. " = " .. (v and "on" or "off")
+    end
+    return msg 
+end
+
+
 
 function ConditionalValue(expression, value1, value2) 
 
@@ -553,7 +607,9 @@ function ToString(t)
     elseif type(t) == "function" then
         return tostring(t)
     elseif type(t) == "userdata" then
-        if t:isa("Vector") then
+        if not t.isa then
+            return "non-isa userdata"
+        elseif t:isa("Vector") then
             return tostring(t)
         elseif t:isa("Trace") then
             return string.format("trace fraction: %.2f entity: %s", t.fraction, SafeClassName(t.entity))
@@ -568,7 +624,7 @@ function ToString(t)
         elseif t.GetClassName then
             return t:GetClassName()
         else
-            return "userdata"
+            return "unknown userdata"
         end
     elseif type(t) == "boolean" then
         return tostring(t)
@@ -956,27 +1012,36 @@ function DecodePointFromString(string)
     
 end
 
-// Allows us to send/receive strings without @ symbols
-// Convert @ to spaces
-// Make better later if needed
-function EncodeStringForNetwork(inputString)
-
-    // Don't allow strings with @ in them
-    if(string.find(inputString, "@") ~= nil) then
-        Print("EncodeStringForNetwork(%s) error - Strings can't contain '@' characters.", inputString)
-    end
-    
-    // Convert spaces to @
-    return string.gsub(inputString, " ", "@")
-    
+// Grabbed these from the lua wiki 
+// http://lua-users.org/wiki/StringRecipes
+function url_decode(str)
+  str = string.gsub (str, "+", " ")
+  str = string.gsub (str, "%%(%x%x)",
+      function(h) return string.char(tonumber(h,16)) end)
+  str = string.gsub (str, "\r\n", "\n")
+  return str
 end
 
-// Convert @ to space
+function url_encode(str)
+  if (str) then
+    str = string.gsub (str, "\n", "\r\n")
+    str = string.gsub (str, "([^%w ])",
+        function (c) return string.format ("%%%02X", string.byte(c)) end)
+    str = string.gsub (str, " ", "+")
+  end
+  return str	
+end
+
+function EncodeStringForNetwork(inputString)       
+    return url_encode(inputString)    
+end
+
 function DecodeStringFromNetwork(inputString)
     if(inputString == nil) then
         return nil
     end
-    return string.gsub(inputString, "@", " ")
+    
+    return url_decode(inputString)
 end
 
 function GetColorForPlayer(player)
@@ -1273,8 +1338,7 @@ function GetTraceCapsuleFromExtents(extents)
         Print("%GetTraceCapsuleFromExtents(): radius is 0.")
     end
     
-    local height = math.max((extents.y - radius) * 2, 0)
-    
+    local height = math.max(extents.y * 2, 0)
     return height, radius
     
 end
@@ -1317,46 +1381,55 @@ function PrecacheMultipleAssets(effectName, substTable)
     
 end
 
-// Calls entity:SetTeamNumber(teamNumber) (if team number passed) and SetOrigin().
+// Calls entity:SetTeamNumber(teamNumber) (if team number passed), SetOrigin() and OnInit(), if those functions exist.
 // Player entities are added to the specified team by default.
 function InitEntity(entity, className, origin, teamNumber)
 
-    if(entity:isa("ScriptActor")) then
-
-        if(Server and teamNumber ~= -1) then
-            entity:SetTeamNumber(teamNumber)
-        end
-        
+    if entity.SetTeamNumber and teamNumber ~= -1 then
+        entity:SetTeamNumber(teamNumber)
+    end
+    
+    if entity.SetOrigin then
         entity:SetOrigin(origin)    
+    end
+    
+    if entity.OnInit then
         entity:OnInit()
-        
     end
     
 end
 
 if(Server) then
 
-// teamNumber optional. Make sure to pass the mapName, not className.
+// Creates entity, initializes it and adds it to the proper team via gamerules.
+// Pass the mapName, not className (teamNumber and origin optional - defaults to -1 and the origin)
 function CreateEntity(mapName, origin, teamNumber)
 
     if (teamNumber == nil) then
         teamNumber = -1
     end
     
-    local entity = nil
-    
-    if(origin == nil) then
+    if (origin == nil) then
         origin = Vector(0, 0, 0)
     end
     
-    // Calls OnCreate()
-    entity = Server.CreateEntity(mapName)
+    ASSERT( type(mapName) == "string" )
+    ASSERT( type(teamNumber) == "number" )
+    ASSERT( origin:isa("Vector") )    
     
-    if(entity ~= nil) then
+    // Calls OnCreate()
+    local entity = Server.CreateEntity(mapName)    
+    if entity then
+    
+        // Set team number, origin then OnInit()
         InitEntity(entity, mapName, origin, teamNumber)
-        GetGamerules():OnEntityChange(nil, entity:GetId())
+        
+        // Add entity to team, add/remove tech from tech tree, etc.
+        GetGamerules():OnEntityCreate(entity)
+            
     else
-        Print("CreateEntity(%s) returned nil.", mapName)
+        ASSERT(entity)
+        Print("CreateEntity(%s, %s, %s) returned nil.", ToString(mapName), ToString(origin), ToString(teamNumber))
     end
     
     return entity
@@ -1366,39 +1439,16 @@ end
 // Script should only use this function, never call Server.DestroyEntity directly.
 function DestroyEntity(entity)
 
-    // Players remove themselves from team when destroyed        
+    ASSERT(entity ~= nil)
+    
+    // Remove from team, tech tree, etc.
+    GetGamerules():OnEntityDestroy(entity)
+
+    // Calls OnDestroy()
     Server.DestroyEntity(entity)        
     
 end
 
-end
-
-function LoadEntityFromValues(entity, values, initOnly)
-
-    entity:SetOrigin( values.origin )
-    entity:SetAngles( values.angles )
-
-    // Copy all of the key values as fields on the entity.
-    for key, value in pairs(values) do 
-    
-        if (key ~= "origin" and key ~= "angles") then
-            entity[key] = value
-        end
-        
-    end
-    
-    if not initOnly then
-    
-        if entity.OnLoad then
-            entity:OnLoad()
-        end
-        
-    end
-    
-    if entity.OnInit then
-        entity:OnInit()
-    end
-    
 end
 
 /**
@@ -1478,4 +1528,50 @@ end
 function AlphaValue(val)
     ASSERT(type(val) == "number")
     return (val/100)
+end
+
+/**
+ * Call MonitorCallHistoryBegin() to begin monitoring the calls and MonitorCallHistoryEnd()
+ * to return a list of functions called in order after MonitorCallHistoryBegin() was called.
+ * Calling MonitorCallHistoryEnd() stops the monitoring process and returns a string.
+ */
+local callHistoryMonitorString = ""
+local callstackDepth = 1
+local allowedFunctionTypes = { "local", "global", "method", "field", "upvalue" }
+local filterFunctionNames = { "MonitorCallHistoryEnd", "sethook", "(for generator)" }
+local function MonitorCallHistoryHook(type)
+
+    if type == "call" then
+        callstackDepth = callstackDepth + 1
+        local function generateOffset(offsetString, currentDepth) if currentDepth <= callstackDepth then return generateOffset(" " .. offsetString, currentDepth + 1) end return offsetString end
+        local offsetString = generateOffset("", 1)
+        local functionName = debug.getinfo(2, "n").name or "No name"
+        local functionType = debug.getinfo(2, "n").namewhat
+        local otherInfo = functionType .. " - " .. debug.getinfo(2, "S").short_src .. ":" .. debug.getinfo(2, "l").currentline
+        if table.contains(allowedFunctionTypes, functionType) and not table.contains(filterFunctionNames, functionName) then
+            if string.len(callHistoryMonitorString) ~= 0 then
+                callHistoryMonitorString = callHistoryMonitorString .. "\n"
+            end
+            callHistoryMonitorString = callHistoryMonitorString .. offsetString .. functionName .. " - " .. otherInfo
+        end
+    elseif type == "return" then
+        callstackDepth = callstackDepth - 1
+    end
+
+end
+
+function MonitorCallHistoryBegin()
+
+    debug.sethook(MonitorCallHistoryHook, "cr")
+
+end
+
+function MonitorCallHistoryEnd()
+
+    debug.sethook()
+    local returnHistory = callHistoryMonitorString
+    callHistoryMonitorString = ""
+    callstackDepth = 1
+    return returnHistory
+
 end

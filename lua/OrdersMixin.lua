@@ -6,6 +6,8 @@
 //    
 // ========= For more information, visit us at http://www.unknownworlds.com =====================    
 
+Script.Load("lua/FunctionContracts.lua")
+
 OrdersMixin = { }
 OrdersMixin.type = "Orders"
 
@@ -48,18 +50,22 @@ function OrdersMixin:TransferOrders(dest)
     self:_OrderChanged()
     
 end
+AddFunctionContract(OrdersMixin.TransferOrders, { Arguments = { "Entity", "Entity" }, Returns = { } })
 
 function OrdersMixin:GetHasOrder()
     return self:GetCurrentOrder() ~= nil
 end
+AddFunctionContract(OrdersMixin.GetHasOrder, { Arguments = { "Entity" }, Returns = { "boolean" } })
 
 function OrdersMixin:GetNumOrders()
     return table.count(self.orders)
 end
+AddFunctionContract(OrdersMixin.GetNumOrders, { Arguments = { "Entity" }, Returns = { "number" } })
 
 function OrdersMixin:SetIgnoreOrders(setIgnoreOrders)
     self.ignoreOrders = setIgnoreOrders
 end
+AddFunctionContract(OrdersMixin.SetIgnoreOrders, { Arguments = { "Entity", "boolean" }, Returns = { } })
 
 /**
  * Children can provide a OnOverrideOrder function to issue build, construct, etc. orders on right-click.
@@ -73,6 +79,7 @@ function OrdersMixin:_OverrideOrder(order)
     end
     
 end
+AddFunctionContract(OrdersMixin._OverrideOrder, { Arguments = { "Entity", "Order" }, Returns = { } })
 
 // Create order, set it, override it
 function OrdersMixin:GiveOrder(orderType, targetId, targetOrigin, orientation, clearExisting, insertFirst)
@@ -101,6 +108,7 @@ function OrdersMixin:GiveOrder(orderType, targetId, targetOrigin, orientation, c
     return order:GetType()
 
 end
+AddFunctionContract(OrdersMixin.GiveOrder, { Arguments = { "Entity", "number", "number", { "Vector", "nil" }, { "Vector", "nil" }, { "boolean", "nil" }, { "boolean", "nil" } }, Returns = { "number" } })
 
 function OrdersMixin:ClearOrders()
 
@@ -112,6 +120,7 @@ function OrdersMixin:ClearOrders()
     end
     
 end
+AddFunctionContract(OrdersMixin.ClearOrders, { Arguments = { "Entity" }, Returns = { } })
 
 function OrdersMixin:_DestroyOrders()
     
@@ -140,6 +149,7 @@ function OrdersMixin:_DestroyOrders()
     table.clear(self.orders)
 
 end
+AddFunctionContract(OrdersMixin._DestroyOrders, { Arguments = { "Entity" }, Returns = { } })
 
 function OrdersMixin:GetHasSpecifiedOrder(orderEnt)
 
@@ -154,6 +164,7 @@ function OrdersMixin:GetHasSpecifiedOrder(orderEnt)
     return false
 
 end
+AddFunctionContract(OrdersMixin.GetHasSpecifiedOrder, { Arguments = { "Entity", "Order" }, Returns = { "boolean" } })
 
 function OrdersMixin:_SetOrder(order, clearExisting, insertFirst)
 
@@ -181,12 +192,13 @@ function OrdersMixin:_SetOrder(order, clearExisting, insertFirst)
     self:_OrderChanged()
 
 end
+AddFunctionContract(OrdersMixin._SetOrder, { Arguments = { "Entity", "Order", "boolean", "boolean" }, Returns = { } })
 
 function OrdersMixin:GetCurrentOrder()
 
     local currentOrder = nil
     
-    if(self.orders and table.maxn(self.orders) > 0) then
+    if self.orders and table.maxn(self.orders) > 0 then
         local orderId = self.orders[1] 
         currentOrder = Shared.GetEntity(orderId)
         ASSERT(currentOrder ~= nil)
@@ -195,6 +207,7 @@ function OrdersMixin:GetCurrentOrder()
     return currentOrder
     
 end
+AddFunctionContract(OrdersMixin.GetCurrentOrder, { Arguments = { "Entity" }, Returns = { { "Order", "nil" } } })
 
 function OrdersMixin:ClearCurrentOrder()
 
@@ -210,6 +223,7 @@ function OrdersMixin:ClearCurrentOrder()
     self:_OrderChanged()
     
 end
+AddFunctionContract(OrdersMixin.ClearCurrentOrder, { Arguments = { "Entity" }, Returns = { } })
 
 function OrdersMixin:CompletedCurrentOrder()
 
@@ -225,6 +239,7 @@ function OrdersMixin:CompletedCurrentOrder()
     end
     
 end
+AddFunctionContract(OrdersMixin.CompletedCurrentOrder, { Arguments = { "Entity" }, Returns = { } })
 
 function OrdersMixin:_OrderChanged()
     
@@ -245,6 +260,7 @@ function OrdersMixin:_OrderChanged()
     end
     
 end
+AddFunctionContract(OrdersMixin._OrderChanged, { Arguments = { "Entity" }, Returns = { } })
 
 // Convert rally orders to move and we're done.
 function OrdersMixin:ProcessRallyOrder(originatingEntity)
@@ -268,6 +284,7 @@ function OrdersMixin:ProcessRallyOrder(originatingEntity)
     end
     
 end
+AddFunctionContract(OrdersMixin.ProcessRallyOrder, { Arguments = { "Entity", "Entity" }, Returns = { } })
 
 // This is an "attack-move" from RTS. Attack the entity specified in our current attack order, if any. 
 //  Otherwise, move to the location specified in the attack order and attack anything along the way.
@@ -281,7 +298,8 @@ function OrdersMixin:ProcessAttackOrder(targetSearchDistance, moveSpeed, time)
         
         if target then
         
-            if not target:GetIsAlive() then
+            // How do you kill that which has no life?
+            if not HasMixin(target, "Live") or not target:GetIsAlive() then
             
                 self:CompletedCurrentOrder()
                 
@@ -330,7 +348,7 @@ function OrdersMixin:ProcessAttackOrder(targetSearchDistance, moveSpeed, time)
             self:MoveToTarget(PhysicsMask.AIMovement, targetLocation, moveSpeed, time)
             
             local distanceToTarget = (currentOrder:GetLocation() - self:GetOrigin()):GetLength()
-            if(distanceToTarget < self.__mixindata.kMoveToDistance) then
+            if(distanceToTarget < self:GetMixinConstants().kMoveToDistance) then
                 self:CompletedCurrentOrder()
             end
  
@@ -339,6 +357,7 @@ function OrdersMixin:ProcessAttackOrder(targetSearchDistance, moveSpeed, time)
     end
     
 end
+AddFunctionContract(OrdersMixin.ProcessAttackOrder, { Arguments = { "Entity", "number", "number", "number" }, Returns = { } })
 
 function OrdersMixin:UpdateOrder()
 
@@ -380,7 +399,7 @@ function OrdersMixin:UpdateOrder()
             
                 self:ClearOrders()
                 
-            elseif not orderTarget:GetIsAlive() then
+            elseif not HasMixin(orderTarget, "Live") or not orderTarget:GetIsAlive() then
             
                 self:GetTeam():TriggerAlert(kTechId.MarineAlertOrderComplete, self)
                 
@@ -393,3 +412,4 @@ function OrdersMixin:UpdateOrder()
     end
     
 end
+AddFunctionContract(OrdersMixin.UpdateOrder, { Arguments = { "Entity" }, Returns = { } })

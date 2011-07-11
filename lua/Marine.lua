@@ -7,6 +7,8 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Player.lua")
+Script.Load("lua/Mixins/GroundMoveMixin.lua")
+Script.Load("lua/Mixins/CameraHolderMixin.lua")
 
 class 'Marine' (Player)
 
@@ -62,17 +64,25 @@ Marine.kUnsprintTime = .25                   // Time it takes to come to rest
 
 Marine.kWalkMaxSpeed = 5                // Four miles an hour = 6,437 meters/hour = 1.8 meters/second (increase for FPS tastes)
 Marine.kRunMaxSpeed = 6.0               // 10 miles an hour = 16,093 meters/hour = 4.4 meters/second (increase for FPS tastes)
+Marine.kRunInfestationMaxSpeed = 5.2    // 10 miles an hour = 16,093 meters/hour = 4.4 meters/second (increase for FPS tastes)
 
 // Allow JPers to go faster in the air, but still capped
 Marine.kAirSpeedMultiplier = 3
 
-local networkVars = 
+// Marine weight scalars (from NS1)
+Marine.kStowedWeaponWeightScalar = .7
+
+// How fast does our armor get repaired by marines
+Marine.kArmorWeldRate = 12
+Marine.kWeldedEffectsInterval = .5
+
+Marine.networkVars = 
 {
     sprinting                       = "boolean",
     desiredSprinting                = "boolean",
     setSprintLoop                   = "boolean",
     sprintingScalar                 = "float",  
-    timeSprintChange                = "float",  
+    timeSprintChange                = "float",
     
     // 0 = no squad, 1-10 is squad number. Make sure it can accomodate kNumSquads.
     squad                           = string.format("integer (0 to %d)", kNumSquads),
@@ -99,12 +109,23 @@ local networkVars =
     nextWeaponLiftCheckTime         = "float",
 
     waypointOrigin                  = "vector",
-    waypointEntityId                = "entityid"
-}
+    waypointEntityId                = "entityid",
     
+    timeOfLastDrop                  = "float",
+    inventoryWeight                 = "compensated float"
+    
+}
+
+PrepareClassForMixin(Marine, GroundMoveMixin)
+PrepareClassForMixin(Marine, CameraHolderMixin)
+
 function Marine:OnCreate()
 
+    InitMixin(self, GroundMoveMixin, { kGravity = Player.kGravity })
+    InitMixin(self, CameraHolderMixin, { kFov = Player.kFov })
+    
     Player.OnCreate(self)
+    self.inventoryWeight = 0
     
     if (Client) then
    
@@ -168,6 +189,7 @@ function Marine:OnInit()
 
     self.waypointOrigin = Vector(0, 0, 0)
     self.waypointEntityId = Entity.invalidId
+    self.timeOfLastDrop = 0
                     
 end
 
@@ -276,14 +298,15 @@ function Marine:UpdateJetpack(input)
 
 end
 
+// Called from GroundMoveMixin.
 function Marine:ComputeForwardVelocity(input)
 
+    // Call the original function to get the base forward velocity.
     local forwardVelocity = Player.ComputeForwardVelocity(self, input)
 
+    // Modify it only if jetpacking.
     if self.jetpacking then
-    
         forwardVelocity = forwardVelocity + Vector(0, 2, 0)
-        
     end
 
     return forwardVelocity
@@ -339,7 +362,7 @@ function Marine:UpdateSprintingState(input)
     local speed = velocity:GetLength()
     
     // Allow small little falls to not break our sprint (stairs)    
-    self.desiredSprinting = (bit.band(input.commands, Move.MovementModifier) ~= 0) and (speed > 1) and not self.crouching and (self.timeLastOnGround ~= nil and Shared.GetTime() < self.timeLastOnGround + .4)
+    self.desiredSprinting = (bit.band(input.commands, Move.MovementModifier) ~= 0) and (speed > 1) and not self.crouching and (self.timeLastOnGround ~= nil and Shared.GetTime() < self.timeLastOnGround + .4) 
     
     if input.move.z < -kEpsilon then
     
@@ -416,7 +439,7 @@ function Marine:UpdateSprintingState(input)
     end
 
     // Update fov as we're sprinting
-    //self.fov = self:GetStartFov() + self.sprintingScalar*(Marine.kMaxSprintFov - self:GetStartFov())
+    //self:SetFov(Player.kFov + self.sprintingScalar*(Marine.kMaxSprintFov - Player.kFov))
     
 end
 
@@ -506,19 +529,57 @@ function Marine:GetCanJump()
     return Player.GetCanJump(self) and not self.sprinting
 end
 
+// Take into account our weapon inventory and current weapon
+function Marine:GetInventorySpeedScalar()
+    return 1 - self.inventoryWeight
+end
+
+function Marine:UpdateSharedMisc(input)
+    Player.UpdateSharedMisc(self, input)
+    self:UpdateInventoryWeight()
+end
+
+function Marine:UpdateInventoryWeight()
+
+    // Loop through all weapons, getting weight of each one
+    local totalWeight = 0
+    
+    local activeWeapon = self:GetActiveWeapon()
+    local weaponList = self:GetHUDOrderedWeaponList()
+    for index = 1, table.count(weaponList) do
+
+        local weapon = weaponList[index]
+        local weaponWeight = ConditionalValue(activeWeapon and (weapon:GetId() == activeWeapon:GetId()), weapon:GetWeight(), weapon:GetWeight() * Marine.kStowedWeaponWeightScalar)
+        
+        // Active items count full, count less when stowed 
+        totalWeight = totalWeight + weaponWeight
+            
+    end            
+    
+    self.inventoryWeight = Clamp(totalWeight, 0, 1)
+
+end
+
 function Marine:GetMaxSpeed()
 
-    local maxSpeed = ConditionalValue(self.sprinting, Marine.kWalkMaxSpeed + (Marine.kRunMaxSpeed - Marine.kWalkMaxSpeed)*self.sprintingScalar, Marine.kWalkMaxSpeed)
+    local onInfestation = self:GetGameEffectMask(kGameEffect.OnInfestation)
+    local maxSprintSpeed = ConditionalValue(onInfestation, Marine.kWalkMaxSpeed + (Marine.kRunInfestationMaxSpeed - Marine.kWalkMaxSpeed)*self.sprintingScalar, Marine.kWalkMaxSpeed + (Marine.kRunMaxSpeed - Marine.kWalkMaxSpeed)*self.sprintingScalar)
+    local maxSpeed = ConditionalValue(self.sprinting, maxSprintSpeed, Marine.kWalkMaxSpeed)
+    
+    // Take into account our weapon inventory and current weapon. Assumes a vanilla marine has a scalar of around .8.
+    local inventorySpeedScalar = self:GetInventorySpeedScalar() + .17
 
     // Take into account crouching
     maxSpeed = ( 1 - self:GetCrouchAmount() * Player.kCrouchSpeedScalar ) * maxSpeed
-        
-    return maxSpeed * self:GetCatalystMoveSpeedModifier()
+
+    local adjustedMaxSpeed = maxSpeed * self:GetCatalystMoveSpeedModifier() * self:GetSlowSpeedModifier() * inventorySpeedScalar 
+    //Print("Adjusted max speed => %.2f (without inventory: %.2f)", adjustedMaxSpeed, adjustedMaxSpeed / inventorySpeedScalar )
+    return adjustedMaxSpeed
     
 end
 
 function Marine:GetFootstepSpeedScalar()
-    return Clamp(self:GetVelocity():GetLength() / (Marine.kRunMaxSpeed * self:GetCatalystMoveSpeedModifier()), 0, 1)
+    return Clamp(self:GetVelocity():GetLength() / (Marine.kRunMaxSpeed * self:GetCatalystMoveSpeedModifier() * self:GetSlowSpeedModifier()), 0, 1)
 end
 
 function Marine:GetAcceleration()
@@ -585,20 +646,6 @@ function Marine:ConstrainMoveVelocity(moveVelocity)
     if(activeWeapon ~= nil) then
         moveVelocity = activeWeapon:ConstrainMoveVelocity(moveVelocity)
     end
-    
-end
-
-function Marine:OnKill(damage, attacker, doer, point, direction)
-    
-    Player.OnKill(self, damage, attacker, doer, point, direction)
-    
-    // Don't play alert if we suicide
-    if player ~= self then
-        self:GetTeam():TriggerAlert(kTechId.MarineAlertSoldierLost, self)
-    end
-    
-    // Remember squad we were in on death so we can beam back to them
-    self.lastSquad = self:GetSquad()
     
 end
 
@@ -830,4 +877,115 @@ function Marine:GetPlayerStatusDesc()
     return status
 end
 
-Shared.LinkClassToMap( "Marine", Marine.kMapName, networkVars )
+function Marine:GetCanDropWeapon(weapon)
+
+    if not weapon then
+        weapon = self:GetActiveWeapon()
+    end
+    
+    if( weapon ~= nil and weapon.GetIsDroppable and weapon:GetIsDroppable() ) then
+    
+        // Don't drop weapons too fast
+        if self.timeOfLastDrop == 0 or (Shared.GetTime() > self.timeOfLastDrop + 1.5) then
+            return true
+        end
+        
+    end
+    
+    return false
+    
+end
+
+// Do basic prediction of the weapon drop on the client so that any client
+// effects for the weapon can be dealt with
+function Marine:Drop(weapon)
+
+    local activeWeapon = self:GetActiveWeapon()
+    
+    if not weapon then
+        weapon = activeWeapon
+    end
+
+    if weapon == activeWeapon then
+        self:SelectNextWeapon()
+    end
+    
+    if self:GetCanDropWeapon(weapon) then
+        
+        weapon:OnPrimaryAttackEnd(self)
+    
+        // Remove from player's inventory
+        if Server then
+            self:RemoveWeapon(weapon)
+        end
+        
+        // Make sure we're ready to deploy new weapon so we switch to it properly
+        self:ClearActivity()
+        
+        if Server then
+            local weaponSpawnPoint = self:GetAttachPointOrigin(Weapon.kHumanAttachPoint)
+            weapon:SetOrigin(weaponSpawnPoint)
+        end
+        
+        // Tell weapon not to be picked up again for a bit
+        weapon:Dropped(self)
+        
+        // Set activity end so we can't drop like crazy
+        self.timeOfLastDrop = Shared.GetTime() 
+        
+        return true
+        
+    end
+    
+    return false
+
+end
+
+function Marine:GetCanBeUsed()
+
+    // Allow team-mates to fix our armor 
+    if self:GetIsAlive() and (self.armor < self.maxArmor) then
+        return true
+    end
+    
+    return Player.GetCanBeUsed(self)
+    
+end
+
+function Marine:OnUse(player, elapsedTime, useAttachPoint, usePoint)
+
+    // Allow others to repair our armor
+    if self:GetArmor() < self:GetMaxArmor() then
+    
+        self:SetArmor( self:GetArmor() + elapsedTime * Marine.kArmorWeldRate )
+    
+        // Trigger welding effects occassionally
+        if Server then
+        
+            if not self.timeOfNextWeldedEffects or (Shared.GetTime() > self.timeOfNextWeldedEffects) then
+            
+                self:TriggerEffects("marine_welded", {effecthostcoords = BuildCoordsFromDirection(player:GetViewCoords().zAxis, usePoint), false})
+                self.timeOfNextWeldedEffects = Shared.GetTime() + Marine.kWeldedEffectsInterval
+                
+            end
+            
+            // Give a point for restoring to full armor
+            if self:GetArmor() == self:GetMaxArmor() then
+                player:AddScore(kRepairMarineArmorPointValue)
+            end
+            
+        end
+        
+        return true
+        
+    end
+    
+    return Player.OnUse(self, player, elapsedTime, useAttachPoint, usePoint)
+    
+end
+
+// No animations for it yet
+function Marine:Taunt()
+end
+
+Shared.LinkClassToMap( "Marine", Marine.kMapName, Marine.networkVars )

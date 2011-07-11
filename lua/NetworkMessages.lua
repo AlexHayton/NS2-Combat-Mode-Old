@@ -150,17 +150,19 @@ Shared.RegisterNetworkMessage("TakeDamageIndicator", kTakeDamageIndicator)
 // For giving damage
 local kGiveDamageIndicator =
 {
-    amount = "float"
+    amount = "float",
+    doerType = "enum kDeathMessageIcon"
 }
 
-function BuildGiveDamageIndicatorMessage(amount)
+function BuildGiveDamageIndicatorMessage(amount, doerType)
     local t = {}
     t.amount = amount
+    t.doerType = doerType
     return t
 end
 
 function ParseGiveDamageIndicatorMessage(message)
-    return message.amount
+    return message.amount, message.doerType
 end
 
 Shared.RegisterNetworkMessage("GiveDamageIndicator", kGiveDamageIndicator)
@@ -359,6 +361,27 @@ function ParseExecuteSayingMessage(t)
     return t.sayingIndex, t.sayingsMenu
 end
 
+local kMutePlayerMessage = 
+{
+    muteClientIndex = "integer",
+    setMute = "boolean"
+}
+
+function BuildMutePlayerMessage(muteClientIndex, setMute)
+
+    local t = {}
+
+    t.muteClientIndex = muteClientIndex
+    t.setMute = setMute
+    
+    return t
+    
+end
+
+function ParseMutePlayerMessage(t)
+    return t.muteClientIndex, t.setMute
+end
+
 local kDebugLineMessage =
 {
     startPoint = "vector",
@@ -390,6 +413,15 @@ function ParseDebugLineMessage(t)
     return t.startPoint, t.endPoint, t.lifetime, t.r, t.g, t.b, t.a
 end
 
+local kMinimapAlertMessage = 
+{
+    techId = "enum kTechId",
+    worldX = "float",
+    worldZ = "float",
+    entityId = "entityid",
+    entityTechId = "enum kTechId"
+}
+
 Shared.RegisterNetworkMessage("EntityChanged", kEntityChangedMessage)
 Shared.RegisterNetworkMessage("ResetMouse", {} )
 
@@ -404,11 +436,15 @@ Shared.RegisterNetworkMessage("CommAction", kCommAction)
 Shared.RegisterNetworkMessage("CommTargetedAction", kCommTargetedAction)
 Shared.RegisterNetworkMessage("CommTargetedActionWorld", kCommTargetedAction)
 
+// Notifications
+Shared.RegisterNetworkMessage("MinimapAlert", kMinimapAlertMessage)
+
 // Tracer effect
 Shared.RegisterNetworkMessage("Tracer", kTracerMessage)
 
 // Player actions
 Shared.RegisterNetworkMessage("ExecuteSaying", kExecuteSayingMessage)
+Shared.RegisterNetworkMessage("MutePlayer", kMutePlayerMessage)
 
 // Debug messages
 Shared.RegisterNetworkMessage("DebugLine", kDebugLineMessage)

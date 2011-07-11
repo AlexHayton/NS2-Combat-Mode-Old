@@ -7,6 +7,10 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
+
+// send out an impulse to maintain infestations every 10 seconds
+Hive.kImpulseInterval = 10 
+
 function Hive:GetTeamType()
     return kAlienTeamType
 end
@@ -20,10 +24,6 @@ function Hive:OnCreate()
 
     CommandStructure.OnCreate(self)
     
-    self:SetLevelTechId(1, kTechId.Hive)
-    //self:SetLevelTechId(2, kTechId.HiveMass)
-    //self:SetLevelTechId(3, kTechId.HiveColony)
-    
     self.upgradeTechId = kTechId.None
     
     self:SetTechId(kTechId.Hive)
@@ -32,7 +32,10 @@ function Hive:OnCreate()
     self.health = kHiveHealth
     
     self:SetModel(Hive.kModelName)
-
+    
+    self.cystChildren = {}
+    
+    self.lastImpulseFireTime = Shared.GetTime()
 end
 
 function Hive:OnDestroy()
@@ -43,14 +46,9 @@ function Hive:OnDestroy()
 
 end
 
-function Hive:OnKill(damage, attacker, doer, point, direction)
-
-    CommandStructure.OnKill(self, damage, attacker, doer, point, direction)
-    
-    if self:GetAttached() then
-        self:GetAttached():SetTechLevel(1)
-    end
-    
+// Hives building can't be sped up
+function Hive:GetCanConstruct(player)
+    return false
 end
 
 function Hive:OnThink()
@@ -62,6 +60,8 @@ function Hive:OnThink()
     self:UpdateInfestation()
     
     self:UpdateHealing()
+    
+    self:FireImpulses()
     
 end
 
@@ -79,17 +79,7 @@ function Hive:GetNumEggs()
 end
 
 function Hive:GetNumDesiredEggs()
-    if self:GetTechId() == kTechId.Hive then
-        return Hive.kHiveNumEggs
-    /*
-    elseif self:GetTechId() == kTechId.HiveMass then
-        return Hive.kMassNumEggs
-    elseif self:GetTechId() == kTechId.HiveColony then
-        return Hive.kColonyNumEggs
-    */
-    end
-    ASSERT(false, string.format("Hive tech id invalid: %s", EnumToString(kTechId, self:GetTechId())))
-    return Hive.kHiveNumEggs 
+    return Hive.kHiveNumEggs
 end
 
 // Make sure there's enough room here for an egg
@@ -161,7 +151,7 @@ function Hive:SpawnEggs()
 end
 
 function Hive:OnOverrideSpawnInfestation(infestation)
-    infestation:SetGeneratorState(true)
+    infestation.hostAlive = true
     infestation:SetMaxRadius(kHiveInfestationRadius)
 end
 
@@ -194,21 +184,25 @@ end
 
 function Hive:UpdateHealing()
 
-    if self.timeOfLastHeal == nil or Shared.GetTime() > (self.timeOfLastHeal + Hive.kHealthUpdateTime) then
-        
-        local players = GetEntitiesForTeam("Player", self:GetTeamNumber())
-        
-        for index, player in ipairs(players) do
-        
-            if player:GetIsAlive() and ((player:GetOrigin() - self:GetOrigin()):GetLength() < Hive.kHealRadius) then
+    if self:GetIsBuilt() then
+    
+        if self.timeOfLastHeal == nil or Shared.GetTime() > (self.timeOfLastHeal + Hive.kHealthUpdateTime) then
             
-                player:AddHealth( player:GetMaxHealth() * Hive.kHealthPercentage, true )
+            local players = GetEntitiesForTeam("Player", self:GetTeamNumber())
             
+            for index, player in ipairs(players) do
+            
+                if player:GetIsAlive() and ((player:GetOrigin() - self:GetOrigin()):GetLength() < Hive.kHealRadius) then
+                
+                    player:AddHealth( player:GetMaxHealth() * Hive.kHealthPercentage, true )
+                
+                end
+                
             end
             
+            self.timeOfLastHeal = Shared.GetTime()
+            
         end
-        
-        self.timeOfLastHeal = Shared.GetTime()
         
     end
     
@@ -266,38 +260,6 @@ function Hive:OnConstructionComplete()
     self:SpawnInfestation()
 end
 
-/*
-function Hive:OnResearchComplete(structure, researchId)
-
-    local success = Structure.OnResearchComplete(self, structure, researchId)
-    
-    if success and (structure and structure:GetId() == self:GetId()) then
-    
-        local techPoint = self:GetAttached()
-        local techLevel = nil
-
-        if(researchId == kTechId.HiveMassUpgrade) then
-        
-            success = self:Upgrade(kTechId.HiveMass)
-            techLevel = 2
-            
-        elseif(researchId == kTechId.HiveColonyUpgrade) then
-        
-            success = self:Upgrade(kTechId.HiveColony)
-            techLevel = 3
-            
-        end    
-        
-        if techPoint and techLevel then
-            techPoint:SetTechLevel(techLevel)
-        end
-        
-    end
-    
-    return success    
-end
-*/
-
 function Hive:GetIsPlayerValidForCommander(player)
     return player ~= nil and player:isa("Alien") and player:GetTeamNumber() == self:GetTeamNumber()
 end
@@ -326,5 +288,30 @@ end
 
 function Hive:SetSupportingUpgradeTechId(techId)
     self.upgradeTechId = techId
+end
+
+
+function Hive:FireImpulses() 
+
+    local now = Shared.GetTime()
+    if now - self.lastImpulseFireTime > Hive.kImpulseInterval then
+        local removals = {}
+        for key,id in pairs(self.cystChildren) do
+            local child = Shared.GetEntity(id)
+            if child == nil then
+                removals[key] = true
+            else
+                child:TriggerImpulse(now)
+            end
+        end
+        for key,_ in pairs(removals) do
+            self.cystChildren[key] = nil
+        end
+        self.lastImpulseFireTime = now
+    end
+end
+
+function Hive:AddChildCyst(child)
+    self.cystChildren["" .. child:GetId()] = child:GetId()
 end
 

@@ -11,6 +11,7 @@
 Script.Load("lua/LiveScriptActor.lua")
 Script.Load("lua/DoorMixin.lua")
 Script.Load("lua/EnergyMixin.lua")
+Script.Load("lua/BuildingMixin.lua")
 
 class 'MAC' (LiveScriptActor)
 
@@ -48,6 +49,7 @@ MAC.kHoverHeight = 1.5
 MAC.kStartDistance = 3
 MAC.kWeldDistance = 3
 MAC.kBuildDistance = 2     // Distance at which bot can start building a structure. 
+MAC.kBuildOrderDistance = 10     // Distance at which bot can start building a structure. 
 MAC.kOrderScanRadius = 5
 MAC.kSpeedUpgradePercent = (1 + kMACSpeedAmount)
 
@@ -83,6 +85,7 @@ function MAC:OnInit()
 
     InitMixin(self, DoorMixin)
     InitMixin(self, EnergyMixin )
+    InitMixin(self, BuildingMixin )
     
     LiveScriptActor.OnInit(self)
 
@@ -94,7 +97,8 @@ function MAC:OnInit()
     
         self.justSpawned = true    
         self:SetNextThink(MAC.kMoveThinkInterval)
-        
+        self:UpdateIncludeRelevancyMask()
+            
     end
     
     self:UpdateControllerFromEntity()
@@ -102,7 +106,7 @@ function MAC:OnInit()
     self.timeOfLastGreeting = 0
     self.timeOfLastGreetingCheck = 0
     self.timeOfLastChatterSound = 0
-        
+    
 end
 
 function MAC:GetExtents()
@@ -245,8 +249,11 @@ function MAC:OverrideTechTreeAction(techNode, position, orientation, commander)
     local success = false
     local keepProcessing = true
     
+    
+    local distanceToTarget = (position - Vector(self:GetOrigin())):GetLength()    
+    
     // Convert build tech actions into build orders
-    if(techNode:GetIsBuild()) then
+    if(techNode:GetIsBuild() and distanceToTarget < MAC.kBuildOrderDistance) then
         
         self:GiveOrder(kTechId.Build, techNode:GetTechId(), position, orientation, not commander.queuingOrders, false)
         
@@ -434,11 +441,11 @@ function MAC:ProcessBuildConstruct()
         if(currentOrder:GetType() == kTechId.Build) then
         
             local commander = self:GetOwner()
-            if commander and commander:isa("Commander") then
+            if commander then
             
                 local techId = currentOrder:GetParam()
                 local techNode = commander:GetTechTree():GetTechNode(techId)
-                local cost = techNode:GetCost()
+                local cost = (techNode and techNode:GetCost()) or nil
                 local team = commander:GetTeam()
                 
                 if(cost == nil) then
@@ -450,7 +457,7 @@ function MAC:ProcessBuildConstruct()
                 
                 if(team:GetTeamResources() >= cost) then
               
-                    local success, createdStructureId = commander:AttemptToBuild(techId, currentOrder:GetLocation(), Vector(0, 1, 0), currentOrder:GetOrientation(), nil, nil, self)
+                    local success, createdStructureId = self:AttemptToBuild(techId, currentOrder:GetLocation(), Vector(0, 1, 0), currentOrder:GetOrientation(), nil, nil, self)
                     
                     // Now construct it
                     if(success) then
@@ -662,6 +669,10 @@ function MAC:OnOverrideDoorInteraction(inEntity)
         end
     end
     return true, 4
+end
+
+function MAC:UpdateIncludeRelevancyMask()
+    self:SetAlwaysRelevantToCommander(true)
 end
 
 Shared.LinkClassToMap("MAC", MAC.kMapName, MAC.networkVars)

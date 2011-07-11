@@ -6,11 +6,14 @@
 //    
 // ========= For more information, visit us at http://www.unknownworlds.com =====================    
 
+Script.Load("lua/FunctionContracts.lua")
+
 EnergyMixin = { }
 EnergyMixin.type = "Energy"
 EnergyMixin.kMaxEnergy = 300
 
-EnergyMixin.expectedCallbacks = { "GetTechId" }
+EnergyMixin.expectedCallbacks = {
+    GetTechId = "Should return the tech id of the object." }
 
 function EnergyMixin.__prepareclass(toClass)
     
@@ -39,19 +42,23 @@ end
 function EnergyMixin:GetEnergy()
     return self.energy
 end
+AddFunctionContract(EnergyMixin.GetEnergy, { Arguments = { "Entity" }, Returns = { "number" } })
 
 function EnergyMixin:SetEnergy(newEnergy)
     self.energy = math.max(math.min(newEnergy, self:GetMaxEnergy()), 0)
 end
+AddFunctionContract(EnergyMixin.SetEnergy, { Arguments = { "Entity", "number" }, Returns = { } })
 
 function EnergyMixin:AddEnergy(amount)
     self.energy = self.energy + amount
     self.energy = math.max(math.min(self.energy, self.maxEnergy), 0)
 end
+AddFunctionContract(EnergyMixin.AddEnergy, { Arguments = { "Entity", "number" }, Returns = { } })
 
 function EnergyMixin:GetMaxEnergy()
     return self.maxEnergy
 end
+AddFunctionContract(EnergyMixin.GetMaxEnergy, { Arguments = { "Entity" }, Returns = { "number" } })
 
 function EnergyMixin:UpdateEnergy(timePassed)
 
@@ -70,5 +77,4 @@ function EnergyMixin:UpdateEnergy(timePassed)
     end
     
 end
-
-
+AddFunctionContract(EnergyMixin.UpdateEnergy, { Arguments = { "Entity", "number" }, Returns = { } })

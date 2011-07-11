@@ -313,9 +313,14 @@ end
  * Called when weapon is purchased
  */
 function MarineBuy_BuyWeapon(idx)
+
     local techId = kWeaponIdList[idx]
-    //Print("MarineBuy_BuyWeapon(%d) => %s", idx, LookupTechData(techId, kTechDataDisplayName))
-    Client.ConsoleCommand("buy " .. tostring(techId))
+    
+    // Don't allow buying basic weapons so they can't be spammed all over the server
+    if techId ~= kTechId.Axe and techId ~= kTechId.Pistol and techId ~= kTechId.Rifle then
+        Client.ConsoleCommand("buy " .. tostring(techId))
+    end
+    
 end
 
 /**

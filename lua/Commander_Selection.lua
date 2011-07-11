@@ -11,6 +11,7 @@
 function Commander:SetDefaultSelection()
 
     // Select nearest command structure so new player knows what to do.
+    self:SetEntitiesSelectionState(false)
     self.selectedEntities = {}
 
     // Find nearest hive or command station and select it
@@ -29,26 +30,36 @@ function Commander:SetDefaultSelection()
         
     end
     
-    if(nearestCommandStructure ~= nil) then
+    if nearestCommandStructure ~= nil then
         
-        table.insertunique(self.selectedEntities, {nearestCommandStructure:GetId(), Shared.GetTime()} )
+        table.insert(self.selectedEntities, {nearestCommandStructure:GetId(), Shared.GetTime()} )
         self:OnSelectionChanged()
         
     end
     
+    self:SetEntitiesSelectionState(true)
+    
 end
 
-// Set the menu from a list of entities (typically structures). Pass nil if none are selected.
-// If more than one entity is passed in, only show build menu icons that they all share.
-function Commander:OnSelectionChanged()
-    if(Client) then
-    
+function Commander:GotoRootMenu ()
+    if(Client) then       
         self:TriggerButtonIndex(4, CommanderUI_IsAlienCommander())
         self.createSelectionCircles = true
         self:UpdateSelectionCircles()
         
     else
         self:ProcessTechTreeAction(kTechId.RootMenu, nil, nil)
+    end
+end
+
+// Set the menu from a list of entities (typically structures). Pass nil if none are selected.
+// If more than one entity is passed in, only show build menu icons that they all share.
+function Commander:OnSelectionChanged()
+
+    self:GotoRootMenu()
+    
+    if Client and table.maxn(self.selectedEntities) > 0 then
+        Shared.PlayPrivateSound(self, self:GetSelectionSound(), nil, 1.0, self:GetOrigin())
     end
     
 end
@@ -429,8 +440,11 @@ function Commander:InternalSetSelection(newSelection, allowEmpty)
         self.gotoHotKeyGroup = 0
         
         if not self:SelectionEntitiesEquivalent(newSelection, self.selectedEntities) then
-        
+            
+            self:SetEntitiesSelectionState(false)
             self.selectedEntities = newSelection
+            self:SetEntitiesSelectionState(true)
+            
             self.selectedSubGroupEntityIds = self:GetSelectedSubGroup()
             self:OnSelectionChanged()
             return true
@@ -438,11 +452,30 @@ function Commander:InternalSetSelection(newSelection, allowEmpty)
         end
         
         // Always go back to root menu when selecting something, even if the same thing
-        self.menuTechId = kTechId.RootMenu
+        self:GotoRootMenu()
         
     end
     
     return false
+    
+end
+
+function Commander:SetEntitiesSelectionState(state)
+        
+    if Server then
+        
+        for index, entityPair in ipairs(self.selectedEntities) do
+            
+            local entityIndex = entityPair[1]
+            local entity = Shared.GetEntity(entityIndex)        
+            
+            if entity ~= nil then
+                entity:SetIsSelected(state)
+            end
+            
+        end
+    
+    end 
     
 end
 
@@ -485,13 +518,31 @@ function Commander:ClearSelection()
 end
 
 function Commander:GetIsEntityValidForSelection(entity)
+    local isAlien   = (self:GetTeamType() == kAlienTeamType)
+    local isValid   = false
+    
             // Select living things on our team that aren't us
             // For now, don't allow even click selection of enemy units or structures
-    return ( entity ~= nil and entity:isa("LiveScriptActor") and (entity:GetTeamNumber() == self:GetTeamNumber()) and (entity:GetIsSelectable()) and (entity ~= self) and entity:GetIsAlive() ) or
+    if      ( entity ~= nil and entity:isa("LiveScriptActor") and (entity:GetTeamNumber() == self:GetTeamNumber()) and (entity:GetIsSelectable()) and (entity ~= self) and entity:GetIsAlive() ) or
             // ...and doors
-            (entity ~= nil and entity:isa("Door")) or
-            // ...and power points
-            (entity ~= nil and entity:isa("PowerPoint")) 
+            (entity ~= nil and entity:isa("Door")) then
+            
+            isValid = true
+    end
+
+    // PowerNodes are special in that aliens can only see
+    // them when sighted as they are not on the alien team
+    // so we need to check to see if the node has been sighted
+    // if alien other wise the selection is false
+    if (entity ~= nil and entity:isa("PowerPoint")) then
+        isValid = true
+        
+        if (isAlien) then
+            isValid = entity:GetIsSighted()
+        end
+    end
+            
+    return isValid
 end
 
 function Commander:UpdateSelection(deltaTime)
@@ -503,16 +554,27 @@ function Commander:UpdateSelection(deltaTime)
         local entityIndex = entityPair[1]
         local entity = Shared.GetEntity(entityIndex)
         
-        if( not self:GetIsEntityValidForSelection(entity) ) then
-        
+        if not self:GetIsEntityValidForSelection(entity) then
             table.insert(entPairsToDelete, entityPair)
-        
         end        
     
     end
     
     for index, entityPair in ipairs(entPairsToDelete) do
+        
         table.removevalue(self.selectedEntities, entityPair)
+        
+        if Server then
+        
+            local entityIndex = entityPair[1]
+            local entity = Shared.GetEntity(entityIndex)        
+        
+            if entity ~= nil then
+                entity:SetIsSelected(false)
+            end
+            
+        end
+        
     end
     
     // Recompute our sub-group

@@ -17,7 +17,7 @@ Armory.kResupplySound = PrecacheAsset("sound/ns2.fev/marine/structures/armory_re
 Armory.kArmoryBuyMenuUpgradesTexture = "ui/marine_buymenu_upgrades.dds"
 Armory.kAttachPoint = "Root"
 
-Armory.kAdvancedArmoryChildModel = PrecacheAsset("models/marine/weapons_module/weapons_module.model")
+Armory.kAdvancedArmoryChildModel = PrecacheAsset("models/marine/advanced_armory/advanced_armory.model")
 
 Armory.kBuyMenuFlash = "ui/marine_buy.swf"
 Armory.kBuyMenuTexture = "ui/marine_buymenu.dds"

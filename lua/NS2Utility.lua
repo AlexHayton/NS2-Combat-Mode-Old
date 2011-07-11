@@ -46,7 +46,17 @@ function GetBuildAttachRequirementsMet(techId, position, teamNumber, snapRadius)
     local buildNearClass = LookupTechData(techId, kStructureBuildNearClass)
     if buildNearClass then
         
-        local ents = GetEntitiesForTeamWithinRange(buildNearClass, teamNumber, position, attachRange)
+        local ents = {}
+        
+        // Handle table of class names
+        if type(buildNearClass) == "table" then
+            for index, className in ipairs(buildNearClass) do
+                table.copy(GetEntitiesForTeamWithinRange(className, teamNumber, position, attachRange), ents, true)
+            end
+        else
+            ents = GetEntitiesForTeamWithinRange(buildNearClass, teamNumber, position, attachRange)
+        end
+        
         legalBuild = (table.count(ents) > 0)
         
     end
@@ -110,6 +120,7 @@ function GetExtents(techId)
 end
 
 // Assumes position at base of structure, so adjust position up by y extents
+// this function should get the surface normal of the surface being built on
 function GetBuildNoCollision(techId, position, attachEntity, ignoreEntity)
 
     local filter = nil
@@ -125,13 +136,29 @@ function GetBuildNoCollision(techId, position, attachEntity, ignoreEntity)
     local extents = GetExtents(techId)
     local trace = Shared.TraceBox(extents, position + Vector(0, extents.y + .01, 0), position + Vector(0, extents.y + .02, 0), PhysicsMask.AllButPCsAndInfestation, filter)
     
-    return (trace.fraction == 1)
+    if trace.fraction ~= 1 then
+        // check if we can tilt the building a little to allow it to build on this surface
+        local normal = Vector(trace.normal)
+        normal:Normalize()
+        local tilt = Vector.yAxis:DotProduct(normal)
+        // normal buildings can only tilt by around 10 degrees, buildOnWall can tilt freely
+        local maxTilt = LookupTechData(techId, kStructureBuildOnWall) and 0 or 0.9  
+        if math.abs(tilt) >= maxTilt then
+            // align along normal
+            p1 = position + normal * 0.01
+            p2 = position + normal * extents.y * 2
+            trace = Shared.TraceViewBox(extents.x, extents.z, 0, p1 , p2, PhysicsMask.AllButPCsAndInfestation, filter)
+        end
+
+    end
     
+    return trace.fraction == 1, trace   
 end
 
-function CheckBuildEntityRequirements(techId, position, player, ignoreEntity, silent)
+function CheckBuildEntityRequirements(techId, position, player, ignoreEntity)
     
     local legalBuild = true
+    local errorString = ""
     
     local techTree = nil
     if Client then
@@ -172,7 +199,7 @@ function CheckBuildEntityRequirements(techId, position, player, ignoreEntity, si
         
     end
 
-    if techNode and (techNode:GetIsBuild() or techNode:GetIsBuy()) and legalBuild then        
+    if techNode and (techNode:GetIsBuild() or techNode:GetIsBuy() or techNode:GetIsEnergyBuild()) and legalBuild then        
     
         local numFriendlyEntitiesInRadius = 0
         local entities = GetEntitiesForTeamWithinXZRange("ScriptActor", player:GetTeamNumber(), position, kMaxEntityRadius)
@@ -188,9 +215,7 @@ function CheckBuildEntityRequirements(techId, position, player, ignoreEntity, si
 
                     if numFriendlyEntitiesInRadius >= (kMaxEntitiesInRadius - 1) then
                     
-                        if not silent then
-                            Print("GetIsBuildLegal() - Too many entities in area.")
-                        end
+                        errorString = "Too many entities in area."
                         legalBuild = false
                         break
                         
@@ -214,7 +239,7 @@ function CheckBuildEntityRequirements(techId, position, player, ignoreEntity, si
         
     end
     
-    return legalBuild
+    return legalBuild, errorString
             
 end
 
@@ -226,6 +251,7 @@ function GetIsBuildLegal(techId, position, snapRadius, player, ignoreEntity)
     local legalBuild = true
     local legalPosition = position
     local attachEntity = nil
+    local errorString = ""
     
     // If structure needs to be attached to an entity, make sure it's near enough to one.
     // Snaps position to it if necessary. Also makes sure we're not building on an attach 
@@ -233,6 +259,8 @@ function GetIsBuildLegal(techId, position, snapRadius, player, ignoreEntity)
     local teamNumber = -1
     if player then
         teamNumber = player:GetTeamNumber()
+    elseif ignoreEntity then
+        teamNumber = ignoreEntity:GetTeamNumber()
     end
     
     // Check attach points
@@ -240,20 +268,46 @@ function GetIsBuildLegal(techId, position, snapRadius, player, ignoreEntity)
     
     // Check collision and make sure there aren't too many entities nearby
     if legalBuild and player then
-        legalBuild = CheckBuildEntityRequirements(techId, legalPosition, player, ignoreEntity, true)
+        legalBuild, errorString = CheckBuildEntityRequirements(techId, legalPosition, player, ignoreEntity)
     end    
-
-    // Check infestation requirements
+    
+    // Make sure tech node is available
     if legalBuild then
+        ASSERT(teamNumber ~= -1)
+        local techTree = GetTechTree(teamNumber)
+        ASSERT(techTree)
+        local techNode = techTree:GetTechNode(techId)
+        ASSERT(techNode)
+        legalBuild = techNode:GetAvailable()        
+    end
+    
+    // Display tooltip error
+    if not legalBuild and errorString ~= "" and HasMixin(player, "Tooltip") then
+    
+        player:AddTooltip(errorString, 2)
+        
+    // Check infestation requirements
+    elseif legalBuild then
+    
         legalBuild = GetInfestationRequirementsMet(techId, legalPosition)
+    
+        // Check collision
+        local trace = nil
+        if legalBuild then    
+            legalBuild, trace = GetBuildNoCollision(techId, legalPosition, attachEntity, ignoreEntity)
+        end
+        
+         // check special build requirements. We do it here because we have the trace from the building available to find out the normal
+        if legalBuild then
+            local method = LookupTechData(techId, kTechDataBuildRequiresMethod, nil)
+            if method then
+                legalBuild = method(techId, legalPosition, trace.normal, player)
+            end 
+        end
+               
     end
     
-    // Check collision
-    if legalBuild then    
-        legalBuild = GetBuildNoCollision(techId, legalPosition, attachEntity, ignoreEntity)
-    end
-    
-    return legalBuild, legalPosition, attachEntity
+    return legalBuild, legalPosition, attachEntity, errorString
 
 end
 
@@ -300,8 +354,6 @@ function CreateEntityForTeam(techId, position, teamNumber, player)
         newEnt:SetAttached(attachEntity)        
     end
     
-    newEnt:SetTeamNumber( teamNumber )
-        
     return newEnt
     
 end
@@ -792,7 +844,7 @@ function GetCanSeeEntity(seeingEntity, targetEntity)
     // See if line is in our view cone
     if(targetEntity:GetIsVisible()) then
     
-        local eyePos = seeingEntity:GetEyePos()
+        local eyePos = GetEntityEyePos(seeingEntity)
         local targetEntityOrigin = targetEntity:GetOrigin()
         
         // Reuse vector
@@ -808,9 +860,14 @@ function GetCanSeeEntity(seeingEntity, targetEntity)
             toEntity.z = toEntity.z / toEntityLength
         end
         
-        local normViewVec = seeingEntity:GetViewAngles():GetCoords().zAxis
+        local seeingEntityAngles = GetEntityViewAngles(seeingEntity)
+        local normViewVec = seeingEntityAngles:GetCoords().zAxis
         local dotProduct = Math.DotProduct(toEntity, normViewVec)
-        local halfFov = math.rad(seeingEntity:GetFov()/2)
+        local fov = 90
+        if seeingEntity.GetFov then
+            fov = seeingEntity:GetFov()
+        end
+        local halfFov = math.rad(fov/2)
         local s = math.acos(dotProduct)
         if(s < halfFov) then
 
@@ -856,7 +913,7 @@ function GetLocationForPoint(point)
     
         if location:GetIsPointInside(point) then
         
-            return location:GetName()
+            return location:GetName(), location
             
         end    
         
@@ -958,11 +1015,6 @@ function SetPlayerPoseParameters(player, viewAngles, velocity, maxSpeed, maxBack
     
     local x = Math.DotProduct(viewCoords.xAxis, horizontalVelocity)
     local z = Math.DotProduct(viewCoords.zAxis, horizontalVelocity)
-    
-    // Use a different maximum speed for forwards and backwards movement.
-    if (Math.DotProduct(viewCoords.zAxis, horizontalVelocity) < 0) then
-        maxSpeed = maxSpeed * maxBackwardSpeedScalar
-    end
 
     local moveYaw   = math.atan2(z, x) * 180 / math.pi
     local moveSpeed = horizontalVelocity:GetLength() / maxSpeed
@@ -1097,6 +1149,7 @@ function TriggerHitEffects(doer, target, origin, surface)
 
     if target and target.GetClassName then
         tableParams[kEffectFilterClassName] = target:GetClassName()
+        tableParams[kEffectFilterIsAlien] = target:GetTeamType() == kAlienTeamType
     end        
     
     tableParams[kEffectSurface] = ConditionalValue(type(surface) == "string" and surface ~= "", surface, "metal")
@@ -1111,7 +1164,7 @@ function TriggerHitEffects(doer, target, origin, surface)
         tableParams[kEffectFilterDoerName] = doer:GetClassName()
     end
 
-    GetEffectManager():TriggerEffects("hit_effect", tableParams, target)
+    GetEffectManager():TriggerEffects("hit_effect", tableParams, doer)
     
 end
 
@@ -1135,12 +1188,13 @@ function GetIsPointOnInfestation(point)
 
 end
 
-function CreateStructureInfestation(origin, teamNumber, infestationRadius, percent)
+function CreateStructureInfestation(coords, teamNumber, infestationRadius, percent)
 
-    local infestation = CreateEntity(Infestation.kMapName, origin, teamNumber)
+    local infestation = CreateEntity(Infestation.kMapName, coords.origin, teamNumber)
     
     infestation:SetMaxRadius(infestationRadius)
-    // TODO: Set coords if on the wall
+    
+    infestation:SetCoords(coords)
     
     if percent then
         infestation:SetRadiusPercent(percent)
@@ -1182,8 +1236,9 @@ end
 if Server then
 function GetPlayerFromUserId(userId)
 
-    for index, currentPlayer in ipairs(GetGamerules():GetEntitiesWithName("Player") ) do
-        if currentPlayer:GetUserId() == userId then
+    for index, currentPlayer in ientitylist(Shared.GetEntitiesWithClassname("Player")) do
+        local owner = Server.GetOwner(currentPlayer)
+        if owner and owner:GetUserId() == userId then
             return currentPlayer
         end
     end
@@ -1218,8 +1273,22 @@ function GetCrosshairText(entity, teamNumber)
         
             if entity:GetTeamNumber() == teamNumber then
             
-                // Add health scalar
-                text = string.format("%s (%d%%)", text, math.ceil(entity:GetHealthScalar()*100))
+                if entity:isa("Marine") then
+                
+                    // Show health/armor scalars separately so marines know when to repair
+                    local healthPct = math.ceil((entity:GetHealth() / entity:GetMaxHealth()) * 100)
+                    local armorPct = math.ceil((entity:GetArmor() / entity:GetMaxArmor()) * 100)
+                    
+                    if healthPct == 100 and armorPct == 100 then
+                        text = string.format("%s (%d%%)", text, 100)
+                    else
+                        text = string.format("%s (%d%%/%d%%)", text, healthPct, armorPct)
+                    end
+                    
+                else
+                    // But aliens only ever need total %
+                    text = string.format("%s (%d%%)", text, math.ceil(entity:GetHealthScalar()*100))
+                end                
                 
             end
             
@@ -1232,10 +1301,19 @@ function GetCrosshairText(entity, teamNumber)
         local enemyTeam = (GetEnemyTeamNumber(entity:GetTeamNumber()) == teamNumber)
         local techId = entity:GetTechId()
         local statusText = string.format("(%.0f%%)", Clamp(math.ceil(entity:GetHealthScalar() * 100), 0, 100))        
-        if entity:isa("Structure") and not entity:GetIsBuilt() and not enemyTeam then
-            statusText = string.format("(%.0f%%)", Clamp(math.ceil(entity:GetBuiltFraction() * 100), 0, 100))
+        if entity:isa("Structure") and not enemyTeam then
+            if not entity:GetIsBuilt() then
+                statusText = string.format("(%.0f%%)", Clamp(math.ceil(entity:GetBuiltFraction() * 100), 0, 100))
+            // Show where phase gate will send player to
+            elseif entity:isa("PhaseGate") and entity:GetDestLocationId() ~= Entity.invalidId then
+                local destGateId = entity:GetDestLocationId()
+                local destGate = Shared.GetEntity(destGateId)
+                if destGate then
+                    statusText = string.format("to %s", destGate:GetName())
+                end
+            end
         end
-
+        
         local secondaryText = ""
         if entity:isa("Structure") then
 
@@ -1290,6 +1368,49 @@ function GetCrosshairText(entity, teamNumber)
     
 end
 
+function GetSelectionText (entity, teamNumber)
+    local text = ""
+    
+    if entity:isa("Player") and entity:GetIsAlive() then
+        local playerName = Scoreboard_GetPlayerData(entity:GetClientIndex(), kScoreboardDataIndexName)
+                    
+        if playerName ~= nil then
+            text = playerName
+        end
+                    
+    elseif entity:GetIsAlive() then
+    
+        // Don't show built % for enemies, show health instead
+        local enemyTeam = (GetEnemyTeamNumber(entity:GetTeamNumber()) == teamNumber)
+        local techId = entity:GetTechId()        
+
+        local secondaryText = ""
+        if entity:isa("Structure") then
+            if not entity:GetIsBuilt() then
+                secondaryText = "Unbuilt "
+            elseif entity:GetRequiresPower() and not entity:GetIsPowered() then
+                secondaryText = "Unpowered "
+            
+            elseif entity:isa("Whip") then
+            
+                if not entity:GetIsRooted() then
+                    secondaryText = "Unrooted "
+                end            
+            end
+            
+        end
+        
+        local primaryText = LookupTechData(techId, kTechDataDisplayName)
+        if entity.GetDescription then
+            primaryText = entity:GetDescription()
+        end
+        text = string.format("%s%s", secondaryText, primaryText)
+
+    end
+    
+    return text    
+end
+
 // Transform angles, view angles and velocity from srcCoords to destCoords (when going through phase gate)
 function TransformPlayerCoords(player, srcCoords, destCoords)
 
@@ -1306,5 +1427,17 @@ function TransformPlayerCoords(player, srcCoords, destCoords)
     // Change player angles relative to gate
     local invZAxis = invSrcCoords:TransformVector(player:GetCoords().zAxis)
     SetAnglesFromVector(player, destCoords:TransformVector(invZAxis))
+    
+end
+
+function GetCostForTech(techId)
+
+    local cost = LookupTechData(techId, kTechDataCostKey, 0)
+    
+    if Shared.GetCheatsEnabled() then
+        cost = 0
+    end
+    
+    return cost
     
 end

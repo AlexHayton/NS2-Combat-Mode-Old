@@ -41,7 +41,7 @@ function ResourcePoint:OnInit()
 
 end
 
-function ResourcePoint:OnReset()
+function ResourcePoint:Reset()
     
     self:OnInit()
     

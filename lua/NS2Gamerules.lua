@@ -8,6 +8,12 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Gamerules.lua")
 
+if(Client) then
+    Script.Load("lua/NS2ConsoleCommands_Client.lua")
+else
+    Script.Load("lua/NS2ConsoleCommands_Server.lua")
+end
+
 class 'NS2Gamerules' (Gamerules)
 
 NS2Gamerules.kMapName = "ns2_gamerules"
@@ -97,7 +103,7 @@ function NS2Gamerules:OnCreate()
     self.autobuild = false
   
     self:SetIsVisible(false)
-    self:SetPropagate(Entity.Propagate_Always)
+    self:SetPropagate(Entity.Propagate_Never)
     
     self.justCreated = true
 end
@@ -158,12 +164,12 @@ end
 function NS2Gamerules:ComputeDamageFromType(damage, damageType, entity)
 
     // StructuresOnly damage
-    if (damageType == kDamageType.StructuresOnly and not entity:isa("Structure")) then
+    if (damageType == kDamageType.StructuresOnly and not entity:isa("Structure") and not entity:isa("ARC")) then
     
         damage = 0
         
     // Extra damage to structures
-    elseif damageType == kDamageType.Structural and entity:isa("Structure") then
+    elseif damageType == kDamageType.Structural and (entity:isa("Structure") or entity:isa("ARC")) then
     
         damage = damage * kStructuralDamageScalar 
 
@@ -179,7 +185,7 @@ function NS2Gamerules:ComputeDamageFromType(damage, damageType, entity)
     elseif damageType == kDamageType.Biological then
     
         // Hurt non-mechanical players and alien structures only
-        if ( (entity:isa("Player") and not entity:isa("Heavy")) or (entity:isa("Structure") and (entity:GetTeamType() == kAlienTeamType))) then
+        if ( (entity:isa("Player") and not entity:isa("Heavy")) or (entity:isa("Structure") and (entity:GetTeamType() == kAlienTeamType)) or entity:isa("ARC")) then
 
         else
             damage = 0
@@ -195,6 +201,83 @@ function NS2Gamerules:ComputeDamageFromType(damage, damageType, entity)
     
     return damage
     
+end
+
+function NS2Gamerules:OnEntityCreate(entity)
+
+    self:OnEntityChange(nil, entity:GetId())
+
+    if entity.GetTeamNumber then
+    
+        local team = self:GetTeam(entity:GetTeamNumber())
+        
+        if team then
+        
+            if entity:isa("Player") then
+        
+                if team:AddPlayer(entity) then
+
+                    // Tell team to send entire tech tree on team change
+                    entity.sendTechTreeBase = true
+
+                    // Clear all hotkey groups on team change since old
+                    // hotkey groups will be invalid.
+                    entity:InitializeHotkeyGroups()                
+                    
+                end 
+               
+                // Send scoreboard changes to everyone    
+                entity:SetScoreboardChanged(true)                
+
+            elseif entity:isa("Structure") then
+            
+                team:TechAdded(entity)
+            
+            end
+            
+        end
+        
+    end
+    
+end
+
+function NS2Gamerules:OnClientDisconnect(client)
+    local player = client:GetControllingPlayer()
+
+    // When a player disconnects remove them from their team
+    if (player ~= nil) then
+        local team = self:GetTeam(player:GetTeamNumber())
+        
+        if team then
+            team:RemovePlayer(player)
+        end
+    end
+    
+    Gamerules.OnClientDisconnect(self, client)
+end
+
+function NS2Gamerules:OnEntityDestroy(entity)
+    
+    self:OnEntityChange(entity:GetId(), nil)
+
+    if entity.GetTeamNumber then
+    
+        local team = self:GetTeam(entity:GetTeamNumber())
+        if team then
+        
+            if entity:isa("Player") then
+                team:RemovePlayer(entity)
+                
+            elseif entity:isa("Structure") then
+            
+                team:TechRemoved(entity)
+            
+            end
+            
+        end
+        
+    end 
+   
 end
 
 // Update player and entity lists
@@ -228,13 +311,52 @@ function NS2Gamerules:OnEntityChange(oldId, newId)
         if ent:GetId() ~= oldId then
             ent:OnEntityChange(oldId, newId)
         end
-    end    
+    end   
+
+end
+
+local function PostKillStat(targetEntity, attacker, doer)
+
+    if not attacker or not targetEntity or not doer then
+        return
+    end
+
+    // General info.
+    local urlString = "http://unknownworldsstats.appspot.com/statkill?version=" .. ToString(Shared.GetBuildNumber())
+    urlString = urlString .. "&map=" .. Shared.GetMapName()
+
+    // Attacker info.
+    urlString = urlString .. "&attacker_type=" .. attacker:GetClassName()
+    urlString = urlString .. "&attacker_team=" .. attacker:GetTeamType()
+    urlString = urlString .. "&attacker_weapon=" .. doer:GetClassName()
+    local attackerOrigin = attacker:GetOrigin()
+    urlString = urlString .. "&attackerx=" .. string.format("%.2f", attackerOrigin.x)
+    urlString = urlString .. "&attackery=" .. string.format("%.2f", attackerOrigin.y)
+    urlString = urlString .. "&attackerz=" .. string.format("%.2f", attackerOrigin.z)
+
+    // Target info.
+    urlString = urlString .. "&target_type=" .. targetEntity:GetClassName()
+    urlString = urlString .. "&target_team=" .. targetEntity:GetTeamType()
+    local targetWeapon = "None"
+    if targetEntity.GetActiveWeapon and targetEntity:GetActiveWeapon() then
+        targetWeapon = targetEntity:GetActiveWeapon():GetClassName()
+    end
+    urlString = urlString .. "&target_weapon=" .. targetWeapon
+    local targetOrigin = targetEntity:GetOrigin()
+    urlString = urlString .. "&targetx=" .. string.format("%.2f", targetOrigin.x)
+    urlString = urlString .. "&targety=" .. string.format("%.2f", targetOrigin.y)
+    urlString = urlString .. "&targetz=" .. string.format("%.2f", targetOrigin.z)
+    urlString = urlString .. "&target_lifetime=" .. string.format("%.2f", Shared.GetTime() - targetEntity:GetCreationTime())
     
+    Shared.GetWebpage(urlString, function (data) end)
+
 end
 
 // Called whenever an entity is killed. Killer could be the same as targetEntity. Called before entity is destroyed.
 function NS2Gamerules:OnKill(targetEntity, damage, attacker, doer, point, direction)
 
+    PostKillStat(targetEntity, attacker, doer)
+    
     self.team1:OnKill(targetEntity, damage, attacker, doer, point, direction)
     self.team2:OnKill(targetEntity, damage, attacker, doer, point, direction)
     
@@ -354,6 +476,10 @@ function NS2Gamerules:ResetGame()
     // Destroy any map entities that are still around
     DestroyLiveMapEntities()    
     
+    // Track which clients have joined teams so we don't 
+    // give them starting resources again if they switch teams
+    self.userIdsInGame = {}
+    
     // Reset all players, delete other not map entities that were created during 
     // the game (hives, command structures, initial resource towers, etc)
     // We need to convert the EntityList to a table since we are destroying entities
@@ -433,6 +559,50 @@ end
 
 function NS2Gamerules:GetSpectatorTeam()
     return self.spectatorTeam
+end
+
+// Returns bool for success and bool if we've played in the game already
+function NS2Gamerules:GetUserPlayedInGame(player)
+
+    local success = false
+    local played = false
+    
+    ASSERT(player:isa("Player"))
+    if player:isa("Player") then
+    
+        local owner = Server.GetOwner(player)
+        if owner then
+        
+            local userId = tonumber(owner:GetUserId())
+            ASSERT(userId >= 0)    
+            
+            // Could be invalid if we're still connecting to Steam
+            played = table.find(self.userIdsInGame, userId) ~= nil
+            success = true
+            
+        end
+        
+    end
+    
+    return success, played
+end
+
+function NS2Gamerules:SetUserPlayedInGame(player)
+
+    ASSERT(player:isa("Player"))
+    local owner = Server.GetOwner(player)
+    if owner then
+    
+        local userId = tonumber(owner:GetUserId())
+        ASSERT(userId >= 0)    
+        
+        // Could be invalid if we're still connecting to Steam
+        return table.insertunique(self.userIdsInGame, userId)
+        
+    end
+    
+    return false
+    
 end
 
 function NS2Gamerules:UpdateScores()
@@ -543,8 +713,10 @@ end
 function NS2Gamerules:DeleteOldMapBlips(mapBlips)
 
     for i, blip in ipairs(mapBlips) do
-        if Shared.GetEntity(blip:GetOwnerEntityId()) == nil then
-            DestroyEntity(blip)
+        if (blip ~= nil) then
+            if not blip:GetIsValid() then
+                DestroyEntity(blip)
+            end
         end
     end
 
@@ -585,7 +757,7 @@ function NS2Gamerules:GetMinimapBlipTypeAndTeam(entity)
         
     // Don't display PowerPoints unless they are in an unpowered state.
     elseif entity:isa("PowerPoint") then
-    
+        
         // Important to have this statement inside the isa("PowerPoint") statement.
         if entity:GetLightMode() == kLightMode.NoPower then
             blipType = kMinimapBlipType.PowerPoint
@@ -594,8 +766,8 @@ function NS2Gamerules:GetMinimapBlipTypeAndTeam(entity)
     // Players and structures.
     elseif entity:GetIsVisible() then
     
-        if entity:isa("Player") or entity:isa("MAC") or entity:isa("Drifter") or entity:isa("ARC") then
-            blipType = kMinimapBlipType.Player 
+        if kMinimapBlipType[entity:GetClassName()] ~= nil then
+            blipType = kMinimapBlipType[entity:GetClassName()]
         elseif entity:isa("Structure") then
             blipType = kMinimapBlipType.Structure
         end
@@ -620,9 +792,8 @@ function NS2Gamerules:CastVoteByPlayer( voteTechId, player )
     if voteTechId == kTechId.VoteDownCommander1 or voteTechId == kTechId.VoteDownCommander2 or voteTechId == kTechId.VoteDownCommander3 then
 
         // Get the 1st, 2nd or 3rd commander by entity order (does this on client as well)    
-        local playerIndex = (voteTechId - kTechId.VoteDownCommander1 + 1)
-        // TODO: Change to "Commander"
-        local commanders = GetEntitiesForTeam("Player", player:GetTeamNumber())
+        local playerIndex = (voteTechId - kTechId.VoteDownCommander1 + 1)        
+        local commanders = GetEntitiesForTeam("Commander", player:GetTeamNumber())
         
         if playerIndex <= table.count(commanders) then
         
@@ -672,6 +843,10 @@ function NS2Gamerules:UpdateToReadyRoom()
     
         if self.timeSinceGameStateChanged >= NS2Gamerules.kTimeToReadyRoom then
         
+            // Force the commanders to logout before we spawn people
+            // in the ready room
+            self:LogoutCommanders()
+    
             // Set all players to ready room team
             local function SetReadyRoomTeam(player)
                 self:JoinTeam(player, kTeamReadyRoom)
@@ -847,21 +1022,18 @@ function NS2Gamerules:GetCanJoinTeamNumber(teamNumber)
 end
 
 /**
- * Changes the team of the specified player. Returns two return codes: success and the new player.
- * If player is already on that team, false and the original player are returned. Pass force 
+ * Returns two return codes: success and the player on the new team. This player could be a new
+ * player (the default respawn type for that team) or it will be the original player if the team 
+ * wasn't changed (false, original player returned). Pass force = true for second parameter
  * to make player change team no matter what and to respawn immediately.
  */
 function NS2Gamerules:JoinTeam(player, newTeamNumber, force)
 
     local success = false
-    local newPlayer = player
-    local currentTeamNumber = player:GetTeamNumber()
     
     // Join new team
-    if(player:GetTeamNumber() ~= newTeamNumber or force) then
+    if(player and player:GetTeamNumber() ~= newTeamNumber or force) then
     
-        player:SetTeamNumber(newTeamNumber)
-        
         local team = self:GetTeam(newTeamNumber)
 
         // Spawn immediately if going to ready room, game hasn't started, cheats on, or game started recently
@@ -873,7 +1045,7 @@ function NS2Gamerules:JoinTeam(player, newTeamNumber, force)
         
             // Destroy the existing player and create a spectator in their place.
             local mapName = ConditionalValue(team:isa("AlienTeam"), AlienSpectator.kMapName, Spectator.kMapName)
-            newPlayer = player:Replace(mapName)
+            newPlayer = player:Replace(mapName, newTeamNumber)
             
             // Queue up the spectator for respawn.
             team:PutPlayerInRespawnQueue(newPlayer, Shared.GetTime())
@@ -881,10 +1053,15 @@ function NS2Gamerules:JoinTeam(player, newTeamNumber, force)
             success = true
             
         end
+        
+        newPlayer:TriggerEffects("join_team")
+        
+        return success, newPlayer
                        
     end
     
-    return success, newPlayer
+    // Return old player
+    return success, player
 
 end
 
@@ -985,7 +1162,6 @@ function NS2Gamerules:UpdatePregame(timePassed)
     
         local preGameTime = NS2Gamerules.kPregameLength
         if(Shared.GetDevMode() or Shared.GetCheatsEnabled()) then
-            Print("Setting preGameTime to 0")
             preGameTime = 0
         end
 
@@ -1027,105 +1203,25 @@ function NS2Gamerules:UpdatePregame(timePassed)
             
 end
 
-// Returns true if entity should be propagated to player
-// NOTE: this is only called for ScriptActors, so if your object extents
-// off Entity it needs to call this
-function NS2Gamerules:GetIsRelevant(player, entity, noRecurse)
-
-    local relevant = false
-    
-    if entity:isa("Blip") then
-    
-        // Hive sight blips only go to aliens and also have a bigger range
-        if player:isa("Alien") and entity.entId ~= player:GetId() then
-            local dist = player:GetDistanceSquared(entity)
-            relevant = (dist < kHiveSightMaxRange * kHiveSightMaxRange)
-        end
+function NS2Gamerules:GetIsRelevant(player, entity)
         
-    elseif entity:isa("MapBlip") then
-    
-        if (entity:GetOwnerEntityId() ~= player:GetId()) then
-            // Not relevant if on the other team.
-            relevant = entity:GetTeamNumber() ~= GetEnemyTeamNumber(player:GetTeamNumber())
-            // Unless sighted.
-            relevant = relevant or entity:GetIsSighted()
-            // Do not show entities that are in the ready room.
-            relevant = relevant and entity:GetTeamNumber() ~= kTeamReadyRoom
-            // Do not show any blips to players in the ready room.
-            relevant = relevant and player:GetTeamNumber() ~= kTeamReadyRoom
-        end
-
-    // Send orders given to players to those players
-    elseif entity:isa("Order") and player:isa("Marine") then
-
-        relevant = (player.GetHasSpecifiedOrder and player:GetHasSpecifiedOrder(entity))
-        
-    // Remove LOS check for perf while debugging
-    elseif(player:GetIsCommander() and not entity:isa("Blip")) then
-    
-        // Don't return dynamic props with commAlpha < 1
-        if entity:isa("PropDynamic") and entity.commAlpha ~= nil and entity.commAlpha < 1 then
-        
-            relevant = false
-
-        // Send orders if they belong to a unit is selected
-        elseif(entity:isa("Order") and player:isa("Commander")) then
-        
-            relevant = player:GetSelectionHasOrder(entity)
-            
+    if player:GetIsCommander() then
+        /*    
         // Send down all players to the commander so select all works
-        elseif entity:isa("Player") and not entity:isa("Commander") and not entity:isa("Spectator") and (entity:GetTeamNumber() == player:GetTeamNumber()) then
-        
+        if entity:isa("Player") and not entity:isa("Commander") and not entity:isa("Spectator") and (entity:GetTeamNumber() == player:GetTeamNumber()) then
             relevant = true
-
         // Send our hotgroups and also the command station we're in
-        elseif(player:GetIsEntitySelected(entity) or player:GetIsEntityHotgrouped(entity) or player:GetIsEntityIdleWorker(entity) or (player:GetHostCommandStructure():GetId() == entity:GetId())) then
-        
+        elseif(player:GetIsEntitySelected(entity) or player:GetIsEntityHotgrouped(entity) or player:GetIsEntityIdleWorker(entity)) then
             relevant = true
-            
-        elseif( GetEnemyTeamNumber(entity:GetTeamNumber()) == player:GetTeamNumber()) then
-        
-            // Enemy seen only if friendly entity has LOS to it
-            relevant = entity.sighted or GetIsDebugging()
-            
-        else
-        
-            local dist = player:GetDistanceSquared(entity)
-            // Friendly entities
-            if (dist < kMaxRelevancyDistance * kMaxRelevancyDistance) /*or GetCanSeeEntity(player, entity)*/ then
-
-                relevant = true
-                
-            end
-        
         end        
-        
-    else
-    
-        local dist = player:GetDistanceSquared(entity)
-        // Check the distance to determine if the entity is relevant.
-        if(dist < kMaxRelevancyDistance * kMaxRelevancyDistance  /*or GetCanSeeEntity(player, entity)*/) then
-
-            relevant = true
-            
-        // Special case active weapons so they are always propagated with their parent, but don't
-        // recurse infinitely!
-        elseif not noRecurse then
-
-            if entity:isa("Weapon") then
-            
-                local parent = entity:GetParent()
-                if parent ~= nil and parent:GetActiveWeapon() == entity then
-                    relevant = self:GetIsRelevant(player, parent, true)
-                end
-                
-            end
-            
-        end
-    
+        */
+    elseif player:isa("Spectator") then
+        // Make sure target is sent to player
+        local target = player:GetTarget()
+        return target and target:GetId() == entity:GetId()
     end
     
-    return relevant
+    return false
 
 end
 
@@ -1170,6 +1266,11 @@ end
 function NS2Gamerules:GetCanPlayerHearPlayer(listenerPlayer, speakerPlayer)
 
     local success = false
+    
+    // Check if the listerner has the speaker muted.
+    if listenerPlayer:GetClientMuted(speakerPlayer:GetClientIndex()) then
+        return false
+    end
     
     // If both players have the same team number, they can hear each other
     if(listenerPlayer:GetTeamNumber() == speakerPlayer:GetTeamNumber()) then
@@ -1218,13 +1319,8 @@ end
 ////////////
 function NS2Gamerules:SetupConsoleCommands()
 
-    Gamerules.SetupConsoleCommands(self)
+    Gamerules.SetupConsoleCommands(self)    
     
-    if(Client) then
-        Script.Load("lua/NS2ConsoleCommands_Client.lua")
-    else
-        Script.Load("lua/NS2ConsoleCommands_Server.lua")
-    end
     
 end
 

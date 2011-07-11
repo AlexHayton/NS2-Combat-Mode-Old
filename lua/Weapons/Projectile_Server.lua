@@ -24,7 +24,7 @@ function Projectile:CreatePhysics()
 
     if (self.physicsBody == nil) then
         self.physicsBody = Shared.CreatePhysicsSphereBody(true, self.radius, self.mass, self:GetCoords() )
-        self.physicsBody:SetGravityEnabled(self.gravityEnabled)
+        self.physicsBody:SetGravityEnabled(true)
         self.physicsBody:SetGroup( PhysicsGroup.ProjectileGroup )
         self.physicsBody:SetEntity( self )
         // Projectiles need to have continuous collision detection so they
@@ -75,13 +75,24 @@ function Projectile:OnUpdate(deltaTime)
 
     ScriptActor.OnUpdate(self, deltaTime)
 
-    self:CreatePhysics()    
-    // Update the position/orientation of the entity based on the current
-    // position/orientation of the physics object.
-    self:SetCoords( self.physicsBody:GetCoords() )
-    
-    Server.dbgTracer:TraceProjectile(self)
+    self:CreatePhysics()
 
+    // If the projectile has moved outside of the world, destroy it
+    local coords = self.physicsBody:GetCoords()
+    local origin = coords.origin
+    
+    local maxDistance = 1000
+    
+    if origin:GetLengthSquared() > maxDistance * maxDistance then
+        Print( "%s moved outside of the playable area, destroying", self:GetClassName() )
+        DestroyEntity(self)
+    else
+        // Update the position/orientation of the entity based on the current
+        // position/orientation of the physics object.
+        self:SetCoords( coords )
+        Server.dbgTracer:TraceProjectile(self)
+    end
+    
 end
 
 function Projectile:SetOrientationFromVelocity()
@@ -119,7 +130,7 @@ end
 function CreateViewProjectile(mapName, player)   
 
     local viewCoords = player:GetViewAngles():GetCoords()
-    local startPoint = player:GetViewOffset() + player:GetOrigin() + viewCoords.zAxis
+    local startPoint = player:GetEyePos() + viewCoords.zAxis
     
     local projectile = CreateEntity(mapName, startPoint, player:GetTeamNumber())
     SetAnglesFromVector(projectile, viewCoords.zAxis)
@@ -134,6 +145,8 @@ end
 
 // Register for callbacks when projectiles collide with the world
 Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, 0 )
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, PhysicsGroup.DefaultGroup )
+Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, PhysicsGroup.StructuresGroup )
 Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, PhysicsGroup.PlayerControllersGroup)
 Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, PhysicsGroup.CommanderPropsGroup )
 Shared.SetPhysicsCollisionCallbackEnabled( PhysicsGroup.ProjectileGroup, PhysicsGroup.AttachClassGroup )

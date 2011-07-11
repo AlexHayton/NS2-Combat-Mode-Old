@@ -67,13 +67,12 @@ end
  * Get a string that describes the entity
  */
 function CommanderUI_GetSelectedDescriptor(entityId)
+    local player = Client.GetLocalPlayer()
     
     local descriptor = "Unknown"
     local ent = Shared.GetEntity(entityId)
     if(ent ~= nil) then
-    
-        descriptor = ent:GetDescription()
-                
+        descriptor = GetSelectionText(ent, player:GetTeamNumber())
     end
     
     return descriptor

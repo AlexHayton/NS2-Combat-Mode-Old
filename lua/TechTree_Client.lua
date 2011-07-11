@@ -7,12 +7,12 @@
 //
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 
-function GetTechSupported(callingEntity, techId)
+function GetTechSupported(callingEntity, techId, silentError)
 
     local techTree = GetTechTree()
     if(techTree ~= nil) then
     
-        return techTree:GetTechSupported(techId)
+        return techTree:GetTechSupported(techId, silentError)
     
     else
         Shared.Message("GetTechSupported (Client) returned nil tech tree.")

@@ -36,20 +36,28 @@ function OnCommandTakeDamageIndicator(damageIndicatorMessage)
     local worldX, worldZ, damage = ParseTakeDamageIndicatorMessage(damageIndicatorMessage)
     player:AddTakeDamageIndicator(worldX, worldZ)
     
-    // Shake the camera if this player supports it
-    if(player.SetCameraShake ~= nil) then
-        local shakeDir = Vector(worldX, player:GetOrigin().y, worldZ) - player:GetOrigin()
-        shakeDir:Normalize()
-        player:SetCameraShake(damage * Player.kDamageCameraShakeAmount, Player.kDamageCameraShakeSpeed, Player.kDamageCameraShakeTime, shakeDir)
+    // Shake the camera if this player supports it.
+    if player.SetCameraShake ~= nil then
+        // Direction not used right now.
+        //local shakeDir = Vector(worldX, player:GetOrigin().y, worldZ) - player:GetOrigin()
+        //shakeDir:Normalize()
+        local amountScalar = damage / player:GetMaxHealth()
+        player:SetCameraShake(amountScalar * Player.kDamageCameraShakeAmount, Player.kDamageCameraShakeSpeed, Player.kDamageCameraShakeTime)
     end
     
 end
 
+local cameraShakeDoerTypes = { kDeathMessageIcon.RifleButt, kDeathMessageIcon.Axe, kDeathMessageIcon.Bite, kDeathMessageIcon.SwipeBlink, kDeathMessageIcon.StabBlink }
 function OnCommandGiveDamageIndicator(damageIndicatorMessage)
 
-    local damageAmount = ParseGiveDamageIndicatorMessage(damageIndicatorMessage)
+    local damageAmount, doerType = ParseGiveDamageIndicatorMessage(damageIndicatorMessage)
     local player = Client.GetLocalPlayer()
     player:AddGiveDamageIndicator(damageAmount)
+    
+    // Shake the camera for melee attacks if this player supports it.
+    if player.SetCameraShake ~= nil and table.contains(cameraShakeDoerTypes, doerType) then
+        player:SetCameraShake(Player.kMeleeHitCameraShakeAmount, Player.kMeleeHitCameraShakeSpeed, Player.kMeleeHitCameraShakeTime)
+    end
 
 end
 
@@ -73,13 +81,6 @@ function OnCommandHotgroup(number, hotgroupString)
     
     player:SetHotgroup(hotgroupNumber, entityList)
         
-end
-
-function OnCommandMinimapAlert(techId, worldX, worldZ, entityId, entityTechId)
-    local player = Client.GetLocalPlayer()
-    if player:isa("Commander") then
-        player:AddAlert(tonumber(techId), tonumber(worldX), tonumber(worldZ), tonumber(entityId), tonumber(entityTechId))
-    end
 end
 
 function OnCommandTraceReticle()
@@ -159,7 +160,6 @@ function OnCommandChangeGCSettingClient(settingName, newValue)
 end
 
 Event.Hook("Console_hotgroup",              OnCommandHotgroup)
-Event.Hook("Console_minimapalert",          OnCommandMinimapAlert)
 Event.Hook("Console_tracereticle",          OnCommandTraceReticle)
 Event.Hook("Console_viewheight",            OnCommandViewHeight)
 Event.Hook("Console_testsentry",            OnCommandTestSentry)

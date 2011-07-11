@@ -39,8 +39,7 @@ function Team:GetSupportsOrders()
 end
 
 /**
- * Adds a player to the team. This generally does not need to be called directly. Called only
- * by Player:OnTeamChange().
+ * Called only by Gamerules.
  */
 function Team:AddPlayer(player)
     
@@ -49,7 +48,7 @@ function Team:AddPlayer(player)
         local id = player:GetId()
         
         if(id ~= Entity.invalidId) then
-            table.insertunique( self.playerIds, id )
+            return table.insertunique( self.playerIds, id )
         else
             Print("Team:AddPlayer(player): Player is valid but id is -1, skipping.")
         end
@@ -58,9 +57,22 @@ function Team:AddPlayer(player)
         Print("%s", ConditionalValue(player == nil, "Team:AddPlayer(nil): Player is nil.", string.format("Team:AddPlayer(): Tried to add entity of type \"%s\"", player:GetMapName())))
     end
     
+    return false
+    
 end
 
 function Team:OnEntityChange(oldId, newId)
+
+    // Replace any entities in the respawn queue
+    if oldId and table.removevalue(self.respawnQueue, oldId) then
+    
+        // Keep queue entry time the same
+        if newId then
+            table.insertunique(self.respawnQueue, newId)
+        end
+        
+    end
+    
 end
 
 function Team:GetPlayer(playerIndex)
@@ -75,12 +87,12 @@ function Team:GetPlayer(playerIndex)
 end
 
 /**
- * Removes a player from the team. This generally does not need to be called directly. Called only
- * by Player:OnTeamChange().
+ * Called only by Gamerules.
  */
 function Team:RemovePlayer(player)
 
-
+    ASSERT(player)
+    
     if(not table.removevalue( self.playerIds, player:GetId() )) then
         Print("Team:RemovePlayer(%s): Player id %d not in playerId list.", player:GetClassName(), player:GetId())
     end
@@ -248,13 +260,16 @@ function Team:GetOldestQueuedPlayer()
     local playerToSpawn = nil
     local earliestTime = -1
 
-    for i,playerId in ipairs(self.respawnQueue) do
+    for i, playerId in ipairs(self.respawnQueue) do
         local player = Shared.GetEntity(playerId)
-        local currentPlayerTime = player:GetRespawnQueueEntryTime()
-        if((currentPlayerTime ~= nil) and ((earliestTime == -1) or (currentPlayerTime < earliestTime))) then
-            playerToSpawn = player
-            earliestTime = currentPlayerTime                        
-        end        
+        if (player ~= nil) then
+            local currentPlayerTime = player:GetRespawnQueueEntryTime()
+            
+            if((currentPlayerTime ~= nil) and ((earliestTime == -1) or (currentPlayerTime < earliestTime))) then
+                playerToSpawn = player
+                earliestTime = currentPlayerTime                        
+            end
+        end     
     end
 
     return playerToSpawn
@@ -269,13 +284,19 @@ function Team:AddKills(num)
     self.kills = self.kills + num
 end
 
+// Structure was created. May or may not be built or active.
+function Team:StructureCreated(entity)
+end
+
+function Team:StructureDestroyed(entity)
+end
+
+// Entity that supports the tech tree was just added (it's built/active).
 function Team:TechAdded(entity) 
 end
 
+// Entity that supports the tech tree was just removed (no longer built/active).
 function Team:TechRemoved(entity)    
-end
-
-function Team:TechBuilt(entity)
 end
 
 // Respawn all players that have been dead since at least the specified time (or pass nil to respawn all)
@@ -353,10 +374,9 @@ function Team:UpdateHelp()
     if(self.timeOfLastHelpCheck == nil or (Shared.GetTime() > self.timeOfLastHelpCheck + PlayingTeam.kTooltipHelpInterval)) then
     
         function ProcessPlayerHelp(player)
-
             if(player:AddTooltipOnce("Welcome to the Natural Selection 2 beta!")) then
                 return true
-            elseif(player:AddTooltipOncePer("You're in the ready room. In the console, type j1 or j2 to play (rr for ready room).", 30)) then
+            elseif(not player:isa("Spectator") and player:AddTooltipOncePer("You're in the ready room. In the console, type j1 or j2 to play (rr for ready room).", 30)) then
                 return true
             end
             

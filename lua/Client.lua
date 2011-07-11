@@ -10,6 +10,7 @@
 decoda_name = "Client"
 
 Script.Load("lua/Shared.lua")
+Script.Load("lua/MapEntityLoader.lua")
 Script.Load("lua/Button.lua")
 Script.Load("lua/Chat.lua")
 Script.Load("lua/DeathMessage_Client.lua")
@@ -32,6 +33,7 @@ Client.skyBoxList = {}
 Client.ambientSoundList = {}
 Client.particlesList = {}
 Client.tracersList = {}
+Client.rules = {}
 
 Client.timeOfLastPowerPoints = nil
     
@@ -85,6 +87,7 @@ function DestroyLevelObjects()
     Client.particlesList = {}
     Client.tracersList = {}
     Client.ambientSoundList = {}
+	Client.rules = {}
 
 end
 
@@ -123,62 +126,6 @@ function OnMapLoadEntity(className, groupName, values)
     
         ParsePropStatic(groupName, values)
     
-    elseif (className == "light_spot"  or
-            className == "light_point" or
-            className == "light_ambient") then
-            
-        local renderLight = Client.CreateRenderLight()
-        local coords = values.angles:GetCoords( values.origin )
-        
-        if (className == "light_spot") then
-        
-            renderLight:SetType( RenderLight.Type_Spot )
-            renderLight:SetOuterCone( values.outerAngle )
-            renderLight:SetInnerCone( values.innerAngle )
-            renderLight:SetCastsShadows( values.casts_shadows )
-            
-            if (values.shadow_fade_rate ~= nil) then
-                renderLight:SetShadowFadeRate( values.shadow_fade_rate )
-            end
-        
-        elseif (className == "light_point") then
-        
-            renderLight:SetType( RenderLight.Type_Point )
-            renderLight:SetCastsShadows( values.casts_shadows )
-
-            if (values.shadow_fade_rate ~= nil) then
-                renderLight:SetShadowFadeRate( values.shadow_fade_rate )
-            end
-            
-        elseif (className == "light_ambient") then
-            
-            renderLight:SetType( RenderLight.Type_AmbientVolume )
-            
-            renderLight:SetDirectionalColor(RenderLight.Direction_Right,    values.color_dir_right)
-            renderLight:SetDirectionalColor(RenderLight.Direction_Left,     values.color_dir_left)
-            renderLight:SetDirectionalColor(RenderLight.Direction_Up,       values.color_dir_up)
-            renderLight:SetDirectionalColor(RenderLight.Direction_Down,     values.color_dir_down)
-            renderLight:SetDirectionalColor(RenderLight.Direction_Forward,  values.color_dir_forward)
-            renderLight:SetDirectionalColor(RenderLight.Direction_Backward, values.color_dir_backward)
-            
-        end
-
-        renderLight:SetCoords( coords )
-        renderLight:SetRadius( values.distance )
-        renderLight:SetIntensity( values.intensity )
-        renderLight:SetColor( values.color )
-        renderLight:SetGroup(groupName)
-        
-        if (values.atmospheric == true) then
-            renderLight:SetAtmospheric( true )
-        end
-        
-        // Save original values so we can alter and restore lights
-        renderLight.originalIntensity = values.intensity
-        renderLight.originalColor = values.color
-        
-        table.insert(Client.lightList, renderLight)
-    
     elseif (className == "color_grading") then
     
         local renderColorGrading = Client.CreateRenderColorGrading()
@@ -203,8 +150,12 @@ function OnMapLoadEntity(className, groupName, values)
         
 	elseif (className == "minimap_extents") then
 
-		Client.minimapExtentScale = Vector(values.scale.x/4, values.scale.y/4, values.scale.z/4)
-		Client.minimapExtentOrigin = values.origin
+        if not Client.rules.numberMiniMapExtents then
+            Client.rules.numberMiniMapExtents = 0
+        end
+        Client.rules.numberMiniMapExtents = Client.rules.numberMiniMapExtents + 1
+        Client.minimapExtentScale = values.scale
+        Client.minimapExtentOrigin = values.origin
 
     elseif (className == "skybox" or className == "cinematic") then
             
@@ -263,6 +214,11 @@ function OnMapLoadEntity(className, groupName, values)
         LoadEntityFromValues(entity, values)
         entity:OnLoad()
 
+    else
+        
+        // Allow the MapEntityLoader to load it if all else fails.
+        LoadMapEntity(className, groupName, values)
+        
     end
 
 end
@@ -423,6 +379,12 @@ function OnSendCharacterEvent(character)
 
 end
 
+function OnResolutionChanged(oldX, oldY, newX, newY)
+
+    gGUIManager:OnResolutionChanged(oldX, oldY, newX, newY)
+
+end
+
 function OnNotifyGUIItemDestroyed(destroyedItem)
     
     gGUIManager:NotifyGUIItemDestroyed(destroyedItem)
@@ -477,6 +439,7 @@ function OnMapPreLoad()
     Client.particlesList = {}
     Client.tracersList = {}
     
+    Client.rules = {}
     Client.DestroyReverbs()
     Client.ResetSoundSystem()
     
@@ -495,6 +458,20 @@ function ShowFeedbackPage()
     Client.ShowWebpage(kFeedbackURL)
 end
 
+local function CheckRules()
+
+    //Client side check for game requirements (listen server)
+    //Required to prevent scripting errors on the client that can lead to false positives
+    if Client.rules.numberMiniMapExtents == nil then
+        Shared.Message('ERROR: minimap_extent entity is missing from the level.')
+        Client.minimapExtentScale = Vector(100,100,100)
+        Client.minimapExtentOrigin = Vector(0,0,0)
+    elseif Client.rules.numberMiniMapExtents > 1 then
+        Shared.Message('WARNING: There are too many minimap_extents, There should only be one placed in the level.')
+    end
+
+end
+
 /**
  * Callback handler for when the map is finished loading.
  */
@@ -507,6 +484,8 @@ function OnMapPostLoad()
     
     Scoreboard_Clear()
     
+    CheckRules()
+    
 end
 
 /**
@@ -518,9 +497,9 @@ function OnSetupCamera()
     local camera = Camera()
     
     // If we have a player, use them to setup the camera. 
-    if (player ~= nil) then
-        camera:SetCoords( player:GetCameraViewCoords() )
-        camera:SetFov( player:GetRenderFov() )
+    if player ~= nil then
+        camera:SetCoords(player:GetCameraViewCoords())
+        camera:SetFov(player:GetRenderFov())
         return camera
     else
         return MenuManager.GetCinematicCamera()
@@ -535,4 +514,5 @@ Event.Hook("MapPostLoad",            OnMapPostLoad)
 Event.Hook("UpdateClient",           OnUpdateClient)
 Event.Hook("SendKeyEvent",           OnSendKeyEvent)
 Event.Hook("SendCharacterEvent",     OnSendCharacterEvent)
+Event.Hook("ResolutionChanged",      OnResolutionChanged)
 Event.Hook("NotifyGUIItemDestroyed", OnNotifyGUIItemDestroyed)

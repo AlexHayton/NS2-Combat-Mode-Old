@@ -6,6 +6,8 @@
 //    
 // ========= For more information, visit us at http://www.unknownworlds.com =====================    
 
+Script.Load("lua/FunctionContracts.lua")
+
 WeaponOwnerMixin = { }
 WeaponOwnerMixin.type = "WeaponOwner"
 
@@ -29,9 +31,9 @@ function WeaponOwnerMixin:__initmixin()
 end
 
 function WeaponOwnerMixin:SetUpdateWeapons(updates)
-    ASSERT(type(updates) == "boolean")
     self.updateWeapons = updates
 end
+AddFunctionContract(WeaponOwnerMixin.SetUpdateWeapons, { Arguments = { "Entity", "boolean" }, Returns = { } })
 
 function WeaponOwnerMixin:UpdateWeapons(input)
 
@@ -48,6 +50,7 @@ function WeaponOwnerMixin:UpdateWeapons(input)
     end
         
 end
+AddFunctionContract(WeaponOwnerMixin.UpdateWeapons, { Arguments = { "Entity", "Move" }, Returns = { } })
 
 // Get list of weapons in order displayed on HUD
 function WeaponOwnerMixin:ComputeHUDOrderedWeaponList()
@@ -63,7 +66,8 @@ function WeaponOwnerMixin:ComputeHUDOrderedWeaponList()
         
     self.hudOrderedWeaponList = childEntities
     
-end   
+end
+AddFunctionContract(WeaponOwnerMixin.ComputeHUDOrderedWeaponList, { Arguments = { "Entity" }, Returns = { } })
 
 function WeaponOwnerMixin:GetHUDOrderedWeaponList()
 
@@ -74,6 +78,7 @@ function WeaponOwnerMixin:GetHUDOrderedWeaponList()
     return self.hudOrderedWeaponList
     
 end
+AddFunctionContract(WeaponOwnerMixin.GetHUDOrderedWeaponList, { Arguments = { "Entity" }, Returns = { "table" } })
 
 // Returns true if we switched to weapon or if weapon is already active. Returns false if we 
 // don't have that weapon.
@@ -130,6 +135,7 @@ function WeaponOwnerMixin:SetActiveWeapon(weaponMapName)
     return false
 
 end
+AddFunctionContract(WeaponOwnerMixin.SetActiveWeapon, { Arguments = { "Entity", "string" }, Returns = { "boolean" } })
 
 function WeaponOwnerMixin:GetActiveWeapon()
 
@@ -149,9 +155,9 @@ function WeaponOwnerMixin:GetActiveWeapon()
     return activeWeapon
     
 end
+AddFunctionContract(WeaponOwnerMixin.GetActiveWeapon, { Arguments = { "Entity" }, Returns = { { "Weapon", "nil" } } })
 
-// SwitchWeapon or choose option from sayings menu if open
-// weaponindex starts at 1
+// SwitchWeapon or choose option from sayings menu if open weaponindex starts at 1.
 function WeaponOwnerMixin:SwitchWeapon(weaponIndex)
 
     local success = false
@@ -173,6 +179,7 @@ function WeaponOwnerMixin:SwitchWeapon(weaponIndex)
     return success
     
 end
+AddFunctionContract(WeaponOwnerMixin.SwitchWeapon, { Arguments = { "Entity", "number" }, Returns = { "boolean" } })
 
 // Checks to see if self already has a weapon with the passed in map name.
 function WeaponOwnerMixin:GetHasWeapon(weaponMapName)
@@ -187,3 +194,4 @@ function WeaponOwnerMixin:GetHasWeapon(weaponMapName)
     return false
 
 end
+AddFunctionContract(WeaponOwnerMixin.GetHasWeapon, { Arguments = { "Entity", "string" }, Returns = { "boolean" } })

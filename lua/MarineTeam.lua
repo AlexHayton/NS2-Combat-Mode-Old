@@ -213,12 +213,9 @@ function MarineTeam:InitTechTree()
     self.techTree:AddResearchNode(kTechId.Weapons1,               kTechId.Armory,               kTechId.None)
     
     // Marine tier 2
-    //self.techTree:AddBuildNode(kTechId.CommandFacility,      kTechId.None,                kTechId.None)
-    //self.techTree:AddUpgradeNode(kTechId.CommandFacilityUpgrade,  kTechId.CommandStation,              kTechId.None)
     self.techTree:AddUpgradeNode(kTechId.AdvancedArmory,               kTechId.Armory,        kTechId.None)
     self.techTree:AddResearchNode(kTechId.PhaseTech,                    kTechId.Observatory,        kTechId.None)
     self.techTree:AddBuildNode(kTechId.PhaseGate,                    kTechId.PhaseTech,        kTechId.None)
-    //self.techTree:AddResearchNode(kTechId.InfantryPortalTransponderTech,    kTechId.CommandFacility,        kTechId.Observatory)
     self.techTree:AddResearchNode(kTechId.Armor2,                 kTechId.Armor1,              kTechId.None)
     self.techTree:AddResearchNode(kTechId.Weapons2,               kTechId.Weapons1,            kTechId.None)
 
@@ -271,8 +268,6 @@ function MarineTeam:InitTechTree()
     self.techTree:AddMenu(kTechId.RoboticsFactoryMACUpgradesMenu)
     
     // Marine tier 3
-    //self.techTree:AddBuildNode(kTechId.CommandCenter,      kTechId.None,                kTechId.None)
-    //self.techTree:AddUpgradeNode(kTechId.CommandCenterUpgrade,   kTechId.CommandFacility,              kTechId.Armory)
     self.techTree:AddBuildNode(kTechId.PrototypeLab,          kTechId.AdvancedArmory,              kTechId.None)        
     self.techTree:AddResearchNode(kTechId.ARCSplashTech,           kTechId.RoboticsFactory,         kTechId.None)
     self.techTree:AddResearchNode(kTechId.ARCArmorTech,           kTechId.RoboticsFactory,          kTechId.None)

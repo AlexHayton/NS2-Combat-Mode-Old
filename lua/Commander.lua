@@ -9,6 +9,9 @@
 // ========= For more information, visit us at http://www.unknownworlds.com =====================
 Script.Load("lua/Player.lua")
 Script.Load("lua/Globals.lua")
+Script.Load("lua/BuildingMixin.lua")
+Script.Load("lua/Mixins/CameraHolderMixin.lua")
+Script.Load("lua/Mixins/CommanderMoveMixin.lua")
 
 class 'Commander' (Player)
 Commander.kMapName = "commander"
@@ -54,7 +57,7 @@ Commander.kMaxSubGroupIndex = 32
 
 Commander.kSelectMode = enum( {'None', 'SelectedGroup', 'JumpedToGroup'} )
 
-local networkVars = 
+Commander.networkVars = 
 {
     timeScoreboardPressed   = "float",
     focusGroupIndex         = string.format("integer (1 to %d)", Commander.kMaxSubGroupIndex),
@@ -67,8 +70,19 @@ local networkVars =
     gotoHotKeyGroup         = string.format("integer (0 to %d)", Player.kMaxHotkeyGroups)
 }
 
+PrepareClassForMixin(Commander, CameraHolderMixin)
+PrepareClassForMixin(Commander, CommanderMoveMixin)
+
 function Commander:OnInit()
 
+    InitMixin(self, CommanderMoveMixin, { kGravity = 0, kScrollVelocity = Commander.kScrollVelocity,
+                                          kDefaultHeight = Commander.kDefaultCommanderHeight,
+                                          kViewOffsetXHeight = Commander.kViewOffsetXHeight })
+    // CameraHolderMixin requires the GetViewAngles() function that CommanderMoveMixin provides.
+    InitMixin(self, CameraHolderMixin, { kFov = Commander.kFov })
+    
+    InitMixin(self, BuildingMixin)
+    
     Player.OnInit(self)
 
     self.selectedEntities = {}
@@ -97,15 +111,13 @@ function Commander:OnInit()
         
         self.ghostStructure = nil
         self.ghostStructureValid = false
+        
+        self.currentTechId = kTechId.None
                 
     end
     
     if(Server) then
     
-        self.smoothCamera = false
-        
-        self:SetFov(Commander.kFov)
-
         // Wait a short time before sending hotkey groups to make sure
         // client has been replaced by commander
         self.timeToSendHotkeyGroups = Shared.GetTime() + .5
@@ -236,72 +248,6 @@ function Commander:UpdatePosition(velocity, time)
 
     return velocity
     
-end
-
-function Commander:UpdateMovePhysics(input)
-
-    PROFILE("Commander:UpdateMovePhysics")
-    
-    local finalPos = Vector()
-    
-    local heightmap = self:GetHeightmap()
-    // If minimap clicked, go right to that position
-    if (bit.band(input.commands, Move.Minimap) ~= 0) then
-
-        // Translate from panel coords to world coordinates described by minimap
-        if(heightmap ~= nil) then
-            
-            // Store normalized minimap coords in yaw and pitch
-            finalPos = Vector(heightmap:GetWorldX(input.pitch), 0, heightmap:GetWorldZ(input.yaw))
-            
-            // Add in extra x offset to center view where we're told, not ourselves
-            finalPos.x = finalPos.x - Commander.kViewOffsetXHeight
-            
-        end
-
-        self.gotoHotKeyGroup = 0
-        
-    // Returns true if player jumped to a hotkey group
-    elseif not self:ProcessNumberKeysMove(input, finalPos) then
-    
-        local angles = self:GetViewAngles()
-        local moveVelocity = angles:GetCoords():TransformVector( input.move ) * Commander.kScrollVelocity
-        
-        // Set final position (no collision)
-        finalPos = self:GetOrigin() + moveVelocity * input.time
-        
-        if input.move:GetLength() > kEpsilon then
-            self.gotoHotKeyGroup = 0
-        end
-        
-    end
-    
-    // Set commander height according to height map (allows commander to move off height map, but uses clipped values to determine height)
-    if(heightmap ~= nil) then
-    
-        finalPos.x = heightmap:ClampXToMapBounds(finalPos.x)
-        finalPos.z = heightmap:ClampZToMapBounds(finalPos.z)
-        finalPos.y = heightmap:GetElevation(finalPos.x, finalPos.z) + Commander.kDefaultCommanderHeight
-
-    else
-    
-        // If there's no height map, trace to the ground and hover a set distance above it 
-        // Doesn't update height if nothing was hit
-        local belowComm = Vector(self:GetOrigin())
-        belowComm.y = belowComm.y - 50
-        
-        local trace = Shared.TraceRay(self:GetOrigin(), belowComm, PhysicsMask.CommanderSelect, EntityFilterOne(self))
-        
-        if trace.fraction < 1 then
-            finalPos.y = trace.endPoint.y + Commander.kDefaultCommanderHeight
-        end
-        
-    end
-        
-    self:SetOrigin(finalPos)
-    
-    self:SetVelocity(Vector(0, 0, 0))
-            
 end
 
 function Commander:UpdateAnimation(timePassed)
@@ -448,7 +394,7 @@ function Commander:GetCurrentTechButtons(techId, entity)
     
     local selectedTechButtons = nil
     if entity then
-        selectedTechButtons = entity:GetTechButtons(techId)
+        selectedTechButtons = entity:GetTechButtons(techId, self:GetTeamType())
     end
     if not selectedTechButtons then
         selectedTechButtons = self:GetSelectionRowsTechButtons(techId)
@@ -560,4 +506,4 @@ function Commander:GetCanDoDamage()
     return false
 end
 
-Shared.LinkClassToMap( "Commander", Commander.kMapName, networkVars )
+Shared.LinkClassToMap( "Commander", Commander.kMapName, Commander.networkVars )

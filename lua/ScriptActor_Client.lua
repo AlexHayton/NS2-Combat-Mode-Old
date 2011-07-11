@@ -117,21 +117,6 @@ function ScriptActor:AttachEffect(effectName, coords, loopMode)
     
 end
 
-function ScriptActor:GetCameraViewCoords()
-
-    local cameraCoords = self:GetViewCoords()
-    cameraCoords.origin = self:GetEyePos()
-    return cameraCoords
-    
-end
-
-// The engine calls this function when rendering the view for the controlling player (set by SetConstrollingPlayer).
-// Return radians.
-function ScriptActor:GetRenderFov()
-    // 90 degrees by default
-    return math.pi/2
-end
-
 function ScriptActor:AddClientEffect(effectName)
 
     self:SetUpdates(true)

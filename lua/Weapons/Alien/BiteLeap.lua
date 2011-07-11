@@ -38,8 +38,8 @@ function BiteLeap:GetEnergyCost(player)
     return kBiteEnergyCost
 end
 
-function BiteLeap:GetHasSecondary()
-    return true
+function BiteLeap:GetHasSecondary(player)
+    return true //player:GetHasUpgrade(kTechId.Leap)
 end
 
 function BiteLeap:GetHUDSlot()
@@ -47,7 +47,7 @@ function BiteLeap:GetHUDSlot()
 end
 
 function BiteLeap:GetSecondaryEnergyCost(player)
-    return 40
+    return kLeapEnergyCost
 end
 
 function BiteLeap:GetIconOffsetY(secondary)
@@ -86,7 +86,7 @@ function BiteLeap:PerformPrimaryAttack(player)
     // check if we should use the right hit instead of the left 
     if rightHit and rightTrace and rightTrace.entity ~= nil then
         // is the right hit a juicier target? Well, if it is an enemy player, then we switch to it
-        if not hit or (rightTrace.entity:isa("Player") and player:GetTeamType() ~= rightTrace.entity:GetTeamType()) then
+        if not trace.entity or (rightTrace.entity:isa("Player") and player:GetTeamType() ~= rightTrace.entity:GetTeamType()) then
             hit, trace, direction = rightHit, rightTrace, rightDirection
         end
     end
@@ -94,23 +94,22 @@ function BiteLeap:PerformPrimaryAttack(player)
     self.lastBittenEntityId = Entity.invalidId
    
     if hit and trace and trace.entity ~= nil then
-
         self.lastBittenEntityId = trace.entity:GetId()
 
-        self:ApplyMeleeHit(player, kBiteDamage, trace, direction)
-        
-    end
+        self:ApplyMeleeHit(player, kBiteDamage, trace, direction)        
+    end        
 
+    return true
 end
 
 // Leap if it makes sense (not if looking down).
 function BiteLeap:PerformSecondaryAttack(player)
 
     local parent = self:GetParent()
-    if parent then
+    if parent and self:GetHasSecondary(player) then
     
         // Check to make sure there's nothing right in front of us
-        local startPoint = player:GetViewOffset() + player:GetOrigin()       
+        local startPoint = player:GetEyePos()
         local viewCoords = player:GetViewAngles():GetCoords()
         local kLeapCheckRange = 2
         

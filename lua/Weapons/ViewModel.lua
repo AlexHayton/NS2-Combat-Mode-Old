@@ -15,10 +15,16 @@
  * all of the weapons).
  */
 Script.Load("lua/Globals.lua")
+Script.Load("lua/FunctionContracts.lua")
 
 class 'ViewModel' (BlendedActor)
 
 ViewModel.mapName = "view_model"
+
+ViewModel.networkVars =
+{
+    weaponId = "entityid"
+}
 
 function ViewModel:OnCreate()
     
@@ -60,37 +66,29 @@ function ViewModel:GetModelIndex()
     return self.modelIndex
 end
 
-function ViewModel:ResetAnimState()
+function ViewModel:SetWeapon(weapon)
 
-    BlendedActor.ResetAnimState(self)    
-    
-    self.weaponId = Entity.invalidId
-
-end
-
-/**
- * Assigns the model for the view model. modelName is a string specifying the
- * file name of the model, which should have been precached by calling
- * Shared.PrecacheModel during load time. Also pass the weapon that will 
- * return idle animations.
- */
-function ViewModel:SetModel(modelName, weapon)
-
-    if BlendedActor.SetModel(self, modelName) then
-    
-        self:ResetAnimState()
-        
-    end
-    
-    // Save the weapon for determining idle anims
-    
-    if (weapon ~= nil) then
+    if weapon ~= nil then
         self.weaponId = weapon:GetId()
     else
         self.weaponId = Entity.invalidId
     end
     
-    if (Client) then
+end
+AddFunctionContract(ViewModel.SetWeapon, { Arguments = { "ViewModel", { "Weapon", "nil" } }, Returns = { } })
+
+/**
+ * Assigns the model for the view model. modelName is a string specifying the
+ * file name of the model, which should have been precached by calling
+ * Shared.PrecacheModel during load time.
+ */
+function ViewModel:SetModel(modelName)
+
+    if BlendedActor.SetModel(self, modelName) then
+        self:ResetAnimState()
+    end
+    
+    if Client then
         self:UpdateRenderModel()
     end
     
@@ -246,14 +244,14 @@ if (Client) then
      */
     function ViewModel:UpdateRenderModel()
     
-        if (self.modelIndex ~= self.oldModelIndex) then
+        if self.modelIndex ~= self.oldModelIndex then
     
             // Create/destroy the model as necessary.
-            if (self.modelIndex == 0) then
+            if self.modelIndex == 0 then
                 Client.DestroyRenderModel(self.model)
                 self.model = nil
             else
-                if(self.model == nil) then
+                if self.model == nil then
                     self.model = Client.CreateRenderModel(RenderScene.Zone_ViewModel)
                 end
                 self.model:SetModel(self.modelIndex)
@@ -264,11 +262,11 @@ if (Client) then
             
         end
         
-        if (self.model ~= nil) then
+        if self.model ~= nil then
             // Show or hide the view model depending on whether or not the
             // entity is visible. This allows the owner to show or hide it
             // as needed.
-            self.model:SetIsVisible( self:GetIsVisible() )
+            self.model:SetIsVisible(self:GetIsVisible())
         end
         
     end
@@ -278,10 +276,10 @@ if (Client) then
      */
     function ViewModel:UpdateGUI()
 
-        if (self.model ~= nil) then
-            self.model:SetMaterialParameter( "weaponAmmo", PlayerUI_GetWeaponAmmo() )
-            self.model:SetMaterialParameter( "weaponClip", PlayerUI_GetWeaponClip() )
-            self.model:SetMaterialParameter( "weaponAuxClip", PlayerUI_GetAuxWeaponClip() )
+        if self.model ~= nil then
+            self.model:SetMaterialParameter("weaponAmmo", PlayerUI_GetWeaponAmmo())
+            self.model:SetMaterialParameter("weaponClip", PlayerUI_GetWeaponClip())
+            self.model:SetMaterialParameter("weaponAuxClip", PlayerUI_GetAuxWeaponClip())
         end
     
     end
@@ -307,4 +305,4 @@ function ViewModel:GetWeapon()
     return Shared.GetEntity(self.weaponId)
 end
 
-Shared.LinkClassToMap( "ViewModel", ViewModel.mapName, {} )  
+Shared.LinkClassToMap( "ViewModel", ViewModel.mapName, ViewModel.networkVars )  

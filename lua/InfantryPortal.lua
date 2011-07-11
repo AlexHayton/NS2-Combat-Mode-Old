@@ -43,12 +43,24 @@ function InfantryPortal:OnInit()
     
 end
 
+function InfantryPortal:OnDestroy()
+
+    Structure.OnDestroy(self)
+    
+    // Put the player back in queue if there was one hoping to spawn at this now destroyed IP.
+    self:RequeuePlayer()
+
+end
+
 function InfantryPortal:GetRequiresPower()
     return true
 end
 
 function InfantryPortal:GetUseAttachPoint()
-    return InfantryPortal.kLoginAttachPoint
+    if self:GetIsBuilt() then
+        return InfantryPortal.kLoginAttachPoint
+    end
+    return ""
 end
 
 function InfantryPortal:QueueWaitingPlayer()
@@ -216,14 +228,6 @@ function InfantryPortal:RequeuePlayer()
     // Don't spawn player
     self.queuedPlayerId = nil
     self.queuedPlayerStartTime = nil
-
-end
-
-function InfantryPortal:OnReset()
-
-    Structure.OnReset(self)
-    
-    //Shared.StopEffect(nil, InfantryPortal.kSpawnEffect, self)
 
 end
 

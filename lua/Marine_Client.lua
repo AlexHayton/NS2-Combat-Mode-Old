@@ -97,19 +97,6 @@ function Marine:UpdateClientEffects(deltaTime, isLocal)
     
 end
 
-function Marine:Drop(weapon)
-
-    local weapon = self:GetActiveWeapon()
-    
-    if( weapon ~= nil and weapon.GetIsDroppable and weapon:GetIsDroppable() ) then
-        // Do basic prediction of the weapon drop on the client so that any client
-        // effects for the weapon can be dealt with
-        weapon:OnPrimaryAttackEnd(self)
-        weapon:Dropped(self)
-    end
-
-end
-
 function Marine:CloseMenu(flashIndex)
 
     if self.showingBuyMenu then

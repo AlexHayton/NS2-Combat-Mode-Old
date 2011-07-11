@@ -13,8 +13,19 @@ function Gorge:InitWeapons()
 
     self:GiveItem(SpitSpray.kMapName)
     self:GiveItem(HydraAbility.kMapName)
+    self:GiveItem(CystAbility.kMapName)
     
     self:SetActiveWeapon(SpitSpray.kMapName)
+    
+end
+
+function Gorge:OnGiveUpgrade(techId)
+
+    Alien.OnGiveUpgrade(self, techId)
+    
+    if techId == kTechId.BileBomb then
+        self:GiveItem(BileBomb.kMapName)
+    end
     
 end
 
@@ -27,7 +38,7 @@ function Gorge:AttemptToBuy(techIds)
     if (techId == kTechId.Hydra) then    
     
         // Create hydra in front of us
-        local playerViewPoint = self:GetOrigin() + self:GetViewOffset()
+        local playerViewPoint = self:GetEyePos()
         local hydraEndPoint = playerViewPoint + self:GetViewAngles():GetCoords().zAxis * 2
         local trace = Shared.TraceRay(playerViewPoint, hydraEndPoint, PhysicsMask.AllButPCs, EntityFilterOne(self))
         local hydraPosition = trace.endPoint

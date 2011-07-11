@@ -262,7 +262,7 @@ function DbgBulletTracer:Trace(shooter, startPoint, trace, capsule)
         // if we didn't hit something, but there is something mobile around that we 
         // may have aimed at, we show that instead
 
-        if not entity and not self.hitTracer then
+        if not entity and not self.hitTracer and shooter then
         
             entity = DbgTracer.FindAimedAtTarget(shooter, startPoint, trace.endPoint)
             
@@ -271,7 +271,7 @@ function DbgBulletTracer:Trace(shooter, startPoint, trace, capsule)
                 bbox2 = DbgTracer.GetBoundingBox(entity)
             end 
         end
-        local name = shooter.GetName and shooter:GetName() or ToString(shooter)
+        local name = shooter and shooter.GetName and shooter:GetName() or ToString(shooter)
         // remember the nil-in-table "feature" in lua - only last element in array may be null
         table.insert(self.bullets, { name, startPoint, trace.endPoint, trace.fraction, targetId, bbox, targetId2, bbox2, capsule})  
     end
@@ -329,12 +329,3 @@ function DbgMeleeTracer:DrawCapsule(startPoint, endPoint, frac, capsule)
     local color = frac and frac < 1 and self.incompleteColor or self.completeColor
     DebugTraceBox(capsule, startPoint, endPoint, self.duration, unpack(color))
 end
-
-function DbgMeleeTracer:DrawLines(points, frac, pi, ...)
-    local p1 = points[pi]
-    for _,pointIndex in ipairs(arg) do
-        local p2 = points[pointIndex] 
-        DbgBulletTracer.Line(self, p1, p2, frac)    
-    end
-end    
-

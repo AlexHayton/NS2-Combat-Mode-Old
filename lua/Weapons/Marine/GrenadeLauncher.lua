@@ -37,6 +37,11 @@ function GrenadeLauncher:GetViewModelName()
     return Rifle.kViewModelName
 end
 
+function GrenadeLauncher:GetWeight()
+    // A bit lighter then NS1
+    return Rifle.GetWeight(self) + ((self:GetAmmo() + self:GetClip()) / self:GetClipSize()) * 0.01
+end
+
 function GrenadeLauncher:GetNeedsAmmo()
     return Rifle.GetNeedsAmmo(self) or self.auxClip < GrenadeLauncher.kAuxClipSize or self.auxAmmo < GrenadeLauncher.kLauncherStartingAmmo
 end

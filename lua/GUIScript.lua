@@ -39,3 +39,6 @@ function GUIScript:SendCharacterEvent(character)
     return false
     
 end
+
+function GUIScript:OnResolutionChanged(oldX, oldY, newX, newY)
+end

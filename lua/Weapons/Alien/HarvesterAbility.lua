@@ -106,6 +106,8 @@ function HarvesterAbility:PerformPrimaryAttack(player)
         
     end
     
+    return true
+    
 end
 
 function HarvesterAbility:CreateHarvester(player)

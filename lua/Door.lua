@@ -204,13 +204,18 @@ function Door:GetTechAllowed(techId, techNode, player)
 
 end
 
-function Door:GetTechButtons(techId)
+function Door:GetTechButtons(techId, teamType)
 
     if(techId == kTechId.RootMenu) then   
-    
-        return  {   kTechId.DoorOpen, kTechId.DoorClose, kTechId.None, kTechId.None,
-                    kTechId.DoorLock, kTechId.DoorUnlock, kTechId.None, kTechId.None }
-                    
+        // $AS - Aliens do not get tech on doors they can just select them
+        if not (teamType == kAlienTeamType) then
+            return  {kTechId.DoorOpen, kTechId.DoorClose, kTechId.None, kTechId.None,
+                     kTechId.DoorLock, kTechId.DoorUnlock, kTechId.None, kTechId.None }
+        else            
+            return  {kTechId.None, kTechId.None, kTechId.None, kTechId.None,
+                     kTechId.None, kTechId.None, kTechId.None, kTechId.None }
+        end
+        
     end
     
     return nil

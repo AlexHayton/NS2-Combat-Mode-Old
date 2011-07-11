@@ -19,7 +19,7 @@ Ability.kMaxEnergy = 100
 // The order of icons in kHUDAbilitiesTexture, used by GetIconOffsetY.
 // These are just the rows, the colum is determined by primary or secondary
 // The 0th row is the unknown (?) icon
-kAbilityOffset = enum( {'Bite', 'Parasite', 'Spit', 'Infestation', 'Spikes', 'Sniper', 'Spores', 'SwipeBlink', 'StabBlink', 'Blink', 'Hydra', 'Gore', 'BoneShield', 'Stomp', 'Charge'} )
+kAbilityOffset = enum( {'Bite', 'Parasite', 'Spit', 'Infestation', 'Spikes', 'Sniper', 'Spores', 'SwipeBlink', 'StabBlink', 'Blink', 'Hydra', 'Gore', 'BoneShield', 'Stomp', 'Charge', 'BileBomb'} )
 
 // Override these
 function Ability:GetPrimaryAttackDelay()
@@ -31,7 +31,7 @@ function Ability:GetEnergyCost(player)
     return Ability.kEnergyCost
 end
 
-function Ability:GetHasSecondary()
+function Ability:GetHasSecondary(player)
     return false
 end
 
@@ -97,6 +97,7 @@ function Ability:GetViewModelName()
 end
 
 function Ability:PerformPrimaryAttack(player)
+    return false
 end
 
 function Ability:PerformSecondaryAttack(player)
@@ -129,13 +130,14 @@ function Ability:OnPrimaryAttack(player)
             energyCost = 0
         end
         
-        if(player:GetEnergy() >= energyCost) then
-
-            player:DeductAbilityEnergy(energyCost)
+        if(player:GetEnergy() >= energyCost) then            
                 
-            self:PerformPrimaryAttack(player)
+            if self:PerformPrimaryAttack(player) then            
             
-            Weapon.OnPrimaryAttack(self, player)
+                player:DeductAbilityEnergy(energyCost)
+                
+                Weapon.OnPrimaryAttack(self, player)
+            end
 
         end
         

@@ -62,6 +62,10 @@ function Rifle:OnInit()
     
     self.viewAnimationState = Rifle.kViewAnimationStates.None
     
+    if Client then
+        self:SetUpdates(true)
+    end
+    
 end
 
 function Rifle:OnDestroy()
@@ -111,6 +115,11 @@ end
 
 function Rifle:GetPrimaryAttackDelay()
     return Rifle.kFireDelay
+end
+
+function Rifle:GetWeight()
+    // From NS1 
+    return .08 + ((self:GetAmmo() + self:GetClip()) / self:GetClipSize()) * 0.01
 end
 
 // Don't punish too badly for walking and moving
@@ -189,6 +198,14 @@ function Rifle:PlayLoopingEffects()
             Shared.PlaySound(parent, Rifle.kSingleShotSounds[self.soundType])
             // Start the looping sound for the rest of the shooting. Pew pew pew...
             Shared.PlaySound(parent, Rifle.kLoopingSounds[self.soundType])
+            
+            // Store enough information for us to stop the sound in the case where
+            // the player dies.
+            if Client then
+                self.clientSoundType = self.soundType
+                self.clientParentId  = parent:GetId()
+            end
+            
             local animationLength = parent:SetViewAnimation(Rifle.kAttackInViewModelAnimation, true, true)
             self.playingLoopingOnEntityId = parent:GetId()
             self.animationStateDoneTime = Shared.GetTime() + animationLength
@@ -234,6 +251,21 @@ function Rifle:StopLoopingEffects()
             self.playingLoopingOnEntityId = Entity.invalidId
             
         end
+
+    elseif Client and self.clientSoundType then
+    
+        // This case happens when the sound effect has been stopped by StopLoopingEffects on
+        // the server, but was not predicted on the client (when a player dies for example).
+    
+        // In the case where the parent no longer exists, the engine will have automatically
+        // stopped the looping sound effect.
+        local parent = Shared.GetEntity(self.clientParentId)
+        if parent then
+            Shared.StopSound(parent, Rifle.kLoopingSounds[self.clientSoundType])
+        end
+        
+        self.clientSoundType = nil
+        self.clientParentId  = nil
         
     end
 
@@ -267,8 +299,18 @@ end
 function Rifle:OnProcessMove(player, input)
 
     ClipWeapon.OnProcessMove(self, player, input)
-    
     self:UpdateShootingEffects()
+
+end
+
+function Rifle:OnUpdate()
+
+    ClipWeapon.OnUpdate(self)
+    
+    // When the weapon is being held, it will be updated by OnProcessMove
+    if self:GetParentId() == Entity.invalidId then
+        self:UpdateShootingEffects()
+    end
 
 end
 
@@ -301,16 +343,10 @@ function Rifle:OnPrimaryAttackEnd(player)
     
 end
 
-function Rifle:DoMelee(player)
+function Rifle:PerformMeleeAttack(player)
 
     self.lastAttackSecondary = true
     
-    self:PerformMeleeAttack(player)
-
-end
-
-function Rifle:PerformMeleeAttack(player)
-
     // Perform melee attack
     local didHit, trace = self:AttackMeleeCapsule(player, Rifle.kButtDamage, Rifle.kButtRange)
     
@@ -325,21 +361,11 @@ function Rifle:PerformMeleeAttack(player)
         
             hitClassname = hitObject:GetClassName()
             isAlien = (hitObject:GetTeamType() == kAlienTeamType)
-            
-            if hitObject:isa("Player") then
-            
-                // Take player mass into account 
-                local direction = player:GetOrigin() - hitObject:GetOrigin()
-                direction:Normalize()
-                
-                local targetVelocity = hitObject:GetVelocity() + direction * (300 / hitObject:GetMass())
-                hitObject:SetVelocity(targetVelocity)
-                    
-            end
+
+            // Rifle melee attack will cause the target to be knocked back in some cases.
+            self:KnockbackTarget(player, hitObject, trace.endPoint)
             
         end
-        
-        self:TriggerEffects("rifle_alt_attack_hit", {classname = hitClassname, isalien = isAlien, surface = trace.surface})
         
     end
     
@@ -370,7 +396,7 @@ function Rifle:OnTag(tagName)
     if tagName == "hit" then
         local player = self:GetParent()
         if player then
-            self:DoMelee(player)
+            self:PerformMeleeAttack(player)
         end
     end
 
@@ -389,9 +415,6 @@ function Rifle:ApplyMeleeHitEffects(player, damage, target, endPoint, direction)
     
         // Throw back (or stun?) target a bit        
         target:AddImpulse(endPoint, direction)
-        
-        //local targetVelocity = target:GetVelocity() + direction * (300 / target:GetMass())
-        //target:SetVelocity(targetVelocity)
 
     end
     

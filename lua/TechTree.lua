@@ -96,6 +96,7 @@ function TechTree:GetRequiresText(techId)
         if(techNode ~= nil and not techNode.available) then
         
             local addedPrereq1 = false
+            local addedPrereq2 = false
             if(techNode.prereq1 ~= kTechId.None) then
                 local missingDisplayText = string.format("<missing display for %s", EnumToString(kTechId, techNode.prereq1))
                 text = string.format("%s%s", text, tostring(LookupTechData(techNode.prereq1, kTechDataDisplayName, missingDisplayText)))
@@ -105,6 +106,12 @@ function TechTree:GetRequiresText(techId)
             if(techNode.prereq2 ~= kTechId.None) then        
                 local missingDisplayText = string.format("<missing display for %s>", EnumToString(kTechId, techNode.prereq2))
                 text = string.format("%s%s%s", text, ConditionalValue(addedPrereq1, ", ", ""), tostring(LookupTechData(techNode.prereq2, kTechDataDisplayName, missingDisplayText)))
+                addedPrereq2 = true
+            end
+            
+            if(techNode.addOnTechId ~= kTechId.None) then
+                local missingDisplayText = string.format("<missing display for %s>", EnumToString(kTechId, techNode.addOnTechId))
+                text = string.format("%s%s%s", text, ConditionalValue(addedPrereq1 or addedPrereq2, " on ", ""), tostring(LookupTechData(techNode.addOnTechId, kTechDataDisplayName, missingDisplayText)))
             end
             
         end

@@ -10,6 +10,7 @@
 decoda_name = "Server"
 
 Script.Load("lua/Shared.lua")
+Script.Load("lua/MapEntityLoader.lua")
 Script.Load("lua/Button.lua")
 Script.Load("lua/TechData.lua")
 
@@ -70,7 +71,7 @@ local function GetMapEntityLoadPriority(mapName)
 
 end
 
-local function LoadMapEntity(mapName, groupName, values)
+local function LoadServerMapEntity(mapName, groupName, values)
 
     // Skip the classes that are not true entities and are handled separately
     // on the client.
@@ -156,13 +157,6 @@ local function LoadMapEntity(mapName, groupName, values)
         LoadEntityFromValues(entity, values)
         table.insert(Server.readyRoomSpawnList, entity)
 
-    elseif (mapName == PlayerSpawn.kMapName) then
-
-        local entity = PlayerSpawn()
-        entity:OnCreate()
-        LoadEntityFromValues(entity, values)
-        table.insert(Server.playerSpawnList, entity)
-
     elseif (mapName == EggSpawn.kMapName) then
 
         local entity = EggSpawn()
@@ -178,6 +172,11 @@ local function LoadMapEntity(mapName, groupName, values)
     elseif (mapName == Particles.kMapName) then
 
         Shared.PrecacheCinematic(values.cinematicName)
+        
+    else
+    
+        // Allow the MapEntityLoader to load it if all else fails.
+        LoadMapEntity(mapName, groupName, values)
 
     end
 
@@ -331,7 +330,7 @@ function OnMapPostLoad()
     for i = highestPriority, 0, -1 do
         if Server.mapPostLoadEntities[i] then
             for k, entityData in ipairs(Server.mapPostLoadEntities[i]) do
-                LoadMapEntity(entityData.MapName, entityData.GroupName, entityData.Values)
+                LoadServerMapEntity(entityData.MapName, entityData.GroupName, entityData.Values)
             end
         end
     end
@@ -576,14 +575,14 @@ function getWebApi(datatype, command, kickedId)
             .. ' input {padding:1px;margin:1px;line-height:10px;}'.."\n"
             .. '</style>'.."\n"
             .. '</head><body>'.."\n"
-            .. '<div><h1><a href="http://localhost:[[webport]]/" target="_self">NS2 Server Manager</a></h1></div><br clear="all" />'.."\n"
+            .. '<div><h1><a href="http://[[webdomain]]:[[webport]]/" target="_self">NS2 Server Manager</a></h1></div><br clear="all" />'.."\n"
             .. '<table width="800" cellspacing="2" cellpadding="2" class="t">'.."\n"
             .. '<tr><td colspan="2"><b>Server Uptime:</b> ' .. stats['uptime'] .. '</td></tr>'.."\n"
             .. '<tr><td class="bb" width="100"><b>Currently Playing:</td><td class="bb">' .. stats['map'] .. '</td></tr>'.."\n"
             .. '<tr><td class="bb"><b>Players Online:</b></td><td class="bb"><b>' .. stats['players'] .. '</b> &nbsp; &nbsp; &nbsp; Marine: <b>' .. stats['playersMarine'] .. '</b> | Alien: <b>' .. stats['playersAlien'] .. '</b></td></tr>'.."\n"
             .. '<tr><td class="bb"><b>Developer Mode:</b></td><td class="bb">' .. stats['devmode'] .. '</td></tr>'.."\n"
             .. '<tr><td class="bb"><b>Cheats Enabled:</b></td><td class="bb">' .. stats['cheats'] .. '</td></tr>'.."\n"
-            .. '<tr><td colspan="2"><form name="send_rcon" action="http://localhost:[[webport]]/" method="post">'
+            .. '<tr><td colspan="2"><form name="send_rcon" action="http://[[webdomain]]:[[webport]]/" method="post">'
             .. '<p>'
             .. '<label for="command"><b>Console Command:</b> </label>'
             .. '<input type="text" name="rcon" size="24"> '
@@ -642,7 +641,7 @@ function getWebApi(datatype, command, kickedId)
                                 .. '<td valign="middle" align="center" class="bb">' .. player:GetResources() .. '</td>'
                                 .. '<td valign="middle" class="bb">' .. steamid .. '</td>'
                                 .. '<td valign="middle" align="center" class="bb">' .. entity:GetPing() .. '</td>'
-                                .. '<td valign="middle"><form name="' .. steamid .. '_playerlist" action="http://localhost:[[webport]]/" method="post" style="display:inline;"><input type="hidden" name="steamid" value="' .. steamid .. '" /><input type="submit" name="kick" value="' .. kickbtext .. '" ' .. kickbutton .. ' /> <input type="submit" name="ban" value="Ban" ' .. kickbutton .. ' /><input type="submit" name="kickban" value="Kick &amp; Ban" ' .. kickbutton .. ' /> <b>Duration:</b> <select name="ban_duration" ' .. kickbutton .. '><option value="-1" disabled="disabled">Forever (TODO)</option><option value="0" selected>This server session</option><option value="30">30 Minuets</option><option value="120">2 Hours</option><option value="480">8 Hours</option><option value="960">16 hours</option><option value="1440">1 Day</option><option value="2880">2 Days</option><option value="5760">4 Days</option></select></form></td>'
+                                .. '<td valign="middle"><form name="' .. steamid .. '_playerlist" action="http://[[webdomain]]:[[webport]]/" method="post" style="display:inline;"><input type="hidden" name="steamid" value="' .. steamid .. '" /><input type="submit" name="kick" value="' .. kickbtext .. '" ' .. kickbutton .. ' /> <input type="submit" name="ban" value="Ban" ' .. kickbutton .. ' /><input type="submit" name="kickban" value="Kick &amp; Ban" ' .. kickbutton .. ' /> <b>Duration:</b> <select name="ban_duration" ' .. kickbutton .. '><option value="-1" disabled="disabled">Forever (TODO)</option><option value="0" selected>This server session</option><option value="30">30 Minuets</option><option value="120">2 Hours</option><option value="480">8 Hours</option><option value="960">16 hours</option><option value="1440">1 Day</option><option value="2880">2 Days</option><option value="5760">4 Days</option></select></form></td>'
                                 .. '</tr>'.."\n"
                                 
             end
@@ -665,7 +664,7 @@ function getWebApi(datatype, command, kickedId)
                     table.remove(Server.playerBanList,i)
                 end
             end
-            result = result .. '<tr><td valign="middle" class="bb">' .. banned.name .. '</td><td valign="middle" class="bb">' .. banned.steamid .. '</td><td valign="middle" class="bb">' .. banduration .. '</td><td valign="middle"><form name="ban_' .. steamid .. '" method="post" action="http://localhost:[[webport]]/" style="display:inline;"><input type="hidden" name="steamid" value="' .. banned.steamid .. '"><input type="submit" name="unban" value="Unban" /></form></td>'
+            result = result .. '<tr><td valign="middle" class="bb">' .. banned.name .. '</td><td valign="middle" class="bb">' .. banned.steamid .. '</td><td valign="middle" class="bb">' .. banduration .. '</td><td valign="middle"><form name="ban_' .. steamid .. '" method="post" action="http://[[webdomain]]:[[webport]]/" style="display:inline;"><input type="hidden" name="steamid" value="' .. banned.steamid .. '"><input type="submit" name="unban" value="Unban" /></form></td>'
         end
         result = result .. '</table>'.."\n"
                         .. '</body></html>'
@@ -697,6 +696,10 @@ local function OnWebRequest(actions)
         end
     end
     return getWebApi(datatype,command,kickedId)
+end
+
+function GetTechTree(teamNumber)
+    return GetGamerules():GetTeam(teamNumber):GetTechTree()
 end
 
 /**
